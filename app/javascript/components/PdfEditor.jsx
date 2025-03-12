@@ -1,23 +1,12 @@
 import React, { useState } from "react";
-import { Document, Page, pdfjs } from "react-pdf";
-
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url
-).toString();
 
 const PdfEditor = ({setPdfUpdated}) => {
   const [formData, setFormData] = useState({ text: "", x: "", y: "", page: "" });
   const [message, setMessage] = useState({ text: "", type: "" });
-  const [numPages, setNumPages] = useState(null);
-
-  const onDocumentLoadSuccess = ({ numPages }) => {
-    setNumPages(numPages);
-  };
 
   const showMessage = (text, type) => {
     setMessage({ text, type });
-    setTimeout(() => setMessage({ text: "", type: "" }), 1000); // Hide after 3 sec
+    setTimeout(() => setMessage({ text: "", type: "" }), 1000);
   };
 
   const handleChange = (e) => {
@@ -85,7 +74,6 @@ const PdfEditor = ({setPdfUpdated}) => {
       showMessage("Error removing page", "error");
     }
   };
-
 
   return (
     <div className="flex">

@@ -8,10 +8,9 @@ const getCSRFToken = () => {
 // Universal form submission function
 const submitForm = async (url, method = "POST", data = {}, extraHeaders = {}) => {
   try {
-    const csrfToken = getCSRFToken(); // Get CSRF token
+    const csrfToken = getCSRFToken();
     const headers = {
-      "Content-Type": "application/json",
-      "X-CSRF-Token": csrfToken, // ✅ Automatically include CSRF token
+      "X-CSRF-Token": csrfToken,
       ...extraHeaders,
     };
 

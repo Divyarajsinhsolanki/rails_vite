@@ -1,7 +1,6 @@
 class Api::AuthController < ApplicationController
-  before_action :authenticate_user!, only: [:logout]
+  include Rails.application.routes.url_helpers
 
-  # User Signup
   def signup
     user = User.new(user_params)
     if user.save
@@ -11,26 +10,35 @@ class Api::AuthController < ApplicationController
     end
   end
 
-  # User Login
   def login
     user = User.find_by(email: user_params[:email])
-    if user && user.valid_password?(user_params[:password])
-      token = user.jwt_token
+    if user&.valid_password?(user_params[:password])
+      token = user.generate_token_for(:auth)
       render json: { token: token, user: user }, status: :ok
     else
       render json: { error: "Invalid email or password" }, status: :unauthorized
     end
   end
 
-  # User Logout
   def logout
-    current_user.update(jti: nil) # Invalidate JWT
+    current_user.revoke_token_for(:auth)
     render json: { message: "Logged out successfully" }, status: :ok
+  end
+
+  def view_profile
+    user = current_user
+    profile_picture_url = rails_blob_url(user.profile_picture, only_path: true) if user.profile_picture.attached?
+    render json: { user: user.as_json.merge(profile_picture: profile_picture_url) }
+  end
+
+  def update_profile
+    current_user.update(user_params)
+    render json: { message: "User details updated successfully" }, status: :ok
   end
 
   private
 
   def user_params
-    params.require(:user).permit(:email, :password, :password_confirmation)
+    params.require(:auth).permit(:first_name, :last_name, :date_of_birth, :email, :password, :profile_picture)
   end
 end
