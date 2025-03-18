@@ -1,8 +1,24 @@
 class PdfsController < ApplicationController
-  require 'combine_pdf'
-  require 'prawn'
-
   before_action :get_pdf
+
+  def upload_pdf
+    if params[:pdf]
+      file = params[:pdf]
+      upload_dir = Rails.root.join("public", "documents")
+
+      # Ensure the directory exists
+      FileUtils.mkdir_p(upload_dir) unless File.directory?(upload_dir)
+
+      file_path = upload_dir.join(file.original_filename)
+
+      # Save file locally
+      File.open(file_path, "wb") { |f| f.write(file.read) }
+
+      render json: { pdf_url: "/documents/#{file.original_filename}" }, status: :ok
+    else
+      render json: { error: "No file uploaded" }, status: :unprocessable_entity
+    end
+  end
 
   def modify
     data = params[:pdf_data]
@@ -73,7 +89,7 @@ class PdfsController < ApplicationController
   private
 
   def get_pdf
-    @pdf_path = pdf_path = Rails.root.join("public/sample.pdf")
+    @pdf_path = pdf_path = Rails.root.join("public/documents/sample.pdf")
     @pdf = CombinePDF.load(@pdf_path) if File.exist?(@pdf_path)
   end
 end

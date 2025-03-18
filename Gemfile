@@ -64,8 +64,7 @@ group :test do
 end
 
 gem "vite_rails", "~> 3.0"
-gem 'combine_pdf'
-gem 'prawn'
 gem "devise", "~> 4.9"
 gem "devise-jwt", "~> 0.12.1"
 gem 'byebug'
+gem 'pdf_modifier', path: "/home/divyarajs/rails_project/Gem/pdf_modifier"

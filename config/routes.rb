@@ -13,6 +13,7 @@ Rails.application.routes.draw do
   post "/add_page", to: "pdfs#add_page"
   post "/remove_page", to: "pdfs#remove_page"
   post "/modify_pdf", to: "pdfs#modify"
+  post "/upload_pdf", to: "pdfs#upload_pdf"
 
   namespace :api do
     post 'signup', to: 'auth#signup'

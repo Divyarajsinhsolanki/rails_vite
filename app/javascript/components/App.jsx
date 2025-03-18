@@ -25,7 +25,7 @@ const App = () => {
           <Navbar />
 
           {/* ✅ Page Content */}
-          <main className="pt-20 p-6 flex-grow">
+          <main className="pt-20 pb-16 p-6 flex-grow">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/about" element={<About />} />
