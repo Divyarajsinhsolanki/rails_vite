@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PdfEditor from "./PdfEditor";
 import PdfViewer from "./PdfViewer";
 
@@ -6,6 +6,14 @@ const PdfPage = () => {
   const [pdfUrl, setPdfUrl] = useState(null);
   const [pdfUpdated, setPdfUpdated] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  // Load PDF from LocalStorage on mount
+  useEffect(() => {
+    const storedPdf = localStorage.getItem("pdfUrl");
+    if (storedPdf) {
+      setPdfUrl(storedPdf);
+    }
+  }, []);
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
@@ -28,13 +36,20 @@ const PdfPage = () => {
       if (!response.ok) throw new Error("Upload failed");
 
       const data = await response.json();
-      setPdfUrl(data.pdf_url); // Show uploaded PDF
+      setPdfUrl(data.pdf_url);
+      localStorage.setItem("pdfUrl", data.pdf_url); // Store in LocalStorage
 
     } catch (error) {
       console.error("Error uploading file:", error);
     } finally {
       setUploading(false);
     }
+  };
+
+  // Remove PDF and allow new selection
+  const handleRemovePdf = () => {
+    setPdfUrl(null);
+    localStorage.removeItem("pdfUrl");
   };
 
   return (
@@ -50,12 +65,14 @@ const PdfPage = () => {
 
             <button
               className="bg-green-500 text-white px-6 py-2 rounded shadow hover:bg-green-600"
-              onClick={() => setPdfUrl("/documents/sample.pdf")}
+              onClick={() => {
+                setPdfUrl("/documents/sample.pdf");
+                localStorage.setItem("pdfUrl", "/documents/sample.pdf");
+              }}
             >
               Use Sample PDF
             </button>
           </div>
-
           {/* Feature Grid (Restored) */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 bg-white p-6 rounded-lg shadow-md w-full max-w-5xl mx-auto mt-4">
             {[
@@ -81,15 +98,23 @@ const PdfPage = () => {
 
       {/* Main Layout */}
       {pdfUrl && (
-        <div className="flex w-full max-w-7xl mx-auto mt-6 flex-grow gap-6">
-          {/* Left: Editor (25%) */}
-          <div className="w-1/4">
+        <div className="flex w-full mx-auto mt-6 flex-grow gap-6">
+          {/* Left: Editor */}
+          <div className="w-2/5">
             <PdfEditor setPdfUpdated={setPdfUpdated} />
           </div>
 
-          {/* Right: PDF Viewer (75%) */}
-          <div className="w-3/4">
+          {/* Right: PDF Viewer */}
+          <div className="w-3/5">
             <PdfViewer pdfUrl={`${pdfUrl}?updated=${pdfUpdated}`} />
+
+            {/* Remove PDF Button */}
+            <button
+              className="bg-red-500 text-white px-6 py-2 mt-4 rounded shadow hover:bg-red-600 w-full"
+              onClick={handleRemovePdf}
+            >
+              Remove PDF
+            </button>
           </div>
         </div>
       )}

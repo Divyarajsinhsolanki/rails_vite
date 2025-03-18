@@ -5,7 +5,6 @@ const PdfViewer = ({ pdfUrl }) => {
 
   return (
     <div className="w-full h-[80vh] border rounded-lg shadow-md bg-white p-4 flex flex-col">
-      <h2 className="text-lg font-semibold mb-2">PDF Preview</h2>
       <div className="border rounded-lg overflow-hidden shadow-md flex-grow">
         <embed src={pdfUrl} type="application/pdf" width="100%" height="100%" className="w-full h-full" />
       </div>

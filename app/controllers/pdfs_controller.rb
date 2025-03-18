@@ -3,20 +3,50 @@ class PdfsController < ApplicationController
 
   def upload_pdf
     if params[:pdf]
-      file = params[:pdf]
-      upload_dir = Rails.root.join("public", "documents")
+      session[:pdf_id] = SecureRandom.uuid
+      session[:original_filename] = params[:pdf].original_filename
+      original_path = Rails.root.join('public', 'uploads', "#{session[:pdf_id]}_original.pdf")
+      working_path = Rails.root.join('public', 'uploads', "#{session[:pdf_id]}_working.pdf")
 
-      # Ensure the directory exists
-      FileUtils.mkdir_p(upload_dir) unless File.directory?(upload_dir)
 
-      file_path = upload_dir.join(file.original_filename)
+      FileUtils.mkdir_p(File.dirname(original_path))
+      File.open(original_path, 'wb') { |file| file.write(params[:pdf].read) }
+      FileUtils.cp(original_path, working_path)
 
-      # Save file locally
-      File.open(file_path, "wb") { |f| f.write(file.read) }
-
-      render json: { pdf_url: "/documents/#{file.original_filename}" }, status: :ok
+      render json: { pdf_url: "/uploads/#{session[:pdf_id]}_working.pdf" }, status: :ok
     else
       render json: { error: "No file uploaded" }, status: :unprocessable_entity
+    end
+  end
+
+  def reset
+    if session[:pdf_id].present?
+      original_path = Rails.root.join('public', 'uploads', "#{session[:pdf_id]}_original.pdf")
+      working_path = Rails.root.join('public', 'uploads', "#{session[:pdf_id]}_working.pdf")
+
+      if File.exist?(original_path)
+        FileUtils.cp(original_path, working_path) # Restore original copy
+        render json: { success: true, message: 'PDF reset to original' }
+      else
+        render json: { success: false, message: 'Original PDF not found' }
+      end
+    else
+      render json: { success: false, message: 'No active session' }
+    end
+  end
+
+  def download
+    if session[:pdf_id].present?
+      working_path = Rails.root.join('public', 'uploads', "#{session[:pdf_id]}_working.pdf")
+
+      file_name = session[:original_filename].present? ? session[:original_filename] : "pdf_modifier.pdf"
+      if File.exist?(working_path)
+        send_file working_path, type: 'application/pdf', filename: file_name
+      else
+        render json: { success: false, message: 'PDF not found' }
+      end
+    else
+      render json: { success: false, message: 'No active session' }
     end
   end
 
@@ -84,6 +114,42 @@ class PdfsController < ApplicationController
       puts "❌ PDF file not found"
       render json: { error: "PDF file not found" }, status: :not_found
     end
+  end
+
+  def add_signature
+    render json: { message: "PDF " }, status: :ok
+  end
+
+  def add_watermark
+    render json: { message: "PDF " }, status: :ok
+  end
+
+  def add_stamp
+    render json: { message: "PDF " }, status: :ok
+  end
+
+  def rotate_left
+    render json: { message: "PDF " }, status: :ok
+  end
+
+  def rotate_right
+    render json: { message: "PDF " }, status: :ok
+  end
+
+  def merge_pdf
+    render json: { message: "PDF " }, status: :ok
+  end
+
+  def split_pdf
+    render json: { message: "PDF " }, status: :ok
+  end
+
+  def encrypt_pdf
+    render json: { message: "PDF " }, status: :ok
+  end
+
+  def decrypt_pdf
+    render json: { message: "PDF " }, status: :ok
   end
 
   private

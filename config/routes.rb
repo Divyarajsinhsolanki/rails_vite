@@ -14,6 +14,15 @@ Rails.application.routes.draw do
   post "/remove_page", to: "pdfs#remove_page"
   post "/modify_pdf", to: "pdfs#modify"
   post "/upload_pdf", to: "pdfs#upload_pdf"
+  post "/add_signature", to: "pdfs#add_signature"
+  post "/add_watermark", to: "pdfs#add_watermark"
+  post "/add_stamp", to: "pdfs#add_stamp"
+  post "/rotate_left", to: "pdfs#rotate_left"
+  post "/rotate_right", to: "pdfs#rotate_right"
+  post "/merge_pdf", to: "pdfs#merge_pdf"
+  post "/split_pdf", to: "pdfs#split_pdf"
+  post "/encrypt_pdf", to: "pdfs#encrypt_pdf"
+  post "/decrypt_pdf", to: "pdfs#decrypt_pdf"
 
   namespace :api do
     post 'signup', to: 'auth#signup'
