@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import {
-  FaPlus, FaTrash, FaFont, FaSignature, FaTint, FaStamp,
-  FaUndo, FaRedo, FaCompress, FaExpand, FaLock, FaUnlock
+  FaPlus, FaTrash, FaFont, FaSignature, FaTint, FaStamp, FaCopy,
+  FaUndo, FaRedo, FaCompress, FaExpand, FaLock, FaUnlock, FaExchangeAlt 
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import FormRenderer from "./FormRenderer";
@@ -13,12 +13,14 @@ const PdfEditor = ({ setPdfUpdated, pdfPath }) => {
   const actions = [
     { label: "Add Page", icon: <FaPlus />, action: () => setActiveForm("addPage") },
     { label: "Remove Page", icon: <FaTrash />, action: () => setActiveForm("removePage") },
+    { label: "Duplicate Page", icon: <FaCopy />, action: () => setActiveForm("duplicatePage") },
+    { label: "Replace Text", icon: <FaExchangeAlt />, action: () => setActiveForm("replaceText") },
+    { label: "Rotate Left", icon: <FaUndo />, action: () => setActiveForm("rotateLeft") },
+    { label: "Rotate Right", icon: <FaRedo />, action: () => setActiveForm("rotateRight") },
     { label: "Add Text", icon: <FaFont />, action: () => setActiveForm("addText") },
     { label: "Sign", icon: <FaSignature />, action: () => setActiveForm("addSignature") },
     { label: "Add Watermark", icon: <FaTint />, action: () => setActiveForm("addWatermark") },
     { label: "Add Stamp", icon: <FaStamp />, action: () => setActiveForm("addStamp") },
-    { label: "Rotate Left", icon: <FaUndo />, action: () => setActiveForm("rotateLeft") },
-    { label: "Rotate Right", icon: <FaRedo />, action: () => setActiveForm("rotateRight") },
     { label: "Merge PDFs", icon: <FaCompress />, action: () => setActiveForm("mergePdf") },
     { label: "Split PDF", icon: <FaExpand />, action: () => setActiveForm("splitPdf") },
     { label: "Encrypt PDF", icon: <FaLock />, action: () => setActiveForm("encryptPdf") },

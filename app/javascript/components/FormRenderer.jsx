@@ -23,6 +23,20 @@ const FormRenderer = ({ activeForm, setActiveForm, setPdfUpdated, pdfPath }) => 
       endpoint: "/remove_page",
       formFields: [{ name: "position", type: "number", placeholder: "Page Number" }],
     },
+    duplicatePage: {
+      title: "Duplicate Page",
+      endpoint: "/duplicate_page",
+      formFields: [{ name: "page_number", type: "number", placeholder: "Page Number to Duplicate" }],
+    },
+    replaceText: {
+      title: "Replace Text",
+      endpoint: "/replace_text",
+      formFields: [
+        { name: "old_text", type: "text", placeholder: "Text to Replace" },
+        { name: "new_text", type: "text", placeholder: "New Text" },
+        { name: "page_number", type: "number", placeholder: "Page Number (Optional)" },
+      ],
+    },
     uploadPdf: {
       title: "Upload PDF",
       endpoint: "/upload_pdf",

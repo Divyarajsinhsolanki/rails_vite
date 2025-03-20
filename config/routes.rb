@@ -15,6 +15,9 @@ Rails.application.routes.draw do
   post "/add_page", to: "pdf_modifiers#add_page"
   post "/remove_page", to: "pdf_modifiers#remove_page"
 
+  post "/duplicate_page", to: "pdf_modifiers#duplicate_page"
+  post "/replace_text", to: "pdf_modifiers#replace_text"
+
   post "/add_text", to: "pdf_modifiers#add_text"
   post "/add_signature", to: "pdf_modifiers#add_signature"
 

@@ -6,7 +6,6 @@ class PdfModifiersController < ApplicationController
       PdfModifier.add_text(@pdf_path, @text, @x.to_i, @y.to_i, @page_number.to_i)
       render json: { message: "Text added successfully." }, status: :ok
     rescue => e
-puts e
       render json: { error: e.message }, status: :unprocessable_entity
     end
   end
@@ -16,7 +15,6 @@ puts e
       PdfModifier.add_page(@pdf_path, @position)
       render json: { message: "Page added successfully." }, status: :ok
     rescue => e
-puts e
       puts e
       render json: { error: e.message }, status: :unprocessable_entity
     end
@@ -27,8 +25,27 @@ puts e
       PdfModifier.remove_page(@pdf_path, @position)
       render json: { message: "Page removed successfully." }, status: :ok
     rescue => e
-puts e
+      render json: { error: e.message }, status: :unprocessable_entity
+    end
+  end
+
+  def duplicate_page
+    begin
+      PdfModifier.duplicate_page(@pdf_path, @page_number.to_i)
+      render json: { message: "Page duplicated successfully." }, status: :ok
+    rescue => e
       puts e
+      render json: { error: e.message }, status: :unprocessable_entity
+    end
+  end
+
+  def replace_text
+    begin
+      PdfModifier.replace_text(@pdf_path, @text_to_replace)
+      render json: { message: "Text replaced successfully." }, status: :ok
+    rescue => e
+      puts e
+
       render json: { error: e.message }, status: :unprocessable_entity
     end
   end
@@ -38,7 +55,6 @@ puts e
       PdfModifier.add_signature(@pdf_path, @signature, @x.to_i, @y.to_i, @page_number.to_i)
       render json: { message: "Signature added successfully." }, status: :ok
     rescue => e
-puts e
       render json: { error: e.message }, status: :unprocessable_entity
     end
   end
@@ -48,7 +64,6 @@ puts e
       PdfModifier.add_watermark(@pdf_path, @watermark_text)
       render json: { message: "Watermark added successfully." }, status: :ok
     rescue => e
-puts e
       render json: { error: e.message }, status: :unprocessable_entity
     end
   end
@@ -58,7 +73,6 @@ puts e
       PdfModifier.rotate_page(@pdf_path, @page_number.to_i, 270)
       render json: { message: "Page rotated left successfully." }, status: :ok
     rescue => e
-puts e
       render json: { error: e.message }, status: :unprocessable_entity
     end
   end
@@ -68,7 +82,6 @@ puts e
       PdfModifier.rotate_page(@pdf_path, @page_number.to_i, 90)
       render json: { message: "Page rotated right successfully." }, status: :ok
     rescue => e
-puts e
       render json: { error: e.message }, status: :unprocessable_entity
     end
   end
@@ -79,7 +92,6 @@ puts e
       PdfModifier.merge_pdfs(@pdf_paths)
       render json: { message: "PDFs merged successfully." }, status: :ok
     rescue => e
-puts e
       render json: { error: e.message }, status: :unprocessable_entity
     end
   end
@@ -89,7 +101,6 @@ puts e
       PdfModifier.split_pdf(@pdf_path, @output_folder)
       render json: { message: "PDF split successfully." }, status: :ok
     rescue => e
-puts e
       render json: { error: e.message }, status: :unprocessable_entity
     end
   end
@@ -99,7 +110,6 @@ puts e
       PdfModifier.secure_pdf(@pdf_path, @password)
       render json: { message: "PDF encrypted successfully." }, status: :ok
     rescue => e
-puts e
       render json: { error: e.message }, status: :unprocessable_entity
     end
   end
