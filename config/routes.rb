@@ -9,20 +9,26 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   root "pages#index"
-
-  post "/add_page", to: "pdfs#add_page"
-  post "/remove_page", to: "pdfs#remove_page"
-  post "/modify_pdf", to: "pdfs#modify"
+  
   post "/upload_pdf", to: "pdfs#upload_pdf"
-  post "/add_signature", to: "pdfs#add_signature"
-  post "/add_watermark", to: "pdfs#add_watermark"
-  post "/add_stamp", to: "pdfs#add_stamp"
-  post "/rotate_left", to: "pdfs#rotate_left"
-  post "/rotate_right", to: "pdfs#rotate_right"
-  post "/merge_pdf", to: "pdfs#merge_pdf"
-  post "/split_pdf", to: "pdfs#split_pdf"
-  post "/encrypt_pdf", to: "pdfs#encrypt_pdf"
-  post "/decrypt_pdf", to: "pdfs#decrypt_pdf"
+
+  post "/add_page", to: "pdf_modifiers#add_page"
+  post "/remove_page", to: "pdf_modifiers#remove_page"
+
+  post "/add_text", to: "pdf_modifiers#add_text"
+  post "/add_signature", to: "pdf_modifiers#add_signature"
+
+  post "/add_watermark", to: "pdf_modifiers#add_watermark"
+  post "/add_stamp", to: "pdf_modifiers#add_stamp"
+
+  post "/rotate_left", to: "pdf_modifiers#rotate_left"
+  post "/rotate_right", to: "pdf_modifiers#rotate_right"
+
+  post "/merge_pdf", to: "pdf_modifiers#merge_pdf"
+  post "/split_pdf", to: "pdf_modifiers#split_pdf"
+
+  post "/encrypt_pdf", to: "pdf_modifiers#encrypt_pdf"
+  post "/decrypt_pdf", to: "pdf_modifiers#decrypt_pdf"
 
   namespace :api do
     post 'signup', to: 'auth#signup'

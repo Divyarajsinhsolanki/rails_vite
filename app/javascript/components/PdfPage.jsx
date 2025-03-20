@@ -98,19 +98,19 @@ const PdfPage = () => {
 
       {/* Main Layout */}
       {pdfUrl && (
-        <div className="flex w-full mx-auto mt-6 flex-grow gap-6">
+        <div className="flex w-full h-[80vh] mx-auto gap-6">
           {/* Left: Editor */}
           <div className="w-2/5">
-            <PdfEditor setPdfUpdated={setPdfUpdated} />
+            <PdfEditor setPdfUpdated={setPdfUpdated} pdfPath={pdfUrl} />
           </div>
 
           {/* Right: PDF Viewer */}
-          <div className="w-3/5">
+          <div className="w-3/5 items-center">
             <PdfViewer pdfUrl={`${pdfUrl}?updated=${pdfUpdated}`} />
 
-            {/* Remove PDF Button */}
+            {/* Move the button outside PdfViewer's flex container */}
             <button
-              className="bg-red-500 text-white px-6 py-2 mt-4 rounded shadow hover:bg-red-600 w-full"
+              className="bg-red-500 text-white px-6 py-2 mt-4 rounded shadow hover:bg-red-600 w-full max-w-xs"
               onClick={handleRemovePdf}
             >
               Remove PDF
