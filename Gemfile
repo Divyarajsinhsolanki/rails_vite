@@ -67,4 +67,12 @@ gem "vite_rails", "~> 3.0"
 gem "devise", "~> 4.9"
 gem "devise-jwt", "~> 0.12.1"
 gem 'byebug'
-gem 'pdf_modifier', path: "/home/divyarajs/rails_project/Gem/pdf_modifier"
+gem 'pdf_modifier', path: "./pdf_modifier"
+
+gem "dockerfile-rails", ">= 1.7", :group => :development
+
+gem "pg", "~> 1.5"
+
+gem "litestream", "~> 0.12.0"
+
+gem "aws-sdk-s3", "~> 1.182", :require => false
