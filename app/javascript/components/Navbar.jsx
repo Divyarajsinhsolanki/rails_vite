@@ -15,17 +15,8 @@ const Navbar = () => {
         </Link>
 
         <nav className="flex space-x-6">
-          <NavLink to="/" className={({ isActive }) => `px-3 py-2 rounded-md text-lg ${isActive ? "bg-indigo-900" : "hover:bg-purple-800"}`}>
-            Home
-          </NavLink>
-          <NavLink to="/about" className={({ isActive }) => `px-3 py-2 rounded-md text-lg ${isActive ? "bg-indigo-900" : "hover:bg-purple-800"}`}>
-            About
-          </NavLink>
           <NavLink to="/posts" className={({ isActive }) => `px-3 py-2 rounded-md text-lg ${isActive ? "bg-indigo-900" : "hover:bg-purple-800"}`}>
             Posts
-          </NavLink>
-          <NavLink to="/view_pdf" className={({ isActive }) => `px-3 py-2 rounded-md text-lg ${isActive ? "bg-indigo-900" : "hover:bg-purple-800"}`}>
-            View PDF
           </NavLink>
 
           {user ? (

@@ -12,6 +12,8 @@ Rails.application.routes.draw do
   
   post "/upload_pdf", to: "pdfs#upload_pdf"
 
+  post "/api/update_pdf", to: "pdf_modifiers#update_pdf"
+
   post "/add_page", to: "pdf_modifiers#add_page"
   post "/remove_page", to: "pdf_modifiers#remove_page"
 

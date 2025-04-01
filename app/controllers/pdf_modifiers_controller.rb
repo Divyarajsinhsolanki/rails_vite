@@ -3,7 +3,7 @@ class PdfModifiersController < ApplicationController
 
   def add_text
     begin
-      PdfModifier.add_text(@pdf_path, @text, @x.to_i, @y.to_i, @page_number.to_i)
+      PdfMaster.add_text(@pdf_path, @text, @x.to_i, @y.to_i, @page_number.to_i)
       render json: { message: "Text added successfully." }, status: :ok
     rescue => e
       render json: { error: e.message }, status: :unprocessable_entity
@@ -12,17 +12,16 @@ class PdfModifiersController < ApplicationController
 
   def add_page
     begin
-      PdfModifier.add_page(@pdf_path, @position)
+      PdfMaster.add_page(@pdf_path, *@position)
       render json: { message: "Page added successfully." }, status: :ok
     rescue => e
-      puts e
       render json: { error: e.message }, status: :unprocessable_entity
     end
   end
 
   def remove_page
     begin
-      PdfModifier.remove_page(@pdf_path, @position)
+      PdfMaster.remove_page(@pdf_path, *@position)
       render json: { message: "Page removed successfully." }, status: :ok
     rescue => e
       render json: { error: e.message }, status: :unprocessable_entity
@@ -31,28 +30,25 @@ class PdfModifiersController < ApplicationController
 
   def duplicate_page
     begin
-      PdfModifier.duplicate_page(@pdf_path, @page_number.to_i)
+      PdfMaster.duplicate_pages(@pdf_path, *@page_number)
       render json: { message: "Page duplicated successfully." }, status: :ok
     rescue => e
-      puts e
       render json: { error: e.message }, status: :unprocessable_entity
     end
   end
 
   def replace_text
     begin
-      PdfModifier.replace_text(@pdf_path, @text_to_replace)
+      PdfMaster.replace_text(@pdf_path, @old_text, @new_text)
       render json: { message: "Text replaced successfully." }, status: :ok
     rescue => e
-      puts e
-
       render json: { error: e.message }, status: :unprocessable_entity
     end
   end
 
   def add_signature
     begin
-      PdfModifier.add_signature(@pdf_path, @signature, @x.to_i, @y.to_i, @page_number.to_i)
+      PdfMaster.add_signature(@pdf_path, @signature, @x.to_i, @y.to_i, @page_number.to_i)
       render json: { message: "Signature added successfully." }, status: :ok
     rescue => e
       render json: { error: e.message }, status: :unprocessable_entity
@@ -61,7 +57,7 @@ class PdfModifiersController < ApplicationController
 
   def add_watermark
     begin
-      PdfModifier.add_watermark(@pdf_path, @watermark_text)
+      PdfMaster.add_watermark(@pdf_path, @watermark_text)
       render json: { message: "Watermark added successfully." }, status: :ok
     rescue => e
       render json: { error: e.message }, status: :unprocessable_entity
@@ -70,7 +66,7 @@ class PdfModifiersController < ApplicationController
 
   def rotate_left
     begin
-      PdfModifier.rotate_page(@pdf_path, @page_number.to_i, 270)
+      PdfMaster.rotate_page(@pdf_path, 270, *@page_number)
       render json: { message: "Page rotated left successfully." }, status: :ok
     rescue => e
       render json: { error: e.message }, status: :unprocessable_entity
@@ -79,7 +75,7 @@ class PdfModifiersController < ApplicationController
 
   def rotate_right
     begin
-      PdfModifier.rotate_page(@pdf_path, @page_number.to_i, 90)
+      PdfMaster.rotate_page(@pdf_path, 90, *@page_number)
       render json: { message: "Page rotated right successfully." }, status: :ok
     rescue => e
       render json: { error: e.message }, status: :unprocessable_entity
@@ -89,7 +85,7 @@ class PdfModifiersController < ApplicationController
   def merge_pdf
 
     begin
-      PdfModifier.merge_pdfs(@pdf_paths)
+      PdfMaster.merge_pdfs(@pdf_paths)
       render json: { message: "PDFs merged successfully." }, status: :ok
     rescue => e
       render json: { error: e.message }, status: :unprocessable_entity
@@ -98,7 +94,7 @@ class PdfModifiersController < ApplicationController
 
   def split_pdf
     begin
-      PdfModifier.split_pdf(@pdf_path, @output_folder)
+      PdfMaster.split_pdf(@pdf_path, @output_folder)
       render json: { message: "PDF split successfully." }, status: :ok
     rescue => e
       render json: { error: e.message }, status: :unprocessable_entity
@@ -107,7 +103,7 @@ class PdfModifiersController < ApplicationController
 
   def encrypt_pdf
     begin
-      PdfModifier.secure_pdf(@pdf_path, @password)
+      PdfMaster.secure_pdf(@pdf_path, @password)
       render json: { message: "PDF encrypted successfully." }, status: :ok
     rescue => e
       render json: { error: e.message }, status: :unprocessable_entity
@@ -116,6 +112,18 @@ class PdfModifiersController < ApplicationController
 
   def decrypt_pdf
     render json: { message: "Decrypt PDF functionality not implemented yet." }, status: :not_implemented
+  end
+
+  def update_pdf
+    text_boxes = params[:textBoxes]
+    file_path = Rails.root.join("public", @pdfUrl.sub(/^\//, ''))
+    text_boxes.each do |page_number, boxes|
+      boxes.each do |box|
+        PdfMaster.add_text(file_path, box["text"], box["x"].to_i, box["y"].to_i, page_number.to_i)
+      end
+    end
+
+    render json: { message: "Text added successfully", updated_pdf: file_path }
   end
 
   private

@@ -3,8 +3,6 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
-import Home from "./Home";
-import About from "./About";
 import Footer from "./Footer";
 import PdfPage from "./PdfPage";
 import Signup from "../pages/Signup";
@@ -27,9 +25,7 @@ const App = () => {
           {/* ✅ Page Content */}
           <main className="pt-20 pb-16 p-6 flex-grow">
             <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/view_pdf" element={<PdfPage />} />
+              <Route path="/" element={<PdfPage />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/login" element={<Login />} />
               <Route path="/posts" element={<PostPage />} />
