@@ -23,9 +23,6 @@ const Profile = () => {
         profile_picture: data.user.profile_picture,
       });
       const postsResponse = await fetchPosts(data.user.id);
-      console.log(postsResponse);
-      console.log(postsResponse.data);
-      console.log(postsResponse.data);
       setPosts(postsResponse.data);
     } catch (error) {
       console.error("Error fetching user info:", error);

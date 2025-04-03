@@ -68,3 +68,4 @@ gem "devise", "~> 4.9"
 gem "devise-jwt", "~> 0.12.1"
 gem 'byebug'
 gem 'PdfMaster', path: "/home/divyarajs/rails_project/newgems/PdfMaster"
+gem 'firebase_id_token'

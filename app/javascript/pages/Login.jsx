@@ -1,30 +1,38 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
+import { auth, getRedirectResult } from "../firebaseConfig";
 
 const Login = () => {
-  const { handleLogin } = useContext(AuthContext);
+  const { handleLogin, handleGoogleLogin } = useContext(AuthContext);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState(null);
+
   const navigate = useNavigate();
 
-  // 🏆 Efficient input handler
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  // 🚀 Optimized form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null); // Clear previous errors
+    setError(null);
 
     try {
-      await handleLogin({auth: formData});
-      navigate("/posts"); // Redirect on success
+      await handleLogin({ auth: formData });
+      navigate("/posts");
     } catch (err) {
-      setError("Invalid email or password. Please try again."); // Display error
+      setError("Invalid email or password. Please try again.");
     }
   };
+
+  useEffect(() => {
+    getRedirectResult(auth).then((result) => {
+      if (result?.user) {
+        console.log("Redirect Login Success:", result.user);
+      }
+    }).catch(console.error);
+  }, []);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
@@ -43,7 +51,11 @@ const Login = () => {
         {/* 🚨 Error Message */}
         {error && <p className="mt-3 text-center text-red-500">{error}</p>}
 
-        {/* 🔗 Sign Up Link */}
+        {/* Google Login Button */}
+        <button onClick={handleGoogleLogin} className="w-full bg-red-500 text-white py-2 rounded-md mt-3 hover:bg-red-600 transition">
+          Sign in with Google
+        </button>
+
         <p className="mt-4 text-center text-gray-600">
           Don't have an account?{" "}
           <Link to="/signup" className="text-blue-500 hover:underline">

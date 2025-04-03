@@ -1,5 +1,4 @@
 import React from "react";
-import { createRoot } from "react-dom/client";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
@@ -7,7 +6,6 @@ import Footer from "./Footer";
 import PdfPage from "./PdfPage";
 import Signup from "../pages/Signup";
 import Login from "../pages/Login";
-import ProtectedRoute from "../components/ProtectedRoute";
 import PostPage from "../pages/PostPage";
 import Profile from "../components/Profile";
 
@@ -41,14 +39,5 @@ const App = () => {
     </Router>
   );
 };
-
-
-// ✅ Mount React App
-// const root = document.getElementById("root");
-// if (root) {
-//   createRoot(root).render(<App />);
-// } else {
-//   console.error("❌ Root element #root not found");
-// }
 
 export default App;

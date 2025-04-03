@@ -3,6 +3,7 @@ class Api::AuthController < ApplicationController
 
   def signup
     user = User.new(user_params)
+    params[:profile_picture] && (user.profile_picture = params[:profile_picture])
     if user.save
       render json: { message: "User created successfully", user: user }, status: :created
     else
@@ -11,13 +12,26 @@ class Api::AuthController < ApplicationController
   end
 
   def login
-    user = User.find_by(email: user_params[:email])
-    if user&.valid_password?(user_params[:password])
-      token = user.generate_token_for(:auth)
-      render json: { token: token, user: user }, status: :ok
+    token = request.headers["Authorization"]&.split(" ")&.last
+
+    if token.present?
+      payload = verify_firebase_token(token)
+      puts "Decoded Payload: #{payload.inspect}"
+
+      return render json: { error: "Invalid token" }, status: :unauthorized unless payload
+
+      user = User.find_or_create_by(email: payload["email"]) do |u|
+        u.first_name = payload["name"]
+        # u.profile_picture = payload["picture"] # Temporary commented
+        u.password = SecureRandom.hex(10) # Dummy password for Google users
+      end
     else
-      render json: { error: "Invalid email or password" }, status: :unauthorized
+      user = User.find_by(email: params[:email])
+      return render json: { error: "Invalid email or password" }, status: :unauthorized unless user&.valid_password?(params[:password])
     end
+
+    token = user.generate_token_for(:auth)
+    render json: { token: token, user: user }, status: :ok
   end
 
   def logout
@@ -39,6 +53,14 @@ class Api::AuthController < ApplicationController
   private
 
   def user_params
-    params.require(:auth).permit(:first_name, :last_name, :date_of_birth, :email, :password, :profile_picture)
+    params.require(:auth).permit(:first_name, :last_name, :date_of_birth, :email, :password, :uid)
+  end
+
+  def verify_firebase_token(token)
+    FirebaseIdToken::Certificates.request
+    FirebaseIdToken::Signature.verify(token)
+  rescue StandardError => e
+    Rails.logger.error("Firebase token verification failed: #{e.message}")
+    nil
   end
 end
