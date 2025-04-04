@@ -11,6 +11,13 @@ import Profile from "../components/Profile";
 
 import "../stylesheets/application.css";
 
+function AuthLayout({ children }) {
+  return <main className="flex-grow">{children}</main>;
+}
+
+function MainLayout({ children }) {
+  return <main className="pt-20 pb-16 p-6 flex-grow">{children}</main>;
+}
 const App = () => {
   return (
     <Router>
@@ -21,15 +28,13 @@ const App = () => {
           <Navbar />
 
           {/* ✅ Page Content */}
-          <main className="pt-20 pb-16 p-6 flex-grow">
             <Routes>
-              <Route path="/" element={<PdfPage />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/posts" element={<PostPage />} />
-              <Route path="/profile" element={<Profile />} />
+              <Route path="/signup" element={<AuthLayout><Signup /></AuthLayout>} />
+              <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
+              <Route path="/" element={<MainLayout><PdfPage /></MainLayout>} />
+              <Route path="/posts" element={<MainLayout><PostPage /></MainLayout>} />
+              <Route path="/profile" element={<MainLayout><Profile /></MainLayout>} />
             </Routes>
-          </main>
 
           {/* ✅ Footer */}
           <Footer />

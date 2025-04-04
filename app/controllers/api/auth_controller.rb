@@ -35,7 +35,7 @@ class Api::AuthController < ApplicationController
   end
 
   def logout
-    current_user.revoke_token_for(:auth)
+    current_user&.revoke_token_for(:auth)
     render json: { message: "Logged out successfully" }, status: :ok
   end
 
