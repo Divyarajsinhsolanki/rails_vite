@@ -13,8 +13,7 @@ class Api::AuthController < ApplicationController
 
   def login
     token = request.headers["Authorization"]&.split(" ")&.last
-
-    if token.present?
+    if token.present? && token != "undefined"
       payload = verify_firebase_token(token)
       puts "Decoded Payload: #{payload.inspect}"
 
@@ -60,7 +59,7 @@ class Api::AuthController < ApplicationController
     FirebaseIdToken::Certificates.request
     FirebaseIdToken::Signature.verify(token)
   rescue StandardError => e
-    Rails.logger.error("Firebase token verification failed: #{e.message}")
+    puts("Firebase token verification failed: #{e.message}")
     nil
   end
 end

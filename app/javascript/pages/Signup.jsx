@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import submitForm from "../utils/formSubmit";
 
 const Signup = () => {
-  const { handleSignup, handleGoogleSignup } = useContext(AuthContext);
+  const { handleSignup, handleGoogleLogin } = useContext(AuthContext);
   const [formData, setFormData] = useState({ email: "", password: "", profile_picture: null });
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -101,7 +101,7 @@ const Signup = () => {
 
         {/* Google Signup Button */}
         <button 
-          onClick={handleGoogleSignup}
+          onClick={handleGoogleLogin}
           className="w-full bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-lg font-medium transition-all flex items-center justify-center gap-2 shadow-md"
         >
           <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
