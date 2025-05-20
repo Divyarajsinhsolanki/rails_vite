@@ -39,9 +39,8 @@ class Api::AuthController < ApplicationController
   end
 
   def view_profile
-    user = current_user
-    profile_picture_url = rails_blob_url(user.profile_picture, only_path: true) if user.profile_picture.attached?
-    render json: { user: user.as_json.merge(profile_picture: profile_picture_url) }
+    profile_picture_url = {} #rails_blob_url(current_user.profile_picture, only_path: true) if current_user&.profile_picture&.attached?
+    render json: { current_user: current_user.as_json.merge(profile_picture: profile_picture_url) }
   end
 
   def update_profile

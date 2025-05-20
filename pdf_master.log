@@ -1,0 +1,3 @@
+# Logfile created on 2025-04-24 14:53:22 +0530 by logger.rb/v1.6.6
+I, [2025-04-24T14:53:22.231908 #54148]  INFO -- : Rotating pages ["2"] of /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf by 270 degrees
+I, [2025-04-24T14:53:22.239408 #54148]  INFO -- : Pages rotated successfully.

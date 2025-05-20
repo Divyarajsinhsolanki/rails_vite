@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import logo from "../images/logo.jpg"; // Import your logo
+import logo from "../images/logo.png"; // Import your logo
 
 const Navbar = () => {
   const { user, handleLogout } = useContext(AuthContext);
@@ -17,6 +17,9 @@ const Navbar = () => {
         <nav className="flex space-x-6">
           <NavLink to="/posts" className={({ isActive }) => `px-3 py-2 rounded-md text-lg ${isActive ? "bg-indigo-900" : "hover:bg-purple-800"}`}>
             Posts
+          </NavLink>
+          <NavLink to="/todo" className={({ isActive }) => `px-3 py-2 rounded-md text-lg ${isActive ? "bg-indigo-900" : "hover:bg-purple-800"}`}>
+            Tasks
           </NavLink>
 
           {user ? (
