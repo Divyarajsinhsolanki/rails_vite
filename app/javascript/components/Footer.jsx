@@ -1,9 +1,25 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <footer className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-center fixed bottom-0 w-full p-2 mt-8">
-      <p>&copy; {new Date().getFullYear()} MyApp. All rights reserved.</p>
+    <footer className="bg-white shadow-t border-t border-gray-200 fixed bottom-0 w-full z-50">
+      <div className="container mx-auto flex flex-col md:flex-row items-center justify-between px-6 py-3 text-sm text-gray-600">
+        <p className="text-center md:text-left">
+          &copy; {new Date().getFullYear()} <span className="text-indigo-700 font-medium">MyApp</span>. All rights reserved.
+        </p>
+        <div className="flex mt-2 md:mt-0 space-x-4">
+          <Link to="/privacy" className="hover:text-indigo-600 transition">
+            Privacy Policy
+          </Link>
+          <Link to="/terms" className="hover:text-indigo-600 transition">
+            Terms
+          </Link>
+          <Link to="/contact" className="hover:text-indigo-600 transition">
+            Contact
+          </Link>
+        </div>
+      </div>
     </footer>
   );
 };

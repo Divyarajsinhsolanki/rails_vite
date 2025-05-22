@@ -1,0 +1,49 @@
+import React from "react";
+import TodayInHistoryCard from "../components/TodayInHistoryCard";
+import QuoteOfTheDayCard from "../components/QuoteOfTheDayCard";
+import TopNewsCard from "../components/TopNewsCard";
+import DailyFactCard from "../components/DailyFactCard";
+import WordOfTheDayCard from "../components/WordOfTheDayCard";
+
+export default function KnowledgeDashboard() {
+  // Example states for toggles & dark mode omitted for brevity
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-gray-200 p-6 pt-[100px] transition-colors duration-500">
+      <header className="mb-8 text-center max-w-3xl mx-auto">
+        <h1 className="text-4xl font-black tracking-tight mb-1">📚 Knowledge Dashboard</h1>
+        <p className="text-md text-gray-600 dark:text-gray-400">Curated daily intelligence at a glance</p>
+        {/* Add dark mode toggle & date picker here */}
+      </header>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+        <AnimatedCard><TodayInHistoryCard /></AnimatedCard>
+        <AnimatedCard><QuoteOfTheDayCard /></AnimatedCard>
+        <AnimatedCard><TopNewsCard /></AnimatedCard>
+        <AnimatedCard><DailyFactCard /></AnimatedCard>
+        <AnimatedCard><WordOfTheDayCard /></AnimatedCard>
+      </div>
+
+      {/* Optional: My Library saved items panel */}
+      <SavedInsights />
+    </div>
+  );
+}
+
+function AnimatedCard({ children }) {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 p-5 cursor-pointer select-none">
+      {children}
+    </div>
+  );
+}
+
+function SavedInsights() {
+  return (
+    <section className="mt-12 max-w-7xl mx-auto">
+      <h3 className="text-xl font-semibold mb-3">📂 My Saved Insights</h3>
+      {/* List saved quotes/facts/news with remove/share */}
+      <p className="text-gray-500">No saved items yet. Start saving your favorite knowledge!</p>
+    </section>
+  );
+}

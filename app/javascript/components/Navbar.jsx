@@ -7,32 +7,50 @@ const Navbar = () => {
   const { user, handleLogout } = useContext(AuthContext);
 
   return (
-    <header className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg fixed top-0 w-full z-50">
-      <div className="container mx-auto flex justify-between items-center p-2">
-        <Link to="/" className="flex items-center">
-          <img src={logo} alt="Logo" className="h-10 w-auto mr-3" />
-          <h1 className="text-xl font-bold">MyApp</h1>
+    <header className="bg-white shadow-md fixed top-0 w-full z-50">
+      <div className="container mx-auto flex justify-between items-center py-3 px-4">
+        <Link to="/" className="flex items-center space-x-3">
+          <img src={logo} alt="Logo" className="h-10 w-auto" />
+          <h1 className="text-2xl font-semibold text-indigo-700">MyApp</h1>
         </Link>
 
-        <nav className="flex space-x-6">
-          <NavLink to="/posts" className={({ isActive }) => `px-3 py-2 rounded-md text-lg ${isActive ? "bg-indigo-900" : "hover:bg-purple-800"}`}>
-            Posts
-          </NavLink>
-          <NavLink to="/todo" className={({ isActive }) => `px-3 py-2 rounded-md text-lg ${isActive ? "bg-indigo-900" : "hover:bg-purple-800"}`}>
-            Tasks
-          </NavLink>
+        <nav className="flex items-center gap-6">
+          {["posts", "todo", "pdf_editor", "knowledge"].map((route) => (
+            <NavLink
+              key={route}
+              to={`/${route}`}
+              className={({ isActive }) =>
+                `relative pb-1 text-gray-700 font-medium hover:text-indigo-600 transition ${
+                  isActive ? "after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-indigo-500" : ""
+                }`
+              }
+            >
+              {route.charAt(0).toUpperCase() + route.slice(1).replace("_", " ")}
+            </NavLink>
+          ))}
 
           {user ? (
             <>
-              <NavLink to="/profile" className={({ isActive }) => `px-3 py-2 rounded-md text-lg ${isActive ? "bg-indigo-900" : "hover:bg-purple-800"}`}>
+              <NavLink
+                to="/profile"
+                className={({ isActive }) =>
+                  `text-gray-700 hover:text-indigo-600 ${isActive ? "font-bold" : ""}`
+                }
+              >
                 Profile
               </NavLink>
-              <button onClick={handleLogout} className="bg-red-600 px-3 py-1 rounded hover:bg-red-700">
+              <button
+                onClick={handleLogout}
+                className="ml-2 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md"
+              >
                 Logout
               </button>
             </>
           ) : (
-            <NavLink to="/login" className={({ isActive }) => `px-3 py-2 rounded-md text-lg ${isActive ? "bg-indigo-900" : "hover:bg-purple-800"}`}>
+            <NavLink
+              to="/login"
+              className="bg-indigo-600 text-white px-4 py-1.5 rounded hover:bg-indigo-700"
+            >
               Login
             </NavLink>
           )}

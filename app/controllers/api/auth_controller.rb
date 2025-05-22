@@ -21,7 +21,11 @@ class Api::AuthController < ApplicationController
 
       user = User.find_or_create_by(email: payload["email"]) do |u|
         u.first_name = payload["name"]
-        # u.profile_picture = payload["picture"] # Temporary commented
+        u.profile_picture.attach(
+          io: URI.open(payload["picture"]),
+          filename: "#{payload["email"]}_profile_picture.jpg",
+          content_type: "image/jpeg"
+        )
         u.password = SecureRandom.hex(10) # Dummy password for Google users
       end
     else
@@ -39,8 +43,8 @@ class Api::AuthController < ApplicationController
   end
 
   def view_profile
-    profile_picture_url = {} #rails_blob_url(current_user.profile_picture, only_path: true) if current_user&.profile_picture&.attached?
-    render json: { current_user: current_user.as_json.merge(profile_picture: profile_picture_url) }
+    profile_picture_url = rails_blob_url(current_user.profile_picture, only_path: true) if current_user&.profile_picture&.attached?
+    render json: { user: current_user.as_json.merge(profile_picture: profile_picture_url) }
   end
 
   def update_profile
