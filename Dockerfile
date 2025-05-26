@@ -58,8 +58,11 @@ RUN apt-get update -qq && \
 COPY --from=build /usr/local/bundle /usr/local/bundle
 COPY --from=build /rails /rails
 
-RUN useradd rails --create-home --shell /bin/bash && \
+# Ensure all required directories exist before chown
+RUN mkdir -p db log storage tmp public/vite-production && \
+    useradd rails --create-home --shell /bin/bash && \
     chown -R rails:rails db log storage tmp public/vite-production
+
 USER rails:rails
 
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
