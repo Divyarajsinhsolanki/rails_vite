@@ -4,6 +4,11 @@ import RubyPlugin from 'vite-plugin-ruby';
 
 export default defineConfig({
   plugins: [RubyPlugin()],
-  // Optionally, ensure .jsx imports are resolved:
-  resolve: { extensions: ['.js', '.jsx'] }
+  build: {
+    rollupOptions: {
+      input: {
+        application: 'app/javascript/entrypoints/application.jsx'
+      }
+    }
+  }
 });
