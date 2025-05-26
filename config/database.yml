@@ -2,21 +2,21 @@ default: &default
   adapter: postgresql
   encoding: unicode
   pool: 5
-  username: postgres
-  password: postgres
-  host: 'localhost'
 
 development:
   <<: *default
   database: pdf_master_development
+  username: postgres
+  password: postgres
+  host: localhost
 
 test:
   <<: *default
   database: pdf_master_test
+  username: postgres
+  password: postgres
+  host: localhost
 
 production:
   <<: *default
-  database: pdf_master_production
-  username: postgres
-  password: postgres
-  host: 'localhost'
+  url: <%= ENV["DATABASE_URL"] %>
