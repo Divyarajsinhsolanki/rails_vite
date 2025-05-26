@@ -15,7 +15,7 @@ const Navbar = () => {
         </Link>
 
         <nav className="flex items-center gap-6">
-          {["posts", "todo", "pdf_editor", "knowledge"].map((route) => (
+          {["posts", "scheduler", "todo", "pdf_editor", "knowledge"].map((route) => (
             <NavLink
               key={route}
               to={`/${route}`}
@@ -49,7 +49,7 @@ const Navbar = () => {
           ) : (
             <NavLink
               to="/login"
-              className="bg-indigo-600 text-white px-4 py-1.5 rounded hover:bg-indigo-700"
+              className="bg-blue-600 text-white px-4 py-1.5 rounded hover:bg-blue-700"
             >
               Login
             </NavLink>

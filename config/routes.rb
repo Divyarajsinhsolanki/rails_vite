@@ -9,7 +9,17 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   root "pages#index"
-  
+
+  # Scheduler
+  resources :sprints, only: [:create, :update]
+  get 'sprints/last', to: 'sprints#last'
+
+  resources :developers, only: [:index]
+  resources :tasks, only: [:index, :create, :update, :destroy]
+
+
+
+  # PDF
   post "/upload_pdf", to: "pdfs#upload_pdf"
 
   post "/api/update_pdf", to: "pdf_modifiers#update_pdf"

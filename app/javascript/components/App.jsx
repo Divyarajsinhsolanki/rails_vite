@@ -11,6 +11,7 @@ import Profile from "../components/Profile";
 import TodoBoard from "../pages/TodoBoard";
 import PdfEditor from '../pages/PdfEditor';
 import KnowledgeDashboard from "../pages/KnowledgeDashboard";
+import Scheduler from '../components/Scheduler/Scheduler';
 
 import "../stylesheets/application.css";
 
@@ -40,6 +41,7 @@ const App = () => {
               <Route path="/todo" element={<MainLayout><TodoBoard /></MainLayout>} />
               <Route path="/pdf_editor" element={<MainLayout><PdfEditor /></MainLayout>} />
               <Route path="/knowledge" element={<KnowledgeDashboard />} />
+              <Route path="/scheduler" element={<Scheduler />} />
             </Routes>
 
           {/* ✅ Footer */}

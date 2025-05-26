@@ -60,12 +60,14 @@ let idCounter = 1;
 
 export default function TodoBoard() {
   const [columns, setColumns] = useState(initialData);
-  const [taskText, setTaskText] = useState("");
+  const [taskTitle, setTaskTitle] = useState("");
+  const [taskContent, setTaskContent] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [tags, setTags] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [editTaskId, setEditTaskId] = useState(null);
   const [editText, setEditText] = useState("");
+  const [showForm, setShowForm] = useState(false);
   const [editTaskDetails, setEditTaskDetails] = useState({
     content: '',
     due: '',
@@ -106,10 +108,11 @@ export default function TodoBoard() {
   }, [editTaskId]);
 
   const handleAddTask = () => {
-    if (!taskText.trim()) return;
+    if (!taskTitle.trim()) return;
     const newTask = {
       id: `task-${idCounter++}`,
-      content: taskText,
+      title: taskTitle,
+      content: taskContent,
       due: dueDate,
       tags: tags.split(',').map((tag) => tag.trim()).filter(Boolean),
       recurring: recurringType,
@@ -120,7 +123,8 @@ export default function TodoBoard() {
       ...prev,
       todo: { ...prev.todo, items: [...prev.todo.items, newTask] },
     }));
-    setTaskText('');
+    setTaskTitle('');
+    setTaskContent('');
     setDueDate('');
     setTags('');
     setRecurringType('');
@@ -218,71 +222,101 @@ export default function TodoBoard() {
 
   return (
     <div className="p-4">
-      <h1 className="text-3xl font-semibold text-blue-700 mb-6 tracking-tight">MyForm Task Control Center</h1>
-      <Toaster position="top-right" />
-      <div className="mb-4 flex flex-col sm:flex-row gap-4">
-        {/* Input Fields */}
-        <input
-          value={taskText}
-          onChange={(e) => setTaskText(e.target.value)}
-          placeholder="Task content"
-          className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all sm:w-1/3"
-        />
-        <input
-          type="date"
-          value={dueDate}
-          onChange={(e) => setDueDate(e.target.value)}
-          className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all sm:w-1/3"
-        />
-        <input
-          value={tags}
-          onChange={(e) => setTags(e.target.value)}
-          placeholder="Comma-separated tags"
-          className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all sm:w-1/3"
-        />
-        <input
-          value={createdBy}
-          onChange={(e) => setCreatedBy(e.target.value)}
-          placeholder="Created by"
-          className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all"
-        />
-        <input
-          value={assignedTo}
-          onChange={(e) => setAssignedTo(e.target.value)}
-          placeholder="Assigned to"
-          className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all"
-        />
-
-        {/* Recurring Option and Add Task Button */}
-        <div className="sm:w-1/3 flex gap-4">
-          <select
-            value={recurringType}
-            onChange={(e) => setRecurringType(e.target.value)}
-            className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all"
-          >
-            <option value="">One-time</option>
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-          </select>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-semibold text-blue-700 mb-6 tracking-tight">MyForm Task Control Center</h1>
+        <div className="flex justify-end mb-2">
           <button
-            onClick={handleAddTask}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-all"
+            onClick={() => setShowForm((prev) => !prev)}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-700 transition-all"
           >
-            Add Task
+            {showForm ? 'Close Form' : '+ New Task'}
           </button>
         </div>
       </div>
 
-      
-      <input
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        placeholder="Search by keyword or tag"
-        className="mb-4 border px-3 py-2 w-full rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all"
-      />
+      <Toaster position="top-right" />
+      {showForm && (
+        <div className="mb-4 flex flex-col sm:flex-row gap-4">
+          {/* Input Fields */}
+          <input
+            value={taskTitle}
+            onChange={(e) => setTaskTitle(e.target.value)}
+            placeholder="Task title"
+            className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all sm:w-1/3"
+          />
+          <textarea
+            value={taskContent}
+            onChange={(e) => setTaskContent(e.target.value)}
+            placeholder="Task content"
+            className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all sm:w-1/3"
+          />
+          <input
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+            className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all sm:w-1/3"
+          />
+          <input
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            placeholder="Comma-separated tags"
+            className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all sm:w-1/3"
+          />
+          <input
+            value={createdBy}
+            onChange={(e) => setCreatedBy(e.target.value)}
+            placeholder="Created by"
+            className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all"
+          />
+          <input
+            value={assignedTo}
+            onChange={(e) => setAssignedTo(e.target.value)}
+            placeholder="Assigned to"
+            className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all"
+          />
+
+          {/* Recurring Option and Add Task Button */}
+          <div className="sm:w-1/3 flex gap-4">
+            <select
+              value={recurringType}
+              onChange={(e) => setRecurringType(e.target.value)}
+              className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all"
+            >
+              <option value="">One-time</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+            <button
+              onClick={handleAddTask}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-all"
+            >
+              Add Task
+            </button>
+          </div>
+        </div>
+      )}
+
 
       <div className="grid md:grid-cols-2 gap-4 mb-6">
+        <div className="bg-white p-6 shadow-md rounded-lg">
+          <h3 className="font-semibold mb-3">Due Date Heatmap</h3>
+          <div className="flex gap-2">
+            {getHeatmapData(columns).map((d, i) => (
+              <div
+                key={i}
+                className={`p-4 rounded-lg text-center ${
+                  d.count === 0 ? 'bg-gray-200' : d.count < 3 ? 'bg-yellow-300' : 'bg-red-500 text-white'
+                }`}
+              >
+                {format(parseISO(d.date), 'EEE')}
+                <br />
+                {d.count}
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="bg-white p-6 shadow-md rounded-lg">
           <h3 className="font-semibold mb-3">Progress Overview</h3>
           <PieChart width={500} height={250}>
@@ -302,26 +336,16 @@ export default function TodoBoard() {
             <Tooltip />
           </PieChart>
         </div>
-
-        <div className="bg-white p-6 shadow-md rounded-lg">
-          <h3 className="font-semibold mb-3">Due Date Heatmap</h3>
-          <div className="flex gap-2">
-            {getHeatmapData(columns).map((d, i) => (
-              <div
-                key={i}
-                className={`p-4 rounded-lg text-center ${
-                  d.count === 0 ? 'bg-gray-200' : d.count < 3 ? 'bg-yellow-300' : 'bg-red-500 text-white'
-                }`}
-              >
-                {format(parseISO(d.date), 'EEE')}
-                <br />
-                {d.count}
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
-      
+
+      {/* Search */}
+      <input
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        placeholder="Search by keyword or tag"
+        className="mb-4 border px-3 py-2 w-full rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all"
+      />
+
       {/* Drag and Drop Columns */}
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -408,7 +432,7 @@ export default function TodoBoard() {
                             ) : (
                               <div>
                                 <div className="flex justify-between items-start">
-                                  <div className="flex-1 text-gray-900">{item.content}</div>
+                                  <div className="flex-1 text-gray-900">{item.title}</div>
                                   <div className="flex flex-col gap-1 text-sm">
                                     <button
                                       onClick={() => {
