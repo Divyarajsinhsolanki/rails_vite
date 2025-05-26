@@ -393,12 +393,12 @@ function TaskCard({ task, onEdit, onTaskUpdate }) {
         <div className="flex items-center gap-1 text-xs text-gray-700">
           <button onClick={toggleStrike} title="Mark done" className="hover:text-black">✅</button>
           <button onClick={onEdit} title="Edit" className="hover:text-black">✏️</button>
-          <button onClick={deleteTask} title="Delete" className="hover:text-red-600">🗑️</button>
           {task.task_url && (
             <button onClick={copyLink} title="Copy link" className="hover:text-blue-600">
               🔗{copied && <span className="ml-1 text-green-600">✔️</span>}
             </button>
           )}
+          <button onClick={deleteTask} title="Delete" className="hover:text-red-600">🗑️</button>
         </div>
       </div>
     </div>
