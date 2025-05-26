@@ -42,12 +42,12 @@ RUN yarn install --frozen-lockfile
 
 COPY . .
 
-RUN bundle exec bootsnap precompile app/ lib/
+RUN bundle exec bootsnap precompile app/ lib/ && \
+    RAILS_ENV=production bin/vite build
 
 # --- Final Runtime Stage ---
 FROM base
 
-# 🔧 Runtime dependencies — this is where the magic happens
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y \
       libpq5 \
@@ -59,7 +59,7 @@ COPY --from=build /usr/local/bundle /usr/local/bundle
 COPY --from=build /rails /rails
 
 RUN useradd rails --create-home --shell /bin/bash && \
-    chown -R rails:rails db log storage tmp
+    chown -R rails:rails db log storage tmp public/vite-production
 USER rails:rails
 
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
