@@ -52,6 +52,10 @@ group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
 
+
+  gem 'PdfMaster', path: "/home/divyarajs/rails_project/newgems/PdfMaster"
+
+
   # Add speed badges [https://github.com/MiniProfiler/rack-mini-profiler]
   # gem "rack-mini-profiler"
 
@@ -69,5 +73,8 @@ gem "vite_rails", "~> 3.0"
 gem "devise", "~> 4.9"
 gem "devise-jwt", "~> 0.12.1"
 gem 'byebug'
-gem 'PdfMaster', path: "/home/divyarajs/rails_project/newgems/PdfMaster"
 gem 'firebase_id_token'
+
+group :production do
+  # gem 'pdf_master', path: 'lib/pdf_master'
+end
