@@ -13,7 +13,6 @@ import PdfEditor from '../pages/PdfEditor';
 import KnowledgeDashboard from "../pages/KnowledgeDashboard";
 import Scheduler from '../components/Scheduler/Scheduler';
 
-import "../stylesheets/application.css";
 
 function AuthLayout({ children }) {
   return <main className="flex-grow">{children}</main>;
