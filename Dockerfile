@@ -37,7 +37,7 @@ RUN bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
     bundle exec bootsnap precompile --gemfile
 
-COPY package.json yarn.lock ./
+COPY package.json yarn.lock tailwind.config.js postcss.config.js ./
 RUN yarn install --frozen-lockfile
 
 COPY . .
