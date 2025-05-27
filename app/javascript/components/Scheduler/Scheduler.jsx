@@ -162,7 +162,13 @@ function Scheduler() {
   });
   tasks.forEach(task => {
     const hrs = parseFloat(task.estimated_hours) || 0;
-    hoursByDateDev[task.date][task.developer_id] += hrs;
+
+    if (
+      hoursByDateDev[task.date] &&
+      typeof hoursByDateDev[task.date][task.developer_id] !== 'undefined'
+    ) {
+      hoursByDateDev[task.date][task.developer_id] += hrs;
+    }
   });
 
   // Format date for display
