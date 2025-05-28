@@ -3,7 +3,7 @@ import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import AddTaskForm from '../Scheduler/AddTaskForm';
 import EditTaskForm from '../Scheduler/EditTaskForm';
-import SprintManager from '../SprintManager'
+import SprintManager from '../Scheduler/SprintManager'
 
 function Scheduler() {
 
@@ -392,7 +392,7 @@ function TaskCard({ task, onEdit, onTaskUpdate }) {
 
           {/* Meta */}
           <span className="ml-2 text-sm text-gray-600">- {task.estimated_hours}h</span>
-          <span className="ml-1 text-xs italic">({task.task_type})</span>
+          <span className="ml-1 text-xs">({task.task_type})</span>
         </div>
 
         {/* Controls */}

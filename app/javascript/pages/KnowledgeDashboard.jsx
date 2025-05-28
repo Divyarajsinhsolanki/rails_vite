@@ -1,9 +1,9 @@
 import React from "react";
-import TodayInHistoryCard from "../components/TodayInHistoryCard";
-import QuoteOfTheDayCard from "../components/QuoteOfTheDayCard";
-import TopNewsCard from "../components/TopNewsCard";
-import DailyFactCard from "../components/DailyFactCard";
-import WordOfTheDayCard from "../components/WordOfTheDayCard";
+import TodayInHistoryCard from "../components/Knowledge/TodayInHistoryCard";
+import QuoteOfTheDayCard from "../components/Knowledge/QuoteOfTheDayCard";
+import TopNewsCard from "../components/Knowledge/TopNewsCard";
+import DailyFactCard from "../components/Knowledge/DailyFactCard";
+import WordOfTheDayCard from "../components/Knowledge/WordOfTheDayCard";
 
 export default function KnowledgeDashboard() {
   // Example states for toggles & dark mode omitted for brevity
