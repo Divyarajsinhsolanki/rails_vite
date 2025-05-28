@@ -34,7 +34,7 @@ function Scheduler() {
 
   const [developers, setDevelopers] = useState([]);
   const [tasks, setTasks] = useState([]);
-  const types = ['Code', 'Code review'];
+  const types = ['Code', 'Code review', 'Dev to QA'];
 
   useEffect(() => {
     // Fetch developers list

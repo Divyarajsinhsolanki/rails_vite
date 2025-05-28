@@ -73,4 +73,8 @@ Rails.application.configure do
   config.action_controller.raise_on_missing_callback_actions = true
 
   Rails.application.routes.default_url_options[:host] = "http://localhost:5000"
+
+  # Allow ngrok tunneling
+  config.hosts << /[a-z0-9]+\.ngrok\.io/
+  config.hosts << /[a-z0-9]+\.ngrok-free\.app/
 end

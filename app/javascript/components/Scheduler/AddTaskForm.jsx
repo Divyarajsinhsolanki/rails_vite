@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 export default function AddTaskForm({developers, dates, types, onAddTask, currentSprintId}) {
-  const [formData, setFormData] = useState({ developer_id: '', type: 'code', date: '', task_id: '', task_url: '' });
+  const [formData, setFormData] = useState({ developer_id: '', type: 'code', date: '', task_id: '', task_url: '', estimated_hours: 1 });
 
   // If dates/devs/types update, reset defaults
   useEffect(() => {
@@ -10,7 +10,8 @@ export default function AddTaskForm({developers, dates, types, onAddTask, curren
       date: dates[0] || f.date,
       developer_id: developers[0]?.id ?? f.developer_id,
       task_type_id: types[0]?.id ?? f.task_type_id,
-      sprint_id: currentSprintId ?? f.sprint_id
+      sprint_id: currentSprintId ?? f.sprint_id,
+      estimated_hours: f.estimated_hours ?? 1
     }));
   }, [dates, developers, types, currentSprintId]);
 
@@ -107,7 +108,7 @@ export default function AddTaskForm({developers, dates, types, onAddTask, curren
             name="estimated_hours"
             min="0"
             step="0.25"
-            value={formData.estimated_hours || '1'}
+            value={formData.estimated_hours}
             onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -124,7 +125,16 @@ export default function AddTaskForm({developers, dates, types, onAddTask, curren
             type="text"
             name="task_id"
             value={formData.task_id || ''}
-            onChange={handleChange}
+            onChange={(e) => {
+              const input = e.target.value;
+              const match = input.match(/HME-\d+/i); // Regex for extracting Jira ticket
+              handleChange({
+                target: {
+                  name: 'task_id',
+                  value: match ? match[0] : input,
+                },
+              });
+            }}
             placeholder="e.g., HME-123456"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
