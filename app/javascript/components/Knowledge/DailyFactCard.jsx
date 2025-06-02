@@ -4,7 +4,7 @@ export default function DailyFactCard() {
   const [fact, setFact] = useState(null);
 
   useEffect(() => {
-    fetch("https://uselessfacts.jsph.pl/api/v2/facts/today")
+    fetch("https://uselessfacts.jsph.pl/api/v2/facts/random")
       .then((res) => res.json())
       .then((data) => {
         setFact(data.text);

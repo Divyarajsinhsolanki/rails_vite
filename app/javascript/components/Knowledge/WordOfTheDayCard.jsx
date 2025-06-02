@@ -58,10 +58,13 @@ export default function WordOfTheDayCard() {
 
   useEffect(() => {
     let mounted = true;
-
+  
     async function fetchWithFallback() {
       setLoading(true);
-      for (const fetcher of fetchers) {
+      const dayIndex = new Date().getDate() % fetchers.length; // Rotate daily
+      const todayFetchers = [...fetchers.slice(dayIndex), ...fetchers.slice(0, dayIndex)];
+  
+      for (const fetcher of todayFetchers) {
         try {
           const data = await fetcher();
           if (mounted) {
@@ -73,14 +76,15 @@ export default function WordOfTheDayCard() {
           console.warn("Word fetch failed, trying next:", e.message);
         }
       }
+  
       if (mounted) {
         setWordData({ word: "No word available", note: "", definitions: [{ text: "", partOfSpeech: "" }] });
         setLoading(false);
       }
     }
-
+  
     fetchWithFallback();
-
+  
     return () => {
       mounted = false;
     };

@@ -74,7 +74,4 @@ Rails.application.configure do
 
   Rails.application.routes.default_url_options[:host] = "http://localhost:5000"
 
-  # Allow ngrok tunneling
-  config.hosts << /[a-z0-9]+\.ngrok\.io/
-  config.hosts << /[a-z0-9]+\.ngrok-free\.app/
 end

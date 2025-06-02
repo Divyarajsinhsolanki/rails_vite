@@ -432,7 +432,7 @@ export default function TodoBoard() {
                             ) : (
                               <div>
                                 <div className="flex justify-between items-start">
-                                  <div className="flex-1 text-gray-900">{item.title}</div>
+                                  <div className="flex-1 text-gray-900">{item.content}</div>
                                   <div className="flex flex-col gap-1 text-sm">
                                     <button
                                       onClick={() => {
