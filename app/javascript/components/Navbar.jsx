@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import logo from "../images/logo.png"; // Import your logo
+import logo from "../images/logo.webp";
 
 const Navbar = () => {
   const { user, handleLogout } = useContext(AuthContext);
