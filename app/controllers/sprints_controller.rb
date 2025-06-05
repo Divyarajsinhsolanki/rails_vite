@@ -1,4 +1,15 @@
 class SprintsController < ApplicationController
+
+  def index
+    if params[:last].present?
+      sprint = Sprint.order(created_at: :desc).first
+      render json: sprint
+    else
+      sprints = Sprint.order(created_at: :desc)
+      render json: sprints
+    end
+  end
+
   def last
     sprint = Sprint.order(created_at: :desc).first
     render json: sprint
@@ -19,6 +30,15 @@ class SprintsController < ApplicationController
       render json: sprint
     else
       render json: { errors: sprint.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  def destroy
+    @sprint = Sprint.find(params[:id])
+    if @sprint.destroy
+      render json: { message: "Sprint deleted successfully", id: @sprint.id }
+    else
+      render json: { errors: @sprint.errors.full_messages }, status: :unprocessable_entity
     end
   end
 

@@ -3,7 +3,7 @@ class CreateTasks < ActiveRecord::Migration[7.1]
     create_table :tasks do |t|
       t.string  :task_id,        null: false
       t.string  :task_url
-      t.string :task_type,   null: false
+      t.string :type,   null: false
       t.decimal :estimated_hours, precision: 5, scale: 2
       t.date    :date,           null: false
       t.references :sprint,      foreign_key: true, null: true
@@ -13,7 +13,6 @@ class CreateTasks < ActiveRecord::Migration[7.1]
       t.timestamps
     end
 
-    add_index :tasks, :task_type_id
     add_index :tasks, :date
   end
 end

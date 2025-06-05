@@ -9,7 +9,6 @@ export default function AddTaskForm({developers, dates, types, onAddTask, curren
       ...f,
       date: dates[0] || f.date,
       developer_id: developers[0]?.id ?? f.developer_id,
-      task_type_id: types[0]?.id ?? f.task_type_id,
       sprint_id: currentSprintId ?? f.sprint_id,
       estimated_hours: f.estimated_hours ?? 1
     }));
@@ -38,7 +37,6 @@ export default function AddTaskForm({developers, dates, types, onAddTask, curren
     setFormData(f => ({
       date: dates[0] || '',
       developer_id: developers[0]?.id || null,
-      task_type_id: types[0]?.id || null,
       task_id: '',
       task_url: '',
       estimated_hours: 1,

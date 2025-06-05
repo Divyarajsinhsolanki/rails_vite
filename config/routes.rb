@@ -11,13 +11,15 @@ Rails.application.routes.draw do
   root "pages#index"
 
   # Scheduler
-  resources :sprints, only: [:create, :update]
+  resources :sprints, only: [:index, :create, :update, :destroy]
   get 'sprints/last', to: 'sprints#last'
 
   resources :developers, only: [:index]
   resources :tasks, only: [:index, :create, :update, :destroy]
 
-
+  namespace :api do
+    get 'coding_tip', to: 'coding_tips#show'
+  end
 
   # PDF
   post "/upload_pdf", to: "pdfs#upload_pdf"

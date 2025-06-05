@@ -74,6 +74,8 @@ gem "devise", "~> 4.9"
 gem "devise-jwt", "~> 0.12.1"
 gem 'byebug'
 gem 'firebase_id_token'
+gem "ruby-openai", "~> 5.0"
+gem 'faraday', '~> 2.7'
 
 group :production do
   # gem 'pdf_master', path: 'lib/pdf_master'

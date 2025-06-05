@@ -39,8 +39,8 @@ const App = () => {
               <Route path="/profile" element={<MainLayout><Profile /></MainLayout>} />
               <Route path="/todo" element={<MainLayout><TodoBoard /></MainLayout>} />
               <Route path="/pdf_editor" element={<MainLayout><PdfEditor /></MainLayout>} />
-              <Route path="/knowledge" element={<KnowledgeDashboard />} />
-              <Route path="/scheduler" element={<Scheduler />} />
+              <Route path="/knowledge" element={<MainLayout><KnowledgeDashboard /></MainLayout>} />
+              <Route path="/scheduler" element={<MainLayout><Scheduler /></MainLayout>} />
             </Routes>
 
           {/* ✅ Footer */}

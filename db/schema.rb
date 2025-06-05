@@ -72,7 +72,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_05_26_063514) do
   create_table "tasks", force: :cascade do |t|
     t.string "task_id", null: false
     t.string "task_url"
-    t.integer "task_type_id", null: false
+    t.integer "type", null: false
     t.decimal "estimated_hours", precision: 5, scale: 2
     t.date "date", null: false
     t.bigint "sprint_id"
@@ -82,7 +82,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_05_26_063514) do
     t.index ["date"], name: "index_tasks_on_date"
     t.index ["developer_id"], name: "index_tasks_on_developer_id"
     t.index ["sprint_id"], name: "index_tasks_on_sprint_id"
-    t.index ["task_type_id"], name: "index_tasks_on_task_type_id"
   end
 
   create_table "users", force: :cascade do |t|

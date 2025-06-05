@@ -42,7 +42,7 @@ class TasksController < ApplicationController
     params.require(:task).permit(
       :task_id,
       :task_url,
-      :task_type,
+      :type,
       :estimated_hours,
       :date,
       :sprint_id,

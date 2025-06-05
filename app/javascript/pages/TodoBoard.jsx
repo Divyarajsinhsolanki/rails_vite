@@ -1,19 +1,8 @@
-// Core React utilities
 import React, { useEffect, useState, useRef } from "react";
-
-// Drag and drop context
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-
-// Iconography
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
-
-// Toast notifications
 import { Toaster, toast } from "react-hot-toast";
-
-// Charting utilities
 import { PieChart, Pie, Cell, Tooltip } from 'recharts';
-
-// Date manipulation
 import { startOfWeek, addDays, format, isSameDay, parseISO } from 'date-fns';
 
 const COLORS = ['#34d399', '#facc15', '#60a5fa'];

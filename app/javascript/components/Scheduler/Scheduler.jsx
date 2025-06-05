@@ -1,367 +1,141 @@
-import React, { useState, useEffect } from 'react';
-import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { DndContext, useDraggable, useDroppable, closestCenter } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
+
+// Assuming these are your existing form components
 import AddTaskForm from '../Scheduler/AddTaskForm';
 import EditTaskForm from '../Scheduler/EditTaskForm';
-import SprintManager from '../Scheduler/SprintManager'
+import SprintManager from '../Scheduler/SprintManager';
 
-function Scheduler() {
-
-  const [sprint, setSprint] = useState(null);
-  useEffect(() => {
-    fetch('/sprints/last.json')
-      .then(res => res.json())
-      .then(data => setSprint(data));
-  }, []);
-
-  function getWeekdaysInRange(start, end) {
-    const dates = [];
-    let current = new Date(start);
-    const endDate = new Date(end);
-  
-    while (current <= endDate) {
-      const day = current.getDay();
-      if (day !== 0 && day !== 6) { // Exclude Sundays (0) and Saturdays (6)
-        dates.push(current.toISOString().split('T')[0]); // YYYY-MM-DD
-      }
-      current.setDate(current.getDate() + 1);
-    }
-  
-    return dates;
-  }
-  
-  const dates = sprint ? getWeekdaysInRange(sprint.start_date, sprint.end_date) : [];
-
-  const [developers, setDevelopers] = useState([]);
-  const [tasks, setTasks] = useState([]);
-  const types = ['Code', 'Code review', 'Dev to QA'];
-
-  useEffect(() => {
-    // Fetch developers list
-    fetch('/developers.json')
-      .then(res => res.json())
-      .then(data => setDevelopers(data));
-
-      // Fetch tasks list
-    fetch('/tasks.json')
-      .then(res => res.json())
-      .then(data => setTasks(data));
-  }, []);
-
-  const tasksByDate = {};
-  for (const task of tasks) {
-    const { date, developer_id } = task;
-    if (!tasksByDate[date]) tasksByDate[date] = {};
-    if (!tasksByDate[date][developer_id]) tasksByDate[date][developer_id] = [];
-    tasksByDate[date][developer_id].push(task);
-  }
-
-  const [editingTaskId, setEditingTaskId] = useState(null);
-
-  // Add a new task
-  const [formResetKey, setFormResetKey] = useState(0);
-  const addTask = (form) => {
-    fetch('/tasks.json', {
-      method: 'POST',
-      headers: { 
-        'X-CSRF-Token': document.querySelector("meta[name='csrf-token']").content,
-        'Content-Type': 'application/json' },
-      body: JSON.stringify({ task: {
-        task_id:         form.task_id,
-        task_url:        form.task_url,
-        task_type:       form.type,
-        estimated_hours: form.estimated_hours,
-        date:            form.date,
-        sprint_id:       form.sprint_id,
-        developer_id:    form.developer_id
-      }})
-    })
-    .then(r => r.json())
-    .then(created => {
-      setTasks(prev => [...prev, created]);
-      setFormResetKey(prev => prev + 1);
-    });
-  };
-
-  // Update an existing task
-  const updateTask = (form) => {
-    fetch(`/tasks/${form.id}.json`, {
-      method: 'PATCH',
-      headers: { 
-        'X-CSRF-Token': document.querySelector("meta[name='csrf-token']").content,
-        'Content-Type': 'application/json' },
-      body: JSON.stringify({ task: {
-        task_id:         form.task_id,
-        task_url:        form.task_url,
-        task_type:       form.type,
-        estimated_hours: form.estimated_hours,
-        date:            form.date,
-        sprint_id:       form.sprint_id,
-        developer_id:    form.developer_id
-      }})
-    })
-    .then(r => r.json())
-    .then(updated => setTasks(prev =>
-      prev.map(t => t.id === updated.id ? updated : t)
-    ));
-  };
-
-  const handleTaskUpdate = (updatedTask) => {
-    setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
-  };
-
-  // Drag-and-drop handler
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
-    if (!active || !over) return;
-  
-    const taskId = active.id;
-    const [newDate, newDevId] = over.id.split(':');
-  
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-  
-    // Optimistic update
-    setTasks(prev =>
-      prev.map(t => t.id === taskId ? { ...t, date: newDate, developer_id: parseInt(newDevId) } : t)
-    );
-  
-    // Persist change
-    fetch(`/tasks/${taskId}.json`, {
-      method: 'PATCH',
-      headers: {
-        'X-CSRF-Token': document.querySelector("meta[name='csrf-token']").content,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ task: { date: newDate, developer_id: newDevId } })
-    });
-  };
+import {
+  PlusCircleIcon,
+  PencilIcon,
+  TrashIcon,
+  LinkIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  Bars3Icon, // Drag Handle
+  CalendarDaysIcon,
+  ClockIcon,
+  UserGroupIcon,
+  TableCellsIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon
+} from '@heroicons/react/24/outline'; // Ensure this path is correct and package installed
+import { CheckCircleIcon as CheckCircleSolidIcon } from '@heroicons/react/24/solid'; // Ensure this path is correct
 
 
-  // Calculate summary matrices
-  const hoursByDevDate = {}; // { dev: { date: hoursSum } }
-  developers.forEach(dev => {
-    hoursByDevDate[dev.id] = {};
-    dates.forEach(date => {
-      hoursByDevDate[dev.id][date] = 0;
-    });
-  });
-  tasks.forEach(task => {
-    const hrs = parseFloat(task.estimated_hours) || 0;
-    if (!hoursByDevDate[task.developer_id]) return;
-    if (!hoursByDevDate[task.developer_id][task.date]) hoursByDevDate[task.developer_id][task.date] = 0;
-    hoursByDevDate[task.developer_id][task.date] += hrs;
-  });
+// --- Helper Components ---
 
-  const hoursByDateDev = {}; // { date: { dev: hoursSum } }
-  dates.forEach(date => {
-    hoursByDateDev[date] = {};
-    developers.forEach(dev => {
-      hoursByDateDev[date][dev.id] = 0;
-    });
-  });
-  tasks.forEach(task => {
-    const hrs = parseFloat(task.estimated_hours) || 0;
+function LoadingSpinner() {
+  return (
+    <div className="flex justify-center items-center h-32">
+      <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <p className="ml-2 text-gray-600">Loading...</p>
+    </div>
+  );
+}
 
-    if (
-      hoursByDateDev[task.date] &&
-      typeof hoursByDateDev[task.date][task.developer_id] !== 'undefined'
-    ) {
-      hoursByDateDev[task.date][task.developer_id] += hrs;
-    }
-  });
-
-  // Format date for display
-  const formatDate = (iso) => {
-    const d = new Date(iso);
-    return d.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
-  };
+function Modal({ isOpen, onClose, title, children }) {
+  if (!isOpen) return null;
 
   return (
-    <div className="container mx-auto p-4 pt-[80px] pb-[50px]">
-      <h1 className="text-2xl font-bold mb-4">Sprint Task Manager</h1>
-
-      <SprintManager onSprintChange={(updatedSprint) => setSprint(updatedSprint)} />
-      {/* Form to add new tasks */}
-      <AddTaskForm key={formResetKey} developers={developers} dates={dates} types={types} onAddTask={addTask} />
-
-      {/* Task grid with drag-and-drop */}
-      <div className="overflow-auto mt-4">
-        <DndContext onDragEnd={handleDragEnd}>
-          <table className="min-w-full bg-white border border-gray-300">
-            <thead>
-              <tr>
-                <th className="p-2 border bg-gray-200">Date</th>
-                {developers.map(dev => (
-                  <th key={dev.id} className="border px-4 py-2 text-left">
-                    {dev.name}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {dates.map(date => (
-                <tr key={date}>
-                  <td className="border px-4 py-2">{formatDate(date)}</td>
-                  {developers.map(dev => (
-                    <TaskCell
-                      key={`${date}-${dev.id}`}
-                      date={date}
-                      dev={dev.id}
-                      tasks={tasksByDate[date]?.[dev.id] || []}
-                      editingTaskId={editingTaskId}
-                      setEditingTaskId={setEditingTaskId}
-                      updateTask={updateTask}
-                      developers={developers}
-                      dates={dates}
-                      handleTaskUpdate={handleTaskUpdate}
-                      types={types}
-                    />
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </DndContext>
-      </div>
-
-      {/* Summary tables */}
-      <div className="mt-6">
-        <h2 className="text-xl font-semibold mb-2">Summary by Developer (Hours)</h2>
-        <table className="min-w-full bg-white border border-gray-300 mb-4">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="p-2 border">Developer</th>
-              {dates.map(date => (
-                <th key={date} className="p-2 border">{formatDate(date)}</th>
-              ))}
-              <th className="p-2 border">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {developers.map(dev => {
-              const total = dates.reduce((sum, date) => sum + (hoursByDevDate[dev.id][date] || 0), 0);
-              return (
-                <tr key={dev.id}>
-                  <td className="p-2 border font-medium">{dev.name}</td>
-                  {dates.map(date => (
-                    <td key={date} className="p-2 border text-center">
-                      {hoursByDevDate[dev.id][date] || ''}
-                    </td>
-                  ))}
-                  <td className="p-2 border font-medium text-center">{total || ''}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-
-        <h2 className="text-xl font-semibold mb-2">Summary by Date (Hours)</h2>
-        <table className="min-w-full bg-white border border-gray-300">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="p-2 border">Date</th>
-              {developers.map(dev => (
-                <th key={dev.id} className="p-2 border">{dev.name}</th>
-              ))}
-              <th className="p-2 border">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dates.map(date => {
-              const total = developers.reduce((sum, dev) => sum + (hoursByDateDev[date][dev.id] || 0), 0);
-              return (
-                <tr key={date}>
-                  <td className="p-2 border">{formatDate(date)}</td>
-                  {developers.map(dev => (
-                    <td key={dev.id} className="p-2 border text-center">
-                      {hoursByDateDev[date][dev.id] || ''}
-                    </td>
-                  ))}
-                  <td className="p-2 border font-medium text-center">{total || ''}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+    <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center z-50 p-4 transition-opacity duration-300 ease-in-out">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg transform transition-all duration-300 ease-in-out scale-95 opacity-0 animate-modalShow">
+        <div className="flex justify-between items-center p-4 border-b border-gray-200">
+          <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
+            aria-label="Close modal"
+          >
+            <XCircleIcon className="h-7 w-7" />
+          </button>
+        </div>
+        <div className="p-6">
+          {children}
+        </div>
       </div>
     </div>
   );
 }
 
-// Cell component with droppable area
-function TaskCell({ date, dev, tasks, editingTaskId, setEditingTaskId, updateTask, developers, dates, handleTaskUpdate, types }) {
-  const droppableId = `${date}:${dev}`;
-  const { setNodeRef, isOver } = useDroppable({ id: droppableId });
+// --- Main Scheduler Components ---
 
-  return (
-    <td ref={setNodeRef} className={`p-2 border align-top ${isOver ? 'bg-yellow-100' : ''}`}>
-      {tasks.filter(t => !t.deleted).map(task => (
-        editingTaskId === task.id
-          ? <EditTaskForm
-              task={task}
-              developers={developers}
-              dates={dates}
-              types={types}
-              onSave={(updated) => { updateTask(updated); setEditingTaskId(null); }}
-              onCancel={() => setEditingTaskId(null)}
-            />
-          : <TaskCard
-              key={task.id}
-              task={task}
-              onEdit={() => setEditingTaskId(task.id)}
-              onTaskUpdate={handleTaskUpdate}
-            />
-      ))}
-    </td>
-  );
-}
-
-// Draggable task card
 function TaskCard({ task, onEdit, onTaskUpdate }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id });
   const [copied, setCopied] = useState(false);
+
   const style = {
     transform: CSS.Translate.toString(transform),
-    opacity: isDragging ? 0.5 : 1
+    // **FIX 2: Increased z-index for dragging item**
+    zIndex: isDragging ? 9999 : 'auto',
+    opacity: isDragging ? 0.8 : 1,
+    boxShadow: isDragging ? '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' : '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
   };
-  const bgColor = task.task_type === 'Code' ? 'bg-green-50' : 'bg-blue-50';
+
+  const typeColors = {
+    'Code': 'bg-green-50 border-green-300 text-green-800',
+    'Code review': 'bg-blue-50 border-blue-300 text-blue-800',
+    'Dev to QA': 'bg-purple-50 border-purple-300 text-purple-800',
+    'Default': 'bg-gray-50 border-gray-300 text-gray-800'
+  };
+  const cardColor = typeColors[task.type] || typeColors['Default'];
 
   const toggleStrike = () => {
     const updatedStrike = !task.is_struck;
-
+    onTaskUpdate({ ...task, is_struck: updatedStrike });
     fetch(`/tasks/${task.id}.json`, {
       method: 'PATCH',
       headers: {
-        'X-CSRF-Token': document.querySelector("meta[name='csrf-token']").content,
+        'X-CSRF-Token': document.querySelector("meta[name='csrf-token']")?.content,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ task: { is_struck: updatedStrike } })
-    }).then(res => res.json())
-      .then(onTaskUpdate);
-  };
-
-  const deleteTask = () => {
-    if (!window.confirm(`Delete task "${task.task_id}"?`)) return;
-
-    fetch(`/tasks/${task.id}.json`, {
-      method: 'DELETE',
-      headers: {
-        'X-CSRF-Token': document.querySelector("meta[name='csrf-token']").content,
-        'Content-Type': 'application/json'
-      }
-    }).then(() => {
-      onTaskUpdate({ ...task, deleted: true }); // trigger removal via filter outside
+    }).then(res => {
+      if (!res.ok) throw new Error('Failed to update task');
+      return res.json();
+    }).then(updatedTaskFromServer => {
+        onTaskUpdate(updatedTaskFromServer);
+    }).catch(error => {
+        console.error("Error striking task:", error);
+        onTaskUpdate({ ...task, is_struck: !updatedStrike });
+        alert("Error: Could not update task status.");
     });
   };
 
-  const copyLink = () => {
+  const deleteTask = () => {
+    if (!window.confirm(`Are you sure you want to delete task "${task.task_id}"?`)) return;
+    onTaskUpdate({ ...task, deleted: true });
+    fetch(`/tasks/${task.id}.json`, {
+      method: 'DELETE',
+      headers: {
+        'X-CSRF-Token': document.querySelector("meta[name='csrf-token']")?.content,
+        'Content-Type': 'application/json'
+      }
+    }).then(res => {
+      if (!res.ok && res.status !== 204) {
+        throw new Error('Failed to delete task');
+      }
+    }).catch(error => {
+      console.error("Error deleting task:", error);
+      onTaskUpdate({ ...task, deleted: false });
+      alert("Error: Could not delete task.");
+    });
+  };
+
+  const copyLink = (e) => {
+    e.stopPropagation();
     if (task.task_url) {
       navigator.clipboard.writeText(task.task_url)
         .then(() => {
           setCopied(true);
-          setTimeout(() => setCopied(false), 1000);
-        });
+          setTimeout(() => setCopied(false), 2000);
+        })
+        .catch(err => console.error('Failed to copy link:', err));
     }
   };
 
@@ -369,45 +143,588 @@ function TaskCard({ task, onEdit, onTaskUpdate }) {
     <div
       ref={setNodeRef}
       style={style}
-      className={`mb-2 p-1 border rounded ${bgColor}`}
+      className={`p-2.5 mb-2 border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-150 ${cardColor} ${task.is_struck ? 'opacity-70' : ''}`}
     >
-      <div className="flex justify-between items-start">
-        <div className="flex items-center gap-1">
-          {/* Drag handle */}
-          <span {...listeners} {...attributes} className="cursor-move px-1">⠿</span>
-
-          {/* Task ID */}
-          {task.task_url ? (
-            <a
-              href={task.task_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`text-blue-600 underline ${task.is_struck ? 'line-through' : ''}`}
-            >
-              {task.task_id}
-            </a>
-          ) : (
-            <span className={`${task.is_struck ? 'line-through' : ''}`}>{task.task_id}</span>
-          )}
-
-          {/* Meta */}
-          <span className="ml-2 text-sm text-gray-600">- {task.estimated_hours}h</span>
-          <span className="ml-1 text-xs">({task.task_type})</span>
+      <div className="flex items-start justify-between">
+        <div className="flex items-start min-w-0">
+          <span {...listeners} {...attributes} className="cursor-move p-1 mr-2 text-gray-400 hover:text-gray-700" title="Drag task">
+            <Bars3Icon className="h-5 w-5" />
+          </span>
+          <div>
+            {task.task_url ? (
+              <a
+                href={task.task_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className={`font-semibold text-sm hover:underline ${task.is_struck ? 'line-through text-gray-500' : 'text-indigo-600'} break-all`}
+                title={`Open: ${task.task_id}`}
+              >
+                {task.task_id}
+              </a>
+            ) : (
+              <span className={`font-semibold text-sm ${task.is_struck ? 'line-through text-gray-500' : 'text-gray-800'} break-all`}>
+                {task.task_id}
+              </span>
+            )}
+            <div className="text-xs text-gray-500 mt-0.5">
+              <span>{task.estimated_hours}h</span>
+              <span className="mx-1">|</span>
+              <span>{task.type}</span>
+            </div>
+          </div>
         </div>
 
-        {/* Controls */}
-        <div className="flex items-center gap-1 text-xs text-gray-700">
-          <button onClick={toggleStrike} title="Mark done" className="hover:text-black">✅</button>
-          <button onClick={onEdit} title="Edit" className="hover:text-black">✏️</button>
+        <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
+          <button onClick={toggleStrike} title={task.is_struck ? "Mark as not done" : "Mark as done"} className="p-1 text-gray-500 hover:text-green-600 rounded-full hover:bg-gray-100 transition-colors">
+            {task.is_struck ? <CheckCircleSolidIcon className="h-5 w-5 text-green-600" /> : <CheckCircleIcon className="h-5 w-5" />}
+          </button>
+          <button onClick={(e) => { e.stopPropagation(); onEdit(); }} title="Edit task" className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100 transition-colors">
+            <PencilIcon className="h-5 w-5" />
+          </button>
           {task.task_url && (
-            <button onClick={copyLink} title="Copy link" className="hover:text-blue-600">
-              🔗{copied && <span className="ml-1 text-green-600">✔️</span>}
+            <button onClick={copyLink} title="Copy task link" className="p-1 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-gray-100 transition-colors relative">
+              <LinkIcon className="h-5 w-5" />
+              {copied && <CheckCircleSolidIcon className="h-3 w-3 text-green-500 absolute -top-1 -right-1" />}
             </button>
           )}
-          <button onClick={deleteTask} title="Delete" className="hover:text-red-600">🗑️</button>
+          <button onClick={deleteTask} title="Delete task" className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100 transition-colors">
+            <TrashIcon className="h-5 w-5" />
+          </button>
         </div>
       </div>
     </div>
+  );
+}
+
+
+function TaskCell({ date, devId, tasksInCell, setEditingTask, updateTask, developers, dates, types, handleTaskUpdate, totalHoursInCell }) {
+  const droppableId = `${date}:${devId}`;
+  const { setNodeRef, isOver } = useDroppable({ id: droppableId });
+
+  const cellCapacity = 8;
+  const hoursPercentage = Math.min((totalHoursInCell / cellCapacity) * 100, 100);
+  let capacityColor = 'bg-green-100';
+  if (totalHoursInCell > cellCapacity) capacityColor = 'bg-red-100';
+  else if (totalHoursInCell > cellCapacity * 0.75) capacityColor = 'bg-yellow-100';
+
+
+  return (
+    <td
+      ref={setNodeRef}
+      className={`p-2 border border-gray-200 align-top min-w-[200px] relative transition-colors duration-150 ease-in-out ${isOver ? 'bg-blue-100 outline outline-2 outline-blue-400' : 'bg-white hover:bg-gray-50'}`}
+      style={{ minHeight: '100px' }}
+    >
+      <div className={`absolute bottom-0 left-0 right-0 h-1 ${capacityColor} opacity-70 transition-all duration-300`} style={{ width: `${hoursPercentage}%` }} title={`${totalHoursInCell}h / ${cellCapacity}h`}></div>
+      {tasksInCell.filter(t => !t.deleted).map(task => (
+        <TaskCard
+            key={task.id}
+            task={task}
+            onEdit={() => setEditingTask(task)}
+            onTaskUpdate={handleTaskUpdate}
+        />
+      ))}
+      {tasksInCell.filter(t => !t.deleted).length === 0 && (
+        <div className="text-center text-gray-400 text-xs mt-4">Drop tasks here</div>
+      )}
+    </td>
+  );
+}
+
+function Scheduler() {
+  const [sprint, setSprint] = useState(null);
+  const [developers, setDevelopers] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const types = useMemo(() => ['Code', 'Code review', 'Dev to QA', 'Planning', 'Testing', 'Bug Fixing'], []);
+
+  const [loading, setLoading] = useState({sprint: true, developers: true, tasks: true});
+  const [error, setError] = useState(null);
+  
+  const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
+  const [mainHeaderHeight, setMainHeaderHeight] = useState(0); // State to store main header height
+
+  // Ref for the main header
+  const mainHeaderRef = useCallback(node => {
+    if (node !== null) {
+      setMainHeaderHeight(node.getBoundingClientRect().height);
+    }
+  }, []);
+
+
+  useEffect(() => {
+    fetch('/sprints/last.json')
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch sprint data');
+        return res.json();
+      })
+      .then(data => {
+        setSprint(data);
+        setLoading(l => ({...l, sprint: false}));
+      })
+      .catch(err => {
+        console.error(err);
+        setError("Could not load sprint. Please try again later.");
+        setLoading(l => ({...l, sprint: false}));
+      });
+  }, []);
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/developers.json').then(res => {
+        if (!res.ok) throw new Error('Failed to fetch developers');
+        return res.json();
+      }),
+      fetch('/tasks.json').then(res => {
+        if (!res.ok) throw new Error('Failed to fetch tasks');
+        return res.json();
+      })
+    ])
+    .then(([devData, taskData]) => {
+      setDevelopers(devData);
+      setTasks(taskData);
+      setLoading(l => ({...l, developers: false, tasks: false}));
+    })
+    .catch(err => {
+      console.error(err);
+      setError("Could not load developers or tasks. Please try again.");
+      setLoading(l => ({...l, developers: false, tasks: false}));
+    });
+  }, []);
+  
+  const getWeekdaysInRange = useCallback((start, end) => {
+    const datesArr = [];
+    if (!start || !end) return datesArr;
+    let current = new Date(new Date(start).toISOString().slice(0,10) + 'T00:00:00Z');
+    const endDate = new Date(new Date(end).toISOString().slice(0,10) + 'T00:00:00Z');
+
+    while (current <= endDate) {
+      const day = current.getUTCDay();
+      if (day !== 0 && day !== 6) {
+        datesArr.push(current.toISOString().split('T')[0]);
+      }
+      current.setUTCDate(current.getUTCDate() + 1);
+    }
+    return datesArr;
+  }, []);
+  
+  const dates = useMemo(() => sprint ? getWeekdaysInRange(sprint.start_date, sprint.end_date) : [], [sprint, getWeekdaysInRange]);
+
+  const tasksByDateDev = useMemo(() => {
+    const structuredTasks = {};
+    dates.forEach(date => {
+      structuredTasks[date] = {};
+      developers.forEach(dev => {
+        structuredTasks[date][dev.id] = [];
+      });
+    });
+    tasks.forEach(task => {
+      if (task.date && task.developer_id && structuredTasks[task.date] && structuredTasks[task.date][task.developer_id]) {
+        structuredTasks[task.date][task.developer_id].push(task);
+      }
+    });
+    return structuredTasks;
+  }, [tasks, dates, developers]);
+
+  const addTask = (formData) => {
+    const tempId = `temp-${Date.now()}`;
+    const newTask = { ...formData, id: tempId, developer_id: Number(formData.developer_id), estimated_hours: parseFloat(formData.estimated_hours) };
+    setTasks(prev => [...prev, newTask]);
+    setIsAddTaskModalOpen(false);
+
+    fetch('/tasks.json', {
+      method: 'POST',
+      headers: {
+        'X-CSRF-Token': document.querySelector("meta[name='csrf-token']")?.content,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ task: formData })
+    })
+    .then(r => {
+      if (!r.ok) throw new Error('Failed to add task');
+      return r.json();
+    })
+    .then(createdTask => {
+      setTasks(prev => prev.map(t => t.id === tempId ? createdTask : t));
+    })
+    .catch(error => {
+        console.error("Error adding task:", error);
+        setTasks(prev => prev.filter(t => t.id !== tempId));
+        alert(`Error: Could not add task. ${error.message}`);
+    });
+  };
+
+  const saveUpdatedTask = (formData) => {
+    const taskId = formData.id;
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...formData, developer_id: Number(formData.developer_id), estimated_hours: parseFloat(formData.estimated_hours) } : t));
+    setEditingTask(null);
+
+    fetch(`/tasks/${taskId}.json`, {
+      method: 'PATCH',
+      headers: {
+        'X-CSRF-Token': document.querySelector("meta[name='csrf-token']")?.content,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ task: formData })
+    })
+    .then(r => {
+        if (!r.ok) throw new Error('Failed to update task');
+        return r.json();
+    })
+    .then(updatedTaskFromServer => {
+      setTasks(prev => prev.map(t => t.id === taskId ? updatedTaskFromServer : t));
+    })
+    .catch(error => {
+        console.error("Error updating task:", error);
+        alert(`Error: Could not update task. ${error.message}`);
+    });
+  };
+
+  const handleTaskUpdate = useCallback((updatedTask) => {
+    setTasks(prevTasks => {
+      if (updatedTask.deleted) {
+        return prevTasks.filter(t => t.id !== updatedTask.id);
+      }
+      return prevTasks.map(t => (t.id === updatedTask.id ? updatedTask : t));
+    });
+  }, []);
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (!active || !over || active.id === over.id) return;
+
+    const taskId = active.id;
+    const [newDate, newDevIdStr] = over.id.split(':');
+    const newDevId = parseInt(newDevIdStr, 10);
+
+    const originalTask = tasks.find(t => t.id === taskId);
+    if (!originalTask) return;
+
+    const updatedTaskData = { ...originalTask, date: newDate, developer_id: newDevId };
+    
+    setTasks(prev => prev.map(t => (t.id === taskId ? updatedTaskData : t)));
+
+    fetch(`/tasks/${taskId}.json`, {
+      method: 'PATCH',
+      headers: {
+        'X-CSRF-Token': document.querySelector("meta[name='csrf-token']")?.content,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ task: { date: newDate, developer_id: newDevId } })
+    }).then(r => {
+        if (!r.ok) throw new Error('Failed to move task');
+        return r.json();
+    }).then(movedTaskFromServer => {
+        setTasks(prev => prev.map(t => t.id === taskId ? movedTaskFromServer : t));
+    }).catch(error => {
+        console.error("Error moving task:", error);
+        setTasks(prev => prev.map(t => (t.id === taskId ? originalTask : t)));
+        alert(`Error: Could not move task. ${error.message}`);
+    });
+  };
+  
+  const { hoursByDevDate, hoursByDateDev, dailyTotalsPerDev, grandTotalsPerDev, dailyTotalsPerDate } = useMemo(() => {
+    const hByDevDate = {};
+    developers.forEach(dev => {
+      hByDevDate[dev.id] = {};
+      dates.forEach(date => hByDevDate[dev.id][date] = 0);
+    });
+
+    const hByDateDev = {};
+    dates.forEach(date => {
+      hByDateDev[date] = {};
+      developers.forEach(dev => hByDateDev[date][dev.id] = 0);
+    });
+
+    tasks.filter(t => !t.deleted).forEach(task => {
+      const hrs = parseFloat(task.estimated_hours) || 0;
+      if (hByDevDate[task.developer_id] && typeof hByDevDate[task.developer_id][task.date] !== 'undefined') {
+        hByDevDate[task.developer_id][task.date] += hrs;
+      }
+      if (hByDateDev[task.date] && typeof hByDateDev[task.date][task.developer_id] !== 'undefined') {
+        hByDateDev[task.date][task.developer_id] += hrs;
+      }
+    });
+    
+    const dtPerDev = {};
+    developers.forEach(dev => {
+        dtPerDev[dev.id] = {};
+        dates.forEach(date => {
+            dtPerDev[dev.id][date] = (tasksByDateDev[date]?.[dev.id] || [])
+                .filter(t => !t.deleted)
+                .reduce((sum, task) => sum + (parseFloat(task.estimated_hours) || 0), 0);
+        });
+    });
+
+    const gtPerDev = {};
+    developers.forEach(dev => {
+        gtPerDev[dev.id] = dates.reduce((sum, date) => sum + (dtPerDev[dev.id][date] || 0), 0);
+    });
+    
+    const dtPerDate = {};
+    dates.forEach(date => {
+        dtPerDate[date] = developers.reduce((sum, dev) => sum + (dtPerDev[dev.id][date] || 0), 0);
+    });
+
+    return { hoursByDevDate: hByDevDate, hoursByDateDev: hByDateDev, dailyTotalsPerDev: dtPerDev, grandTotalsPerDev: gtPerDev, dailyTotalsPerDate: dtPerDate };
+  }, [tasks, developers, dates, tasksByDateDev]);
+
+
+  const formatDate = useCallback((isoDateString) => {
+    if (!isoDateString) return '';
+    const date = new Date(isoDateString + 'T00:00:00'); 
+    return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  }, []);
+
+  if (loading.sprint || loading.developers || loading.tasks) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <header ref={mainHeaderRef} className="bg-white shadow-sm p-4"> {/* Added ref here */}
+          <h1 className="text-2xl font-bold text-gray-800 flex items-center"><CalendarDaysIcon className="h-7 w-7 mr-2 text-blue-600"/>Sprint Task Manager</h1>
+        </header>
+        <main className="flex-grow container mx-auto p-4 lg:p-6">
+          <LoadingSpinner />
+        </main>
+      </div>
+    );
+  }
+
+  if (error) {
+     return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-lg shadow-xl text-center">
+          <ExclamationTriangleIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-semibold text-gray-800 mb-2">Oops! Something went wrong.</h2>
+          <p className="text-red-600 bg-red-50 p-3 rounded-md">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!sprint) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+          <SprintManager onSprintChange={(updatedSprint) => setSprint(updatedSprint)} />
+          {!loading.sprint && <p className="mt-4 text-gray-600">No active sprint found or failed to load. Please select or create a sprint.</p>}
+      </div>
+    );
+  }
+
+  // **FIX 3: Calculate dynamic top offset for sticky table header**
+  const stickyTableHeaderOffset = mainHeaderHeight > 0 ? `${mainHeaderHeight}px` : '4rem'; // Default to 4rem (64px) if height not yet calculated
+
+  return (
+    <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 flex flex-col">
+        <header ref={mainHeaderRef} className="bg-white/80 backdrop-blur-md shadow-sm top-0 z-40">
+          <div className="container mx-auto px-4 ">
+            <div className="flex flex-wrap justify-between items-center gap-y-3">
+              <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center">
+                <CalendarDaysIcon className="h-7 w-7 mr-2"/>Sprint Task Manager
+              </h1>
+              <div className="flex items-center space-x-3">
+                <SprintManager onSprintChange={(updatedSprint) => setSprint(updatedSprint)} currentSprint={sprint} />
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-grow container mx-auto p-4 lg:p-6">
+          {sprint && (
+            <p className="text-sm text-gray-600 mt-1">
+                Current Sprint: <span className="font-semibold">{sprint.name || `Sprint ending ${formatDate(sprint.end_date)}`}</span>
+            </p>
+          )}
+          <div style={{textAlign: '-webkit-right'}}>
+            <button
+              onClick={() => setIsAddTaskModalOpen(true)}
+              className="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105"
+              >
+              <PlusCircleIcon className="h-5 w-5 mr-2" />
+              Add Task
+            </button>
+          </div>
+            <section className="mb-8 bg-white/70 backdrop-blur-md shadow-xl rounded-xl overflow-hidden border border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-700 px-6 py-4 border-b border-gray-200 flex items-center">
+                    <TableCellsIcon className="h-6 w-6 mr-2 text-sky-600"/> Task Board
+                </h2>
+                <div className="overflow-x-auto relative">
+                    <table className="min-w-full divide-y divide-gray-200 border-collapse">
+                    {/* **FIX 3: Adjusted sticky top position dynamically** */}
+                    <thead className="bg-gray-50/80 backdrop-blur-sm sticky z-30" >
+                        <tr>
+                        <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-r border-gray-200 sticky left-0 bg-gray-100/90 z-20">
+                            Date
+                        </th>
+                        {developers.map(dev => (
+                            <th key={dev.id} className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-r border-gray-200 whitespace-nowrap">
+                            {dev.name}
+                            <span className="block text-[10px] font-normal text-gray-400">Total: {grandTotalsPerDev[dev.id] || 0}h</span>
+                            </th>
+                        ))}
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {dates.length === 0 && (
+                            <tr>
+                                <td colSpan={developers.length + 1} className="p-6 text-center text-gray-500">
+                                    <InformationCircleIcon className="h-8 w-8 mx-auto mb-2 text-gray-400"/>
+                                    No dates found for this sprint, or developers are not loaded.
+                                </td>
+                            </tr>
+                        )}
+                        {dates.map(date => (
+                        <tr key={date} className="hover:bg-sky-50/50 transition-colors duration-100">
+                            <td className="px-4 py-3 font-medium text-sm text-gray-700 border-r border-gray-200 sticky left-0 bg-white/90 hover:bg-sky-50/50 z-10 whitespace-nowrap">
+                                {formatDate(date)}
+                                <span className="block text-xs text-gray-400">{dailyTotalsPerDate[date] || 0}h Total</span>
+                            </td>
+                            {developers.map(dev => (
+                            <TaskCell
+                                key={`${date}-${dev.id}`}
+                                date={date}
+                                devId={dev.id}
+                                tasksInCell={tasksByDateDev[date]?.[dev.id] || []}
+                                setEditingTask={setEditingTask}
+                                updateTask={saveUpdatedTask}
+                                developers={developers}
+                                dates={dates}
+                                types={types}
+                                handleTaskUpdate={handleTaskUpdate}
+                                totalHoursInCell={dailyTotalsPerDev[dev.id]?.[date] || 0}
+                            />
+                            ))}
+                        </tr>
+                        ))}
+                    </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section className="mb-8">
+                <h2 className="text-xl font-semibold text-gray-700 mb-4 flex items-center">
+                    <UserGroupIcon className="h-6 w-6 mr-2 text-sky-600"/>Workload Summaries
+                </h2>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="bg-white/70 backdrop-blur-md shadow-xl rounded-xl overflow-hidden border border-gray-200">
+                    <h3 className="text-lg font-medium text-gray-700 px-5 py-3 border-b border-gray-200">Developer Hours</h3>
+                    <div className="overflow-x-auto"> {/* Added overflow-x-auto here for scrolling */}
+                        <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50/80">
+                            <tr>
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Developer</th>
+                            {/* **FIX 1: Removed .slice() to show all dates** */}
+                            {dates.map(date => (
+                                <th key={date} className="px-3 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{formatDate(date).split(',')[0]}</th>
+                            ))}
+                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {developers.map((dev, index) => (
+                            <tr key={dev.id} className={index % 2 === 0 ? undefined : 'bg-gray-50/70'}>
+                                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-800">{dev.name}</td>
+                                {/* **FIX 1: Removed .slice() to show all dates** */}
+                                {dates.map(date => (
+                                <td key={date} className="px-3 py-3 whitespace-nowrap text-sm text-gray-600 text-center">{hoursByDevDate[dev.id]?.[date] || '0'}</td>
+                                ))}
+                                <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-800 text-center">{grandTotalsPerDev[dev.id] || '0'}</td>
+                            </tr>
+                            ))}
+                        </tbody>
+                        </table>
+                    </div>
+                    </div>
+
+                    <div className="bg-white/70 backdrop-blur-md shadow-xl rounded-xl overflow-hidden border border-gray-200">
+                    <h3 className="text-lg font-medium text-gray-700 px-5 py-3 border-b border-gray-200">Daily Hours</h3>
+                    <div className="overflow-x-auto"> {/* Added overflow-x-auto here for scrolling */}
+                        <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50/80">
+                            <tr>
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                            {/* Showing all developers, ensure this is intended or use slice if needed */}
+                            {developers.map(dev => (
+                                <th key={dev.id} className="px-3 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">{dev.name.split(' ')[0]}</th>
+                            ))}
+                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {dates.map((date, index) => (
+                            <tr key={date} className={index % 2 === 0 ? undefined : 'bg-gray-50/70'}>
+                                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-800">{formatDate(date)}</td>
+                                {developers.map(dev => (
+                                <td key={dev.id} className="px-3 py-3 whitespace-nowrap text-sm text-gray-600 text-center">{hoursByDateDev[date]?.[dev.id] || '0'}</td>
+                                ))}
+                                <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-800 text-center">{dailyTotalsPerDate[date] || '0'}</td>
+                            </tr>
+                            ))}
+                        </tbody>
+                        </table>
+                    </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+      </div>
+
+      <Modal isOpen={isAddTaskModalOpen} onClose={() => setIsAddTaskModalOpen(false)} title="✨ Add New Task">
+        <AddTaskForm
+          developers={developers}
+          dates={dates}
+          types={types}
+          onAddTask={addTask}
+          currentSprintId={sprint?.id}
+        />
+      </Modal>
+
+      <Modal isOpen={!!editingTask} onClose={() => setEditingTask(null)} title="✏️ Edit Task">
+        {editingTask && (
+          <EditTaskForm
+            task={editingTask}
+            developers={developers}
+            dates={dates}
+            types={types}
+            onSave={saveUpdatedTask}
+            onCancel={() => setEditingTask(null)}
+            currentSprintId={sprint?.id}
+          />
+        )}
+      </Modal>
+       <style>{`
+        @keyframes modalShow {
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        .animate-modalShow {
+          animation: modalShow 0.3s ease-out forwards;
+        }
+        .overflow-x-auto::-webkit-scrollbar {
+            height: 8px;
+            width: 8px; /* For vertical scroll on main content if needed */
+        }
+        .overflow-x-auto::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .overflow-x-auto::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+      `}</style>
+    </DndContext>
   );
 }
 

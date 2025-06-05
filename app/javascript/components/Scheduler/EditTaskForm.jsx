@@ -8,7 +8,6 @@ export default function EditTaskForm({ task, developers, dates, types, onSave, o
     task_id: task.task_id || '',
     task_url: task.task_url || '',
     estimated_hours: task.estimated_hours || 1,
-    task_type_id: task.task_type_id || types[0]?.id || '',
     sprint_id: task.sprint_id || null
   });
 
@@ -20,14 +19,13 @@ export default function EditTaskForm({ task, developers, dates, types, onSave, o
       task_id: task.task_id || '',
       task_url: task.task_url || '',
       estimated_hours: task.estimated_hours || 1,
-      task_type_id: task.task_type_id || types[0]?.id || '',
       sprint_id: task.sprint_id || null
     });
   }, [task, developers, types]);
 
   const handleChange = e => {
     let { name, value } = e.target;
-    if (['developer_id', 'estimated_hours', 'sprint_id', 'task_type_id'].includes(name)) {
+    if (['developer_id', 'estimated_hours', 'sprint_id'].includes(name)) {
       value = Number(value);
     }
     setFormData(f => ({ ...f, [name]: value }));
@@ -82,8 +80,8 @@ export default function EditTaskForm({ task, developers, dates, types, onSave, o
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">🧩 Type</label>
           <select
-            name="task_type_id"
-            value={formData.task_type_id}
+            name="type"
+            value={formData.type}
             onChange={handleChange}
             className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
           >
