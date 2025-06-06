@@ -1,4 +1,6 @@
 class Task < ApplicationRecord
+  include UserStampable
+
   belongs_to :sprint, optional: true
   belongs_to :developer
 

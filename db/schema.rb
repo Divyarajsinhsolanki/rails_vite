@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_06_06_072653) do
+ActiveRecord::Schema[7.1].define(version: 2025_06_06_124130) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -65,6 +65,12 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_06_072653) do
     t.text "description"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "status", default: "todo"
+    t.integer "progress", default: 0
+    t.integer "order", default: 0
+    t.integer "project_id"
+    t.integer "created_by"
+    t.integer "updated_by"
     t.index ["end_date"], name: "index_sprints_on_end_date"
     t.index ["start_date"], name: "index_sprints_on_start_date"
   end
@@ -80,6 +86,12 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_06_072653) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "is_struck", default: false
+    t.string "status", default: "todo"
+    t.integer "order", default: 0
+    t.integer "assigned_to"
+    t.integer "created_by"
+    t.integer "updated_by"
+    t.date "due_date"
     t.index ["date"], name: "index_tasks_on_date"
     t.index ["developer_id"], name: "index_tasks_on_developer_id"
     t.index ["sprint_id"], name: "index_tasks_on_sprint_id"
