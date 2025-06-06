@@ -167,7 +167,7 @@ export default function SprintManager({ onSprintChange }) {
                 
                 {/* Sprint Info */}
                 <div className="flex flex-col h-full">
-                  <div className="flex justify-between items-start">
+                  <div className="flex items-start">
                     <h3 className={`font-bold text-lg ${isActive ? 'text-blue-600' : 'text-gray-800'}`}>
                       {s.name}
                     </h3>
