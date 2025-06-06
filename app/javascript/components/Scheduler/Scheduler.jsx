@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { DndContext, useDraggable, useDroppable, closestCenter } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
+import { SchedulerAPI } from '../api';
 
 // Assuming these are your existing form components
 import AddTaskForm from '../Scheduler/AddTaskForm';
@@ -16,7 +17,8 @@ import {
   XCircleIcon,
   Bars3Icon, // Drag Handle
   CalendarDaysIcon,
-  ClockIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
   UserGroupIcon,
   TableCellsIcon,
   ExclamationTriangleIcon,
@@ -85,46 +87,29 @@ function TaskCard({ task, onEdit, onTaskUpdate }) {
   };
   const cardColor = typeColors[task.type] || typeColors['Default'];
 
-  const toggleStrike = () => {
+  const toggleStrike = async () => {
     const updatedStrike = !task.is_struck;
     onTaskUpdate({ ...task, is_struck: updatedStrike });
-    fetch(`/api/tasks/${task.id}.json`, {
-      method: 'PATCH',
-      headers: {
-        'X-CSRF-Token': document.querySelector("meta[name='csrf-token']")?.content,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ task: { is_struck: updatedStrike } })
-    }).then(res => {
-      if (!res.ok) throw new Error('Failed to update task');
-      return res.json();
-    }).then(updatedTaskFromServer => {
-        onTaskUpdate(updatedTaskFromServer);
-    }).catch(error => {
-        console.error("Error striking task:", error);
-        onTaskUpdate({ ...task, is_struck: !updatedStrike });
-        alert("Error: Could not update task status.");
-    });
+    try {
+      const { data: updated } = await SchedulerAPI.toggleTaskStatus(task.id, updatedStrike);
+      onTaskUpdate(updated);
+    } catch (error) {
+      console.error("Error striking task:", error);
+      onTaskUpdate({ ...task, is_struck: !updatedStrike });
+      alert("Error: Could not update task status.");
+    }
   };
 
-  const deleteTask = () => {
+  const deleteTask = async () => {
     if (!window.confirm(`Are you sure you want to delete task "${task.task_id}"?`)) return;
     onTaskUpdate({ ...task, deleted: true });
-    fetch(`/api/tasks/${task.id}.json`, {
-      method: 'DELETE',
-      headers: {
-        'X-CSRF-Token': document.querySelector("meta[name='csrf-token']")?.content,
-        'Content-Type': 'application/json'
-      }
-    }).then(res => {
-      if (!res.ok && res.status !== 204) {
-        throw new Error('Failed to delete task');
-      }
-    }).catch(error => {
+    try {
+      await SchedulerAPI.deleteTask(task.id);
+    } catch (error) {
       console.error("Error deleting task:", error);
       onTaskUpdate({ ...task, deleted: false });
       alert("Error: Could not delete task.");
-    });
+    }
   };
 
   const copyLink = (e) => {
@@ -198,7 +183,7 @@ function TaskCard({ task, onEdit, onTaskUpdate }) {
 }
 
 
-function TaskCell({ date, devId, tasksInCell, setEditingTask, updateTask, developers, dates, types, handleTaskUpdate, totalHoursInCell }) {
+function TaskCell({ date, devId, tasksInCell, setEditingTask, handleTaskUpdate, totalHoursInCell }) {
   const droppableId = `${date}:${devId}`;
   const { setNodeRef, isOver } = useDroppable({ id: droppableId });
 
@@ -237,6 +222,7 @@ function Scheduler() {
   const [tasks, setTasks] = useState([]);
   const types = useMemo(() => ['Code', 'Code review', 'Dev to QA', 'Planning', 'Testing', 'Bug Fixing'], []);
 
+  const [isHeaderExpanded, setIsHeaderExpanded] = useState(false); // New state for header expansion
   const [loading, setLoading] = useState({sprint: true, developers: true, tasks: true});
   const [error, setError] = useState(null);
   
@@ -253,43 +239,25 @@ function Scheduler() {
 
 
   useEffect(() => {
-    fetch('/api/sprints/last.json')
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch sprint data');
-        return res.json();
-      })
-      .then(data => {
-        setSprint(data);
-        setLoading(l => ({...l, sprint: false}));
-      })
-      .catch(err => {
-        console.error(err);
-        setError("Could not load sprint. Please try again later.");
-        setLoading(l => ({...l, sprint: false}));
+    SchedulerAPI.getLastSprint()
+      .then(res => { setSprint(res.data); setLoading(l => ({ ...l, sprint: false })); })
+      .catch(() => {
+        setError("Could not load sprint");
+        setLoading(l => ({ ...l, sprint: false }));
       });
   }, []);
 
   useEffect(() => {
-    Promise.all([
-      fetch('/api/developers.json').then(res => {
-        if (!res.ok) throw new Error('Failed to fetch developers');
-        return res.json();
-      }),
-      fetch('/api/tasks.json').then(res => {
-        if (!res.ok) throw new Error('Failed to fetch tasks');
-        return res.json();
+    Promise.all([ SchedulerAPI.getDevelopers(), SchedulerAPI.getTasks() ])
+      .then(([devRes, taskRes]) => {
+        setDevelopers(devRes.data);
+        setTasks(taskRes.data);
+        setLoading(l => ({ ...l, developers: false, tasks: false }));
       })
-    ])
-    .then(([devData, taskData]) => {
-      setDevelopers(devData);
-      setTasks(taskData);
-      setLoading(l => ({...l, developers: false, tasks: false}));
-    })
-    .catch(err => {
-      console.error(err);
-      setError("Could not load developers or tasks. Please try again.");
-      setLoading(l => ({...l, developers: false, tasks: false}));
-    });
+      .catch(() => {
+        setError("Could not load developers or tasks");
+        setLoading(l => ({ ...l, developers: false, tasks: false }));
+      });
   }, []);
   
   const getWeekdaysInRange = useCallback((start, end) => {
@@ -326,58 +294,34 @@ function Scheduler() {
     return structuredTasks;
   }, [tasks, dates, developers]);
 
-  const addTask = (formData) => {
+  const addTask = async (formData) => {
     const tempId = `temp-${Date.now()}`;
     const newTask = { ...formData, id: tempId, developer_id: Number(formData.developer_id), estimated_hours: parseFloat(formData.estimated_hours) };
     setTasks(prev => [...prev, newTask]);
     setIsAddTaskModalOpen(false);
 
-    fetch('/api/tasks.json', {
-      method: 'POST',
-      headers: {
-        'X-CSRF-Token': document.querySelector("meta[name='csrf-token']")?.content,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ task: formData })
-    })
-    .then(r => {
-      if (!r.ok) throw new Error('Failed to add task');
-      return r.json();
-    })
-    .then(createdTask => {
-      setTasks(prev => prev.map(t => t.id === tempId ? createdTask : t));
-    })
-    .catch(error => {
-        console.error("Error adding task:", error);
-        setTasks(prev => prev.filter(t => t.id !== tempId));
-        alert(`Error: Could not add task. ${error.message}`);
-    });
+    try {
+      const { data: created } = await SchedulerAPI.createTask({ ...formData, sprint_id: sprint.id });
+      setTasks(prev => prev.map(t => t.id === tempId ? created : t));
+    } catch (error) {
+      console.error("Error adding task:", error);
+      setTasks(prev => prev.filter(t => t.id !== tempId));
+      alert(`Error: Could not add task. ${error.message}`);
+    }
   };
 
-  const saveUpdatedTask = (formData) => {
+  const saveUpdatedTask = async (formData) => {
     const taskId = formData.id;
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...formData, developer_id: Number(formData.developer_id), estimated_hours: parseFloat(formData.estimated_hours) } : t));
     setEditingTask(null);
 
-    fetch(`/api/tasks/${taskId}.json`, {
-      method: 'PATCH',
-      headers: {
-        'X-CSRF-Token': document.querySelector("meta[name='csrf-token']")?.content,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ task: formData })
-    })
-    .then(r => {
-        if (!r.ok) throw new Error('Failed to update task');
-        return r.json();
-    })
-    .then(updatedTaskFromServer => {
-      setTasks(prev => prev.map(t => t.id === taskId ? updatedTaskFromServer : t));
-    })
-    .catch(error => {
-        console.error("Error updating task:", error);
-        alert(`Error: Could not update task. ${error.message}`);
-    });
+    try {
+      const { data: updated } = await SchedulerAPI.updateTask(taskId, formData);
+      setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
+    } catch (error) {
+      console.error("Error updating task:", error);
+      alert(`Error: Could not update task. ${error.message}`);
+    }
   };
 
   const handleTaskUpdate = useCallback((updatedTask) => {
@@ -389,7 +333,7 @@ function Scheduler() {
     });
   }, []);
 
-  const handleDragEnd = (event) => {
+  const handleDragEnd = async (event) => {
     const { active, over } = event;
     if (!active || !over || active.id === over.id) return;
 
@@ -404,23 +348,14 @@ function Scheduler() {
     
     setTasks(prev => prev.map(t => (t.id === taskId ? updatedTaskData : t)));
 
-    fetch(`/api/tasks/${taskId}.json`, {
-      method: 'PATCH',
-      headers: {
-        'X-CSRF-Token': document.querySelector("meta[name='csrf-token']")?.content,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ task: { date: newDate, developer_id: newDevId } })
-    }).then(r => {
-        if (!r.ok) throw new Error('Failed to move task');
-        return r.json();
-    }).then(movedTaskFromServer => {
-        setTasks(prev => prev.map(t => t.id === taskId ? movedTaskFromServer : t));
-    }).catch(error => {
-        console.error("Error moving task:", error);
-        setTasks(prev => prev.map(t => (t.id === taskId ? originalTask : t)));
-        alert(`Error: Could not move task. ${error.message}`);
-    });
+    try {
+      const { data: moved } = await SchedulerAPI.moveTask(taskId, { date: newDate, developer_id: newDevId });
+      setTasks(prev => prev.map(t => t.id === taskId ? moved : t));
+    } catch (error) {
+      console.error("Error moving task:", error);
+      setTasks(prev => prev.map(t => t.id === taskId ? original : t));
+      alert(`Error: Could not move task. ${error.message}`);
+    }
   };
   
   const { hoursByDevDate, hoursByDateDev, dailyTotalsPerDev, grandTotalsPerDev, dailyTotalsPerDate } = useMemo(() => {
@@ -522,26 +457,44 @@ function Scheduler() {
   return (
     <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 flex flex-col">
-        <header ref={mainHeaderRef} className="bg-white/80 backdrop-blur-md shadow-sm top-0 z-40">
-          <div className="container mx-auto px-4 ">
-            <div className="flex flex-wrap justify-between items-center gap-y-3">
-              <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center">
-                <CalendarDaysIcon className="h-7 w-7 mr-2"/>Sprint Task Manager
-              </h1>
-              <div className="flex items-center space-x-3">
-                <SprintManager onSprintChange={(updatedSprint) => setSprint(updatedSprint)} currentSprint={sprint} />
-              </div>
+      <header ref={mainHeaderRef} className="bg-white/80 backdrop-blur-md shadow-sm top-0 z-40">
+        <div className="container mx-auto px-4 py-3"> {/* Added some padding for better click area */}
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center">
+              <CalendarDaysIcon className="h-7 w-7 mr-2"/>Sprint Task Manager
+            </h1>
+
+            {/* Collapsible area for sprint details */}
+            <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}>
+              {sprint && (
+                <p className="text-sm text-gray-600">
+                  Current Sprint: <span className="font-semibold">{sprint.name || `Sprint ending ${formatDate(sprint.end_date)}`}</span>
+                </p>
+              )}
+              {isHeaderExpanded ? (
+                <ChevronUpIcon className="h-5 w-5 text-gray-500" />
+              ) : (
+                <ChevronDownIcon className="h-5 w-5 text-gray-500" />
+              )}
             </div>
           </div>
-        </header>
+
+          {/* Expanded content area - conditionally rendered */}
+          {isHeaderExpanded && (
+            <div className="mt-4 border-t border-gray-200 pt-4">
+              <SprintManager onSprintChange={(updatedSprint) => setSprint(updatedSprint)} currentSprint={sprint} />
+            </div>
+          )}
+        </div>
+      </header>
 
         <main className="flex-grow container mx-auto p-4 lg:p-6">
-          {sprint && (
-            <p className="text-sm text-gray-600 mt-1">
-                Current Sprint: <span className="font-semibold">{sprint.name || `Sprint ending ${formatDate(sprint.end_date)}`}</span>
-            </p>
-          )}
-          <div style={{textAlign: '-webkit-right'}}>
+          <div className="flex justify-between items-center mb-4"> {/* Combined div for alignment */}
+            {sprint && (
+              <p className="text-sm text-gray-600 mt-1">
+                  Current Sprint: <span className="font-semibold">{sprint.name || `Sprint ending ${formatDate(sprint.end_date)}`}</span>
+              </p>
+            )}
             <button
               onClick={() => setIsAddTaskModalOpen(true)}
               className="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105"
@@ -592,10 +545,6 @@ function Scheduler() {
                                 devId={dev.id}
                                 tasksInCell={tasksByDateDev[date]?.[dev.id] || []}
                                 setEditingTask={setEditingTask}
-                                updateTask={saveUpdatedTask}
-                                developers={developers}
-                                dates={dates}
-                                types={types}
                                 handleTaskUpdate={handleTaskUpdate}
                                 totalHoursInCell={dailyTotalsPerDev[dev.id]?.[date] || 0}
                             />
