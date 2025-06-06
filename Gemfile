@@ -76,6 +76,8 @@ gem 'byebug'
 gem 'firebase_id_token'
 gem "ruby-openai", "~> 5.0"
 gem 'faraday', '~> 2.7'
+gem 'jwt'
+gem 'bcrypt'
 
 group :production do
   # gem 'pdf_master', path: 'lib/pdf_master'

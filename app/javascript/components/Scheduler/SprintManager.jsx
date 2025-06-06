@@ -12,7 +12,7 @@ export default function SprintManager({ onSprintChange }) {
 
   // Load all sprints when component mounts
   useEffect(() => {
-    fetch('/sprints.json')
+    fetch('/api/sprints.json')
       .then(res => res.json())
       .then(data => {
         setSprints(data || []);
@@ -35,7 +35,7 @@ export default function SprintManager({ onSprintChange }) {
   const handleSubmit = e => {
     e.preventDefault();
     const method = formData.id ? 'PATCH' : 'POST';
-    const url = formData.id ? `/sprints/${formData.id}.json` : '/sprints.json';
+    const url = formData.id ? `/api/sprints/${formData.id}.json` : '/api/sprints.json';
 
     const payload = {
       sprint: {
@@ -74,7 +74,7 @@ export default function SprintManager({ onSprintChange }) {
   // Delete a sprint by id
   const handleDelete = (id) => {
     setIsDeleting(true);
-    fetch(`/sprints/${id}.json`, {
+    fetch(`/api/sprints/${id}.json`, {
       method: 'DELETE',
       headers: {
         'X-CSRF-Token': document.querySelector("meta[name='csrf-token']").content,

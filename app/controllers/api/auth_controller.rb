@@ -1,9 +1,11 @@
-class Api::AuthController < ApplicationController
+class Api::AuthController < Api::BaseController
   include Rails.application.routes.url_helpers
+  skip_before_action :authenticate_user!, only: [:login, :signup, :refresh]
 
   def signup
     user = User.new(user_params)
-    params[:profile_picture] && (user.profile_picture = params[:profile_picture])
+    user.profile_picture = params[:profile_picture] if params[:profile_picture].present? && params[:profile_picture] != "null"
+
     if user.save
       render json: { message: "User created successfully", user: user }, status: :created
     else
@@ -12,34 +14,46 @@ class Api::AuthController < ApplicationController
   end
 
   def login
-    token = request.headers["Authorization"]&.split(" ")&.last
-    if token.present? && token != "undefined"
-      payload = verify_firebase_token(token)
-      puts "Decoded Payload: #{payload.inspect}"
+    user = nil
 
+    if params[:id_token] # firebase_token = request.headers["Authorization"]&.split(" ")&.last.presence
+      payload = verify_firebase_token(params[:id_token])  # (firebase_token)
       return render json: { error: "Invalid token" }, status: :unauthorized unless payload
 
       user = User.find_or_create_by(email: payload["email"]) do |u|
         u.first_name = payload["name"]
+        u.password = SecureRandom.hex(10)
         u.profile_picture.attach(
           io: URI.open(payload["picture"]),
           filename: "#{payload["email"]}_profile_picture.jpg",
           content_type: "image/jpeg"
         )
-        u.password = SecureRandom.hex(10) # Dummy password for Google users
       end
     else
-      user = User.find_by(email: params[:email])
-      return render json: { error: "Invalid email or password" }, status: :unauthorized unless user&.valid_password?(params[:password])
+      user = User.find_by(email: params[:auth][:email])
+      return render json: { error: "Invalid credentials" }, status: :unauthorized unless user&.valid_password?(params[:auth][:password])
     end
 
-    token = user.generate_token_for(:auth)
-    render json: { token: token, user: user }, status: :ok
+    set_jwt_cookie!(user)
+    render json: { message: "Login successful", user: user, exp: 15.minutes.from_now.to_i }
+  end
+
+  def refresh
+    refresh_token = cookies.signed[:refresh_token]
+    payload = JwtService.decode(refresh_token)
+
+    if payload && (user = User.find_by(id: payload["user_id"]))
+      set_jwt_cookie!(user)
+      render json: { user: user, exp: 15.minutes.from_now.to_i }
+    else
+      render json: { error: "Unauthorized" }, status: :unauthorized
+    end
   end
 
   def logout
-    current_user&.revoke_token_for(:auth)
-    render json: { message: "Logged out successfully" }, status: :ok
+    cookies.delete(:access_token, httponly: true)
+    cookies.delete(:refresh_token, httponly: true)
+    render json: { message: "Logged out successfully" }
   end
 
   def view_profile
@@ -49,7 +63,7 @@ class Api::AuthController < ApplicationController
 
   def update_profile
     current_user.update(user_params)
-    render json: { message: "User details updated successfully" }, status: :ok
+    render json: { message: "User details updated successfully" }
   end
 
   private
@@ -61,8 +75,29 @@ class Api::AuthController < ApplicationController
   def verify_firebase_token(token)
     FirebaseIdToken::Certificates.request
     FirebaseIdToken::Signature.verify(token)
-  rescue StandardError => e
-    puts("Firebase token verification failed: #{e.message}")
+  rescue => e
+    Rails.logger.error("Firebase token error: #{e}")
     nil
+  end
+
+  def set_jwt_cookie!(user)
+    access_token = JwtService.encode({ user_id: user.id }, 15.minutes.from_now)
+    refresh_token = JwtService.encode({ user_id: user.id }, 7.days.from_now)
+
+    cookies.signed[:access_token] = {
+      value: access_token,
+      httponly: true,
+      secure: Rails.env.production?,
+      same_site: :strict,
+      expires: 15.minutes.from_now
+    }
+
+    cookies.signed[:refresh_token] = {
+      value: refresh_token,
+      httponly: true,
+      secure: Rails.env.production?,
+      same_site: :lax,
+      expires: 7.days.from_now
+    }
   end
 end

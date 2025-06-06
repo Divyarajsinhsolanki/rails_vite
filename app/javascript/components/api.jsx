@@ -1,40 +1,69 @@
 import axios from "axios";
 
-const API = axios.create({
+const getCsrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content;
+
+const api = axios.create({
   baseURL: "/api",
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+    "X-CSRF-Token": getCsrfToken(),
+  },
 });
 
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content; // CSRF Token
-
-  config.headers = {
-    ...config.headers, // Keep existing headers
-    "Content-Type": "multipart/form-data",
-  };
-
-  if (token) {
-    config.headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  if (csrfToken) {
-    config.headers["X-CSRF-Token"] = csrfToken;
-  }
+// Attach CSRF token before each request
+api.interceptors.request.use((config) => {
+  const csrfToken = getCsrfToken();
+  if (csrfToken) config.headers["X-CSRF-Token"] = csrfToken;
   return config;
-}, (error) => {
-  return Promise.reject(error);
 });
 
-export const signup = (userData) => API.post("/signup", userData);
-export const login = (userData) => API.post("/login", userData);
-export const logout = () => API.delete("/logout");
-export const fetchUserInfo = () => API.get("/view_profile");
-export const updateUserInfo = (userData) => API.post("/update_profile", userData);
+axios.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response?.status === 401) {
+      toast.error("Please log in to continue");
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  }
+);
 
-export const fetchPosts = (userId) => {
-  const url = userId ? `/posts?user_id=${userId}` : '/posts';
-  return API.get(url);
-};
-export const createPost = (data) => API.post("/posts", data, { headers: { "Content-Type": "multipart/form-data" } });
-export const updatePost = (id, data) => API.put(`/posts/${id}`, data);
-export const deletePost = (id) => API.delete(`/posts/${id}`);
+api.interceptors.response.use(
+  response => response,
+  async error => {
+    const { config, response } = error;
+
+    // NEW GUARD CLAUSE
+    if (config?.skipAuthRetry || config?.url.includes("/refresh")) {
+      return Promise.reject(error);
+    }
+
+    if (response?.status === 401 && !config._retry) {
+      config._retry = true;
+      try {
+        await api.post("/refresh");
+        return api(config);
+      } catch {
+        // silent
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+export default api;
+
+// Exported endpoints
+export const signup        = (u) => api.post("/signup", u);
+export const login         = (u) => api.post("/login", u);
+export const logout        = ()   => api.delete("/logout");
+
+export const fetchUserInfo   = () => api.get("/view_profile");
+export const updateUserInfo  = (d) => api.post("/update_profile", d);
+
+export const fetchPosts      = (id) => api.get(id ? `/posts?user_id=${id}`: "/posts");
+export const createPost      = (d) => api.post("/posts", d);
+export const updatePost      = (i, d) => api.put(`/posts/${i}`, d);
+export const deletePost      = (i) => api.delete(`/posts/${i}`);

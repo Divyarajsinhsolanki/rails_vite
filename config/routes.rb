@@ -10,17 +10,6 @@ Rails.application.routes.draw do
 
   root "pages#index"
 
-  # Scheduler
-  resources :sprints, only: [:index, :create, :update, :destroy]
-  get 'sprints/last', to: 'sprints#last'
-
-  resources :developers, only: [:index]
-  resources :tasks, only: [:index, :create, :update, :destroy]
-
-  namespace :api do
-    get 'coding_tip', to: 'coding_tips#show'
-  end
-
   # PDF
   post "/upload_pdf", to: "pdfs#upload_pdf"
 
@@ -51,11 +40,18 @@ Rails.application.routes.draw do
     post 'signup', to: 'auth#signup'
     post 'login', to: 'auth#login'
     delete 'logout', to: 'auth#logout'
-    resources :posts, only: [:index, :create, :update, :destroy]
-
+    post   'refresh',       to: 'auth#refresh'
+    get 'sprints/last', to: 'sprints#last'  
     get 'view_profile', to: 'auth#view_profile'
     post 'update_profile', to: 'auth#update_profile'
+    get 'coding_tip', to: 'coding_tips#show'
+
+    resources :posts, only: [:index, :create, :update, :destroy]
+    resources :sprints, only: [:index, :create, :update, :destroy]
+    resources :developers, only: [:index]
+    resources :tasks, only: [:index, :create, :update, :destroy]
   end
+
   get "*path", to: "pages#index", constraints: lambda { |req|
     !req.path.start_with?("/rails/active_storage")  # Don't redirect Active Storage URLs
   }

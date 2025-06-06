@@ -1,80 +1,105 @@
-import React, { createContext, useState, useEffect } from "react";
-import { login, signup, logout } from "../components/api";
+import React, { createContext, useState, useEffect, useCallback, useRef } from "react";
+import api from "../components/api";
 import { useNavigate } from "react-router-dom";
-import { auth, googleProvider, signInWithPopup } from "../firebaseConfig";
+import { auth, googleProvider } from "../firebaseConfig";
+import { signInWithPopup } from "firebase/auth";
 
 export const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [initializing, setInitializing] = useState(true);
   const navigate = useNavigate();
+  const refreshTimer = useRef();
 
+  // Clear timer on unmount
+  useEffect(() => () => clearTimeout(refreshTimer.current), []);
+
+  // Hydrate user + schedule refresh on mount
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
+    const hydrate = async () => {
       try {
-        setUser(token);
-      } catch (error) {
-        console.error("Invalid token:", error);
-        localStorage.removeItem("token"); // ✅ Remove invalid token
+        const { data } = await api.post("/refresh", {}, { skipAuthRetry: true });
+        setUser(data.user);
+        scheduleRefresh(data.exp);
+      } catch {
+        setUser(null);
+      } finally {
+        setInitializing(false);
       }
-    }
+    };
+    hydrate();
   }, []);
 
+  // Schedule silent refresh before token expires
+  const scheduleRefresh = useCallback((exp) => {
+    if (!exp) return;
+    const ms = (exp * 1000 - Date.now()) * 0.75;
+    clearTimeout(refreshTimer.current);
+    refreshTimer.current = setTimeout(async () => {
+      try {
+        const { data } = await api.post("/refresh");
+        setUser(data.user);
+        scheduleRefresh(data.exp);
+      } catch {
+        setUser(null);
+        navigate("/login");
+      }
+    }, ms);
+  }, [navigate]);
 
-  const handleSignup = async (formData) => {
-    const res = await signup(formData);
-    localStorage.setItem("token", res.data.token);
-    setUser(res.data.token);
+  // Normal login/signup + Google login: schedule refresh from exp
+  const handleLogin = async (credentials) => {
+    const { data } = await api.post("/login", credentials);
+    setUser(data.user);
+    scheduleRefresh(data.exp);
+    navigate("/posts");
   };
 
-  const handleLogin = async (formData) => {
-    const res = await login(formData.auth);
-    localStorage.setItem("token", res.data.token);
-    setUser(res.data.token);
+  const handleSignup = async (payload) => {
+    const { data } = await api.post("/signup", payload);
+    setUser(data.user);
+    scheduleRefresh(data.exp);
+    navigate("/posts");
   };
 
-  // Google Login
   const handleGoogleLogin = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-      const idToken = await user.getIdToken();
-      const response = await fetch("/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken}`,
-          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content,
-        },
-        body: JSON.stringify({
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName,
-        }),
-      });
-      const data = await response.json();
-
-      localStorage.setItem("token", data.token);
-      setUser(data.token);
-
+      const firebaseUser = result.user;
+      const idToken = await firebaseUser.getIdToken();
+      const { data } = await api.post(
+        "/login",
+        { id_token: idToken, email: firebaseUser.email, display_name: firebaseUser.displayName }
+      );
+      setUser(data.user);
+      scheduleRefresh(data.exp);
       navigate("/posts");
-      console.log("Backend Response:", data);
     } catch (error) {
-      console.error("Login Error:", error);
+      console.error("Google login failed:", error);
     }
   };
 
   const handleLogout = async () => {
-    await logout();
-    localStorage.removeItem("token");
+    await api.delete("/logout");
     setUser(null);
+    clearTimeout(refreshTimer.current);
     navigate("/login");
   };
 
+  const value = {
+    user,
+    initializing,
+    isAuthenticated: !!user,
+    handleLogin,
+    handleSignup,
+    handleGoogleLogin,
+    handleLogout,
+  };
+
   return (
-    <AuthContext.Provider value={{ user, handleSignup, handleLogin, handleLogout, handleGoogleLogin }}>
-      {children}
+    <AuthContext.Provider value={value}>
+      {initializing ? <div>Loading…</div> : children}
     </AuthContext.Provider>
   );
-};
+}

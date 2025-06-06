@@ -1,4 +1,4 @@
-class SprintsController < ApplicationController
+class Api::SprintsController < Api::BaseController
 
   def index
     if params[:last].present?

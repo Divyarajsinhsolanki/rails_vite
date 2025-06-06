@@ -31,7 +31,7 @@
 require 'faraday'
 require 'json'
 
-class Api::CodingTipsController < ApplicationController
+class Api::CodingTipsController < Api::BaseController
   def show
     token = ''
     # model_id = 'gpt2' # Lightweight free model for demonstration; you can pick any HF model supporting text generation

@@ -1,4 +1,4 @@
-class DevelopersController < ApplicationController
+class Api::DevelopersController < Api::BaseController
   def index
     @developers = Developer.order(:name)
     render json: @developers

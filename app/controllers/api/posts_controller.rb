@@ -1,4 +1,4 @@
-class Api::PostsController < ApplicationController
+class Api::PostsController < Api::BaseController
   # before_action :authenticate_user!, only: [:create, :update, :destroy]
   include Rails.application.routes.url_helpers
 

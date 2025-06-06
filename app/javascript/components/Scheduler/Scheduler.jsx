@@ -88,7 +88,7 @@ function TaskCard({ task, onEdit, onTaskUpdate }) {
   const toggleStrike = () => {
     const updatedStrike = !task.is_struck;
     onTaskUpdate({ ...task, is_struck: updatedStrike });
-    fetch(`/tasks/${task.id}.json`, {
+    fetch(`/api/tasks/${task.id}.json`, {
       method: 'PATCH',
       headers: {
         'X-CSRF-Token': document.querySelector("meta[name='csrf-token']")?.content,
@@ -110,7 +110,7 @@ function TaskCard({ task, onEdit, onTaskUpdate }) {
   const deleteTask = () => {
     if (!window.confirm(`Are you sure you want to delete task "${task.task_id}"?`)) return;
     onTaskUpdate({ ...task, deleted: true });
-    fetch(`/tasks/${task.id}.json`, {
+    fetch(`/api/tasks/${task.id}.json`, {
       method: 'DELETE',
       headers: {
         'X-CSRF-Token': document.querySelector("meta[name='csrf-token']")?.content,
@@ -253,7 +253,7 @@ function Scheduler() {
 
 
   useEffect(() => {
-    fetch('/sprints/last.json')
+    fetch('/api/sprints/last.json')
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch sprint data');
         return res.json();
@@ -271,11 +271,11 @@ function Scheduler() {
 
   useEffect(() => {
     Promise.all([
-      fetch('/developers.json').then(res => {
+      fetch('/api/developers.json').then(res => {
         if (!res.ok) throw new Error('Failed to fetch developers');
         return res.json();
       }),
-      fetch('/tasks.json').then(res => {
+      fetch('/api/tasks.json').then(res => {
         if (!res.ok) throw new Error('Failed to fetch tasks');
         return res.json();
       })
@@ -332,7 +332,7 @@ function Scheduler() {
     setTasks(prev => [...prev, newTask]);
     setIsAddTaskModalOpen(false);
 
-    fetch('/tasks.json', {
+    fetch('/api/tasks.json', {
       method: 'POST',
       headers: {
         'X-CSRF-Token': document.querySelector("meta[name='csrf-token']")?.content,
@@ -359,7 +359,7 @@ function Scheduler() {
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...formData, developer_id: Number(formData.developer_id), estimated_hours: parseFloat(formData.estimated_hours) } : t));
     setEditingTask(null);
 
-    fetch(`/tasks/${taskId}.json`, {
+    fetch(`/api/tasks/${taskId}.json`, {
       method: 'PATCH',
       headers: {
         'X-CSRF-Token': document.querySelector("meta[name='csrf-token']")?.content,
@@ -404,7 +404,7 @@ function Scheduler() {
     
     setTasks(prev => prev.map(t => (t.id === taskId ? updatedTaskData : t)));
 
-    fetch(`/tasks/${taskId}.json`, {
+    fetch(`/api/tasks/${taskId}.json`, {
       method: 'PATCH',
       headers: {
         'X-CSRF-Token': document.querySelector("meta[name='csrf-token']")?.content,

@@ -1,4 +1,4 @@
-class TasksController < ApplicationController
+class Api::TasksController < Api::BaseController
   before_action :set_task, only: [:update, :destroy]
 
   # GET /tasks.json

@@ -380,6 +380,7 @@ PLATFORMS
 
 DEPENDENCIES
   PdfMaster!
+  bcrypt
   bootsnap
   byebug
   capybara
@@ -390,6 +391,7 @@ DEPENDENCIES
   firebase_id_token
   jbuilder
   jsbundling-rails
+  jwt
   pg
   puma (>= 5.0)
   rails (~> 7.1.3)

@@ -15,30 +15,22 @@ const Navbar = () => {
         </Link>
 
         <nav className="flex items-center gap-6">
-          {["posts", "scheduler", "todo", "pdf_editor", "knowledge"].map((route) => (
-            <NavLink
-              key={route}
-              to={`/${route}`}
-              className={({ isActive }) =>
-                `relative pb-1 text-gray-700 font-medium hover:text-indigo-600 transition ${
-                  isActive ? "after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-indigo-500" : ""
-                }`
-              }
-            >
-              {route.charAt(0).toUpperCase() + route.slice(1).replace("_", " ")}
-            </NavLink>
-          ))}
-
           {user ? (
             <>
-              <NavLink
-                to="/profile"
-                className={({ isActive }) =>
-                  `text-gray-700 hover:text-indigo-600 ${isActive ? "font-bold" : ""}`
-                }
-              >
-                Profile
-              </NavLink>
+              {["posts", "scheduler", "todo", "pdf_editor", "knowledge", "profile"].map((route) => (
+                <NavLink
+                  key={route}
+                  to={`/${route}`}
+                  className={({ isActive }) =>
+                    `relative pb-1 text-gray-700 font-medium hover:text-indigo-600 transition ${
+                      isActive ? "after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-indigo-500" : ""
+                    }`
+                  }
+                >
+                  {route.charAt(0).toUpperCase() + route.slice(1).replace("_", " ")}
+                </NavLink>
+              ))}
+
               <button
                 onClick={handleLogout}
                 className="ml-2 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md"
@@ -47,12 +39,8 @@ const Navbar = () => {
               </button>
             </>
           ) : (
-            <NavLink
-              to="/login"
-              className="bg-blue-600 text-white px-4 py-1.5 rounded hover:bg-blue-700"
-            >
-              Login
-            </NavLink>
+            <>
+            </>
           )}
         </nav>
       </div>

@@ -1,6 +1,9 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+
 import { AuthProvider } from "../context/AuthContext";
+import PrivateRoute from "../components/PrivateRoute";
+
 import Navbar from "../components/Navbar";
 import Footer from "./Footer";
 import PdfPage from "./PdfPage";
@@ -34,13 +37,15 @@ const App = () => {
             <Routes>
               <Route path="/signup" element={<AuthLayout><Signup /></AuthLayout>} />
               <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
-              <Route path="/" element={<MainLayout><PdfPage /></MainLayout>} />
-              <Route path="/posts" element={<MainLayout><PostPage /></MainLayout>} />
-              <Route path="/profile" element={<MainLayout><Profile /></MainLayout>} />
-              <Route path="/todo" element={<MainLayout><TodoBoard /></MainLayout>} />
-              <Route path="/pdf_editor" element={<MainLayout><PdfEditor /></MainLayout>} />
-              <Route path="/knowledge" element={<MainLayout><KnowledgeDashboard /></MainLayout>} />
-              <Route path="/scheduler" element={<MainLayout><Scheduler /></MainLayout>} />
+
+              {/* 🔐 Protected */}
+              <Route path="/" element={<PrivateRoute><MainLayout><PdfPage /></MainLayout></PrivateRoute>} />
+              <Route path="/posts" element={<PrivateRoute><MainLayout><PostPage /></MainLayout></PrivateRoute>} />
+              <Route path="/profile" element={<PrivateRoute><MainLayout><Profile /></MainLayout></PrivateRoute>} />
+              <Route path="/todo" element={<PrivateRoute><MainLayout><TodoBoard /></MainLayout></PrivateRoute>} />
+              <Route path="/pdf_editor" element={<PrivateRoute><MainLayout><PdfEditor /></MainLayout></PrivateRoute>} />
+              <Route path="/knowledge" element={<PrivateRoute><MainLayout><KnowledgeDashboard /></MainLayout></PrivateRoute>} />
+              <Route path="/scheduler" element={<PrivateRoute><MainLayout><Scheduler /></MainLayout></PrivateRoute>} />
             </Routes>
 
           {/* ✅ Footer */}
