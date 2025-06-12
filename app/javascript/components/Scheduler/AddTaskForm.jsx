@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 export default function AddTaskForm({developers, dates, types, onAddTask, currentSprintId}) {
-  const [formData, setFormData] = useState({ developer_id: '', type: 'code', date: '', task_id: '', task_url: '', estimated_hours: 1 });
+  const [formData, setFormData] = useState({ developer_id: '', type: 'Code', date: '', task_id: '', task_url: '', estimated_hours: 1 });
 
   // If dates/devs/types update, reset defaults
   useEffect(() => {

@@ -15,6 +15,7 @@ import TodoBoard from "../pages/TodoBoard";
 import PdfEditor from '../pages/PdfEditor';
 import KnowledgeDashboard from "../pages/KnowledgeDashboard";
 import Scheduler from '../components/Scheduler/Scheduler';
+import Admin from '../components/Admin/Admin';
 
 
 function AuthLayout({ children }) {
@@ -46,6 +47,7 @@ const App = () => {
               <Route path="/pdf_editor" element={<PrivateRoute><MainLayout><PdfEditor /></MainLayout></PrivateRoute>} />
               <Route path="/knowledge" element={<PrivateRoute><MainLayout><KnowledgeDashboard /></MainLayout></PrivateRoute>} />
               <Route path="/scheduler" element={<PrivateRoute><MainLayout><Scheduler /></MainLayout></PrivateRoute>} />
+              <Route path="/admin" element={<PrivateRoute><MainLayout><Admin /></MainLayout></PrivateRoute>} />
             </Routes>
 
           {/* ✅ Footer */}

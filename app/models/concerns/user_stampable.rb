@@ -9,10 +9,14 @@ module UserStampable
   private
 
   def set_created_by
-    self.created_by ||= User.current_user.try(:id) if User.current_user
+    if self.respond_to?(:created_by=) && User.current_user
+      self.created_by ||= User.current_user.try(:id)
+    end
   end
 
   def set_updated_by
-    self.updated_by = User.current_user.try(:id) if User.current_user
+    if self.respond_to?(:updated_by=) && User.current_user
+      self.updated_by = User.current_user.try(:id)
+    end
   end
 end

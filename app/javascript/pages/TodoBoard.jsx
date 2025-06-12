@@ -4,6 +4,7 @@ import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import { Toaster, toast } from "react-hot-toast";
 import { PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { startOfWeek, addDays, format, isSameDay, parseISO } from 'date-fns';
+import { SchedulerAPI } from '../components/api';
 
 const COLORS = ['#34d399', '#facc15', '#60a5fa'];
 
@@ -71,22 +72,22 @@ export default function TodoBoard() {
   const [assignedTo, setAssignedTo] = useState("");
   
   useEffect(() => {
-    const saved = localStorage.getItem("kanban-tasks");
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      const restored = Object.fromEntries(
-        Object.entries(initialData).map(([colId, defCol]) => [
-          colId,
-          {
-            ...defCol,
-            items: parsed[colId]?.items || [],
-          },
-        ])
-      );
-      setColumns(restored);
-      idCounter = parsed._idCounter || 1;
-    }
+    SchedulerAPI.getTasks()
+      .then(res => {
+        const grouped = groupBy(res.data);
+        setColumns(grouped);
+      })
+      .catch(() => toast.error("Could not load tasks"));
   }, []);
+
+  function groupBy(tasks) {
+    const cols = JSON.parse(JSON.stringify(initialData)); 
+    tasks.forEach(task => {
+      const status = task.status || 'todo';
+      cols[status].items.push(task);
+    });
+    return cols;
+  }
 
   useEffect(() => {
     localStorage.setItem("kanban-tasks", JSON.stringify({ ...columns, _idCounter: idCounter }));
@@ -96,28 +97,14 @@ export default function TodoBoard() {
     if (editInputRef.current) editInputRef.current.focus();
   }, [editTaskId]);
 
-  const handleAddTask = () => {
-    if (!taskTitle.trim()) return;
-    const newTask = {
-      id: `task-${idCounter++}`,
-      title: taskTitle,
-      content: taskContent,
-      due: dueDate,
-      tags: tags.split(',').map((tag) => tag.trim()).filter(Boolean),
-      recurring: recurringType,
-      createdBy,
-      assignedTo,
-    };
-    setColumns((prev) => ({
+  const handleAddTask = async () => {
+    const newTask = { title: taskTitle, content: taskContent, due: dueDate, tags: tags.split(',').map(t=>t.trim()), created_by: createdBy, assigned_to: assignedTo, recurring: recurringType, status: 'todo' };
+    const { data } = await SchedulerAPI.createTask({ task: newTask });
+    setColumns(prev => ({
       ...prev,
-      todo: { ...prev.todo, items: [...prev.todo.items, newTask] },
+      todo: { ...prev.todo, items: [...prev.todo.items, data] }
     }));
-    setTaskTitle('');
-    setTaskContent('');
-    setDueDate('');
-    setTags('');
-    setRecurringType('');
-    toast.success('Task added');
+    toast.success("Task added");
   };
 
   useEffect(() => {
@@ -141,30 +128,23 @@ export default function TodoBoard() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleDelete = (colId, taskId) => {
-    setColumns((prev) => ({
+  const handleDelete = async (colId, taskId) => {
+    await SchedulerAPI.deleteTask(taskId);
+    setColumns(prev => ({
       ...prev,
-      [colId]: {
-        ...prev[colId],
-        items: prev[colId].items.filter((item) => item.id !== taskId),
-      },
+      [colId]: { ...prev[colId], items: prev[colId].items.filter(t => t.id !== taskId) }
     }));
     toast.success("Task deleted");
   };
 
-  const handleEditSave = (colId) => {
-    const updated = { ...editTaskDetails, tags: editTaskDetails.tags.split(',').map(tag => tag.trim()) };
-    setColumns((prev) => ({
+  const handleEditSave = async (colId) => {
+    const updates = { ...editTaskDetails, tags: editTaskDetails.tags.split(',').map(t=>t.trim()) };
+    const { data } = await SchedulerAPI.updateTask(editTaskId, { task: updates });
+    setColumns(prev => ({
       ...prev,
-      [colId]: {
-        ...prev[colId],
-        items: prev[colId].items.map((item) =>
-          item.id === editTaskId ? { ...item, ...updated } : item
-        ),
-      },
+      [colId]: { ...prev[colId], items: prev[colId].items.map(t => t.id === data.id ? data : t) }
     }));
     setEditTaskId(null);
-    setEditTaskDetails({ content: '', due: '', tags: '', createdBy: '', assignedTo: '', recurring: '' });
     toast.success("Task updated");
   };
 
@@ -176,31 +156,29 @@ export default function TodoBoard() {
       setEditText("");
     }
   };
+  const term = (searchTerm || "").toLowerCase();
 
-  const onDragEnd = (result) => {
+  const onDragEnd = async result => {
     const { source, destination } = result;
     if (!destination) return;
-
-    const sourceCol = columns[source.droppableId];
-    const destCol = columns[destination.droppableId];
-    const sourceItems = [...sourceCol.items];
-    const destItems = [...destCol.items];
-    const [movedItem] = sourceItems.splice(source.index, 1);
-
-    if (source.droppableId === destination.droppableId) {
-      sourceItems.splice(destination.index, 0, movedItem);
-      setColumns({
-        ...columns,
-        [source.droppableId]: { ...sourceCol, items: sourceItems },
-      });
-    } else {
-      destItems.splice(destination.index, 0, movedItem);
-      setColumns({
-        ...columns,
-        [source.droppableId]: { ...sourceCol, items: sourceItems },
-        [destination.droppableId]: { ...destCol, items: destItems },
-      });
-    }
+  
+    const srcCol = columns[source.droppableId];
+    const dstCol = columns[destination.droppableId];
+    const item = srcCol.items[source.index];
+  
+    const updatedItem = { ...item, status: destination.droppableId };
+    await SchedulerAPI.moveTask(item.id, { task: { status: updatedItem.status } });
+  
+    const newSrcItems = Array.from(srcCol.items);
+    newSrcItems.splice(source.index, 1);
+    const newDstItems = Array.from(dstCol.items);
+    newDstItems.splice(destination.index, 0, updatedItem);
+  
+    setColumns(prev => ({
+      ...prev,
+      [source.droppableId]: { ...srcCol, items: newSrcItems },
+      [destination.droppableId]: { ...dstCol, items: newDstItems }
+    }));
   };
 
   const getDueColor = (due) => {
@@ -347,20 +325,28 @@ export default function TodoBoard() {
                   {...provided.droppableProps}
                 >
                   <h2 className="text-xl font-semibold mb-4 text-gray-800">{column.name}</h2>
-                  {column.items.filter(item =>
-                    item.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    item.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-                  ).length === 0 && (
+                  {column.items.filter(item => {
+                    const content = (item.task_id || "").toLowerCase();
+                    
+                    const tagMatch = Array.isArray(item.tags)
+                      ? item.tags.some(tag => (tag || "").toLowerCase().includes(term))
+                      : false;
+
+                    return content.includes(term) || tagMatch;
+                }).length === 0 && (
                     <p className="text-sm italic text-gray-500">No matching tasks.</p>
                   )}
       
                   {column.items
-                    .filter(item =>
-                      item.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      item.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-                    )
+                    .filter(item => {
+                      const content = (item.task_id || "").toLowerCase();
+                      const tagMatch = Array.isArray(item.tags)
+                        ? item.tags.some(tag => (tag || "").toLowerCase().includes(term))
+                        : false;
+                      return content.includes(term) || tagMatch;
+                    })
                     .map((item, index) => (
-                      <Draggable key={item.id} draggableId={item.id} index={index}>
+                      <Draggable key={String(item.id)} draggableId={String(item.id)} index={index}>
                         {(provided) => (
                           <div
                             className="bg-white p-4 mb-4 rounded-lg shadow-lg hover:bg-gray-100 transition-all"
@@ -421,13 +407,13 @@ export default function TodoBoard() {
                             ) : (
                               <div>
                                 <div className="flex justify-between items-start">
-                                  <div className="flex-1 text-gray-900">{item.content}</div>
+                                  <div className="flex-1 text-gray-900">{item.task_id}</div>
                                   <div className="flex flex-col gap-1 text-sm">
                                     <button
                                       onClick={() => {
                                         setEditTaskId(item.id);
                                         setEditTaskDetails({
-                                          content: item.content,
+                                          content: item.task_id,
                                           due: item.due || '',
                                           tags: (item.tags || []).join(', '),
                                           createdBy: item.createdBy || '',

@@ -15,12 +15,16 @@ export default function SprintManager({ onSprintChange }) {
     fetch('/api/sprints.json')
       .then(res => res.json())
       .then(data => {
+        const today = new Date();
+        const filteredSprint = data?.find(sprint => {
+          const startDate = new Date(sprint.start_date);
+          const endDate = new Date(sprint.end_date);
+          return today >= startDate && today <= endDate;
+        });
+  
         setSprints(data || []);
-        if (data?.length) {
-          const last = data[data.length - 1];
-          setCurrentSprint(last);
-          if (onSprintChange) onSprintChange(last);
-        }
+        setCurrentSprint(filteredSprint || null);
+        if (filteredSprint && onSprintChange) onSprintChange(filteredSprint);
       })
       .finally(() => setLoading(false));
   }, []);

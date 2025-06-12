@@ -46,10 +46,21 @@ Rails.application.routes.draw do
     post 'update_profile', to: 'auth#update_profile'
     get 'coding_tip', to: 'coding_tips#show'
 
+    resources :users, only: [:index, :update, :destroy]
     resources :posts, only: [:index, :create, :update, :destroy]
     resources :sprints, only: [:index, :create, :update, :destroy]
     resources :developers, only: [:index]
     resources :tasks, only: [:index, :create, :update, :destroy]
+
+    get 'admin/tables', to: 'admin#tables'
+    get 'admin_meta/:table', to: 'admin#meta'
+  
+    scope 'admin/:table' do
+      get '/', to: 'admin#index'
+      post '/', to: 'admin#create'
+      patch '/:id', to: 'admin#update'
+      delete '/:id', to: 'admin#destroy'
+    end
   end
 
   get "*path", to: "pages#index", constraints: lambda { |req|
