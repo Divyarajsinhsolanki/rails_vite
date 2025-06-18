@@ -11,7 +11,7 @@ import Signup from "../pages/Signup";
 import Login from "../pages/Login";
 import PostPage from "../pages/PostPage";
 import Profile from "../components/Profile";
-import TodoBoard from "../pages/TodoBoard";
+import TodoBoard from "../components/TodoBoard/TodoBoard";
 import PdfEditor from '../pages/PdfEditor';
 import KnowledgeDashboard from "../pages/KnowledgeDashboard";
 import Scheduler from '../components/Scheduler/Scheduler';
