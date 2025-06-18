@@ -230,12 +230,6 @@ export default function TodoBoard() {
             className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all sm:w-1/3"
           />
           <input
-            value={createdBy}
-            onChange={(e) => setCreatedBy(e.target.value)}
-            placeholder="Created by"
-            className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all"
-          />
-          <input
             value={assignedTo}
             onChange={(e) => setAssignedTo(e.target.value)}
             placeholder="Assigned to"

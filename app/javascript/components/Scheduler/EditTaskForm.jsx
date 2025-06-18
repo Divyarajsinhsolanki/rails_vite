@@ -148,17 +148,6 @@ export default function EditTaskForm({ task, developers, dates, types, onSave, o
       {formData.sprint_id && (
         <input type="hidden" name="sprint_id" value={formData.sprint_id} />
       )}
-
-      {/* Cancel Button */}
-      <div className="flex justify-end mt-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="text-sm text-gray-600 hover:underline"
-        >
-          Cancel
-        </button>
-      </div>
     </form>
   );
 }
