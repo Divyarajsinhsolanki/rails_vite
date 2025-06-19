@@ -1,8 +1,0 @@
-I, [2025-04-21T19:05:55.125239 #13503]  INFO -- : Removing pages ["1"] from /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
-I, [2025-04-21T19:05:55.134032 #13503]  INFO -- : Pages [1] removed successfully.
-I, [2025-04-21T19:06:09.601187 #13503]  INFO -- : Rotating pages ["2"] of /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf by 90 degrees
-I, [2025-04-21T19:06:09.611476 #13503]  INFO -- : Pages rotated successfully.
-I, [2025-04-21T19:06:22.714658 #13503]  INFO -- : Rotating pages ["3"] of /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf by 90 degrees
-I, [2025-04-21T19:06:22.726407 #13503]  INFO -- : Pages rotated successfully.
-I, [2025-04-21T19:06:39.472222 #13503]  INFO -- : Rotating pages ["3"] of /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf by 270 degrees
-I, [2025-04-21T19:06:39.484371 #13503]  INFO -- : Pages rotated successfully.

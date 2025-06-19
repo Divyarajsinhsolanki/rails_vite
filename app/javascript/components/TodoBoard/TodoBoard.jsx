@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { DragDropContext } from "@hello-pangea/dnd";
 import { Toaster, toast } from "react-hot-toast";
 import { SchedulerAPI } from '../api';
-// import { generateRecurringTask } from '../utils/taskUtils'; // TODO
 
 // Component Imports
 import TaskForm from "./TaskForm";
