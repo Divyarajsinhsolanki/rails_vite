@@ -59,6 +59,12 @@ const Profile = () => {
     }
   };
 
+  const displayName = user
+    ? ([user.first_name, user.last_name]
+        .filter((n) => n && n !== "null")
+        .join(" ") || "Unnamed User")
+    : "";
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4">
       <div className={`w-full max-w-4xl transition-opacity duration-500 ${editMode ? 'opacity-0' : 'opacity-100'}`}>
@@ -68,7 +74,11 @@ const Profile = () => {
               {/* Profile Image with a subtle border animation */}
               <div className="relative group">
                 <img
-                  src={user?.profile_picture || 'https://via.placeholder.com/150'}
+                  src={
+                    user?.profile_picture && user.profile_picture !== 'null'
+                      ? user.profile_picture
+                      : 'https://via.placeholder.com/150'
+                  }
                   alt="Profile"
                   className="w-40 h-40 rounded-full object-cover border-4 border-transparent group-hover:border-blue-300 transition-all duration-300"
                 />
@@ -80,7 +90,7 @@ const Profile = () => {
               {/* User Info with more spacing and better typography */}
               <div className="md:ml-8 mt-6 md:mt-0">
                 <h1 className="text-4xl font-extrabold text-gray-800">
-                  {user ? `${user.first_name} ${user.last_name}` : "Loading..."}
+                  {user ? displayName : "Loading..."}
                 </h1>
                 <p className="text-md text-gray-500 mt-1">{user?.email}</p>
                 {user?.date_of_birth && (
@@ -191,5 +201,4 @@ const Profile = () => {
     </div>
   );
 };
-
 export default Profile;
