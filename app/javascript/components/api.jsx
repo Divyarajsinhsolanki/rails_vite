@@ -70,6 +70,10 @@ export const fetchUserInfo = () => api.get("/view_profile");
 export const updateUserInfo = (d) => api.post("/update_profile", d);
 export const getUsers = () => api.get('/users.json');
 export const deleteUser = (id) => api.delete(`/users/${id}.json`);
+export const updateUser = (id, data) =>
+  api.patch(`/users/${id}.json`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
 
 // POST ENDPOINTS (existing)
 export const fetchPosts = (id) => api.get(id ? `/posts?user_id=${id}` : "/posts");
@@ -89,5 +93,4 @@ export const createRecord = (table, data) => api.post(`/admin/${table}`, { recor
 export const updateRecord = (table, id, data) => api.patch(`/admin/${table}/${id}`, { record: data });
 // Delete a record by ID in a table
 export const deleteRecord = (table, id) => api.delete(`/admin/${table}/${id}`);
-
 export default api;
