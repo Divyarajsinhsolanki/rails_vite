@@ -30,6 +30,13 @@ const fetchers = [
       }),
 ];
 
+const fallbackQuotes = [
+  { q: "Practice makes perfect.", a: "Unknown" },
+  { q: "Code is like humor. When you have to explain it, it's bad.", a: "Cory House" },
+  { q: "First, solve the problem. Then, write the code.", a: "John Johnson" },
+  { q: "Any fool can write code that a computer can understand. Good programmers write code that humans can understand.", a: "Martin Fowler" },
+];
+
 export default function QuoteOfTheDayCard() {
   const [quote, setQuote] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -53,7 +60,7 @@ export default function QuoteOfTheDayCard() {
       }
       // all failed fallback
       if (mounted) {
-        setQuote({ q: "No quote available today.", a: "" });
+        setQuote(fallbackQuotes[Math.floor(Math.random() * fallbackQuotes.length)]);
         setLoading(false);
       }
     }
