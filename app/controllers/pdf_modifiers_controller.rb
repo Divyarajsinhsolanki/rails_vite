@@ -12,7 +12,7 @@ class PdfModifiersController < ApplicationController
 
   def add_page
     begin
-      PdfMaster.add_page(@pdf_path, *@position)
+      PdfMaster.add_page(@pdf_path, @position.to_i)
       render json: { message: "Page added successfully." }, status: :ok
     rescue => e
       render json: { error: e.message }, status: :unprocessable_entity
@@ -21,7 +21,7 @@ class PdfModifiersController < ApplicationController
 
   def remove_page
     begin
-      PdfMaster.remove_page(@pdf_path, *@position)
+      PdfMaster.remove_page(@pdf_path, @position.to_i)
       render json: { message: "Page removed successfully." }, status: :ok
     rescue => e
       render json: { error: e.message }, status: :unprocessable_entity
@@ -30,7 +30,7 @@ class PdfModifiersController < ApplicationController
 
   def duplicate_page
     begin
-      PdfMaster.duplicate_pages(@pdf_path, *@page_number)
+      PdfMaster.duplicate_pages(@pdf_path, @page_number.to_i)
       render json: { message: "Page duplicated successfully." }, status: :ok
     rescue => e
       render json: { error: e.message }, status: :unprocessable_entity
@@ -66,7 +66,7 @@ class PdfModifiersController < ApplicationController
 
   def rotate_left
     begin
-      PdfMaster.rotate_page(@pdf_path, 270, *@page_number)
+      PdfMaster.rotate_page(@pdf_path, 270, @page_number.to_i)
       render json: { message: "Page rotated left successfully." }, status: :ok
     rescue => e
       render json: { error: e.message }, status: :unprocessable_entity
@@ -75,7 +75,7 @@ class PdfModifiersController < ApplicationController
 
   def rotate_right
     begin
-      PdfMaster.rotate_page(@pdf_path, 90, *@page_number)
+      PdfMaster.rotate_page(@pdf_path, 90, @page_number.to_i)
       render json: { message: "Page rotated right successfully." }, status: :ok
     rescue => e
       render json: { error: e.message }, status: :unprocessable_entity
