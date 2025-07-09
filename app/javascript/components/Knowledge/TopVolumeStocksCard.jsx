@@ -1,11 +1,43 @@
 import React, { useEffect, useState } from "react";
 
-const sampleVolume = [
-  { symbol: "RELIANCE", volume: "18M" },
-  { symbol: "SBIN", volume: "15M" },
-  { symbol: "TATAMOTORS", volume: "13M" },
-  { symbol: "ICICIBANK", volume: "11M" },
-  { symbol: "HINDALCO", volume: "10M" },
+// API keys for external stock data sources
+const API_KEYS = {
+  FMP: "YOUR_FMP_API_KEY", // Financial Modeling Prep
+  ALPHA: "YOUR_ALPHA_VANTAGE_KEY", // AlphaVantage fallback
+};
+
+// Functions that fetch stock data in priority order
+const fetchers = [
+  // 1) Financial Modeling Prep - most active stocks (high volume)
+  () =>
+    fetch(
+      `https://financialmodelingprep.com/api/v3/stock_market/actives?apikey=${API_KEYS.FMP}`
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length)
+          return data.slice(0, 5).map((d) => ({
+            symbol: d.symbol || d.ticker,
+            volume: d.volume || d.avgVolume || "N/A",
+          }));
+        throw new Error("Invalid FMP response");
+      }),
+
+  // 2) AlphaVantage market movers endpoint
+  () =>
+    fetch(
+      `https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=${API_KEYS.ALPHA}`
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        const arr = data?.most_actively_traded || data?.mostActiveStock;
+        if (Array.isArray(arr) && arr.length)
+          return arr.slice(0, 5).map((d) => ({
+            symbol: d.ticker || d.symbol,
+            volume: d.volume || "N/A",
+          }));
+        throw new Error("Invalid AlphaVantage response");
+      }),
 ];
 
 export default function TopVolumeStocksCard() {
@@ -13,8 +45,33 @@ export default function TopVolumeStocksCard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setStocks(sampleVolume);
-    setLoading(false);
+    let mounted = true;
+
+    async function fetchWithFallback() {
+      setLoading(true);
+      for (const fetcher of fetchers) {
+        try {
+          const results = await fetcher();
+          if (mounted) {
+            setStocks(results);
+            setLoading(false);
+          }
+          return;
+        } catch (e) {
+          console.warn("Top volume fetch failed:", e.message);
+        }
+      }
+      if (mounted) {
+        setStocks([]);
+        setLoading(false);
+      }
+    }
+
+    fetchWithFallback();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return (
