@@ -8,10 +8,10 @@ const API_KEYS = {
 
 // Fetch functions in priority order
 const fetchers = [
-  // 1) Financial Modeling Prep top gainers
+  // 1) Financial Modeling Prep top gainers on NSE
   () =>
     fetch(
-      `https://financialmodelingprep.com/api/v3/stock_market/gainers?apikey=${API_KEYS.FMP}`
+      `https://financialmodelingprep.com/api/v3/stock_market/gainers?exchange=NSE&apikey=${API_KEYS.FMP}`
     )
       .then((res) => res.json())
       .then((data) => {
@@ -24,10 +24,10 @@ const fetchers = [
         throw new Error("Invalid FMP response");
       }),
 
-  // 2) AlphaVantage market movers (top gainers)
+  // 2) AlphaVantage market movers (top gainers) for India
   () =>
     fetch(
-      `https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=${API_KEYS.ALPHA}`
+      `https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&market=IN&apikey=${API_KEYS.ALPHA}`
     )
       .then((res) => res.json())
       .then((data) => {
@@ -78,7 +78,7 @@ export default function TopGainersCard() {
 
   return (
     <div className="bg-white shadow-md rounded-2xl p-4 h-full flex flex-col">
-      <h2 className="text-lg font-semibold mb-2">🏆 Top Gainers</h2>
+      <h2 className="text-lg font-semibold mb-2">🇮🇳 Top Gainers</h2>
       {loading ? (
         <div className="text-sm text-gray-500">Loading...</div>
       ) : stocks.length ? (
