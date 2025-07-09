@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 const API_KEYS = {
-  GNEWS: "YOUR_GNEWS_API_KEY",          // primary
+  GNEWS: "d098827abeb336616016d7585e1931e9",          // primary
   NEWSAPI: "YOUR_NEWSAPI_KEY",          // secondary
 };
 

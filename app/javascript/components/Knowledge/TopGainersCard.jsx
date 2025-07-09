@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 
 // API keys for gainers data
 const API_KEYS = {
-  FMP: "YOUR_FMP_API_KEY", // Financial Modeling Prep
+  FMP: "e5ye9VH06cq5TTNyyA6z2gd2S8pf9sBV", // Financial Modeling Prep
   ALPHA: "YOUR_ALPHA_VANTAGE_KEY", // AlphaVantage fallback
 };
 
