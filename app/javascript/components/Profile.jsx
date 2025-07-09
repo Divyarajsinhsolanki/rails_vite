@@ -65,6 +65,8 @@ const Profile = () => {
         .join(" ") || "Unnamed User")
     : "";
 
+  const initial = (user?.first_name || user?.email || "").charAt(0).toUpperCase();
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4">
       <div className={`w-full max-w-4xl transition-opacity duration-500 ${editMode ? 'opacity-0' : 'opacity-100'}`}>
@@ -73,15 +75,17 @@ const Profile = () => {
             <div className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left">
               {/* Profile Image with a subtle border animation */}
               <div className="relative group">
-                <img
-                  src={
-                    user?.profile_picture && user.profile_picture !== 'null'
-                      ? user.profile_picture
-                      : 'https://via.placeholder.com/150'
-                  }
-                  alt="Profile"
-                  className="w-40 h-40 rounded-full object-cover border-4 border-transparent group-hover:border-blue-300 transition-all duration-300"
-                />
+                {user?.profile_picture && user.profile_picture !== 'null' ? (
+                  <img
+                    src={user.profile_picture}
+                    alt="Profile"
+                    className="w-40 h-40 rounded-full object-cover border-4 border-transparent group-hover:border-blue-300 transition-all duration-300"
+                  />
+                ) : (
+                  <div className="w-40 h-40 rounded-full bg-gradient-to-tr from-indigo-500 to-blue-500 text-white text-6xl font-bold flex items-center justify-center">
+                    {initial}
+                  </div>
+                )}
                 <div className="absolute inset-0 rounded-full bg-black bg-opacity-25 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <p className="text-white text-lg">Change</p>
                 </div>
