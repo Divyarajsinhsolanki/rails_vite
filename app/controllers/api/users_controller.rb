@@ -1,10 +1,11 @@
 class Api::UsersController < Api::BaseController
+  include Rails.application.routes.url_helpers
   before_action :set_user, only: [:update, :destroy, :update_profile]
 
   # GET /api/users.json
   def index
     @users = User.order(created_at: :desc)
-    render json: @users
+    render json: @users.map { |user| serialize_user(user) }
   end
 
   # PATCH /api/users/:id.json
@@ -40,4 +41,15 @@ class Api::UsersController < Api::BaseController
   def user_params
     params.require(:user).permit(:first_name, :last_name, :email, :date_of_birth)
   end
-end
+
+  def serialize_user(user)
+    {
+      id: user.id,
+      email: user.email,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      date_of_birth: user.date_of_birth,
+      profile_picture: user.profile_picture.attached? ?
+        rails_blob_url(user.profile_picture, only_path: true) : nil
+    }
+  endend
