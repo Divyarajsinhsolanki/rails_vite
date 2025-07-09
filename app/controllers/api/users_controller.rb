@@ -52,4 +52,5 @@ class Api::UsersController < Api::BaseController
       profile_picture: user.profile_picture.attached? ?
         rails_blob_url(user.profile_picture, only_path: true) : nil
     }
-  endend
+  end
+end
