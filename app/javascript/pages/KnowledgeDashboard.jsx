@@ -11,6 +11,9 @@ import TopGainersCard from "../components/Knowledge/TopGainersCard";
 import TopVolumeStocksCard from "../components/Knowledge/TopVolumeStocksCard";
 import TopBuyingStocksCard from "../components/Knowledge/TopBuyingStocksCard";
 import IndianStockNewsCard from "../components/Knowledge/IndianStockNewsCard";
+import CommonEnglishWordCard from "../components/Knowledge/CommonEnglishWordCard";
+import EnglishTenseCard from "../components/Knowledge/EnglishTenseCard";
+import EnglishPhraseCard from "../components/Knowledge/EnglishPhraseCard";
 
 export default function KnowledgeDashboard() {
   // Example states for toggles & dark mode omitted for brevity
@@ -29,6 +32,9 @@ export default function KnowledgeDashboard() {
         <AnimatedCard><TopNewsCard /></AnimatedCard>
         <AnimatedCard><DailyFactCard /></AnimatedCard>
         <AnimatedCard><WordOfTheDayCard /></AnimatedCard>
+        <AnimatedCard><CommonEnglishWordCard /></AnimatedCard>
+        <AnimatedCard><EnglishTenseCard /></AnimatedCard>
+        <AnimatedCard><EnglishPhraseCard /></AnimatedCard>
         <AnimatedCard><RandomCodingTipCard /></AnimatedCard>
         <AnimatedCard><ScienceNewsCard /></AnimatedCard>
         <AnimatedCard><TechNewsCard /></AnimatedCard>
