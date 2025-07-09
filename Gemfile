@@ -78,7 +78,8 @@ gem "ruby-openai", "~> 5.0"
 gem 'faraday', '~> 2.7'
 gem 'jwt'
 gem 'bcrypt'
+gem 'stripe'
+gem 'rqrcode'
 
 group :production do
-  # gem 'pdf_master', path: 'lib/pdf_master'
-end
+  # gem 'pdf_master', path: 'lib/pdf_master'end

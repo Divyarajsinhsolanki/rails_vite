@@ -17,6 +17,8 @@ import KnowledgeDashboard from "../pages/KnowledgeDashboard";
 import Scheduler from '../components/Scheduler/Scheduler';
 import Admin from '../components/Admin/Admin';
 import Users from "../pages/Users";
+import Event from "../pages/Event";
+import Ticket from "../pages/Ticket";
 
 
 function AuthLayout({ children }) {
@@ -39,6 +41,8 @@ const App = () => {
             <Routes>
               <Route path="/signup" element={<AuthLayout><Signup /></AuthLayout>} />
               <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
+              <Route path="/event" element={<MainLayout><Event /></MainLayout>} />
+              <Route path="/ticket" element={<MainLayout><Ticket /></MainLayout>} />
 
               {/* 🔐 Protected */}
               <Route path="/" element={<PrivateRoute><MainLayout><PdfPage /></MainLayout></PrivateRoute>} />
