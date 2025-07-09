@@ -5,6 +5,8 @@ import TopNewsCard from "../components/Knowledge/TopNewsCard";
 import DailyFactCard from "../components/Knowledge/DailyFactCard";
 import WordOfTheDayCard from "../components/Knowledge/WordOfTheDayCard";
 import RandomCodingTipCard from "../components/Knowledge/RandomCodingTipCard";
+import ScienceNewsCard from "../components/Knowledge/ScienceNewsCard";
+import TechNewsCard from "../components/Knowledge/TechNewsCard";
 
 export default function KnowledgeDashboard() {
   // Example states for toggles & dark mode omitted for brevity
@@ -24,6 +26,8 @@ export default function KnowledgeDashboard() {
         <AnimatedCard><DailyFactCard /></AnimatedCard>
         <AnimatedCard><WordOfTheDayCard /></AnimatedCard>
         <AnimatedCard><RandomCodingTipCard /></AnimatedCard>
+        <AnimatedCard><ScienceNewsCard /></AnimatedCard>
+        <AnimatedCard><TechNewsCard /></AnimatedCard>
       </div>
 
       {/* Optional: My Library saved items panel */}
