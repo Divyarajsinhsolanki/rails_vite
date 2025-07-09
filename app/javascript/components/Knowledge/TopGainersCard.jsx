@@ -1,11 +1,45 @@
 import React, { useEffect, useState } from "react";
 
-const sampleGainers = [
-  { symbol: "RELIANCE", price: "2700", change: "+2.5%" },
-  { symbol: "INFY", price: "1700", change: "+2.1%" },
-  { symbol: "HDFCBANK", price: "1620", change: "+1.9%" },
-  { symbol: "ICICIBANK", price: "970", change: "+1.8%" },
-  { symbol: "TCS", price: "3570", change: "+1.7%" },
+// API keys for gainers data
+const API_KEYS = {
+  FMP: "YOUR_FMP_API_KEY", // Financial Modeling Prep
+  ALPHA: "YOUR_ALPHA_VANTAGE_KEY", // AlphaVantage fallback
+};
+
+// Fetch functions in priority order
+const fetchers = [
+  // 1) Financial Modeling Prep top gainers
+  () =>
+    fetch(
+      `https://financialmodelingprep.com/api/v3/stock_market/gainers?apikey=${API_KEYS.FMP}`
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length)
+          return data.slice(0, 5).map((d) => ({
+            symbol: d.symbol || d.ticker,
+            price: d.price || d.price || "N/A",
+            change: d.changesPercentage || d.changes || "",
+          }));
+        throw new Error("Invalid FMP response");
+      }),
+
+  // 2) AlphaVantage market movers (top gainers)
+  () =>
+    fetch(
+      `https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=${API_KEYS.ALPHA}`
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        const arr = data?.top_gainers || data?.topGainers || [];
+        if (Array.isArray(arr) && arr.length)
+          return arr.slice(0, 5).map((d) => ({
+            symbol: d.ticker || d.symbol,
+            price: d.price || "N/A",
+            change: d.change_percentage || d.change || "",
+          }));
+        throw new Error("Invalid AlphaVantage response");
+      }),
 ];
 
 export default function TopGainersCard() {
@@ -13,8 +47,33 @@ export default function TopGainersCard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setStocks(sampleGainers);
-    setLoading(false);
+    let mounted = true;
+
+    async function fetchWithFallback() {
+      setLoading(true);
+      for (const fetcher of fetchers) {
+        try {
+          const results = await fetcher();
+          if (mounted) {
+            setStocks(results);
+            setLoading(false);
+          }
+          return;
+        } catch (e) {
+          console.warn("Top gainers fetch failed:", e.message);
+        }
+      }
+      if (mounted) {
+        setStocks([]);
+        setLoading(false);
+      }
+    }
+
+    fetchWithFallback();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return (
