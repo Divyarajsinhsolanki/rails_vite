@@ -42,15 +42,17 @@ const Users = () => {
             key={user.id}
             className="bg-white border border-gray-100 shadow-md rounded-xl p-6 flex flex-col items-center text-center transition-transform transform hover:-translate-y-1 hover:shadow-lg"
           >
-            <img
-              src={
-                user.profile_picture && user.profile_picture !== 'null'
-                  ? user.profile_picture
-                  : 'https://via.placeholder.com/150'
-              }
-              alt="Profile"
-              className="w-20 h-20 mb-4 rounded-full object-cover border-2 border-gray-200"
-            />
+            {user.profile_picture && user.profile_picture !== 'null' ? (
+              <img
+                src={user.profile_picture}
+                alt="Profile"
+                className="w-20 h-20 mb-4 rounded-full object-cover border-2 border-gray-200"
+              />
+            ) : (
+              <div className="w-20 h-20 mb-4 rounded-full bg-gradient-to-tr from-indigo-500 to-blue-500 text-white text-3xl font-bold flex items-center justify-center">
+                {(user.first_name || user.email).charAt(0).toUpperCase()}
+              </div>
+            )}
             <h2 className="text-lg font-semibold mb-1">
               {user.first_name} {user.last_name}
             </h2>
