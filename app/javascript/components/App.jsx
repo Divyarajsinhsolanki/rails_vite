@@ -10,6 +10,7 @@ import PdfPage from "./PdfPage";
 import Signup from "../pages/Signup";
 import Login from "../pages/Login";
 import PostPage from "../pages/PostPage";
+import Notes from "../pages/Notes";
 import Profile from "../components/Profile";
 import TodoBoard from "../components/TodoBoard/TodoBoard";
 import PdfEditor from '../pages/PdfEditor';
@@ -49,6 +50,7 @@ const App = () => {
               {/* 🔐 Protected */}
               <Route path="/" element={<PrivateRoute><MainLayout><PdfPage /></MainLayout></PrivateRoute>} />
               <Route path="/posts" element={<PrivateRoute><MainLayout><PostPage /></MainLayout></PrivateRoute>} />
+              <Route path="/notes" element={<PrivateRoute><MainLayout><Notes /></MainLayout></PrivateRoute>} />
               <Route path="/profile" element={<PrivateRoute><MainLayout><Profile /></MainLayout></PrivateRoute>} />
               <Route path="/todo" element={<PrivateRoute><MainLayout><TodoBoard /></MainLayout></PrivateRoute>} />
               <Route path="/pdf_editor" element={<PrivateRoute><MainLayout><PdfEditor /></MainLayout></PrivateRoute>} />
