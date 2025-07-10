@@ -81,6 +81,12 @@ export const createPost = (d) => api.post("/posts", d);
 export const updatePost = (i, d) => api.put(`/posts/${i}`, d);
 export const deletePost = (i) => api.delete(`/posts/${i}`);
 
+// NOTE ENDPOINTS
+export const fetchNotes = () => api.get('/notes.json');
+export const createNote = (d) => api.post('/notes.json', { note: d });
+export const updateNote = (id, d) => api.patch(`/notes/${id}.json`, { note: d });
+export const deleteNote = (id) => api.delete(`/notes/${id}.json`);
+
 // Fetch list of tables
 export const getTables = () => api.get('/admin/tables');
 // Fetch column metadata for a given table

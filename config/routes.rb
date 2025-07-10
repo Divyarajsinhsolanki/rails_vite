@@ -54,6 +54,7 @@ Rails.application.routes.draw do
     resources :sprints, only: [:index, :create, :update, :destroy]
     resources :developers, only: [:index]
     resources :tasks, only: [:index, :create, :update, :destroy]
+    resources :notes, only: [:index, :create, :update, :destroy]
 
     resources :contacts, only: [:create]
 
