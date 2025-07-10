@@ -57,6 +57,8 @@ Rails.application.routes.draw do
 
     resources :contacts, only: [:create]
 
+    get 'greeting', to: 'greetings#show'
+
     get 'admin/tables', to: 'admin#tables'
     get 'admin_meta/:table', to: 'admin#meta'
   
