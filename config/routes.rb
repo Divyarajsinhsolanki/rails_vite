@@ -48,16 +48,21 @@ Rails.application.routes.draw do
     get 'english_word', to: 'english_words#show'
     get 'english_tense', to: 'english_tenses#show'
     get 'english_phrase', to: 'english_phrases#show'
+    get 'weather', to: 'weather#show'
+    get 'joke', to: 'jokes#show'
 
     resources :users, only: [:index, :update, :destroy]
     resources :posts, only: [:index, :create, :update, :destroy]
     resources :sprints, only: [:index, :create, :update, :destroy]
     resources :developers, only: [:index]
     resources :tasks, only: [:index, :create, :update, :destroy]
+    resources :notes, only: [:index, :create, :update, :destroy]
 
     resources :quotes, only: [:index, :create]
 
     resources :contacts, only: [:create]
+
+    get 'greeting', to: 'greetings#show'
 
     get 'admin/tables', to: 'admin#tables'
     get 'admin_meta/:table', to: 'admin#meta'

@@ -35,9 +35,39 @@ const Navbar = () => {
             >
               Contact
             </NavLink>
+            <NavLink
+              to="/joke"
+              className={({ isActive }) =>
+                `relative pb-1 text-gray-700 font-medium hover:text-indigo-600 transition ${
+                  isActive ? "after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-indigo-500" : ""
+                }`
+              }
+            >
+              Joke
+            </NavLink>
+            <NavLink
+              to="/greeting"
+              className={({ isActive }) =>
+                `relative pb-1 text-gray-700 font-medium hover:text-indigo-600 transition ${
+                  isActive ? "after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-indigo-500" : ""
+                }`
+              }
+            >
+              Greeting
+            </NavLink>
+            <NavLink
+              to="/weather"
+              className={({ isActive }) =>
+                `relative pb-1 text-gray-700 font-medium hover:text-indigo-600 transition ${
+                  isActive ? "after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-indigo-500" : ""
+                }`
+              }
+            >
+              Weather
+            </NavLink>
             {user ? (
               <>
-                {["posts", "quotes", "scheduler", "todo", "pdf_editor", "knowledge", "profile", "users", "admin"].map((route) => (
+                {["posts", "notes", "quotes", "scheduler", "todo", "pdf_editor", "knowledge", "profile", "users", "admin"].map((route) => (
                   <NavLink
                     key={route}
                     to={`/${route}`}
