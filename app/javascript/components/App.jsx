@@ -21,6 +21,7 @@ import Users from "../pages/Users";
 import Event from "../pages/Event";
 import Ticket from "../pages/Ticket";
 import Contact from "../pages/Contact";
+import Joke from "../pages/Joke";
 
 
 function AuthLayout({ children }) {
@@ -45,6 +46,7 @@ const App = () => {
               <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
               <Route path="/event" element={<MainLayout><Event /></MainLayout>} />
               <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
+              <Route path="/joke" element={<MainLayout><Joke /></MainLayout>} />
               <Route path="/ticket" element={<MainLayout><Ticket /></MainLayout>} />
 
               {/* 🔐 Protected */}

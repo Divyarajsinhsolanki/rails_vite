@@ -105,4 +105,7 @@ export const fetchTicket = (sessionId) => api.get(`/ticket`, { params: { session
 
 // CONTACT ENDPOINT
 export const sendContact = (data) => api.post('/contacts', { contact: data });
+
+// FUN JOKE ENDPOINT
+export const fetchJoke = () => api.get('/joke');
 export default api;
