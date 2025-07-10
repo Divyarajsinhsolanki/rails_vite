@@ -10,6 +10,8 @@ const Vault = () => {
   const [newTitle, setNewTitle] = useState("");
   const [newCategory, setNewCategory] = useState("");
   const [newContent, setNewContent] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalCategory, setModalCategory] = useState("");
 
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
@@ -35,13 +37,24 @@ const Vault = () => {
     loadItems(q);
   };
 
+  const openModal = (category = "") => {
+    setModalCategory(category);
+    setNewCategory(category);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setNewTitle("");
+    setNewCategory("");
+    setNewContent("");
+  };
+
   const handleAddItem = async (e) => {
     e.preventDefault();
     if (!newTitle.trim() || !newContent.trim()) return;
     await createItem({ title: newTitle.trim(), category: newCategory.trim(), content: newContent.trim() });
-    setNewTitle("");
-    setNewCategory("");
-    setNewContent("");
+    closeModal();
     loadItems(searchQuery);
   };
 
@@ -85,7 +98,10 @@ const Vault = () => {
 
   const credentials = items.filter((i) => i.category === "Credential");
   const commands = items.filter((i) => i.category === "Command");
-  const others = items.filter((i) => i.category !== "Credential" && i.category !== "Command");
+  const tokens = items.filter((i) => i.category === "Token");
+  const others = items.filter(
+    (i) => !["Credential", "Command", "Token"].includes(i.category)
+  );
 
   const renderEditCard = (id) => (
     <div className="p-4 border rounded-lg bg-white shadow-sm">
@@ -137,6 +153,24 @@ const Vault = () => {
     </div>
   );
 
+  const renderToken = (item) => (
+    <div key={item.id} className="p-4 border rounded-lg bg-white shadow-sm">
+      {editingId === item.id ? (
+        renderEditCard(item.id)
+      ) : (
+        <>
+          <div className="font-semibold mb-1">{item.title}</div>
+          <pre className="bg-gray-100 p-2 rounded mb-2 whitespace-pre-wrap break-words">{item.content}</pre>
+          <button className="text-sm text-blue-600" onClick={() => copyText(item.content)}>Copy Token</button>
+          <div className="mt-2 space-x-2">
+            <button className="text-sm" onClick={() => startEditing(item)}>Edit</button>
+            <button className="text-sm text-red-600" onClick={() => handleDeleteItem(item.id)}>Delete</button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+
   const renderOther = (item) => (
     <div key={item.id} className="p-4 border rounded-lg bg-white shadow-sm">
       {editingId === item.id ? (
@@ -156,52 +190,107 @@ const Vault = () => {
   );
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="flex items-center mt-4 mb-2">
-        <input className="border p-2 flex-grow mr-2" placeholder="Search..." value={searchQuery} onChange={handleSearchChange} />
-        <button onClick={handleExportAll} className="bg-gray-200 px-3 py-2 rounded">Export All</button>
+    <div className="max-w-5xl mx-auto p-4 space-y-6">
+      <div className="flex items-center">
+        <input
+          className="border p-2 flex-grow mr-2"
+          placeholder="Search..."
+          value={searchQuery}
+          onChange={handleSearchChange}
+        />
+        <button onClick={handleExportAll} className="bg-gray-200 px-3 py-2 rounded">
+          Export All
+        </button>
       </div>
 
-      <form onSubmit={handleAddItem} className="bg-white shadow p-4 rounded mb-6">
-        <h3 className="text-lg font-semibold mb-2">Add New Item</h3>
-        <input className="w-full border rounded p-2 mb-2" placeholder="Title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
-        <input className="w-full border rounded p-2 mb-2" placeholder="Category" value={newCategory} onChange={(e) => setNewCategory(e.target.value)} />
-        <textarea className="w-full border rounded p-2 mb-2" rows="3" placeholder="Content" value={newContent} onChange={(e) => setNewContent(e.target.value)} />
-        <button className="bg-indigo-600 text-white px-4 py-2 rounded">Add Item</button>
-      </form>
-
-      {credentials.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-2">Credentials</h2>
-          <div className={gridStyle}>
-            {credentials.map(renderCredential)}
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="md:col-span-1">
+          <div className="rounded-lg overflow-hidden shadow">
+            <div className="bg-blue-500 text-white px-3 py-2 flex justify-between items-center">
+              <span>Credentials</span>
+              <button onClick={() => openModal('Credential')} className="font-bold">+</button>
+            </div>
+            <div className="p-4 space-y-4">
+              {credentials.map(renderCredential)}
+              {credentials.length === 0 && <p className="italic text-sm">No credentials</p>}
+            </div>
           </div>
         </div>
-      )}
-
-      {commands.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-2">Commands</h2>
-          <div className={gridStyle}>
-            {commands.map(renderCommand)}
+        <div className="md:col-span-2">
+          <div className="rounded-lg overflow-hidden shadow">
+            <div className="bg-green-500 text-white px-3 py-2 flex justify-between items-center">
+              <span>Commands</span>
+              <button onClick={() => openModal('Command')} className="font-bold">+</button>
+            </div>
+            <div className="p-4 space-y-4">
+              {commands.map(renderCommand)}
+              {commands.length === 0 && <p className="italic text-sm">No commands</p>}
+            </div>
           </div>
         </div>
-      )}
+      </div>
+
+      <div className="rounded-lg overflow-hidden shadow">
+        <div className="bg-orange-500 text-white px-3 py-2 flex justify-between items-center">
+          <span>Tokens</span>
+          <button onClick={() => openModal('Token')} className="font-bold">+</button>
+        </div>
+        <div className="p-4 space-y-4">
+          {tokens.map(renderToken)}
+          {tokens.length === 0 && <p className="italic text-sm">No tokens</p>}
+        </div>
+      </div>
 
       {others.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-2">Other Items</h2>
-          <div className={gridStyle}>
+        <div className="rounded-lg overflow-hidden shadow">
+          <div className="bg-purple-500 text-white px-3 py-2 flex justify-between items-center">
+            <span>Other Items</span>
+            <button onClick={() => openModal('')} className="font-bold">+</button>
+          </div>
+          <div className="p-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {others.map(renderOther)}
           </div>
         </div>
       )}
 
-      {items.length === 0 && searchQuery === "" && (
-        <p className="italic">No items yet. Add a new credential, command, or snippet above!</p>
+      {items.length === 0 && (
+        <p className="italic">No items yet. Use the add buttons above to create one.</p>
       )}
-      {items.length === 0 && searchQuery !== "" && (
-        <p className="italic">No items match your search.</p>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="text-lg font-semibold">Add New {modalCategory || 'Item'}</h3>
+              <button onClick={closeModal} className="text-gray-500">&times;</button>
+            </div>
+            <form onSubmit={handleAddItem} className="p-4 space-y-2">
+              <input
+                className="w-full border rounded p-2"
+                placeholder="Title"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+              />
+              <input
+                className="w-full border rounded p-2"
+                placeholder="Category"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+              />
+              <textarea
+                className="w-full border rounded p-2"
+                rows="3"
+                placeholder="Content"
+                value={newContent}
+                onChange={(e) => setNewContent(e.target.value)}
+              />
+              <div className="flex justify-end space-x-2 pt-2">
+                <button type="button" onClick={closeModal} className="px-4 py-2">Cancel</button>
+                <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded">Add</button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
