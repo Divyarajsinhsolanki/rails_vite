@@ -19,6 +19,7 @@ import Admin from '../components/Admin/Admin';
 import Users from "../pages/Users";
 import Event from "../pages/Event";
 import Ticket from "../pages/Ticket";
+import Contact from "../pages/Contact";
 
 
 function AuthLayout({ children }) {
@@ -42,6 +43,7 @@ const App = () => {
               <Route path="/signup" element={<AuthLayout><Signup /></AuthLayout>} />
               <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
               <Route path="/event" element={<MainLayout><Event /></MainLayout>} />
+              <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
               <Route path="/ticket" element={<MainLayout><Ticket /></MainLayout>} />
 
               {/* 🔐 Protected */}

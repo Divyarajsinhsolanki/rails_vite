@@ -96,4 +96,7 @@ export const deleteRecord = (table, id) => api.delete(`/admin/${table}/${id}`);
 // EVENT BOOKING ENDPOINTS
 export const bookEvent = () => api.post('/event/book');
 export const fetchTicket = (sessionId) => api.get(`/ticket`, { params: { session_id: sessionId } });
+
+// CONTACT ENDPOINT
+export const sendContact = (data) => api.post('/contacts', { contact: data });
 export default api;

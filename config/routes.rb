@@ -55,6 +55,8 @@ Rails.application.routes.draw do
     resources :developers, only: [:index]
     resources :tasks, only: [:index, :create, :update, :destroy]
 
+    resources :contacts, only: [:create]
+
     get 'admin/tables', to: 'admin#tables'
     get 'admin_meta/:table', to: 'admin#meta'
   
