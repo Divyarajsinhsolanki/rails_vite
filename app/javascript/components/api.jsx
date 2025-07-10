@@ -81,6 +81,9 @@ export const createPost = (d) => api.post("/posts", d);
 export const updatePost = (i, d) => api.put(`/posts/${i}`, d);
 export const deletePost = (i) => api.delete(`/posts/${i}`);
 
+// QUOTE ENDPOINTS
+export const fetchQuotes = () => api.get('/quotes');
+export const createQuote = (d) => api.post('/quotes', d);
 // NOTE ENDPOINTS
 export const fetchNotes = () => api.get('/notes.json');
 export const createNote = (d) => api.post('/notes.json', { note: d });

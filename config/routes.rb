@@ -58,6 +58,8 @@ Rails.application.routes.draw do
     resources :tasks, only: [:index, :create, :update, :destroy]
     resources :notes, only: [:index, :create, :update, :destroy]
 
+    resources :quotes, only: [:index, :create]
+
     resources :contacts, only: [:create]
 
     get 'greeting', to: 'greetings#show'
