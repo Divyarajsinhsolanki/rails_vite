@@ -20,6 +20,7 @@ import Users from "../pages/Users";
 import Event from "../pages/Event";
 import Ticket from "../pages/Ticket";
 import Contact from "../pages/Contact";
+import QuotesPage from "../pages/QuotesPage";
 
 
 function AuthLayout({ children }) {
@@ -49,6 +50,7 @@ const App = () => {
               {/* 🔐 Protected */}
               <Route path="/" element={<PrivateRoute><MainLayout><PdfPage /></MainLayout></PrivateRoute>} />
               <Route path="/posts" element={<PrivateRoute><MainLayout><PostPage /></MainLayout></PrivateRoute>} />
+              <Route path="/quotes" element={<PrivateRoute><MainLayout><QuotesPage /></MainLayout></PrivateRoute>} />
               <Route path="/profile" element={<PrivateRoute><MainLayout><Profile /></MainLayout></PrivateRoute>} />
               <Route path="/todo" element={<PrivateRoute><MainLayout><TodoBoard /></MainLayout></PrivateRoute>} />
               <Route path="/pdf_editor" element={<PrivateRoute><MainLayout><PdfEditor /></MainLayout></PrivateRoute>} />

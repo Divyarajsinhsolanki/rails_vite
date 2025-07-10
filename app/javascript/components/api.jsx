@@ -81,6 +81,10 @@ export const createPost = (d) => api.post("/posts", d);
 export const updatePost = (i, d) => api.put(`/posts/${i}`, d);
 export const deletePost = (i) => api.delete(`/posts/${i}`);
 
+// QUOTE ENDPOINTS
+export const fetchQuotes = () => api.get('/quotes');
+export const createQuote = (d) => api.post('/quotes', d);
+
 // Fetch list of tables
 export const getTables = () => api.get('/admin/tables');
 // Fetch column metadata for a given table

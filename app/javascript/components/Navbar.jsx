@@ -37,7 +37,7 @@ const Navbar = () => {
             </NavLink>
             {user ? (
               <>
-                {["posts", "scheduler", "todo", "pdf_editor", "knowledge", "profile", "users", "admin"].map((route) => (
+                {["posts", "quotes", "scheduler", "todo", "pdf_editor", "knowledge", "profile", "users", "admin"].map((route) => (
                   <NavLink
                     key={route}
                     to={`/${route}`}
