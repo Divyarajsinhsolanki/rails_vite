@@ -90,6 +90,12 @@ export const createNote = (d) => api.post('/notes.json', { note: d });
 export const updateNote = (id, d) => api.patch(`/notes/${id}.json`, { note: d });
 export const deleteNote = (id) => api.delete(`/notes/${id}.json`);
 
+// ITEM ENDPOINTS
+export const fetchItems = (q) => api.get('/items.json', { params: q ? { q } : {} });
+export const createItem = (d) => api.post('/items.json', { item: d });
+export const updateItem = (id, d) => api.patch(`/items/${id}.json`, { item: d });
+export const deleteItem = (id) => api.delete(`/items/${id}.json`);
+
 // Fetch list of tables
 export const getTables = () => api.get('/admin/tables');
 // Fetch column metadata for a given table
