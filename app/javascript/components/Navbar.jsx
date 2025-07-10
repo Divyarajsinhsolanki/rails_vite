@@ -46,6 +46,16 @@ const Navbar = () => {
               Joke
             </NavLink>
             <NavLink
+              to="/greeting"
+              className={({ isActive }) =>
+                `relative pb-1 text-gray-700 font-medium hover:text-indigo-600 transition ${
+                  isActive ? "after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-indigo-500" : ""
+                }`
+              }
+            >
+              Greeting
+            </NavLink>
+            <NavLink
               to="/weather"
               className={({ isActive }) =>
                 `relative pb-1 text-gray-700 font-medium hover:text-indigo-600 transition ${

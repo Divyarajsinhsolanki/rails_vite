@@ -21,6 +21,7 @@ import Users from "../pages/Users";
 import Event from "../pages/Event";
 import Ticket from "../pages/Ticket";
 import Contact from "../pages/Contact";
+import Greeting from "../pages/Greeting";
 import Weather from "../pages/Weather";
 import Joke from "../pages/Joke";
 
@@ -47,6 +48,7 @@ const App = () => {
               <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
               <Route path="/event" element={<MainLayout><Event /></MainLayout>} />
               <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
+              <Route path="/greeting" element={<MainLayout><Greeting /></MainLayout>} />
               <Route path="/weather" element={<MainLayout><Weather /></MainLayout>} />
               <Route path="/joke" element={<MainLayout><Joke /></MainLayout>} />
               <Route path="/ticket" element={<MainLayout><Ticket /></MainLayout>} />
