@@ -4,7 +4,7 @@ class Api::EventsController < ApplicationController
   skip_before_action :verify_authenticity_token
 
   def book
-    Stripe.api_key = ENV["STRIPE_SECRET_KEY"]
+    Stripe.api_key = ''
     session = Stripe::Checkout::Session.create(
       payment_method_types: ["card"],
       line_items: [

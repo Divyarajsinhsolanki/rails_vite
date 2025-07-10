@@ -82,4 +82,5 @@ gem 'stripe'
 gem 'rqrcode'
 
 group :production do
-  # gem 'pdf_master', path: 'lib/pdf_master'end
+  # gem 'pdf_master', path: 'lib/pdf_master'
+end
