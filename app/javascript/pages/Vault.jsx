@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Toaster, toast } from "react-hot-toast";
 import { fetchItems, createItem, updateItem, deleteItem } from "../components/api";
 
 const gridStyle = "grid gap-4 sm:grid-cols-2 lg:grid-cols-3";
@@ -53,9 +54,14 @@ const Vault = () => {
   const handleAddItem = async (e) => {
     e.preventDefault();
     if (!newTitle.trim() || !newContent.trim()) return;
-    await createItem({ title: newTitle.trim(), category: newCategory.trim(), content: newContent.trim() });
-    closeModal();
-    loadItems(searchQuery);
+    try {
+      await createItem({ title: newTitle.trim(), category: newCategory.trim(), content: newContent.trim() });
+      toast.success("Item added");
+      closeModal();
+      loadItems(searchQuery);
+    } catch {
+      toast.error("Failed to add item");
+    }
   };
 
   const startEditing = (item) => {
@@ -67,19 +73,32 @@ const Vault = () => {
 
   const handleUpdateItem = async (id) => {
     if (!editTitle.trim() || !editContent.trim()) return;
-    await updateItem(id, { title: editTitle.trim(), category: editCategory.trim(), content: editContent.trim() });
+    try {
+      await updateItem(id, { title: editTitle.trim(), category: editCategory.trim(), content: editContent.trim() });
+      toast.success("Item updated");
+    } catch {
+      toast.error("Failed to update item");
+    }
     setEditingId(null);
     loadItems(searchQuery);
   };
 
   const handleDeleteItem = async (id) => {
     if (!window.confirm("Delete this item?")) return;
-    await deleteItem(id);
-    loadItems(searchQuery);
+    try {
+      await deleteItem(id);
+      toast.success("Item deleted");
+      loadItems(searchQuery);
+    } catch {
+      toast.error("Failed to delete item");
+    }
   };
 
   const copyText = (text) => {
-    navigator.clipboard.writeText(text).then(() => alert("Copied to clipboard!"));
+    navigator.clipboard.writeText(text).then(
+      () => toast.success("Copied to clipboard"),
+      () => toast.error("Failed to copy")
+    );
   };
 
   const handleExportAll = () => {
@@ -191,6 +210,7 @@ const Vault = () => {
 
   return (
     <div className="max-w-1xl mx-auto p-4 space-y-6">
+      <Toaster position="top-right" />
       <div className="flex items-center">
         <input
           className="border p-2 flex-grow mr-2"
