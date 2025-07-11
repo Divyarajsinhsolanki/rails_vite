@@ -15,39 +15,9 @@ const Navbar = () => {
         </Link>
 
           <nav className="flex items-center gap-6">
-            <NavLink
-              to="/event"
-              className={({ isActive }) =>
-                `relative pb-1 text-gray-700 font-medium hover:text-indigo-600 transition ${
-                  isActive ? "after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-indigo-500" : ""
-                }`
-              }
-            >
-              Event
-            </NavLink>
-            <NavLink
-              to="/contact"
-              className={({ isActive }) =>
-                `relative pb-1 text-gray-700 font-medium hover:text-indigo-600 transition ${
-                  isActive ? "after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-indigo-500" : ""
-                }`
-              }
-            >
-              Contact
-            </NavLink>
-            <NavLink
-              to="/weather"
-              className={({ isActive }) =>
-                `relative pb-1 text-gray-700 font-medium hover:text-indigo-600 transition ${
-                  isActive ? "after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-indigo-500" : ""
-                }`
-              }
-            >
-              Weather
-            </NavLink>
             {user ? (
               <>
-                {["posts", "vault", "scheduler", "todo", "pdf_editor", "knowledge", "profile", "users", "admin"].map((route) => (
+                {["posts", "Event", "weather", "vault", "scheduler", "todo", "pdf_editor", "knowledge", "profile", "users", "admin", "contact"].map((route) => (
                   <NavLink
                     key={route}
                     to={`/${route}`}
