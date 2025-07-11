@@ -10,7 +10,6 @@ class User < ApplicationRecord
   has_many :posts
   has_many :tasks, foreign_key: :assigned_to
   has_many :items
-  has_many :notes
 
   # This is a class attribute that will store the current user for the current request.
   # It needs to be thread-safe.
