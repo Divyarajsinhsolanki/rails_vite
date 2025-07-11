@@ -18,6 +18,7 @@ const Vault = () => {
   const [editTitle, setEditTitle] = useState("");
   const [editCategory, setEditCategory] = useState("");
   const [editContent, setEditContent] = useState("");
+  const [openMenuId, setOpenMenuId] = useState(null);
 
   useEffect(() => {
     loadItems();
@@ -69,6 +70,7 @@ const Vault = () => {
     setEditTitle(item.title);
     setEditCategory(item.category || "");
     setEditContent(item.content);
+    setOpenMenuId(null);
   };
 
   const handleUpdateItem = async (id) => {
@@ -92,6 +94,7 @@ const Vault = () => {
     } catch {
       toast.error("Failed to delete item");
     }
+    setOpenMenuId(null);
   };
 
   const copyText = (text) => {
@@ -99,6 +102,10 @@ const Vault = () => {
       () => toast.success("Copied to clipboard"),
       () => toast.error("Failed to copy")
     );
+  };
+
+  const toggleMenu = (id) => {
+    setOpenMenuId(openMenuId === id ? null : id);
   };
 
   const handleExportAll = () => {
@@ -134,20 +141,30 @@ const Vault = () => {
   );
 
   const renderCredential = (item) => (
-    <div key={item.id} className="p-4 border rounded-lg bg-white shadow-sm">
+    <div key={item.id} className="p-4 border rounded-lg bg-white shadow-sm relative">
       {editingId === item.id ? (
         renderEditCard(item.id)
       ) : (
         <>
-          <div className="font-semibold mb-1">{item.title}</div>
-          <div className="mb-2">Password: <span className="tracking-widest">••••••••</span></div>
-          <div className="space-x-2">
-            <button className="text-sm text-blue-600" onClick={() => copyText(item.title)}>Copy Username</button>
-            <button className="text-sm text-blue-600" onClick={() => copyText(item.content)}>Copy Password</button>
+          <div className="flex justify-between items-start mb-1">
+            <div className="font-semibold">{item.title}</div>
+            <div className="relative">
+              <button className="px-1 text-gray-500" onClick={() => toggleMenu(item.id)}>⋮</button>
+              {openMenuId === item.id && (
+                <div className="absolute right-0 mt-1 w-24 bg-white border rounded shadow z-10">
+                  <button className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-100" onClick={() => startEditing(item)}>Edit</button>
+                  <button className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-100 text-red-600" onClick={() => handleDeleteItem(item.id)}>Delete</button>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="mt-2 space-x-2">
-            <button className="text-sm" onClick={() => startEditing(item)}>Edit</button>
-            <button className="text-sm text-red-600" onClick={() => handleDeleteItem(item.id)}>Delete</button>
+          <div className="flex items-center mb-1">
+            <span className="flex-grow">Username: {item.title}</span>
+            <button className="ml-2 text-blue-600 text-sm" onClick={() => copyText(item.title)} title="Copy">📋</button>
+          </div>
+          <div className="flex items-center">
+            <span className="flex-grow">Password: <span className="tracking-widest">••••••••</span></span>
+            <button className="ml-2 text-blue-600 text-sm" onClick={() => copyText(item.content)} title="Copy">📋</button>
           </div>
         </>
       )}
@@ -155,17 +172,26 @@ const Vault = () => {
   );
 
   const renderCommand = (item) => (
-    <div key={item.id} className="p-4 border rounded-lg bg-white shadow-sm">
+    <div key={item.id} className="p-4 border rounded-lg bg-white shadow-sm relative">
       {editingId === item.id ? (
         renderEditCard(item.id)
       ) : (
         <>
-          <div className="font-semibold mb-1">{item.title}</div>
-          <pre className="bg-gray-100 p-2 rounded mb-2 whitespace-pre-wrap break-words">{item.content}</pre>
-          <button className="text-sm text-blue-600" onClick={() => copyText(item.content)}>Copy Command</button>
-          <div className="mt-2 space-x-2">
-            <button className="text-sm" onClick={() => startEditing(item)}>Edit</button>
-            <button className="text-sm text-red-600" onClick={() => handleDeleteItem(item.id)}>Delete</button>
+          <div className="flex justify-between items-start mb-1">
+            <div className="font-semibold">{item.title}</div>
+            <div className="relative">
+              <button className="px-1 text-gray-500" onClick={() => toggleMenu(item.id)}>⋮</button>
+              {openMenuId === item.id && (
+                <div className="absolute right-0 mt-1 w-24 bg-white border rounded shadow z-10">
+                  <button className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-100" onClick={() => startEditing(item)}>Edit</button>
+                  <button className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-100 text-red-600" onClick={() => handleDeleteItem(item.id)}>Delete</button>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex items-start">
+            <pre className="bg-gray-100 p-2 rounded whitespace-pre-wrap break-words flex-grow">{item.content}</pre>
+            <button className="ml-2 text-blue-600 text-sm" onClick={() => copyText(item.content)} title="Copy">📋</button>
           </div>
         </>
       )}
@@ -173,17 +199,26 @@ const Vault = () => {
   );
 
   const renderToken = (item) => (
-    <div key={item.id} className="p-4 border rounded-lg bg-white shadow-sm">
+    <div key={item.id} className="p-4 border rounded-lg bg-white shadow-sm relative">
       {editingId === item.id ? (
         renderEditCard(item.id)
       ) : (
         <>
-          <div className="font-semibold mb-1">{item.title}</div>
-          <pre className="bg-gray-100 p-2 rounded mb-2 whitespace-pre-wrap break-words">{item.content}</pre>
-          <button className="text-sm text-blue-600" onClick={() => copyText(item.content)}>Copy Token</button>
-          <div className="mt-2 space-x-2">
-            <button className="text-sm" onClick={() => startEditing(item)}>Edit</button>
-            <button className="text-sm text-red-600" onClick={() => handleDeleteItem(item.id)}>Delete</button>
+          <div className="flex justify-between items-start mb-1">
+            <div className="font-semibold">{item.title}</div>
+            <div className="relative">
+              <button className="px-1 text-gray-500" onClick={() => toggleMenu(item.id)}>⋮</button>
+              {openMenuId === item.id && (
+                <div className="absolute right-0 mt-1 w-24 bg-white border rounded shadow z-10">
+                  <button className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-100" onClick={() => startEditing(item)}>Edit</button>
+                  <button className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-100 text-red-600" onClick={() => handleDeleteItem(item.id)}>Delete</button>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex items-start">
+            <pre className="bg-gray-100 p-2 rounded whitespace-pre-wrap break-words flex-grow">{item.content}</pre>
+            <button className="ml-2 text-blue-600 text-sm" onClick={() => copyText(item.content)} title="Copy">📋</button>
           </div>
         </>
       )}
@@ -191,17 +226,26 @@ const Vault = () => {
   );
 
   const renderOther = (item) => (
-    <div key={item.id} className="p-4 border rounded-lg bg-white shadow-sm">
+    <div key={item.id} className="p-4 border rounded-lg bg-white shadow-sm relative">
       {editingId === item.id ? (
         renderEditCard(item.id)
       ) : (
         <>
-          <div className="font-semibold mb-1">{item.title}</div>
-          <div className="mb-2 break-words">{item.content.length > 100 ? item.content.slice(0, 100) + "..." : item.content}</div>
-          <button className="text-sm text-blue-600" onClick={() => copyText(item.content)}>Copy Content</button>
-          <div className="mt-2 space-x-2">
-            <button className="text-sm" onClick={() => startEditing(item)}>Edit</button>
-            <button className="text-sm text-red-600" onClick={() => handleDeleteItem(item.id)}>Delete</button>
+          <div className="flex justify-between items-start mb-1">
+            <div className="font-semibold">{item.title}</div>
+            <div className="relative">
+              <button className="px-1 text-gray-500" onClick={() => toggleMenu(item.id)}>⋮</button>
+              {openMenuId === item.id && (
+                <div className="absolute right-0 mt-1 w-24 bg-white border rounded shadow z-10">
+                  <button className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-100" onClick={() => startEditing(item)}>Edit</button>
+                  <button className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-100 text-red-600" onClick={() => handleDeleteItem(item.id)}>Delete</button>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex items-start">
+            <div className="flex-grow break-words">{item.content.length > 100 ? item.content.slice(0, 100) + "..." : item.content}</div>
+            <button className="ml-2 text-blue-600 text-sm" onClick={() => copyText(item.content)} title="Copy">📋</button>
           </div>
         </>
       )}
