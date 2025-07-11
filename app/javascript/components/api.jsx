@@ -54,7 +54,7 @@ export const SchedulerAPI = {
   createDeveloper: (data) => api.post("/developers.json", { developer: data }),
 
   // Tasks
-  getTasks: () => api.get("/tasks.json"),
+  getTasks: (params = {}) => api.get("/tasks.json", { params }),
   createTask: (data) => api.post("/tasks.json", { task: data }),
   updateTask: (id, data) => api.patch(`/tasks/${id}.json`, { task: data }),
   deleteTask: (id) => api.delete(`/tasks/${id}.json`),

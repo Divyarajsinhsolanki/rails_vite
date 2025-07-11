@@ -3,7 +3,8 @@ class Api::TasksController < Api::BaseController
 
   # GET /tasks.json
   def index
-    @tasks = Task.order(date: :asc).all
+    @tasks = Task.order(date: :asc)
+    @tasks = @tasks.where(assigned_to: params[:assigned_to]) if params[:assigned_to].present?
     render json: @tasks
   end
 
