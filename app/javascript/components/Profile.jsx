@@ -25,7 +25,7 @@ const Profile = () => {
       });
       const postsResponse = await fetchPosts(data.user.id);
       setPosts(postsResponse.data);
-      const tasksResponse = await SchedulerAPI.getTasks({ assigned_to: data.user.id });
+      const tasksResponse = await SchedulerAPI.getTasks({ assigned_to_user: data.user.id });
       setTasks(tasksResponse.data);
     } catch (error) {
       console.error("Error fetching user info:", error);

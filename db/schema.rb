@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_07_11_000000) do
+ActiveRecord::Schema[7.1].define(version: 2025_07_15_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -67,6 +67,15 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_11_000000) do
     t.index ["user_id"], name: "index_items_on_user_id"
   end
 
+  create_table "notes", force: :cascade do |t|
+    t.string "title", null: false
+    t.text "body", null: false
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_notes_on_user_id"
+  end
+
   create_table "posts", force: :cascade do |t|
     t.string "message"
     t.string "image"
@@ -76,6 +85,12 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_11_000000) do
     t.index ["user_id"], name: "index_posts_on_user_id"
   end
 
+  create_table "quotes", force: :cascade do |t|
+    t.string "content"
+    t.string "author"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
 
   create_table "sprints", force: :cascade do |t|
     t.string "name", null: false
@@ -98,12 +113,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_11_000000) do
     t.string "task_id", null: false
     t.string "task_url"
     t.string "type", null: false
-    t.string "title"
-    t.text "description"
     t.decimal "estimated_hours", precision: 5, scale: 2
     t.date "date", null: false
-    t.date "start_date"
-    t.date "end_date"
     t.bigint "sprint_id"
     t.bigint "developer_id", null: false
     t.datetime "created_at", null: false
@@ -112,10 +123,14 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_11_000000) do
     t.string "status", default: "todo"
     t.integer "order", default: 0
     t.integer "assigned_to_user"
-    t.integer "assigned_to_developer"
     t.integer "created_by"
     t.integer "updated_by"
     t.date "due_date"
+    t.integer "assigned_to_developer"
+    t.string "title"
+    t.text "description"
+    t.date "start_date"
+    t.date "end_date"
     t.index ["date"], name: "index_tasks_on_date"
     t.index ["developer_id"], name: "index_tasks_on_developer_id"
     t.index ["sprint_id"], name: "index_tasks_on_sprint_id"
@@ -141,6 +156,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_11_000000) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "items", "users"
+  add_foreign_key "notes", "users"
   add_foreign_key "posts", "users"
   add_foreign_key "tasks", "developers"
   add_foreign_key "tasks", "sprints"
