@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import { fetchItems, createItem, updateItem, deleteItem } from "../components/api";
+import {
+  DocumentDuplicateIcon,
+  PencilIcon,
+  TrashIcon,
+  EllipsisVerticalIcon,
+} from "@heroicons/react/24/outline";
+import { CheckCircleIcon as CheckCircleSolidIcon } from "@heroicons/react/24/solid";
 
 const gridStyle = "grid gap-4 sm:grid-cols-2 lg:grid-cols-3";
 
@@ -19,6 +26,7 @@ const Vault = () => {
   const [editCategory, setEditCategory] = useState("");
   const [editContent, setEditContent] = useState("");
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [copiedKey, setCopiedKey] = useState(null);
 
   useEffect(() => {
     loadItems();
@@ -97,9 +105,13 @@ const Vault = () => {
     setOpenMenuId(null);
   };
 
-  const copyText = (text) => {
+  const copyText = (key, text) => {
     navigator.clipboard.writeText(text).then(
-      () => toast.success("Copied to clipboard"),
+      () => {
+        toast.success("Copied to clipboard");
+        setCopiedKey(key);
+        setTimeout(() => setCopiedKey(null), 2000);
+      },
       () => toast.error("Failed to copy")
     );
   };
@@ -149,22 +161,48 @@ const Vault = () => {
           <div className="flex justify-between items-start mb-1">
             <div className="font-semibold">{item.title}</div>
             <div className="relative">
-              <button className="px-1 text-gray-500" onClick={() => toggleMenu(item.id)}>⋮</button>
+              <button className="p-1 text-gray-500 hover:text-gray-700" onClick={() => toggleMenu(item.id)}>
+                <EllipsisVerticalIcon className="h-5 w-5" />
+              </button>
               {openMenuId === item.id && (
-                <div className="absolute right-0 mt-1 w-24 bg-white border rounded shadow z-10">
-                  <button className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-100" onClick={() => startEditing(item)}>Edit</button>
-                  <button className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-100 text-red-600" onClick={() => handleDeleteItem(item.id)}>Delete</button>
+                <div className="absolute right-0 mt-1 w-28 bg-white border rounded shadow z-10">
+                  <button className="flex items-center w-full px-2 py-1 text-sm hover:bg-gray-100" onClick={() => startEditing(item)}>
+                    <PencilIcon className="h-4 w-4 mr-2" />
+                    Edit
+                  </button>
+                  <button className="flex items-center w-full px-2 py-1 text-sm text-red-600 hover:bg-gray-100" onClick={() => handleDeleteItem(item.id)}>
+                    <TrashIcon className="h-4 w-4 mr-2" />
+                    Delete
+                  </button>
                 </div>
               )}
             </div>
           </div>
           <div className="flex items-center mb-1">
             <span className="flex-grow">Username: {item.title}</span>
-            <button className="ml-2 text-blue-600 text-sm" onClick={() => copyText(item.title)} title="Copy">📋</button>
+            <button
+              className="ml-2 p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100 transition-colors relative"
+              onClick={() => copyText(`title-${item.id}`, item.title)}
+              title="Copy"
+            >
+              <DocumentDuplicateIcon className="h-5 w-5" />
+              {copiedKey === `title-${item.id}` && (
+                <CheckCircleSolidIcon className="h-3 w-3 text-green-500 absolute -top-1 -right-1" />
+              )}
+            </button>
           </div>
           <div className="flex items-center">
             <span className="flex-grow">Password: <span className="tracking-widest">••••••••</span></span>
-            <button className="ml-2 text-blue-600 text-sm" onClick={() => copyText(item.content)} title="Copy">📋</button>
+            <button
+              className="ml-2 p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100 transition-colors relative"
+              onClick={() => copyText(`content-${item.id}`, item.content)}
+              title="Copy"
+            >
+              <DocumentDuplicateIcon className="h-5 w-5" />
+              {copiedKey === `content-${item.id}` && (
+                <CheckCircleSolidIcon className="h-3 w-3 text-green-500 absolute -top-1 -right-1" />
+              )}
+            </button>
           </div>
         </>
       )}
@@ -180,18 +218,35 @@ const Vault = () => {
           <div className="flex justify-between items-start mb-1">
             <div className="font-semibold">{item.title}</div>
             <div className="relative">
-              <button className="px-1 text-gray-500" onClick={() => toggleMenu(item.id)}>⋮</button>
+              <button className="p-1 text-gray-500 hover:text-gray-700" onClick={() => toggleMenu(item.id)}>
+                <EllipsisVerticalIcon className="h-5 w-5" />
+              </button>
               {openMenuId === item.id && (
-                <div className="absolute right-0 mt-1 w-24 bg-white border rounded shadow z-10">
-                  <button className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-100" onClick={() => startEditing(item)}>Edit</button>
-                  <button className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-100 text-red-600" onClick={() => handleDeleteItem(item.id)}>Delete</button>
+                <div className="absolute right-0 mt-1 w-28 bg-white border rounded shadow z-10">
+                  <button className="flex items-center w-full px-2 py-1 text-sm hover:bg-gray-100" onClick={() => startEditing(item)}>
+                    <PencilIcon className="h-4 w-4 mr-2" />
+                    Edit
+                  </button>
+                  <button className="flex items-center w-full px-2 py-1 text-sm text-red-600 hover:bg-gray-100" onClick={() => handleDeleteItem(item.id)}>
+                    <TrashIcon className="h-4 w-4 mr-2" />
+                    Delete
+                  </button>
                 </div>
               )}
             </div>
           </div>
           <div className="flex items-start">
             <pre className="bg-gray-100 p-2 rounded whitespace-pre-wrap break-words flex-grow">{item.content}</pre>
-            <button className="ml-2 text-blue-600 text-sm" onClick={() => copyText(item.content)} title="Copy">📋</button>
+            <button
+              className="ml-2 p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100 transition-colors relative"
+              onClick={() => copyText(`content-${item.id}`, item.content)}
+              title="Copy"
+            >
+              <DocumentDuplicateIcon className="h-5 w-5" />
+              {copiedKey === `content-${item.id}` && (
+                <CheckCircleSolidIcon className="h-3 w-3 text-green-500 absolute -top-1 -right-1" />
+              )}
+            </button>
           </div>
         </>
       )}
@@ -207,18 +262,35 @@ const Vault = () => {
           <div className="flex justify-between items-start mb-1">
             <div className="font-semibold">{item.title}</div>
             <div className="relative">
-              <button className="px-1 text-gray-500" onClick={() => toggleMenu(item.id)}>⋮</button>
+              <button className="p-1 text-gray-500 hover:text-gray-700" onClick={() => toggleMenu(item.id)}>
+                <EllipsisVerticalIcon className="h-5 w-5" />
+              </button>
               {openMenuId === item.id && (
-                <div className="absolute right-0 mt-1 w-24 bg-white border rounded shadow z-10">
-                  <button className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-100" onClick={() => startEditing(item)}>Edit</button>
-                  <button className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-100 text-red-600" onClick={() => handleDeleteItem(item.id)}>Delete</button>
+                <div className="absolute right-0 mt-1 w-28 bg-white border rounded shadow z-10">
+                  <button className="flex items-center w-full px-2 py-1 text-sm hover:bg-gray-100" onClick={() => startEditing(item)}>
+                    <PencilIcon className="h-4 w-4 mr-2" />
+                    Edit
+                  </button>
+                  <button className="flex items-center w-full px-2 py-1 text-sm text-red-600 hover:bg-gray-100" onClick={() => handleDeleteItem(item.id)}>
+                    <TrashIcon className="h-4 w-4 mr-2" />
+                    Delete
+                  </button>
                 </div>
               )}
             </div>
           </div>
           <div className="flex items-start">
             <pre className="bg-gray-100 p-2 rounded whitespace-pre-wrap break-words flex-grow">{item.content}</pre>
-            <button className="ml-2 text-blue-600 text-sm" onClick={() => copyText(item.content)} title="Copy">📋</button>
+            <button
+              className="ml-2 p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100 transition-colors relative"
+              onClick={() => copyText(`content-${item.id}`, item.content)}
+              title="Copy"
+            >
+              <DocumentDuplicateIcon className="h-5 w-5" />
+              {copiedKey === `content-${item.id}` && (
+                <CheckCircleSolidIcon className="h-3 w-3 text-green-500 absolute -top-1 -right-1" />
+              )}
+            </button>
           </div>
         </>
       )}
@@ -234,18 +306,35 @@ const Vault = () => {
           <div className="flex justify-between items-start mb-1">
             <div className="font-semibold">{item.title}</div>
             <div className="relative">
-              <button className="px-1 text-gray-500" onClick={() => toggleMenu(item.id)}>⋮</button>
+              <button className="p-1 text-gray-500 hover:text-gray-700" onClick={() => toggleMenu(item.id)}>
+                <EllipsisVerticalIcon className="h-5 w-5" />
+              </button>
               {openMenuId === item.id && (
-                <div className="absolute right-0 mt-1 w-24 bg-white border rounded shadow z-10">
-                  <button className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-100" onClick={() => startEditing(item)}>Edit</button>
-                  <button className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-100 text-red-600" onClick={() => handleDeleteItem(item.id)}>Delete</button>
+                <div className="absolute right-0 mt-1 w-28 bg-white border rounded shadow z-10">
+                  <button className="flex items-center w-full px-2 py-1 text-sm hover:bg-gray-100" onClick={() => startEditing(item)}>
+                    <PencilIcon className="h-4 w-4 mr-2" />
+                    Edit
+                  </button>
+                  <button className="flex items-center w-full px-2 py-1 text-sm text-red-600 hover:bg-gray-100" onClick={() => handleDeleteItem(item.id)}>
+                    <TrashIcon className="h-4 w-4 mr-2" />
+                    Delete
+                  </button>
                 </div>
               )}
             </div>
           </div>
           <div className="flex items-start">
             <div className="flex-grow break-words">{item.content.length > 100 ? item.content.slice(0, 100) + "..." : item.content}</div>
-            <button className="ml-2 text-blue-600 text-sm" onClick={() => copyText(item.content)} title="Copy">📋</button>
+            <button
+              className="ml-2 p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100 transition-colors relative"
+              onClick={() => copyText(`content-${item.id}`, item.content)}
+              title="Copy"
+            >
+              <DocumentDuplicateIcon className="h-5 w-5" />
+              {copiedKey === `content-${item.id}` && (
+                <CheckCircleSolidIcon className="h-3 w-3 text-green-500 absolute -top-1 -right-1" />
+              )}
+            </button>
           </div>
         </>
       )}
