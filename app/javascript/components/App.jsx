@@ -23,6 +23,7 @@ import Contact from "../pages/Contact";
 import Weather from "../pages/Weather";
 import Vault from "../pages/Vault";
 import Legal from "../pages/Legal";
+import SprintDashboard from "../pages/SprintDashboard";
 
 
 function AuthLayout({ children }) {
@@ -60,6 +61,7 @@ const App = () => {
               <Route path="/pdf_editor" element={<PrivateRoute><MainLayout><PdfEditor /></MainLayout></PrivateRoute>} />
               <Route path="/knowledge" element={<PrivateRoute><MainLayout><KnowledgeDashboard /></MainLayout></PrivateRoute>} />
               <Route path="/scheduler" element={<PrivateRoute><MainLayout><Scheduler /></MainLayout></PrivateRoute>} />
+              <Route path="/sprint_dashboard" element={<PrivateRoute><MainLayout><SprintDashboard /></MainLayout></PrivateRoute>} />
               <Route path="/users" element={<PrivateRoute><MainLayout><Users /></MainLayout></PrivateRoute>} />
               <Route path="/admin" element={<PrivateRoute><MainLayout><Admin /></MainLayout></PrivateRoute>} />
               </Routes>
