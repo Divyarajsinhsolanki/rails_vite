@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { SchedulerAPI } from '../components/api';
 
+// Helper to calculate working days between two dates excluding weekends
+const calculateWorkingDays = (start, end) => {
+  let count = 0;
+  const current = new Date(start);
+  const last = new Date(end);
+  while (current <= last) {
+    const day = current.getDay();
+    if (day !== 0 && day !== 6) count += 1; // exclude Sunday(0) and Saturday(6)
+    current.setDate(current.getDate() + 1);
+  }
+  return count;
+};
+
 // Task Details Modal Component
 const TaskDetailsModal = ({ task, developers, onClose, onUpdate }) => {
   const [editedTask, setEditedTask] = useState({ ...task });
@@ -231,6 +244,9 @@ const SprintDashboard = () => {
 
     const getDeveloperNames = (devIds) => devIds.map(id => developers.find(dev => String(dev.id) === String(id))?.name || 'Unknown').join(', ');
 
+    const currentSprint = sprints.find(s => s.id === selectedSprintId);
+    const workingDays = currentSprint ? calculateWorkingDays(currentSprint.start_date, currentSprint.end_date) : 0;
+
     const openTaskModal = (task) => {
         setCurrentTask(task);
         setShowTaskModal(true);
@@ -276,11 +292,15 @@ const SprintDashboard = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-lg">
                             <p>
                                 <span className="font-semibold">Start Date:</span>{' '}
-                                {sprints.find(s => s.id === selectedSprintId)?.start_date}
+                                {currentSprint?.start_date}
                             </p>
                             <p>
                                 <span className="font-semibold">End Date:</span>{' '}
-                                {sprints.find(s => s.id === selectedSprintId)?.end_date}
+                                {currentSprint?.end_date}
+                            </p>
+                            <p>
+                                <span className="font-semibold">Working Days:</span>{' '}
+                                {workingDays}
                             </p>
                         </div>
                     </div>
@@ -339,10 +359,10 @@ const SprintDashboard = () => {
                                             {getDeveloperNames(task.assignedTo)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {task.scheduledStartDate}
+                                            {new Date(task.scheduledStartDate).getDate()}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {task.scheduledEndDate}
+                                            {new Date(task.scheduledEndDate).getDate()}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
