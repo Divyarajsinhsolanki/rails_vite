@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { fetchUserInfo, updateUserInfo, fetchPosts, SchedulerAPI } from "../components/api"; // Adjust the import path as necessary
+import { getStatusClasses } from '/utils/taskUtils';
 
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -171,7 +172,7 @@ const Profile = () => {
                   {tasks.map((task) => (
                     <div key={task.id} className="bg-white rounded-xl shadow-md p-5">
                       <h3 className="text-lg font-semibold text-gray-800 break-all">{task.task_id}</h3>
-                      <p className="text-sm text-gray-500 capitalize">{task.status}</p>
+                      <span className={`text-sm px-2 py-1 rounded-full font-medium capitalize ${getStatusClasses(task.status)}`}>{task.status}</span>
                       {task.due_date && (
                         <p className="text-sm text-gray-500">Due {new Date(task.due_date).toLocaleDateString()}</p>
                       )}
