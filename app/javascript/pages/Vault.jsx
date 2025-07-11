@@ -190,7 +190,7 @@ const Vault = () => {
   );
 
   return (
-    <div className="max-w-5xl mx-auto p-4 space-y-6">
+    <div className="max-w-1xl mx-auto p-4 space-y-6">
       <div className="flex items-center">
         <input
           className="border p-2 flex-grow mr-2"
