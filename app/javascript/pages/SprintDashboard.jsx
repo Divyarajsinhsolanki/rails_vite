@@ -240,7 +240,17 @@ const SprintDashboard = () => {
     useEffect(() => {
         SchedulerAPI.getDevelopers().then(res => setDevelopers(res.data));
         getUsers().then(res => setUsers(Array.isArray(res.data) ? res.data : []));
-        SchedulerAPI.getTasks().then(res => {
+        fetch('/api/sprints.json')
+            .then(res => res.json())
+            .then(data => {
+                setSprints(data);
+                if (data.length) setSelectedSprintId(data[0].id);
+            });
+    }, []);
+
+    useEffect(() => {
+        if (selectedSprintId === null) return;
+        SchedulerAPI.getTasks({ sprint_id: selectedSprintId }).then(res => {
             const mapped = res.data.map(t => ({
                 id: t.task_id,
                 dbId: t.id,
@@ -259,13 +269,7 @@ const SprintDashboard = () => {
             }));
             setTasks(mapped);
         });
-        fetch('/api/sprints.json')
-            .then(res => res.json())
-            .then(data => {
-                setSprints(data);
-                if (data.length) setSelectedSprintId(data[0].id);
-            });
-    }, []);
+    }, [selectedSprintId]);
 
     const filteredTasks = tasks.filter(task => task.sprintId === selectedSprintId);
 

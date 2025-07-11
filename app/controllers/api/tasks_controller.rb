@@ -5,6 +5,7 @@ class Api::TasksController < Api::BaseController
   def index
     @tasks = Task.order(date: :asc)
     @tasks = @tasks.where(assigned_to_user: params[:assigned_to_user]) if params[:assigned_to_user].present?
+    @tasks = @tasks.where(sprint_id: params[:sprint_id]) if params[:sprint_id].present?
     render json: @tasks
   end
 
