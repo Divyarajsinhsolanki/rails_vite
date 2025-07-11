@@ -4,7 +4,6 @@ import { SchedulerAPI } from '../components/api';
 // Task Details Modal Component
 const TaskDetailsModal = ({ task, developers, onClose, onUpdate }) => {
   const [editedTask, setEditedTask] = useState({ ...task });
-  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -23,44 +22,6 @@ const TaskDetailsModal = ({ task, developers, onClose, onUpdate }) => {
     e.preventDefault();
     onUpdate(editedTask);
   };
-
-  // ✨ LLM Integration: Enhance Task Description
-  const handleEnhanceDescription = async () => {
-    setIsGeneratingDescription(true);
-    const prompt = `Enhance the following task description. Make it more detailed, clear, and comprehensive. If it's very brief, suggest sub-points or steps.
-        Task Title: "${editedTask.title}"
-        Current Description: "${editedTask.description || 'No description provided.'}"
-        `;
-
-    try {
-      let chatHistory = [];
-      chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-      const payload = { contents: chatHistory };
-      const apiKey = ""; // Keep this empty, Canvas will provide it
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const result = await response.json();
-
-      if (result.candidates && result.candidates.length > 0 &&
-          result.candidates[0].content && result.candidates[0].content.parts &&
-          result.candidates[0].content.parts.length > 0) {
-        const text = result.candidates[0].content.parts[0].text;
-        setEditedTask(prev => ({ ...prev, description: text }));
-      } else {
-        console.error('Failed to generate description: Unexpected API response structure.');
-      }
-    } catch (error) {
-      console.error('Error generating description:', error);
-    } finally {
-      setIsGeneratingDescription(false);
-    }
-  };
-
 
   return (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4">
@@ -120,21 +81,6 @@ const TaskDetailsModal = ({ task, developers, onClose, onUpdate }) => {
                                 rows="5"
                                 className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                             ></textarea>
-                            <button
-                                type="button"
-                                onClick={handleEnhanceDescription}
-                                className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition duration-200 ease-in-out shadow-md flex items-center justify-center"
-                                disabled={isGeneratingDescription}
-                            >
-                                {isGeneratingDescription ? (
-                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                ) : (
-                                    '✨ Enhance Description'
-                                )}
-                            </button>
                         </div>
                         <div>
                             <label htmlFor="estimatedHours" className="block text-sm font-medium text-gray-700 mb-1">
@@ -245,29 +191,6 @@ const TaskDetailsModal = ({ task, developers, onClose, onUpdate }) => {
     );
 };
 
-// Generic Summary Modal Component
-const SummaryModal = ({ title, content, onClose }) => {
-    return (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-2xl transform transition-all scale-100 opacity-100">
-                <h2 className="text-3xl font-bold text-indigo-700 mb-6 text-center">{title}</h2>
-                <div className="max-h-96 overflow-y-auto mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200 text-gray-800">
-                    <p className="whitespace-pre-wrap">{content}</p>
-                </div>
-                <div className="flex justify-end">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition duration-200 ease-in-out shadow-md"
-                    >
-                        Close
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
 // Main Component
 const SprintDashboard = () => {
     const [sprints, setSprints] = useState([]);
@@ -276,9 +199,6 @@ const SprintDashboard = () => {
     const [selectedSprintId, setSelectedSprintId] = useState(null);
     const [showTaskModal, setShowTaskModal] = useState(false);
     const [currentTask, setCurrentTask] = useState(null);
-    const [showSummaryModal, setShowSummaryModal] = useState(false);
-    const [sprintSummary, setSprintSummary] = useState('');
-    const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
     useEffect(() => {
         SchedulerAPI.getDevelopers().then(res => setDevelopers(res.data));
@@ -321,61 +241,6 @@ const SprintDashboard = () => {
         setShowTaskModal(false);
     };
 
-    const handleGenerateSprintSummary = async () => {
-        setIsGeneratingSummary(true);
-        setSprintSummary('Generating summary...');
-
-        const currentSprint = sprints.find(s => s.id === selectedSprintId);
-        if (!currentSprint) {
-            setSprintSummary('No sprint selected.');
-            setIsGeneratingSummary(false);
-            return;
-        }
-
-        const sprintTasks = tasks.filter(task => task.sprintId === selectedSprintId);
-        let prompt = `Generate a concise sprint summary for the following sprint and its tasks:\n\n`;
-        prompt += `Sprint Name: ${currentSprint.name}\n`;
-        prompt += `Start Date: ${currentSprint.start_date}\n`;
-        prompt += `End Date: ${currentSprint.end_date}\n`;
-        prompt += `\nTasks:\n`;
-
-        sprintTasks.forEach(task => {
-            prompt += `- Task ID: ${task.id}, Title: "${task.title}", Status: ${task.status}, Estimated Hours: ${task.estimatedHours}, Assigned To: ${getDeveloperNames(task.assignedTo)}\n`;
-        });
-
-        prompt += `\nFocus on overall progress, key achievements, and any potential areas needing attention. Keep it under 200 words.`;
-
-        try {
-            let chatHistory = [];
-            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-            const payload = { contents: chatHistory };
-            const apiKey = ""; // Keep this empty, Canvas will provide it
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const result = await response.json();
-
-            if (result.candidates && result.candidates.length > 0 &&
-                result.candidates[0].content && result.candidates[0].content.parts &&
-                result.candidates[0].content.parts.length > 0) {
-                const text = result.candidates[0].content.parts[0].text;
-                setSprintSummary(text);
-            } else {
-                setSprintSummary('Failed to generate summary. Please try again.');
-            }
-        } catch (error) {
-            console.error('Error generating sprint summary:', error);
-            setSprintSummary('An error occurred while generating the summary.');
-        } finally {
-            setIsGeneratingSummary(false);
-            setShowSummaryModal(true);
-        }
-    };
-
     return (
         <div className="min-h-screen bg-gray-100 p-8 font-sans text-gray-800">
             <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-8">
@@ -400,20 +265,6 @@ const SprintDashboard = () => {
                             </option>
                         ))}
                     </select>
-                    <button
-                        onClick={handleGenerateSprintSummary}
-                        className="px-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition duration-200 ease-in-out shadow-md flex items-center justify-center"
-                        disabled={isGeneratingSummary}
-                    >
-                        {isGeneratingSummary ? (
-                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                        ) : (
-                            '✨ Generate Sprint Summary'
-                        )}
-                    </button>
                 </div>
 
                 {/* Current Sprint Overview */}
@@ -523,15 +374,6 @@ const SprintDashboard = () => {
                     developers={developers}
                     onClose={() => setShowTaskModal(false)}
                     onUpdate={handleUpdateTask}
-                />
-            )}
-
-            {/* Sprint Summary Modal */}
-            {showSummaryModal && (
-                <SummaryModal
-                    title="Sprint Summary"
-                    content={sprintSummary}
-                    onClose={() => setShowSummaryModal(false)}
                 />
             )}
         </div>
