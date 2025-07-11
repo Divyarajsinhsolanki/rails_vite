@@ -88,23 +88,15 @@ export const createItem = (d) => api.post('/items.json', { item: d });
 export const updateItem = (id, d) => api.patch(`/items/${id}.json`, { item: d });
 export const deleteItem = (id) => api.delete(`/items/${id}.json`);
 
-// Fetch list of tables
 export const getTables = () => api.get('/admin/tables');
-// Fetch column metadata for a given table
 export const getMeta = (table) => api.get(`/admin_meta/${table}`);
-// Fetch all records of a given table
 export const getRecords = (table) => api.get(`/admin/${table}`);
-// Create a new record in a table
 export const createRecord = (table, data) => api.post(`/admin/${table}`, { record: data });
-// Update a record by ID in a table
 export const updateRecord = (table, id, data) => api.patch(`/admin/${table}/${id}`, { record: data });
-// Delete a record by ID in a table
 export const deleteRecord = (table, id) => api.delete(`/admin/${table}/${id}`);
-// EVENT BOOKING ENDPOINTS
 export const bookEvent = () => api.post('/event/book');
 export const fetchTicket = (sessionId) => api.get(`/ticket`, { params: { session_id: sessionId } });
 
-// CONTACT ENDPOINT
 export const sendContact = (data) => api.post('/contacts', { contact: data });
 
 export const getWeather = (params) => api.get('/weather', { params });
