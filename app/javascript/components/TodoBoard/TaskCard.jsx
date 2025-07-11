@@ -10,14 +10,14 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
       content: item.task_id,
       due: item.due || '',
       tags: (item.tags || []).join(', '),
-      assignedTo: item.assignedTo || '',
+      assigned_to_user: item.assigned_to_user || '',
       recurring: item.recurring || ''
   });
 
   const handleSave = () => {
     const updates = {
         ...editDetails,
-        tags: editDetails.tags.split(',').map(t=>t.trim())
+        tags: editDetails.tags.split(',').map(t => t.trim())
     };
     onUpdate(columnId, item.id, updates);
     setIsEditing(false);
@@ -28,7 +28,7 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
       <input value={editDetails.content} onChange={(e) => setEditDetails(prev => ({ ...prev, content: e.target.value }))} placeholder="Task content" className="border p-2 rounded" />
       <input type="date" value={editDetails.due} onChange={(e) => setEditDetails(prev => ({ ...prev, due: e.target.value }))} className="border p-2 rounded" />
       <input value={editDetails.tags} onChange={(e) => setEditDetails(prev => ({ ...prev, tags: e.target.value }))} placeholder="Comma-separated tags" className="border p-2 rounded" />
-      <input value={editDetails.assignedTo} onChange={(e) => setEditDetails(prev => ({ ...prev, assignedTo: e.target.value }))} placeholder="Assigned To" className="border p-2 rounded" />
+      <input value={editDetails.assigned_to_user} onChange={(e) => setEditDetails(prev => ({ ...prev, assigned_to_user: e.target.value }))} placeholder="Assigned To" className="border p-2 rounded" />
       <select value={editDetails.recurring} onChange={(e) => setEditDetails(prev => ({ ...prev, recurring: e.target.value }))} className="border p-2 rounded">
         <option value="">One-time</option>
         <option value="daily">Daily</option>
@@ -56,7 +56,7 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
             </div>
         )}
         {item.createdBy && <div className="text-xs text-gray-600 mt-1">Created by: {item.createdBy}</div>}
-        {item.assignedTo && <div className="text-xs text-gray-600">Assigned to: {item.assignedTo}</div>}
+        {item.assigned_to_user && <div className="text-xs text-gray-600">Assigned to: {item.assigned_to_user}</div>}
     </div>
   );
 

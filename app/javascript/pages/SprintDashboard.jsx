@@ -126,7 +126,7 @@ const TaskDetailsModal = ({ task, developers, onClose, onUpdate }) => {
                         </div>
                         <div>
                             <label htmlFor="assignedTo" className="block text-sm font-medium text-gray-700 mb-1">
-                                Assigned To
+                                Assigned To Developer
                             </label>
                             <select
                                 id="assignedTo"
@@ -142,6 +142,19 @@ const TaskDetailsModal = ({ task, developers, onClose, onUpdate }) => {
                                     </option>
                                 ))}
                             </select>
+                        </div>
+                        <div>
+                            <label htmlFor="assignedUser" className="block text-sm font-medium text-gray-700 mb-1">
+                                Assigned User ID
+                            </label>
+                            <input
+                                type="number"
+                                id="assignedUser"
+                                name="assignedUser"
+                                value={editedTask.assignedUser || ''}
+                                onChange={handleChange}
+                                className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                            />
                         </div>
                         <div>
                             <label htmlFor="scheduledStartDate" className="block text-sm font-medium text-gray-700 mb-1">
@@ -226,6 +239,8 @@ const SprintDashboard = () => {
                 estimatedHours: t.estimated_hours,
                 status: t.status === 'done' ? 'Done' : t.status === 'inprogress' ? 'In Progress' : 'To Do',
                 assignedTo: [t.developer_id].filter(Boolean).map(String),
+                assignedUser: t.assigned_to_user,
+                assignedDeveloper: t.assigned_to_developer,
                 order: t.order,
                 scheduledStartDate: t.date,
                 scheduledEndDate: t.due_date || t.date,

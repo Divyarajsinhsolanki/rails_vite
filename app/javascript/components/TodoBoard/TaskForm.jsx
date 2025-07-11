@@ -19,7 +19,7 @@ const TaskForm = ({ onAddTask }) => {
       content,
       due: dueDate,
       tags: tags.split(',').map(t => t.trim()),
-      assigned_to: assignedTo,
+      assigned_to_user: assignedTo,
       recurring,
       status: 'todo'
     };

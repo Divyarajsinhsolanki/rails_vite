@@ -8,7 +8,7 @@ class User < ApplicationRecord
 
   has_one_attached :profile_picture
   has_many :posts
-  has_many :tasks, foreign_key: :assigned_to
+  has_many :tasks, foreign_key: :assigned_to_user
   has_many :items
 
   # This is a class attribute that will store the current user for the current request.
