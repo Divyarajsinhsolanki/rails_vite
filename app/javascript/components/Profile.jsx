@@ -48,10 +48,36 @@ const Profile = () => {
     }));
   };
 
+  function getCSRFToken() {
+    const meta = document.querySelector("meta[name='csrf-token']");
+    return meta?.getAttribute("content");
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const payload = new FormData();
+    payload.append("auth[first_name]", formData.first_name);
+    payload.append("auth[last_name]", formData.last_name);
+    payload.append("auth[date_of_birth]", formData.date_of_birth);
+  
+    if (formData.profile_picture instanceof File) {
+      payload.append("auth[profile_picture]", formData.profile_picture);
+    }
+
     try {
-      await updateUserInfo({auth: formData});
+      const res = await fetch("/api/update_profile", {
+        method: "POST",
+        body: payload,
+        headers: {
+          "Accept": "application/json",
+          "X-CSRF-Token": getCSRFToken()
+        },
+        credentials: "include"
+      });
+
+      if (!res.ok) throw new Error("Update failed");
+
       setEditMode(false);
       refreshUserInfo();
     } catch (error) {

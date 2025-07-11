@@ -69,7 +69,7 @@ class Api::AuthController < Api::BaseController
   private
 
   def user_params
-    params.require(:auth).permit(:first_name, :last_name, :date_of_birth, :email, :password, :uid)
+    params.require(:auth).permit(:first_name, :last_name, :date_of_birth, :email, :password, :uid, :profile_picture)
   end
 
   def verify_firebase_token(token)
