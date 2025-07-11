@@ -17,7 +17,7 @@ const Navbar = () => {
           <nav className="flex items-center gap-6">
             {user ? (
               <>
-                {["posts", "Event", "weather", "vault", "scheduler", "todo", "pdf_editor", "knowledge", "profile", "users", "admin", "contact"].map((route) => (
+                {["posts", "Event", "weather", "vault", "scheduler", "todo", "sprint-board", "pdf_editor", "knowledge", "profile", "users", "admin", "contact"].map((route) => (
                   <NavLink
                     key={route}
                     to={`/${route}`}
