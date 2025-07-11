@@ -10,7 +10,6 @@ import PdfPage from "./PdfPage";
 import Signup from "../pages/Signup";
 import Login from "../pages/Login";
 import PostPage from "../pages/PostPage";
-import Notes from "../pages/Notes";
 import Profile from "../components/Profile";
 import TodoBoard from "../components/TodoBoard/TodoBoard";
 import PdfEditor from '../pages/PdfEditor';
@@ -21,10 +20,7 @@ import Users from "../pages/Users";
 import Event from "../pages/Event";
 import Ticket from "../pages/Ticket";
 import Contact from "../pages/Contact";
-import QuotesPage from "../pages/QuotesPage";
-import Greeting from "../pages/Greeting";
 import Weather from "../pages/Weather";
-import Joke from "../pages/Joke";
 import Vault from "../pages/Vault";
 
 
@@ -50,16 +46,12 @@ const App = () => {
               <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
               <Route path="/event" element={<MainLayout><Event /></MainLayout>} />
               <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
-              <Route path="/greeting" element={<MainLayout><Greeting /></MainLayout>} />
-              <Route path="/weather" element={<MainLayout><Weather /></MainLayout>} />
-              <Route path="/joke" element={<MainLayout><Joke /></MainLayout>} />
-              <Route path="/ticket" element={<MainLayout><Ticket /></MainLayout>} />
+                <Route path="/weather" element={<MainLayout><Weather /></MainLayout>} />
+                <Route path="/ticket" element={<MainLayout><Ticket /></MainLayout>} />
 
               {/* 🔐 Protected */}
               <Route path="/" element={<PrivateRoute><MainLayout><PdfPage /></MainLayout></PrivateRoute>} />
               <Route path="/posts" element={<PrivateRoute><MainLayout><PostPage /></MainLayout></PrivateRoute>} />
-              <Route path="/quotes" element={<PrivateRoute><MainLayout><QuotesPage /></MainLayout></PrivateRoute>} />
-              <Route path="/notes" element={<PrivateRoute><MainLayout><Notes /></MainLayout></PrivateRoute>} />
               <Route path="/vault" element={<PrivateRoute><MainLayout><Vault /></MainLayout></PrivateRoute>} />
               <Route path="/profile" element={<PrivateRoute><MainLayout><Profile /></MainLayout></PrivateRoute>} />
               <Route path="/todo" element={<PrivateRoute><MainLayout><TodoBoard /></MainLayout></PrivateRoute>} />
