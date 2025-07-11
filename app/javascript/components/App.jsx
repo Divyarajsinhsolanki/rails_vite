@@ -22,6 +22,7 @@ import Ticket from "../pages/Ticket";
 import Contact from "../pages/Contact";
 import Weather from "../pages/Weather";
 import Vault from "../pages/Vault";
+import Legal from "../pages/Legal";
 
 
 function AuthLayout({ children }) {
@@ -46,8 +47,11 @@ const App = () => {
               <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
               <Route path="/event" element={<MainLayout><Event /></MainLayout>} />
               <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
-                <Route path="/weather" element={<MainLayout><Weather /></MainLayout>} />
-                <Route path="/ticket" element={<MainLayout><Ticket /></MainLayout>} />
+              <Route path="/weather" element={<MainLayout><Weather /></MainLayout>} />
+              <Route path="/ticket" element={<MainLayout><Ticket /></MainLayout>} />
+              <Route path="/legal" element={<MainLayout><Legal /></MainLayout>} />
+              <Route path="/privacy" element={<MainLayout><Legal /></MainLayout>} />
+              <Route path="/terms" element={<MainLayout><Legal /></MainLayout>} />
 
               {/* 🔐 Protected */}
               <Route path="/" element={<PrivateRoute><MainLayout><PdfPage /></MainLayout></PrivateRoute>} />

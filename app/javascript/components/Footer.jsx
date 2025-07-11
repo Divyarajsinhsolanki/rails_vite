@@ -9,11 +9,8 @@ const Footer = () => {
           &copy; {new Date().getFullYear()} <span className="text-indigo-700 font-medium">MyApp</span>. All rights reserved.
         </p>
         <div className="flex mt-2 md:mt-0 space-x-4">
-          <Link to="/privacy" className="hover:text-indigo-600 transition">
-            Privacy Policy
-          </Link>
-          <Link to="/terms" className="hover:text-indigo-600 transition">
-            Terms
+          <Link to="/legal" className="hover:text-indigo-600 transition">
+            Privacy & Terms
           </Link>
           <Link to="/contact" className="hover:text-indigo-600 transition">
             Contact
