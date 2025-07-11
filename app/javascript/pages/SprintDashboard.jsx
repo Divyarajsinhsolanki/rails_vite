@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SchedulerAPI } from '../components/api';
+import { SchedulerAPI, getUsers } from '../components/api';
 
 // Helper to calculate working days between two dates excluding weekends
 const calculateWorkingDays = (start, end) => {
@@ -15,7 +15,7 @@ const calculateWorkingDays = (start, end) => {
 };
 
 // Task Details Modal Component
-const TaskDetailsModal = ({ task, developers, onClose, onUpdate }) => {
+const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
   const [editedTask, setEditedTask] = useState({ ...task });
 
   const handleChange = (e) => {
@@ -29,6 +29,10 @@ const TaskDetailsModal = ({ task, developers, onClose, onUpdate }) => {
       .filter(option => option.selected)
       .map(option => option.value);
     setEditedTask(prev => ({ ...prev, assignedTo: selectedDevIds }));
+  };
+
+  const handleUserChange = (e) => {
+    setEditedTask(prev => ({ ...prev, assignedUser: e.target.value }));
   };
 
   const handleSubmit = (e) => {
@@ -145,16 +149,22 @@ const TaskDetailsModal = ({ task, developers, onClose, onUpdate }) => {
                         </div>
                         <div>
                             <label htmlFor="assignedUser" className="block text-sm font-medium text-gray-700 mb-1">
-                                Assigned User ID
+                                Assigned User
                             </label>
-                            <input
-                                type="number"
+                            <select
                                 id="assignedUser"
                                 name="assignedUser"
                                 value={editedTask.assignedUser || ''}
-                                onChange={handleChange}
+                                onChange={handleUserChange}
                                 className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                            />
+                            >
+                                <option value="">Select user</option>
+                                {users.map(u => (
+                                    <option key={u.id} value={u.id}>
+                                        {u.first_name ? `${u.first_name} ${u.last_name}` : u.email}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                         <div>
                             <label htmlFor="scheduledStartDate" className="block text-sm font-medium text-gray-700 mb-1">
@@ -221,6 +231,7 @@ const TaskDetailsModal = ({ task, developers, onClose, onUpdate }) => {
 const SprintDashboard = () => {
     const [sprints, setSprints] = useState([]);
     const [developers, setDevelopers] = useState([]);
+    const [users, setUsers] = useState([]);
     const [tasks, setTasks] = useState([]);
     const [selectedSprintId, setSelectedSprintId] = useState(null);
     const [showTaskModal, setShowTaskModal] = useState(false);
@@ -228,6 +239,7 @@ const SprintDashboard = () => {
 
     useEffect(() => {
         SchedulerAPI.getDevelopers().then(res => setDevelopers(res.data));
+        getUsers().then(res => setUsers(Array.isArray(res.data) ? res.data : []));
         SchedulerAPI.getTasks().then(res => {
             const mapped = res.data.map(t => ({
                 id: t.task_id,
@@ -407,6 +419,7 @@ const SprintDashboard = () => {
                 <TaskDetailsModal
                     task={currentTask}
                     developers={developers}
+                    users={users}
                     onClose={() => setShowTaskModal(false)}
                     onUpdate={handleUpdateTask}
                 />
