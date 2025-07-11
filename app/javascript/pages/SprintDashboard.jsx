@@ -167,27 +167,27 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
                             </select>
                         </div>
                         <div>
-                            <label htmlFor="scheduledStartDate" className="block text-sm font-medium text-gray-700 mb-1">
-                                Scheduled Start Date
+                            <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
+                                Start Date
                             </label>
                             <input
                                 type="date"
-                                id="scheduledStartDate"
-                                name="scheduledStartDate"
-                                value={editedTask.scheduledStartDate}
+                                id="startDate"
+                                name="startDate"
+                                value={editedTask.startDate}
                                 onChange={handleChange}
                                 className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                             />
                         </div>
                         <div>
-                            <label htmlFor="scheduledEndDate" className="block text-sm font-medium text-gray-700 mb-1">
-                                Scheduled End Date
+                            <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">
+                                End Date
                             </label>
                             <input
                                 type="date"
-                                id="scheduledEndDate"
-                                name="scheduledEndDate"
-                                value={editedTask.scheduledEndDate}
+                                id="endDate"
+                                name="endDate"
+                                value={editedTask.endDate}
                                 onChange={handleChange}
                                 className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                             />
@@ -245,8 +245,8 @@ const SprintDashboard = () => {
                 id: t.task_id,
                 dbId: t.id,
                 sprintId: t.sprint_id,
-                title: `${t.type}`,
-                description: '',
+                title: t.title || 'title not added',
+                description: t.description || '',
                 link: t.task_url,
                 estimatedHours: t.estimated_hours,
                 status: t.status === 'done' ? 'Done' : t.status === 'inprogress' ? 'In Progress' : 'To Do',
@@ -254,8 +254,8 @@ const SprintDashboard = () => {
                 assignedUser: t.assigned_to_user,
                 assignedDeveloper: t.assigned_to_developer,
                 order: t.order,
-                scheduledStartDate: t.date,
-                scheduledEndDate: t.due_date || t.date,
+                startDate: t.start_date || t.date,
+                endDate: t.end_date || t.due_date || t.date,
             }));
             setTasks(mapped);
         });
@@ -279,8 +279,18 @@ const SprintDashboard = () => {
         setShowTaskModal(true);
     };
 
-    const handleUpdateTask = (updatedTask) => {
-        setTasks(tasks.map(t => t.id === updatedTask.id ? updatedTask : t));
+    const handleUpdateTask = async (updatedTask) => {
+        try {
+            await SchedulerAPI.updateTask(updatedTask.dbId, {
+                title: updatedTask.title,
+                description: updatedTask.description,
+                start_date: updatedTask.startDate,
+                end_date: updatedTask.endDate
+            });
+            setTasks(tasks.map(t => t.id === updatedTask.id ? { ...updatedTask, title: updatedTask.title || 'title not added' } : t));
+        } catch (e) {
+            console.error('Failed to update task', e);
+        }
         setShowTaskModal(false);
     };
 
@@ -354,10 +364,10 @@ const SprintDashboard = () => {
                                     Assigned To
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Scheduled Start
+                                    Start Date
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Scheduled End
+                                    End Date
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-xl">
                                     Status
@@ -386,10 +396,10 @@ const SprintDashboard = () => {
                                             {getDeveloperNames(task.assignedTo)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {new Date(task.scheduledStartDate).getDate()}
+                                            {new Date(task.startDate).getDate()}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {new Date(task.scheduledEndDate).getDate()}
+                                            {new Date(task.endDate).getDate()}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full

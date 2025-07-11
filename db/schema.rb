@@ -98,8 +98,12 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_11_000000) do
     t.string "task_id", null: false
     t.string "task_url"
     t.string "type", null: false
+    t.string "title"
+    t.text "description"
     t.decimal "estimated_hours", precision: 5, scale: 2
     t.date "date", null: false
+    t.date "start_date"
+    t.date "end_date"
     t.bigint "sprint_id"
     t.bigint "developer_id", null: false
     t.datetime "created_at", null: false
