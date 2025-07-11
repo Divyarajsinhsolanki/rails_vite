@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { fetchUserInfo, updateUserInfo, fetchPosts } from "../components/api"; // Adjust the import path as necessary
+import { fetchUserInfo, updateUserInfo, fetchPosts, SchedulerAPI } from "../components/api"; // Adjust the import path as necessary
 
 const Profile = () => {
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({
     first_name: "",
@@ -24,6 +25,8 @@ const Profile = () => {
       });
       const postsResponse = await fetchPosts(data.user.id);
       setPosts(postsResponse.data);
+      const tasksResponse = await SchedulerAPI.getTasks({ assigned_to: data.user.id });
+      setTasks(tasksResponse.data);
     } catch (error) {
       console.error("Error fetching user info:", error);
     }
@@ -157,6 +160,26 @@ const Profile = () => {
                 </div>
               ) : (
                 <p className="text-center text-gray-500 py-8">You haven't posted anything yet.</p>
+              )}
+            </div>
+
+            {/* Tasks Section */}
+            <div className="mt-12">
+              <h2 className="text-2xl font-bold text-gray-700 mb-6">My Tasks</h2>
+              {tasks.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {tasks.map((task) => (
+                    <div key={task.id} className="bg-white rounded-xl shadow-md p-5">
+                      <h3 className="text-lg font-semibold text-gray-800 break-all">{task.task_id}</h3>
+                      <p className="text-sm text-gray-500 capitalize">{task.status}</p>
+                      {task.due_date && (
+                        <p className="text-sm text-gray-500">Due {new Date(task.due_date).toLocaleDateString()}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-gray-500 py-8">No tasks assigned.</p>
               )}
             </div>
           </div>
