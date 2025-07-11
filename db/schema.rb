@@ -107,7 +107,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_11_000000) do
     t.boolean "is_struck", default: false
     t.string "status", default: "todo"
     t.integer "order", default: 0
-    t.integer "assigned_to"
+    t.integer "assigned_to_user"
+    t.integer "assigned_to_developer"
     t.integer "created_by"
     t.integer "updated_by"
     t.date "due_date"

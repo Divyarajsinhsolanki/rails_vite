@@ -39,6 +39,6 @@ class Api::TasksController < Api::BaseController
   end
 
   def task_params
-    params.require(:task).permit(:task_id, :task_url, :type, :status, :order, :assigned_to, :created_by, :created_at, :updated_by, :updated_at, :due_date, :estimated_hours, :date, :sprint_id, :developer_id, :is_struck)
+    params.require(:task).permit(:task_id, :task_url, :type, :status, :order, :assigned_to_user, :assigned_to_developer, :created_by, :created_at, :updated_by, :updated_at, :due_date, :estimated_hours, :date, :sprint_id, :developer_id, :is_struck)
   end
 end
