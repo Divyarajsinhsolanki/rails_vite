@@ -536,16 +536,15 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
 
     const handleAddTask = async (newTask) => {
         try {
-            const { data } = await SchedulerAPI.createTask({
-                task: {
-                    ...newTask,
-                    sprint_id: selectedSprintId,
-                    developer_id: Number(newTask.developer_id) || null,
-                    assigned_to_user: newTask.assigned_to_user || null,
-                    status: newTask.status,
-                    date: newTask.start_date || new Date().toISOString().slice(0,10)
-                }
-            });
+            const payload = {
+                ...newTask,
+                sprint_id: selectedSprintId,
+                developer_id: Number(newTask.developer_id) || null,
+                assigned_to_user: newTask.assigned_to_user || null,
+                status: newTask.status,
+                date: newTask.start_date || new Date().toISOString().slice(0,10)
+            };
+            const { data } = await SchedulerAPI.createTask(payload);
             const mapped = {
                 id: data.task_id,
                 dbId: data.id,

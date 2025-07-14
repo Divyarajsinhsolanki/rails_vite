@@ -72,7 +72,7 @@ export default function TodoBoard({ sprintId, onSprintChange }) {
   const handleAddTask = async (newTaskData) => {
     try {
       const payload = { ...newTaskData, sprint_id: selectedSprintId };
-      const { data } = await SchedulerAPI.createTask({ task: payload });
+      const { data } = await SchedulerAPI.createTask(payload);
       setColumns(prev => ({
         ...prev,
         todo: { ...prev.todo, items: [...prev.todo.items, data] }
