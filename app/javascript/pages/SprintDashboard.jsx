@@ -22,7 +22,7 @@ export default function SprintDashboard() {
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-800 flex items-center">
             <CalendarDaysIcon className="h-7 w-7 mr-2 text-blue-600"/>
-            Sprint Task Manager
+            Sprint Manager
           </h1>
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}>
             {sprint && (

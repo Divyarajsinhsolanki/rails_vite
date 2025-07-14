@@ -325,20 +325,15 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 p-8 font-sans text-gray-800">
-            <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-8">
-                <h1 className="text-4xl font-extrabold text-center text-indigo-700 mb-10">
-                    Sprint Management Dashboard
-                </h1>
-
-
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 p-8 font-sans text-gray-800">
+            <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-4">
                 {/* Current Sprint Overview */}
                 {selectedSprintId && (
-                    <div className="bg-indigo-50 p-6 rounded-xl shadow-inner mb-8">
-                        <h2 className="text-2xl font-bold text-indigo-800 mb-4">
-                            Current Sprint: {sprints.find(s => s.id === selectedSprintId)?.name}
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-lg">
+                    <div className="bg-indigo-50 p-3 rounded-xl shadow-inner mb-8">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-lg">
+                            <h2 className="text-2xl font-bold text-indigo-800 mb-4">
+                                Sprint: {sprints.find(s => s.id === selectedSprintId)?.name}
+                            </h2>
                             <p>
                                 <span className="font-semibold">Start Date:</span>{' '}
                                 {currentSprint?.start_date}

@@ -160,7 +160,7 @@ export default function TodoBoard({ sprintId, onSprintChange }) {
   }, {});
 
   return (
-    <div className="p-4">
+    <div className="p-4 bg-gradient-to-br from-slate-50 to-sky-100">
       <Toaster position="top-right" />
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div className="flex items-center gap-4">
