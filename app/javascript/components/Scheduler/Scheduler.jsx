@@ -255,10 +255,11 @@ function Scheduler({ sprintId }) {
   }, [sprintId]);
 
   useEffect(() => {
+    const params = sprintId ? { sprint_id: sprintId } : {};
     Promise.all([
       SchedulerAPI.getDevelopers(),
-      SchedulerAPI.getTaskLogs(),
-      SchedulerAPI.getTasks()
+      SchedulerAPI.getTaskLogs(params),
+      SchedulerAPI.getTasks(params)
     ])
       .then(([devRes, logRes, taskRes]) => {
         setDevelopers(devRes.data);
@@ -270,7 +271,7 @@ function Scheduler({ sprintId }) {
         setError("Could not load developers or tasks");
         setLoading(l => ({ ...l, developers: false, tasks: false }));
       });
-  }, []);
+  }, [sprintId]);
   
   const getWeekdaysInRange = useCallback((start, end) => {
     const datesArr = [];
@@ -607,7 +608,7 @@ function Scheduler({ sprintId }) {
         </main>
       </div>
 
-      <Modal isOpen={isAddTaskModalOpen} onClose={() => setIsAddTaskModalOpen(false)} title="✨ Add New Task">
+      <Modal isOpen={isAddTaskModalOpen} onClose={() => setIsAddTaskModalOpen(false)} title="✨ Add Log">
         <AddTaskForm
           developers={developers}
           dates={dates}

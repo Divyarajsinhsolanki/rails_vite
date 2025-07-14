@@ -125,7 +125,9 @@ export default function AddTaskForm({developers, dates, types, tasks, onAddTask}
           >
             <option value="">Select Task</option>
             {tasks.map(t => (
-              <option key={t.id} value={t.id}>{t.task_id}</option>
+              <option key={t.id} value={t.id}>
+                {t.task_id}{t.task_url ? ` - ${t.task_url}` : ''}
+              </option>
             ))}
           </select>
         </div>
@@ -134,7 +136,7 @@ export default function AddTaskForm({developers, dates, types, tasks, onAddTask}
           type="submit"
           className="bg-blue-600 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-700 transition"
         >
-          🛠️ Add Task
+          🛠️ Add Log
         </button>
       </div>
     </form>
