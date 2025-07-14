@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SchedulerAPI, getUsers } from '../components/api';
+import { FiX } from 'react-icons/fi';
 
 // Helper to calculate working days between two dates excluding weekends
 const calculateWorkingDays = (start, end) => {
@@ -41,8 +42,15 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
   };
 
   return (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-2xl transform transition-all scale-100 opacity-100">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="relative bg-white rounded-xl shadow-2xl p-8 w-full max-w-2xl transform transition-all scale-100 opacity-100 overflow-y-auto max-h-[90vh]">
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+                >
+                    <FiX className="w-5 h-5" />
+                </button>
                 <h2 className="text-3xl font-bold text-indigo-700 mb-6 text-center">Task Details</h2>
                 <form onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
