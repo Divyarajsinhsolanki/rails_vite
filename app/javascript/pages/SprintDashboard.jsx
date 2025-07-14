@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CalendarDaysIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import SprintOverview from './SprintOverview';
 import Scheduler from '../components/Scheduler/Scheduler';
@@ -9,7 +9,29 @@ export default function SprintDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [sprintId, setSprintId] = useState(null);
   const [sprint, setSprint] = useState(null);
+  const [sprints, setSprints] = useState([]);
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(false);
+
+  // Load all sprints on mount and select the current one
+  useEffect(() => {
+    fetch('/api/sprints.json')
+      .then(res => res.json())
+      .then(data => {
+        setSprints(data || []);
+        if (data && data.length) {
+          const today = new Date();
+          const current = data.find(s => {
+            const start = new Date(s.start_date);
+            const end = new Date(s.end_date);
+            return today >= start && today <= end;
+          });
+          if (current) {
+            setSprint(current);
+            setSprintId(current.id);
+          }
+        }
+      });
+  }, []);
 
   const isCurrentSprint = (s) => {
     if (!s) return false;
@@ -20,8 +42,14 @@ export default function SprintDashboard() {
   };
 
   const handleSprintChange = (s) => {
-    setSprint(s);
-    setSprintId(s?.id || null);
+    if (typeof s === 'number' || typeof s === 'string') {
+      const found = sprints.find(sp => sp.id === Number(s));
+      if (found) setSprint(found);
+      setSprintId(Number(s));
+    } else {
+      setSprint(s);
+      setSprintId(s?.id || null);
+    }
     setIsHeaderExpanded(false);
   };
 
@@ -47,11 +75,9 @@ export default function SprintDashboard() {
             )}
           </div>
         </div>
-        {isHeaderExpanded && (
-          <div className="mt-4 border-t border-gray-200 pt-4">
-            <SprintManager onSprintChange={handleSprintChange} />
-          </div>
-        )}
+        <div className={`mt-4 border-t border-gray-200 pt-4 ${isHeaderExpanded ? '' : 'hidden'}`}>
+          <SprintManager onSprintChange={handleSprintChange} />
+        </div>
       </header>
       <div className="flex justify-center space-x-4 my-4">
         <button className={`px-4 py-2 rounded-md ${activeTab==='overview'?'bg-indigo-600 text-white':'bg-gray-200'}`} onClick={() => setActiveTab('overview')}>Overview</button>
