@@ -199,12 +199,14 @@ export default function SprintManager({ onSprintChange }) {
                     </span>
                   </div>
                   
+                  {/*
                   {s.description && (
                     <div className="mt-3 text-gray-600 text-sm flex items-start">
                       <FiInfo className="mt-0.5 mr-2 text-gray-400 flex-shrink-0" />
                       <span className="line-clamp-2">{s.description}</span>
                     </div>
                   )}
+                  */}
                   
                   <div className="mt-4">
                     <div className="flex items-center justify-between text-xs text-gray-500">
