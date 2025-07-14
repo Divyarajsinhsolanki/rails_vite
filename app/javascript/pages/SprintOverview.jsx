@@ -331,28 +331,6 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                     Sprint Management Dashboard
                 </h1>
 
-                {/* Sprint Selector */}
-                <div className="mb-8 flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4">
-                    <label htmlFor="sprint-select" className="text-lg font-semibold text-gray-700">
-                        Select Sprint:
-                    </label>
-                    <select
-                        id="sprint-select"
-                        className="p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-lg"
-                        value={selectedSprintId || ''}
-                        onChange={(e) => {
-                            const val = Number(e.target.value);
-                            setSelectedSprintId(val);
-                            if(onSprintChange) onSprintChange(val);
-                        }}
-                    >
-                        {sprints.map((sprint) => (
-                            <option key={sprint.id} value={sprint.id}>
-                                {sprint.name} ({sprint.start_date} to {sprint.end_date})
-                            </option>
-                        ))}
-                    </select>
-                </div>
 
                 {/* Current Sprint Overview */}
                 {selectedSprintId && (
