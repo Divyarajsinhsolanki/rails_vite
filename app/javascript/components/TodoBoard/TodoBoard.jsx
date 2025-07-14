@@ -19,16 +19,30 @@ export default function TodoBoard() {
   const [columns, setColumns] = useState(initialData);
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [sprints, setSprints] = useState([]);
+  const [selectedSprintId, setSelectedSprintId] = useState(null);
 
   // --- DATA FETCHING & INITIALIZATION ---
   useEffect(() => {
-    SchedulerAPI.getTasks()
+    SchedulerAPI.getSprints()
+      .then(res => {
+        setSprints(res.data);
+        if (res.data.length) {
+          setSelectedSprintId(res.data[0].id);
+        }
+      })
+      .catch(() => toast.error("Could not load sprints"));
+  }, []);
+
+  useEffect(() => {
+    if (!selectedSprintId) return;
+    SchedulerAPI.getTasks({ sprint_id: selectedSprintId })
       .then(res => {
         const grouped = groupBy(res.data);
         setColumns(grouped);
       })
       .catch(() => toast.error("Could not load tasks"));
-  }, []);
+  }, [selectedSprintId]);
 
   function groupBy(tasks) {
     const cols = JSON.parse(JSON.stringify(initialData));
@@ -44,7 +58,8 @@ export default function TodoBoard() {
   // --- HANDLERS ---
   const handleAddTask = async (newTaskData) => {
     try {
-      const { data } = await SchedulerAPI.createTask({ task: newTaskData });
+      const payload = { ...newTaskData, sprint_id: selectedSprintId };
+      const { data } = await SchedulerAPI.createTask({ task: payload });
       setColumns(prev => ({
         ...prev,
         todo: { ...prev.todo, items: [...prev.todo.items, data] }
@@ -134,8 +149,19 @@ export default function TodoBoard() {
   return (
     <div className="p-4">
       <Toaster position="top-right" />
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-semibold text-blue-700 tracking-tight">MyForm Task Control Center</h1>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+        <div className="flex items-center gap-4">
+          <h1 className="text-3xl font-semibold text-blue-700 tracking-tight">MyForm Task Control Center</h1>
+          <select
+            className="border px-2 py-1 rounded-md"
+            value={selectedSprintId || ''}
+            onChange={e => setSelectedSprintId(Number(e.target.value))}
+          >
+            {sprints.map(s => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+        </div>
         <button onClick={() => setShowForm(prev => !prev)} className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-700 transition-all">
           {showForm ? 'Close Form' : '+ New Task'}
         </button>
@@ -158,7 +184,7 @@ export default function TodoBoard() {
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {Object.entries(filteredColumns).map(([columnId, column]) => (
-                <KanbanColumn 
+                <KanbanColumn
                     key={columnId}
                     columnId={columnId}
                     column={column}
@@ -169,6 +195,15 @@ export default function TodoBoard() {
             ))}
         </div>
       </DragDropContext>
+
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-4">Tasks in Selected Sprint</h2>
+        <ul className="list-disc pl-5 space-y-1">
+          {Object.values(columns).flatMap(c => c.items).map(task => (
+            <li key={task.id}>{task.task_id}</li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

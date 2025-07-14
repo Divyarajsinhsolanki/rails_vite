@@ -46,6 +46,7 @@ api.interceptors.response.use(
 export const SchedulerAPI = {
   // Sprints
   getLastSprint: () => api.get("/sprints/last.json"),
+  getSprints: () => api.get("/sprints.json"),
   createSprint: (data) => api.post("/sprints.json", { sprint: data }),
   updateSprint: (id, data) => api.put(`/sprints/${id}.json`, { sprint: data }),
 
