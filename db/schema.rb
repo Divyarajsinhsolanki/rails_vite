@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_01_01_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_01_01_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -96,12 +96,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_01_01_000001) do
     t.string "name", null: false
     t.date "start_date", null: false
     t.date "end_date", null: false
-    t.text "description"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "status", default: "todo"
     t.integer "progress", default: 0
-    t.integer "order", default: 0
     t.integer "project_id"
     t.integer "created_by"
     t.integer "updated_by"
@@ -130,24 +128,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_01_01_000001) do
     t.string "task_url"
     t.string "type", null: false
     t.decimal "estimated_hours", precision: 5, scale: 2
-    t.date "date", null: false
     t.bigint "sprint_id"
     t.bigint "developer_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.boolean "is_struck", default: false
     t.string "status", default: "todo"
     t.integer "order", default: 0
     t.integer "assigned_to_user"
     t.integer "created_by"
     t.integer "updated_by"
-    t.date "due_date"
     t.integer "assigned_to_developer"
     t.string "title"
     t.text "description"
     t.date "start_date"
     t.date "end_date"
-    t.index ["date"], name: "index_tasks_on_date"
     t.index ["developer_id"], name: "index_tasks_on_developer_id"
     t.index ["sprint_id"], name: "index_tasks_on_sprint_id"
     t.index ["type"], name: "index_tasks_on_type"

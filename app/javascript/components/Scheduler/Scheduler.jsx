@@ -166,7 +166,7 @@ function TaskCard({ task, onEdit, onTaskUpdate }) {
           <button onClick={(e) => { e.stopPropagation(); onEdit(); }} title="Edit task" className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100 transition-colors">
             <PencilIcon className="h-5 w-5" />
           </button>
-          {task.task_url && (
+          {task.task?.task_url && (
             <button onClick={copyLink} title="Copy task link" className="p-1 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-gray-100 transition-colors relative">
               <LinkIcon className="h-5 w-5" />
               {copied && <CheckCircleSolidIcon className="h-3 w-3 text-green-500 absolute -top-1 -right-1" />}

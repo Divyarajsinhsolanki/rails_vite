@@ -94,11 +94,11 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
                                 name="title"
                                 value={editedTask.title}
                                 onChange={handleChange}
-                                rows="1"
+                                rows="3"
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             ></textarea>
                         </div>
-                        <div className="md:col-span-2 lg:col-span-3">
+                        {/* <div className="md:col-span-2 lg:col-span-3">
                             <label htmlFor="taskDescription" className="block text-sm font-medium text-gray-700 mb-1">
                                 Description
                             </label>
@@ -110,7 +110,7 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
                                 rows="2"
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             ></textarea>
-                        </div>
+                        </div> */}
                         <div>
                             <label htmlFor="estimatedHours" className="block text-sm font-medium text-gray-700 mb-1">
                                 Estimated Hours
@@ -316,11 +316,11 @@ const AddTaskModal = ({ developers, users, onClose, onCreate }) => {
                                 name="title"
                                 value={newTask.title}
                                 onChange={handleChange}
-                                rows="1"
+                                rows="3"
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             ></textarea>
                         </div>
-                        <div className="md:col-span-2 lg:col-span-3">
+                        {/* <div className="md:col-span-2 lg:col-span-3">
                             <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
                                 Description
                             </label>
@@ -332,7 +332,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate }) => {
                                 rows="2"
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             ></textarea>
-                        </div>
+                        </div> */}
                         <div>
                             <label htmlFor="estimated_hours" className="block text-sm font-medium text-gray-700 mb-1">
                                 Estimated Hours

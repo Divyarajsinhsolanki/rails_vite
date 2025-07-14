@@ -126,7 +126,7 @@ export default function AddTaskForm({developers, dates, types, tasks, onAddTask}
             <option value="">Select Task</option>
             {tasks.map(t => (
               <option key={t.id} value={t.id}>
-                {t.task_id}{t.task_url ? ` - ${t.task_url}` : ''}
+                {t.task_id}
               </option>
             ))}
           </select>
