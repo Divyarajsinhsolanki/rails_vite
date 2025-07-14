@@ -212,15 +212,6 @@ export default function TodoBoard({ sprintId, onSprintChange }) {
             ))}
         </div>
       </DragDropContext>
-
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">Tasks in Selected Sprint</h2>
-        <ul className="list-disc pl-5 space-y-1">
-          {Object.values(columns).flatMap(c => c.items).map(task => (
-            <li key={task.id}>{task.task_id}</li>
-          ))}
-        </ul>
-      </div>
     </div>
   );
 }
