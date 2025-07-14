@@ -72,17 +72,32 @@ export default function SprintDashboard() {
 
   return (
     <div className="space-y-6">
-      <header className="bg-white shadow-sm p-4">
+      <header className="bg-white shadow-sm p-2">
         <div className="flex justify-between items-center">
           <h1 className="text-xl font-bold text-gray-800 flex items-center">
             <CalendarDaysIcon className="h-7 w-7 mr-2 text-blue-600"/>
-            {sprint ? `Sprint: ${sprint.name} ${formatDateRange(sprint.start_date, sprint.end_date)} Working Days: ${calculateWorkingDays(sprint.start_date, sprint.end_date)}` : 'Sprint Manager'}
+            {sprint ? (
+              <span className="flex flex-col sm:flex-row sm:items-center">
+                <span className="truncate">Sprint: {sprint.name}</span>
+                <span className="sm:ml-4 text-xl font-medium text-gray-600">
+                  ({formatDateRange(sprint.start_date, sprint.end_date)})
+                </span>
+                <span className="sm:ml-4 text-xl font-medium text-gray-600">
+                  Working Days: {calculateWorkingDays(sprint.start_date, sprint.end_date)}
+                </span>
+              </span>
+            ) : (
+              'Sprint Manager'
+            )}
           </h1>
-          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}>
+          <div
+            className="flex items-center space-x-3 cursor-pointer select-none p-2 rounded-lg hover:bg-blue-50 transition-colors duration-200"
+            onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}
+          >
             {sprint && (
               <p className="text-m text-gray-600">
                 {isCurrentSprint(sprint) ? 'Current Sprint:' : 'Selected Sprint:'}{' '}
-                <span className="font-semibold">{sprint.name}</span>
+                <span className="font-semibold text-blue-700">{sprint.name}</span>
               </p>
             )}
             {isHeaderExpanded ? (
@@ -96,10 +111,40 @@ export default function SprintDashboard() {
           <SprintManager onSprintChange={handleSprintChange} />
         </div>
       </header>
-      <div className="flex justify-center space-x-4 my-4">
-        <button className={`px-4 py-2 rounded-md ${activeTab==='overview'?'bg-indigo-600 text-white':'bg-gray-200'}`} onClick={() => setActiveTab('overview')}>Overview</button>
-        <button className={`px-4 py-2 rounded-md ${activeTab==='scheduler'?'bg-indigo-600 text-white':'bg-gray-200'}`} onClick={() => setActiveTab('scheduler')}>Scheduler</button>
-        <button className={`px-4 py-2 rounded-md ${activeTab==='todo'?'bg-indigo-600 text-white':'bg-gray-200'}`} onClick={() => setActiveTab('todo')}>Todo</button>
+      {/* Tab Navigation */}
+      <div className="flex justify-center mb-8">
+        <div className="flex bg-white rounded-full p-1 shadow-md border border-gray-100">
+          <button
+            className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out
+              ${activeTab === 'overview'
+                ? 'bg-blue-500 text-white shadow-lg'
+                : 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+              }`}
+            onClick={() => setActiveTab('overview')}
+          >
+            Overview
+          </button>
+          <button
+            className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
+              ${activeTab === 'scheduler'
+                ? 'bg-blue-500 text-white shadow-lg'
+                : 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+              }`}
+            onClick={() => setActiveTab('scheduler')}
+          >
+            Scheduler
+          </button>
+          <button
+            className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
+              ${activeTab === 'todo'
+                ? 'bg-blue-500 text-white shadow-lg'
+                : 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+              }`}
+            onClick={() => setActiveTab('todo')}
+          >
+            Todo
+          </button>
+        </div>
       </div>
       {activeTab === 'overview' && (
         <SprintOverview sprintId={sprintId} onSprintChange={handleSprintChange} />

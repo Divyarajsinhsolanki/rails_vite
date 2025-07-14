@@ -133,9 +133,9 @@ export default function SprintManager({ onSprintChange }) {
   }
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl shadow-xl border border-gray-200 mb-8">
+    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl shadow-xl border border-gray-200">
       {/* Sprint Cards */}
-      <div className="relative mb-8">
+      <div className="relative">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {sprints.map((s) => {
             const isActive = s.id === currentSprint?.id;
