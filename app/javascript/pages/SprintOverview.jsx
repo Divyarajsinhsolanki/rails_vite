@@ -519,21 +519,27 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
         setShowTaskModal(true);
     };
 
-    const handleUpdateTask = async (updatedTask) => {
+        const handleUpdateTask = async (updatedTask) => {
         try {
-            await SchedulerAPI.updateTask(updatedTask.dbId, {
+            const payload = {
                 title: updatedTask.title,
                 description: updatedTask.description,
                 start_date: updatedTask.startDate,
-                end_date: updatedTask.endDate
-            });
-            setTasks(tasks.map(t => t.id === updatedTask.id ? { ...updatedTask, title: updatedTask.title || 'title not added' } : t));
+                end_date: updatedTask.endDate,
+                task_url: updatedTask.link,
+                estimated_hours: updatedTask.estimatedHours,
+                developer_id: Number(updatedTask.assignedTo?.[0]) || null,
+                assigned_to_user: updatedTask.assignedUser || null,
+                status: updatedTask.status?.toLowerCase().replace(" ", "") || "todo",
+                order: updatedTask.order
+            };
+            await SchedulerAPI.updateTask(updatedTask.dbId, payload);
+            setTasks(tasks.map(t => t.id === updatedTask.id ? { ...updatedTask, title: updatedTask.title || "title not added" } : t));
         } catch (e) {
-            console.error('Failed to update task', e);
+            console.error("Failed to update task", e);
         }
         setShowTaskModal(false);
     };
-
     const handleAddTask = async (newTask) => {
         try {
             const payload = {
