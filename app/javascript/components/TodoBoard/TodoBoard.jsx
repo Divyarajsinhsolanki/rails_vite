@@ -15,12 +15,16 @@ const initialData = {
   done: { name: "Completed", color: "bg-green-100", items: [] },
 };
 
-export default function TodoBoard() {
+export default function TodoBoard({ sprintId, onSprintChange }) {
   const [columns, setColumns] = useState(initialData);
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [sprints, setSprints] = useState([]);
-  const [selectedSprintId, setSelectedSprintId] = useState(null);
+  const [selectedSprintId, setSelectedSprintId] = useState(sprintId || null);
+
+  useEffect(() => {
+    if (sprintId) setSelectedSprintId(sprintId);
+  }, [sprintId]);
 
   // --- DATA FETCHING & INITIALIZATION ---
   useEffect(() => {
@@ -28,7 +32,10 @@ export default function TodoBoard() {
       .then(res => {
         setSprints(res.data);
         if (res.data.length) {
-          setSelectedSprintId(res.data[0].id);
+          if(!sprintId) {
+            setSelectedSprintId(res.data[0].id);
+            onSprintChange && onSprintChange(res.data[0].id);
+          }
         }
       })
       .catch(() => toast.error("Could not load sprints"));
@@ -42,6 +49,12 @@ export default function TodoBoard() {
         setColumns(grouped);
       })
       .catch(() => toast.error("Could not load tasks"));
+  }, [selectedSprintId]);
+
+  useEffect(() => {
+    if (onSprintChange && selectedSprintId) {
+      onSprintChange(selectedSprintId);
+    }
   }, [selectedSprintId]);
 
   function groupBy(tasks) {
@@ -155,7 +168,11 @@ export default function TodoBoard() {
           <select
             className="border px-2 py-1 rounded-md"
             value={selectedSprintId || ''}
-            onChange={e => setSelectedSprintId(Number(e.target.value))}
+            onChange={e => {
+              const val = Number(e.target.value);
+              setSelectedSprintId(val);
+              onSprintChange && onSprintChange(val);
+            }}
           >
             {sprints.map(s => (
               <option key={s.id} value={s.id}>{s.name}</option>

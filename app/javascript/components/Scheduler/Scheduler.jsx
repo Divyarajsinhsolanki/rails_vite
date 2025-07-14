@@ -216,7 +216,7 @@ function TaskCell({ date, devId, tasksInCell, setEditingTask, handleTaskUpdate, 
   );
 }
 
-function Scheduler() {
+function Scheduler({ sprintId }) {
   const [sprint, setSprint] = useState(null);
   const [developers, setDevelopers] = useState([]);
   const [tasks, setTasks] = useState([]);
@@ -239,13 +239,23 @@ function Scheduler() {
 
 
   useEffect(() => {
-    SchedulerAPI.getLastSprint()
-      .then(res => { setSprint(res.data); setLoading(l => ({ ...l, sprint: false })); })
-      .catch(() => {
-        setError("Could not load sprint");
-        setLoading(l => ({ ...l, sprint: false }));
-      });
-  }, []);
+    if (sprintId) {
+      SchedulerAPI.getSprints()
+        .then(res => {
+          const found = res.data.find(s => s.id === sprintId);
+          if (found) setSprint(found);
+        })
+        .catch(() => setError("Could not load sprint"))
+        .finally(() => setLoading(l => ({ ...l, sprint: false })));
+    } else {
+      SchedulerAPI.getLastSprint()
+        .then(res => { setSprint(res.data); setLoading(l => ({ ...l, sprint: false })); })
+        .catch(() => {
+          setError("Could not load sprint");
+          setLoading(l => ({ ...l, sprint: false }));
+        });
+    }
+  }, [sprintId]);
 
   useEffect(() => {
     Promise.all([ SchedulerAPI.getDevelopers(), SchedulerAPI.getTasks() ])
