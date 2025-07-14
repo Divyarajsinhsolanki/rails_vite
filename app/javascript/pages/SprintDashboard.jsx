@@ -282,6 +282,12 @@ const SprintDashboard = () => {
 
     const getDeveloperNames = (devIds) => devIds.map(id => developers.find(dev => String(dev.id) === String(id))?.name || 'Unknown').join(', ');
 
+    const getUserName = (userId) => {
+        const user = users.find(u => String(u.id) === String(userId));
+        if (!user) return 'Unknown';
+        return user.first_name ? `${user.first_name} ${user.last_name}` : user.email;
+    };
+
     const currentSprint = sprints.find(s => s.id === selectedSprintId);
     const workingDays = currentSprint ? calculateWorkingDays(currentSprint.start_date, currentSprint.end_date) : 0;
 
@@ -372,7 +378,10 @@ const SprintDashboard = () => {
                                     Est. Hours
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Assigned To
+                                    Assigned To Developer
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Assigned User
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Start Date
@@ -407,6 +416,9 @@ const SprintDashboard = () => {
                                             {getDeveloperNames(task.assignedTo)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {getUserName(task.assignedUser)}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             {new Date(task.startDate).getDate()}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -425,7 +437,7 @@ const SprintDashboard = () => {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="8" className="px-6 py-4 text-center text-gray-500">
+                                    <td colSpan="9" className="px-6 py-4 text-center text-gray-500">
                                         No tasks found for this sprint.
                                     </td>
                                 </tr>
