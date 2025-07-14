@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SchedulerAPI, getUsers } from '../components/api';
 import { FiX } from 'react-icons/fi';
+import { CalendarDaysIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
 
 // Task Details Modal Component
 const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
@@ -221,6 +222,228 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
     );
 };
 
+// Add Task Modal Component
+const AddTaskModal = ({ developers, users, onClose, onCreate }) => {
+    const [newTask, setNewTask] = useState({
+        task_id: '',
+        task_url: '',
+        status: 'todo',
+        title: '',
+        description: '',
+        estimated_hours: '',
+        developer_id: developers[0]?.id || '',
+        assigned_to_user: '',
+        start_date: '',
+        end_date: '',
+        order: ''
+    });
+
+    useEffect(() => {
+        setNewTask(t => ({ ...t, developer_id: developers[0]?.id || '' }));
+    }, [developers]);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setNewTask(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onCreate(newTask);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="relative bg-white rounded-xl shadow-2xl p-8 w-full max-w-4xl transform transition-all scale-100 opacity-100 overflow-y-auto max-h-[80vh]">
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+                >
+                    <FiX className="w-5 h-5" />
+                </button>
+                <h2 className="text-3xl font-bold text-indigo-700 mb-6 text-center">Add Task</h2>
+                <form onSubmit={handleSubmit}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                        <div>
+                            <label htmlFor="task_id" className="block text-sm font-medium text-gray-700 mb-1">
+                                Task ID
+                            </label>
+                            <input
+                                type="text"
+                                id="task_id"
+                                name="task_id"
+                                value={newTask.task_id}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="task_url" className="block text-sm font-medium text-gray-700 mb-1">
+                                Task Link
+                            </label>
+                            <input
+                                type="url"
+                                id="task_url"
+                                name="task_url"
+                                value={newTask.task_url}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+                                Status
+                            </label>
+                            <select
+                                id="status"
+                                name="status"
+                                value={newTask.status}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            >
+                                <option value="todo">To Do</option>
+                                <option value="inprogress">In Progress</option>
+                                <option value="done">Done</option>
+                            </select>
+                        </div>
+                        <div className="md:col-span-2 lg:col-span-3">
+                            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                                Task Title
+                            </label>
+                            <textarea
+                                id="title"
+                                name="title"
+                                value={newTask.title}
+                                onChange={handleChange}
+                                rows="1"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            ></textarea>
+                        </div>
+                        <div className="md:col-span-2 lg:col-span-3">
+                            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                                Description
+                            </label>
+                            <textarea
+                                id="description"
+                                name="description"
+                                value={newTask.description}
+                                onChange={handleChange}
+                                rows="2"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            ></textarea>
+                        </div>
+                        <div>
+                            <label htmlFor="estimated_hours" className="block text-sm font-medium text-gray-700 mb-1">
+                                Estimated Hours
+                            </label>
+                            <input
+                                type="number"
+                                id="estimated_hours"
+                                name="estimated_hours"
+                                value={newTask.estimated_hours}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="developer_id" className="block text-sm font-medium text-gray-700 mb-1">
+                                Assigned To Developer
+                            </label>
+                            <select
+                                id="developer_id"
+                                name="developer_id"
+                                value={newTask.developer_id}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            >
+                                {developers.map(dev => (
+                                    <option key={dev.id} value={dev.id}>
+                                        {dev.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="assigned_to_user" className="block text-sm font-medium text-gray-700 mb-1">
+                                Assigned User
+                            </label>
+                            <select
+                                id="assigned_to_user"
+                                name="assigned_to_user"
+                                value={newTask.assigned_to_user}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            >
+                                <option value="">Select user</option>
+                                {users.map(u => (
+                                    <option key={u.id} value={u.id}>
+                                        {u.first_name ? `${u.first_name}` : u.email}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="start_date" className="block text-sm font-medium text-gray-700 mb-1">
+                                Start Date
+                            </label>
+                            <input
+                                type="date"
+                                id="start_date"
+                                name="start_date"
+                                value={newTask.start_date}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="end_date" className="block text-sm font-medium text-gray-700 mb-1">
+                                End Date
+                            </label>
+                            <input
+                                type="date"
+                                id="end_date"
+                                name="end_date"
+                                value={newTask.end_date}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="order" className="block text-sm font-medium text-gray-700 mb-1">
+                                Order
+                            </label>
+                            <input
+                                type="number"
+                                id="order"
+                                name="order"
+                                value={newTask.order}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                        </div>
+                    </div>
+                    <div className="flex justify-end space-x-4">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition duration-200 ease-in-out shadow-md"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 ease-in-out shadow-md"
+                        >
+                            Create Task
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
 // Main Component
 const SprintOverview = ({ sprintId, onSprintChange }) => {
     const [sprints, setSprints] = useState([]);
@@ -234,6 +457,7 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
     }, [sprintId]);
     const [showTaskModal, setShowTaskModal] = useState(false);
     const [currentTask, setCurrentTask] = useState(null);
+    const [showAddModal, setShowAddModal] = useState(false);
 
     useEffect(() => {
         SchedulerAPI.getDevelopers().then(res => setDevelopers(res.data));
@@ -310,10 +534,56 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
         setShowTaskModal(false);
     };
 
+    const handleAddTask = async (newTask) => {
+        try {
+            const { data } = await SchedulerAPI.createTask({
+                task: {
+                    ...newTask,
+                    sprint_id: selectedSprintId,
+                    developer_id: Number(newTask.developer_id) || null,
+                    assigned_to_user: newTask.assigned_to_user || null,
+                    status: newTask.status,
+                    date: newTask.start_date || new Date().toISOString().slice(0,10)
+                }
+            });
+            const mapped = {
+                id: data.task_id,
+                dbId: data.id,
+                sprintId: data.sprint_id,
+                title: data.title || 'title not added',
+                description: data.description || '',
+                link: data.task_url,
+                estimatedHours: data.estimated_hours,
+                status: data.status === 'done' ? 'Done' : data.status === 'inprogress' ? 'In Progress' : 'To Do',
+                assignedTo: [data.developer_id].filter(Boolean).map(String),
+                assignedUser: data.assigned_to_user,
+                assignedDeveloper: data.assigned_to_developer,
+                order: data.order,
+                startDate: data.start_date || data.date,
+                endDate: data.end_date || data.due_date || data.date,
+            };
+            setTasks([...tasks, mapped]);
+        } catch (e) {
+            console.error('Failed to add task', e);
+        }
+        setShowAddModal(false);
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 p-8 font-sans text-gray-800">
             <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-4">
-
+                <div className="flex justify-between items-center mb-4">
+                    <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center">
+                        <CalendarDaysIcon className="h-7 w-7 mr-2"/>Sprint Task Manager
+                    </h1>
+                    <button
+                        onClick={() => setShowAddModal(true)}
+                        className="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
+                    >
+                        <PlusCircleIcon className="h-5 w-5 mr-2" />
+                        Add Task
+                    </button>
+                </div>
 
                 {/* Tasks Table */}
                 <div className="overflow-x-auto bg-white rounded-xl shadow-md">
@@ -401,6 +671,16 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                     </table>
                 </div>
             </div>
+
+            {/* Add Task Modal */}
+            {showAddModal && (
+                <AddTaskModal
+                    developers={developers}
+                    users={users}
+                    onClose={() => setShowAddModal(false)}
+                    onCreate={handleAddTask}
+                />
+            )}
 
             {/* Task Details Modal */}
             {showTaskModal && currentTask && (
