@@ -168,7 +168,7 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
                                 <option value="">Select user</option>
                                 {users.map(u => (
                                     <option key={u.id} value={u.id}>
-                                        {u.first_name ? `${u.first_name} ${u.last_name}` : u.email}
+                                        {u.first_name ? `${u.first_name}` : u.email}
                                     </option>
                                 ))}
                             </select>
@@ -285,7 +285,7 @@ const SprintDashboard = () => {
     const getUserName = (userId) => {
         const user = users.find(u => String(u.id) === String(userId));
         if (!user) return 'Unknown';
-        return user.first_name ? `${user.first_name} ${user.last_name}` : user.email;
+        return user.first_name ? `${user.first_name}` : user.email;
     };
 
     const currentSprint = sprints.find(s => s.id === selectedSprintId);
