@@ -81,6 +81,22 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                         </div>
+                        <div>
+                            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+                                Status
+                            </label>
+                            <select
+                                id="status"
+                                name="status"
+                                value={editedTask.status}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            >
+                                <option value="To Do">To Do</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Done">Done</option>
+                            </select>
+                        </div>
                         <div className="md:col-span-2 lg:col-span-3">
                             <label htmlFor="taskTitle" className="block text-sm font-medium text-gray-700 mb-1">
                                 Task Title
@@ -90,7 +106,7 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
                                 name="title"
                                 value={editedTask.title}
                                 onChange={handleChange}
-                                rows="2"
+                                rows="1"
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             ></textarea>
                         </div>
@@ -103,7 +119,7 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
                                 name="description"
                                 value={editedTask.description}
                                 onChange={handleChange}
-                                rows="4"
+                                rows="2"
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             ></textarea>
                         </div>
@@ -121,32 +137,15 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
                             />
                         </div>
                         <div>
-                            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
-                                Status
-                            </label>
-                            <select
-                                id="status"
-                                name="status"
-                                value={editedTask.status}
-                                onChange={handleChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            >
-                                <option value="To Do">To Do</option>
-                                <option value="In Progress">In Progress</option>
-                                <option value="Done">Done</option>
-                            </select>
-                        </div>
-                        <div>
                             <label htmlFor="assignedTo" className="block text-sm font-medium text-gray-700 mb-1">
                                 Assigned To Developer
                             </label>
                             <select
                                 id="assignedTo"
                                 name="assignedTo"
-                                multiple
                                 value={editedTask.assignedTo}
                                 onChange={handleDeveloperChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 h-24"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             >
                                 {developers.map(dev => (
                                     <option key={dev.id} value={dev.id}>
