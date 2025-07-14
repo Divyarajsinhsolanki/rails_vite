@@ -80,7 +80,7 @@ export default function SprintDashboard() {
           </h1>
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}>
             {sprint && (
-              <p className="text-sm text-gray-600">
+              <p className="text-m text-gray-600">
                 {isCurrentSprint(sprint) ? 'Current Sprint:' : 'Selected Sprint:'}{' '}
                 <span className="font-semibold">{sprint.name}</span>
               </p>

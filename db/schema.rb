@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_07_15_000000) do
+ActiveRecord::Schema[7.1].define(version: 2026_01_01_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -109,6 +109,22 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_15_000000) do
     t.index ["start_date"], name: "index_sprints_on_start_date"
   end
 
+  create_table "task_logs", force: :cascade do |t|
+    t.bigint "task_id", null: false
+    t.bigint "developer_id", null: false
+    t.date "log_date", null: false
+    t.string "type", default: "code"
+    t.decimal "hours_logged", precision: 5, scale: 2, null: false
+    t.string "status", default: "todo"
+    t.integer "created_by"
+    t.integer "updated_by"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["developer_id"], name: "index_task_logs_on_developer_id"
+    t.index ["log_date"], name: "index_task_logs_on_log_date"
+    t.index ["task_id"], name: "index_task_logs_on_task_id"
+  end
+
   create_table "tasks", force: :cascade do |t|
     t.string "task_id", null: false
     t.string "task_url"
@@ -158,6 +174,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_15_000000) do
   add_foreign_key "items", "users"
   add_foreign_key "notes", "users"
   add_foreign_key "posts", "users"
+  add_foreign_key "task_logs", "developers"
+  add_foreign_key "task_logs", "tasks"
   add_foreign_key "tasks", "developers"
   add_foreign_key "tasks", "sprints"
 end

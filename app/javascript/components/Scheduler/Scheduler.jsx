@@ -474,17 +474,6 @@ function Scheduler({ sprintId }) {
             <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center">
               <CalendarDaysIcon className="h-7 w-7 mr-2"/>Sprint Task Manager
             </h1>
-          </div>
-        </div>
-      </header>
-
-        <main className="flex-grow container mx-auto p-4 lg:p-6">
-          <div className="flex justify-between items-center mb-4"> {/* Combined div for alignment */}
-            {sprint && (
-              <p className="text-sm text-gray-600 mt-1">
-                  Current Sprint: <span className="font-semibold">{sprint.name || `Sprint ending ${formatDate(sprint.end_date)}`}</span>
-              </p>
-            )}
             <button
               onClick={() => setIsAddTaskModalOpen(true)}
               className="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105"
@@ -493,124 +482,128 @@ function Scheduler({ sprintId }) {
               Add Task
             </button>
           </div>
-            <section className="mb-8 bg-white/70 backdrop-blur-md shadow-xl rounded-xl overflow-hidden border border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-700 px-6 py-4 border-b border-gray-200 flex items-center">
-                    <TableCellsIcon className="h-6 w-6 mr-2 text-sky-600"/> Task Board
-                </h2>
-                <div className="overflow-x-auto relative">
-                    <table className="min-w-full divide-y divide-gray-200 border-collapse">
-                    {/* **FIX 3: Adjusted sticky top position dynamically** */}
-                    <thead className="bg-gray-50/80 backdrop-blur-sm sticky z-30" >
-                        <tr>
-                        <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-r border-gray-200 sticky left-0 bg-gray-100/90 z-20">
-                            Date
-                        </th>
-                        {developers.map(dev => (
-                            <th key={dev.id} className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-r border-gray-200 whitespace-nowrap">
-                            {dev.name}
-                            <span className="block text-[10px] font-normal text-gray-400">Total: {grandTotalsPerDev[dev.id] || 0}h</span>
-                            </th>
-                        ))}
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {dates.length === 0 && (
-                            <tr>
-                                <td colSpan={developers.length + 1} className="p-6 text-center text-gray-500">
-                                    <InformationCircleIcon className="h-8 w-8 mx-auto mb-2 text-gray-400"/>
-                                    No dates found for this sprint, or developers are not loaded.
-                                </td>
-                            </tr>
-                        )}
-                        {dates.map(date => (
-                        <tr key={date} className="hover:bg-sky-50/50 transition-colors duration-100">
-                            <td className="px-4 py-3 font-medium text-sm text-gray-700 border-r border-gray-200 sticky left-0 bg-white/90 hover:bg-sky-50/50 z-10 whitespace-nowrap">
-                                {formatDate(date)}
-                                <span className="block text-xs text-gray-400">{dailyTotalsPerDate[date] || 0}h Total</span>
-                            </td>
-                            {developers.map(dev => (
-                            <TaskCell
-                                key={`${date}-${dev.id}`}
-                                date={date}
-                                devId={dev.id}
-                                tasksInCell={tasksByDateDev[date]?.[dev.id] || []}
-                                setEditingTask={setEditingTask}
-                                handleTaskUpdate={handleTaskUpdate}
-                                totalHoursInCell={dailyTotalsPerDev[dev.id]?.[date] || 0}
-                            />
-                            ))}
-                        </tr>
-                        ))}
-                    </tbody>
-                    </table>
-                </div>
-            </section>
+        </div>
+      </header>
 
-            <section className="mb-8">
-                <h2 className="text-xl font-semibold text-gray-700 mb-4 flex items-center">
-                    <UserGroupIcon className="h-6 w-6 mr-2 text-sky-600"/>Workload Summaries
-                </h2>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="bg-white/70 backdrop-blur-md shadow-xl rounded-xl overflow-hidden border border-gray-200">
-                    <h3 className="text-lg font-medium text-gray-700 px-5 py-3 border-b border-gray-200">Developer Hours</h3>
-                    <div className="overflow-x-auto"> {/* Added overflow-x-auto here for scrolling */}
-                        <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50/80">
-                            <tr>
-                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Developer</th>
-                            {/* **FIX 1: Removed .slice() to show all dates** */}
-                            {dates.map(date => (
-                                <th key={date} className="px-3 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{formatDate(date).split(',')[0]}</th>
-                            ))}
-                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {developers.map((dev, index) => (
-                            <tr key={dev.id} className={index % 2 === 0 ? undefined : 'bg-gray-50/70'}>
-                                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-800">{dev.name}</td>
-                                {/* **FIX 1: Removed .slice() to show all dates** */}
-                                {dates.map(date => (
-                                <td key={date} className="px-3 py-3 whitespace-nowrap text-sm text-gray-600 text-center">{hoursByDevDate[dev.id]?.[date] || '0'}</td>
-                                ))}
-                                <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-800 text-center">{grandTotalsPerDev[dev.id] || '0'}</td>
-                            </tr>
-                            ))}
-                        </tbody>
-                        </table>
-                    </div>
-                    </div>
+        <main className="flex-grow container mx-auto p-4 lg:p-6">
+          <section className="mb-8 bg-white/70 backdrop-blur-md shadow-xl rounded-xl overflow-hidden border border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-700 px-6 py-4 border-b border-gray-200 flex items-center">
+                  <TableCellsIcon className="h-6 w-6 mr-2 text-sky-600"/> Task Board
+              </h2>
+              <div className="overflow-x-auto relative">
+                  <table className="min-w-full divide-y divide-gray-200 border-collapse">
+                  {/* **FIX 3: Adjusted sticky top position dynamically** */}
+                  <thead className="bg-gray-50/80 backdrop-blur-sm sticky z-30" >
+                      <tr>
+                      <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-r border-gray-200 sticky left-0 bg-gray-100/90 z-20">
+                          Date
+                      </th>
+                      {developers.map(dev => (
+                          <th key={dev.id} className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-r border-gray-200 whitespace-nowrap">
+                          {dev.name}
+                          <span className="block text-[10px] font-normal text-gray-400">Total: {grandTotalsPerDev[dev.id] || 0}h</span>
+                          </th>
+                      ))}
+                      </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                      {dates.length === 0 && (
+                          <tr>
+                              <td colSpan={developers.length + 1} className="p-6 text-center text-gray-500">
+                                  <InformationCircleIcon className="h-8 w-8 mx-auto mb-2 text-gray-400"/>
+                                  No dates found for this sprint, or developers are not loaded.
+                              </td>
+                          </tr>
+                      )}
+                      {dates.map(date => (
+                      <tr key={date} className="hover:bg-sky-50/50 transition-colors duration-100">
+                          <td className="px-4 py-3 font-medium text-sm text-gray-700 border-r border-gray-200 sticky left-0 bg-white/90 hover:bg-sky-50/50 z-10 whitespace-nowrap">
+                              {formatDate(date)}
+                              <span className="block text-xs text-gray-400">{dailyTotalsPerDate[date] || 0}h Total</span>
+                          </td>
+                          {developers.map(dev => (
+                          <TaskCell
+                              key={`${date}-${dev.id}`}
+                              date={date}
+                              devId={dev.id}
+                              tasksInCell={tasksByDateDev[date]?.[dev.id] || []}
+                              setEditingTask={setEditingTask}
+                              handleTaskUpdate={handleTaskUpdate}
+                              totalHoursInCell={dailyTotalsPerDev[dev.id]?.[date] || 0}
+                          />
+                          ))}
+                      </tr>
+                      ))}
+                  </tbody>
+                  </table>
+              </div>
+          </section>
 
-                    <div className="bg-white/70 backdrop-blur-md shadow-xl rounded-xl overflow-hidden border border-gray-200">
-                    <h3 className="text-lg font-medium text-gray-700 px-5 py-3 border-b border-gray-200">Daily Hours</h3>
-                    <div className="overflow-x-auto"> {/* Added overflow-x-auto here for scrolling */}
-                        <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50/80">
-                            <tr>
-                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                            {/* Showing all developers, ensure this is intended or use slice if needed */}
-                            {developers.map(dev => (
-                                <th key={dev.id} className="px-3 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">{dev.name.split(' ')[0]}</th>
-                            ))}
-                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {dates.map((date, index) => (
-                            <tr key={date} className={index % 2 === 0 ? undefined : 'bg-gray-50/70'}>
-                                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-800">{formatDate(date)}</td>
-                                {developers.map(dev => (
-                                <td key={dev.id} className="px-3 py-3 whitespace-nowrap text-sm text-gray-600 text-center">{hoursByDateDev[date]?.[dev.id] || '0'}</td>
-                                ))}
-                                <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-800 text-center">{dailyTotalsPerDate[date] || '0'}</td>
-                            </tr>
-                            ))}
-                        </tbody>
-                        </table>
-                    </div>
-                    </div>
-                </div>
-            </section>
+          <section className="mb-8">
+              <h2 className="text-xl font-semibold text-gray-700 mb-4 flex items-center">
+                  <UserGroupIcon className="h-6 w-6 mr-2 text-sky-600"/>Workload Summaries
+              </h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white/70 backdrop-blur-md shadow-xl rounded-xl overflow-hidden border border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-700 px-5 py-3 border-b border-gray-200">Developer Hours</h3>
+                  <div className="overflow-x-auto"> {/* Added overflow-x-auto here for scrolling */}
+                      <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50/80">
+                          <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Developer</th>
+                          {/* **FIX 1: Removed .slice() to show all dates** */}
+                          {dates.map(date => (
+                              <th key={date} className="px-3 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{formatDate(date).split(',')[0]}</th>
+                          ))}
+                          <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
+                          </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                          {developers.map((dev, index) => (
+                          <tr key={dev.id} className={index % 2 === 0 ? undefined : 'bg-gray-50/70'}>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-800">{dev.name}</td>
+                              {/* **FIX 1: Removed .slice() to show all dates** */}
+                              {dates.map(date => (
+                              <td key={date} className="px-3 py-3 whitespace-nowrap text-sm text-gray-600 text-center">{hoursByDevDate[dev.id]?.[date] || '0'}</td>
+                              ))}
+                              <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-800 text-center">{grandTotalsPerDev[dev.id] || '0'}</td>
+                          </tr>
+                          ))}
+                      </tbody>
+                      </table>
+                  </div>
+                  </div>
+
+                  <div className="bg-white/70 backdrop-blur-md shadow-xl rounded-xl overflow-hidden border border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-700 px-5 py-3 border-b border-gray-200">Daily Hours</h3>
+                  <div className="overflow-x-auto"> {/* Added overflow-x-auto here for scrolling */}
+                      <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50/80">
+                          <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                          {/* Showing all developers, ensure this is intended or use slice if needed */}
+                          {developers.map(dev => (
+                              <th key={dev.id} className="px-3 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">{dev.name.split(' ')[0]}</th>
+                          ))}
+                          <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
+                          </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                          {dates.map((date, index) => (
+                          <tr key={date} className={index % 2 === 0 ? undefined : 'bg-gray-50/70'}>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-800">{formatDate(date)}</td>
+                              {developers.map(dev => (
+                              <td key={dev.id} className="px-3 py-3 whitespace-nowrap text-sm text-gray-600 text-center">{hoursByDateDev[date]?.[dev.id] || '0'}</td>
+                              ))}
+                              <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-800 text-center">{dailyTotalsPerDate[date] || '0'}</td>
+                          </tr>
+                          ))}
+                      </tbody>
+                      </table>
+                  </div>
+                  </div>
+              </div>
+          </section>
         </main>
       </div>
 
