@@ -3,17 +3,17 @@ class Api::TasksController < Api::BaseController
 
   # GET /tasks.json
   def index
-    @tasks = Task.order(date: :asc)
+    @tasks = Task.includes(:assigned_user).order(date: :asc)
     @tasks = @tasks.where(assigned_to_user: params[:assigned_to_user]) if params[:assigned_to_user].present?
     @tasks = @tasks.where(sprint_id: params[:sprint_id]) if params[:sprint_id].present?
-    render json: @tasks
+    render json: @tasks.as_json(include: { assigned_user: { only: [:id, :first_name, :email] } })
   end
 
   # POST /tasks.json
   def create
     @task = Task.new(task_params)
     if @task.save
-      render json: @task, include: [:developer], status: :created
+      render json: @task.as_json(include: { developer: {}, assigned_user: { only: [:id, :first_name, :email] } }), status: :created
     else
       render json: { errors: @task.errors.full_messages }, status: :unprocessable_entity
     end
@@ -22,7 +22,7 @@ class Api::TasksController < Api::BaseController
   # PATCH/PUT /tasks/:id.json
   def update
     if @task.update(task_params)
-      render json: @task, include: [:developer]
+      render json: @task.as_json(include: { developer: {}, assigned_user: { only: [:id, :first_name, :email] } })
     else
       render json: { errors: @task.errors.full_messages }, status: :unprocessable_entity
     end
