@@ -60,7 +60,13 @@ export const SchedulerAPI = {
   updateTask: (id, data) => api.patch(`/tasks/${id}.json`, { task: data }),
   deleteTask: (id) => api.delete(`/tasks/${id}.json`),
   moveTask: (id, newData) => api.patch(`/tasks/${id}.json`, newData),
-  toggleTaskStatus: (id, status) => api.patch(`/tasks/${id}.json`, { is_struck: status })
+  toggleTaskStatus: (id, status) => api.patch(`/tasks/${id}.json`, { is_struck: status }),
+
+  // Task Logs
+  getTaskLogs: (params = {}) => api.get('/task_logs.json', { params }),
+  createTaskLog: (data) => api.post('/task_logs.json', { task_log: data }),
+  updateTaskLog: (id, data) => api.patch(`/task_logs/${id}.json`, { task_log: data }),
+  deleteTaskLog: (id) => api.delete(`/task_logs/${id}.json`)
 };
 
 // USER ENDPOINTS (existing)

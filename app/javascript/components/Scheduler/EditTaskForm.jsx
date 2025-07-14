@@ -1,31 +1,31 @@
 import React, { useState, useEffect } from 'react';
 
-export default function EditTaskForm({ task, developers, dates, types, onSave, onCancel }) {
+export default function EditTaskForm({ task, developers, dates, types, tasks, onSave, onCancel }) {
   const [formData, setFormData] = useState({
     id: task.id,
-    date: task.date || '',
+    log_date: task.log_date || '',
     developer_id: task.developer_id || developers[0]?.id || '',
     task_id: task.task_id || '',
-    task_url: task.task_url || '',
-    estimated_hours: task.estimated_hours || 1,
-    sprint_id: task.sprint_id || null
+    hours_logged: task.hours_logged || 1,
+    type: task.type || 'Code',
+    status: task.status || 'todo'
   });
 
   useEffect(() => {
     setFormData({
       id: task.id,
-      date: task.date || '',
+      log_date: task.log_date || '',
       developer_id: task.developer_id || developers[0]?.id || '',
       task_id: task.task_id || '',
-      task_url: task.task_url || '',
-      estimated_hours: task.estimated_hours || 1,
-      sprint_id: task.sprint_id || null
+      hours_logged: task.hours_logged || 1,
+      type: task.type || 'Code',
+      status: task.status || 'todo'
     });
   }, [task, developers, types]);
 
   const handleChange = e => {
     let { name, value } = e.target;
-    if (['developer_id', 'estimated_hours', 'sprint_id'].includes(name)) {
+    if (['developer_id', 'hours_logged'].includes(name)) {
       value = Number(value);
     }
     setFormData(f => ({ ...f, [name]: value }));
@@ -33,8 +33,8 @@ export default function EditTaskForm({ task, developers, dates, types, onSave, o
 
   const handleSubmit = e => {
     e.preventDefault();
-    const { date, developer_id, task_id } = formData;
-    if (!date || !developer_id || !task_id.trim()) return;
+    const { log_date, developer_id, task_id } = formData;
+    if (!log_date || !developer_id || !task_id) return;
     onSave(formData);
   };
 
@@ -48,8 +48,8 @@ export default function EditTaskForm({ task, developers, dates, types, onSave, o
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">📅 Date</label>
           <select
-            name="date"
-            value={formData.date}
+            name="log_date"
+            value={formData.log_date}
             onChange={handleChange}
             className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
           >
@@ -91,15 +91,15 @@ export default function EditTaskForm({ task, developers, dates, types, onSave, o
           </select>
         </div>
 
-        {/* Estimated Hours */}
+        {/* Logged Hours */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">⏱ Estimated Hours</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">⏱ Hours Logged</label>
           <input
             type="number"
-            name="estimated_hours"
+            name="hours_logged"
             min="0"
             step="0.25"
-            value={formData.estimated_hours}
+            value={formData.hours_logged}
             onChange={handleChange}
             className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
           />
@@ -111,29 +111,20 @@ export default function EditTaskForm({ task, developers, dates, types, onSave, o
         {/* Task ID */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">📌 Task ID</label>
-          <input
-            type="text"
+          <select
             name="task_id"
             value={formData.task_id}
             onChange={handleChange}
-            placeholder="e.g., HME-123456"
-            required
             className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-          />
+            required
+          >
+            <option value="">Select Task</option>
+            {tasks.map(t => (
+              <option key={t.id} value={t.id}>{t.task_id}</option>
+            ))}
+          </select>
         </div>
 
-        {/* Task URL */}
-        <div className="flex-grow">
-          <label className="block text-sm font-medium text-gray-700 mb-1">🔗 Task URL</label>
-          <input
-            type="url"
-            name="task_url"
-            value={formData.task_url}
-            onChange={handleChange}
-            placeholder="https://..."
-            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
 
         {/* Save Button */}
         <button
@@ -143,11 +134,6 @@ export default function EditTaskForm({ task, developers, dates, types, onSave, o
           💾 Save Changes
         </button>
       </div>
-
-      {/* Hidden Sprint ID */}
-      {formData.sprint_id && (
-        <input type="hidden" name="sprint_id" value={formData.sprint_id} />
-      )}
     </form>
   );
 }

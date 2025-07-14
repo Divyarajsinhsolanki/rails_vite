@@ -85,14 +85,14 @@ function TaskCard({ task, onEdit, onTaskUpdate }) {
   const cardColor = typeColors[task.type] || typeColors['Default'];
 
   const toggleStrike = async () => {
-    const updatedStrike = !task.is_struck;
-    onTaskUpdate({ ...task, is_struck: updatedStrike });
+    const newStatus = task.status === 'completed' ? 'todo' : 'completed';
+    onTaskUpdate({ ...task, status: newStatus });
     try {
-      const { data: updated } = await SchedulerAPI.toggleTaskStatus(task.id, updatedStrike);
+      const { data: updated } = await SchedulerAPI.updateTaskLog(task.id, { status: newStatus });
       onTaskUpdate(updated);
     } catch (error) {
-      console.error("Error striking task:", error);
-      onTaskUpdate({ ...task, is_struck: !updatedStrike });
+      console.error("Error updating status:", error);
+      onTaskUpdate({ ...task, status: task.status });
       alert("Error: Could not update task status.");
     }
   };
@@ -125,7 +125,7 @@ function TaskCard({ task, onEdit, onTaskUpdate }) {
     <div
       ref={setNodeRef}
       style={style}
-      className={`p-2.5 mb-2 border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-150 ${cardColor} ${task.is_struck ? 'opacity-70' : ''}`}
+      className={`p-2.5 mb-2 border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-150 ${cardColor} ${task.status === 'completed' ? 'opacity-70' : ''}`}
     >
       <div className="flex items-start justify-between">
         <div className="flex items-start min-w-0">
@@ -139,18 +139,18 @@ function TaskCard({ task, onEdit, onTaskUpdate }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className={`font-semibold text-sm hover:underline ${task.is_struck ? 'line-through text-gray-500' : 'text-indigo-600'} break-all`}
+                className={`font-semibold text-sm hover:underline ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-indigo-600'} break-all`}
                 title={`Open: ${task.task_id}`}
               >
                 {task.task_id}
               </a>
             ) : (
-              <span className={`font-semibold text-sm ${task.is_struck ? 'line-through text-gray-500' : 'text-gray-800'} break-all`}>
+              <span className={`font-semibold text-sm ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-800'} break-all`}>
                 {task.task_id}
               </span>
             )}
             <div className="text-xs text-gray-500 mt-0.5">
-              <span>{task.estimated_hours}h</span>
+              <span>{task.hours_logged}h</span>
               <span className="mx-1">|</span>
               <span>{task.type}</span>
             </div>
@@ -158,8 +158,8 @@ function TaskCard({ task, onEdit, onTaskUpdate }) {
         </div>
 
         <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
-          <button onClick={toggleStrike} title={task.is_struck ? "Mark as not done" : "Mark as done"} className="p-1 text-gray-500 hover:text-green-600 rounded-full hover:bg-gray-100 transition-colors">
-            {task.is_struck ? <CheckCircleSolidIcon className="h-5 w-5 text-green-600" /> : <CheckCircleIcon className="h-5 w-5" />}
+          <button onClick={toggleStrike} title={task.status === 'completed' ? "Mark as not done" : "Mark as done"} className="p-1 text-gray-500 hover:text-green-600 rounded-full hover:bg-gray-100 transition-colors">
+            {task.status === 'completed' ? <CheckCircleSolidIcon className="h-5 w-5 text-green-600" /> : <CheckCircleIcon className="h-5 w-5" />}
           </button>
           <button onClick={(e) => { e.stopPropagation(); onEdit(); }} title="Edit task" className="p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100 transition-colors">
             <PencilIcon className="h-5 w-5" />
@@ -216,7 +216,8 @@ function TaskCell({ date, devId, tasksInCell, setEditingTask, handleTaskUpdate, 
 function Scheduler({ sprintId }) {
   const [sprint, setSprint] = useState(null);
   const [developers, setDevelopers] = useState([]);
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState([]); // will hold task logs
+  const [allTasks, setAllTasks] = useState([]); // options from tasks table
   const types = useMemo(() => ['Code', 'Code review', 'Dev to QA', 'Planning', 'Testing', 'Bug Fixing'], []);
 
   const [loading, setLoading] = useState({sprint: true, developers: true, tasks: true});
@@ -254,10 +255,15 @@ function Scheduler({ sprintId }) {
   }, [sprintId]);
 
   useEffect(() => {
-    Promise.all([ SchedulerAPI.getDevelopers(), SchedulerAPI.getTasks() ])
-      .then(([devRes, taskRes]) => {
+    Promise.all([
+      SchedulerAPI.getDevelopers(),
+      SchedulerAPI.getTaskLogs(),
+      SchedulerAPI.getTasks()
+    ])
+      .then(([devRes, logRes, taskRes]) => {
         setDevelopers(devRes.data);
-        setTasks(taskRes.data);
+        setTasks(logRes.data);
+        setAllTasks(taskRes.data);
         setLoading(l => ({ ...l, developers: false, tasks: false }));
       })
       .catch(() => {
@@ -293,8 +299,8 @@ function Scheduler({ sprintId }) {
       });
     });
     tasks.forEach(task => {
-      if (task.date && task.developer_id && structuredTasks[task.date] && structuredTasks[task.date][task.developer_id]) {
-        structuredTasks[task.date][task.developer_id].push(task);
+      if (task.log_date && task.developer_id && structuredTasks[task.log_date] && structuredTasks[task.log_date][task.developer_id]) {
+        structuredTasks[task.log_date][task.developer_id].push(task);
       }
     });
     return structuredTasks;
@@ -302,12 +308,12 @@ function Scheduler({ sprintId }) {
 
   const addTask = async (formData) => {
     const tempId = `temp-${Date.now()}`;
-    const newTask = { ...formData, id: tempId, developer_id: Number(formData.developer_id), estimated_hours: parseFloat(formData.estimated_hours) };
+    const newTask = { ...formData, id: tempId, developer_id: Number(formData.developer_id), hours_logged: parseFloat(formData.hours_logged) };
     setTasks(prev => [...prev, newTask]);
     setIsAddTaskModalOpen(false);
 
     try {
-      const { data: created } = await SchedulerAPI.createTask({ ...formData, sprint_id: sprint.id });
+      const { data: created } = await SchedulerAPI.createTaskLog({ ...formData });
       setTasks(prev => prev.map(t => t.id === tempId ? created : t));
     } catch (error) {
       console.error("Error adding task:", error);
@@ -318,11 +324,11 @@ function Scheduler({ sprintId }) {
 
   const saveUpdatedTask = async (formData) => {
     const taskId = formData.id;
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...formData, developer_id: Number(formData.developer_id), estimated_hours: parseFloat(formData.estimated_hours) } : t));
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...formData, developer_id: Number(formData.developer_id), hours_logged: parseFloat(formData.hours_logged) } : t));
     setEditingTask(null);
 
     try {
-      const { data: updated } = await SchedulerAPI.updateTask(taskId, formData);
+      const { data: updated } = await SchedulerAPI.updateTaskLog(taskId, formData);
       setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
     } catch (error) {
       console.error("Error updating task:", error);
@@ -350,12 +356,12 @@ function Scheduler({ sprintId }) {
     const originalTask = tasks.find(t => t.id === taskId);
     if (!originalTask) return;
 
-    const updatedTaskData = { ...originalTask, date: newDate, developer_id: newDevId };
+    const updatedTaskData = { ...originalTask, log_date: newDate, developer_id: newDevId };
     
     setTasks(prev => prev.map(t => (t.id === taskId ? updatedTaskData : t)));
 
     try {
-      const { data: moved } = await SchedulerAPI.moveTask(taskId, { date: newDate, developer_id: newDevId });
+      const { data: moved } = await SchedulerAPI.updateTaskLog(taskId, { log_date: newDate, developer_id: newDevId });
       setTasks(prev => prev.map(t => t.id === taskId ? moved : t));
     } catch (error) {
       console.error("Error moving task:", error);
@@ -378,12 +384,12 @@ function Scheduler({ sprintId }) {
     });
 
     tasks.filter(t => !t.deleted).forEach(task => {
-      const hrs = parseFloat(task.estimated_hours) || 0;
-      if (hByDevDate[task.developer_id] && typeof hByDevDate[task.developer_id][task.date] !== 'undefined') {
-        hByDevDate[task.developer_id][task.date] += hrs;
+      const hrs = parseFloat(task.hours_logged) || 0;
+      if (hByDevDate[task.developer_id] && typeof hByDevDate[task.developer_id][task.log_date] !== 'undefined') {
+        hByDevDate[task.developer_id][task.log_date] += hrs;
       }
-      if (hByDateDev[task.date] && typeof hByDateDev[task.date][task.developer_id] !== 'undefined') {
-        hByDateDev[task.date][task.developer_id] += hrs;
+      if (hByDateDev[task.log_date] && typeof hByDateDev[task.log_date][task.developer_id] !== 'undefined') {
+        hByDateDev[task.log_date][task.developer_id] += hrs;
       }
     });
     
@@ -393,7 +399,7 @@ function Scheduler({ sprintId }) {
         dates.forEach(date => {
             dtPerDev[dev.id][date] = (tasksByDateDev[date]?.[dev.id] || [])
                 .filter(t => !t.deleted)
-                .reduce((sum, task) => sum + (parseFloat(task.estimated_hours) || 0), 0);
+                .reduce((sum, task) => sum + (parseFloat(task.hours_logged) || 0), 0);
         });
     });
 
@@ -613,8 +619,8 @@ function Scheduler({ sprintId }) {
           developers={developers}
           dates={dates}
           types={types}
+          tasks={allTasks}
           onAddTask={addTask}
-          currentSprintId={sprint?.id}
         />
       </Modal>
 
@@ -625,9 +631,9 @@ function Scheduler({ sprintId }) {
             developers={developers}
             dates={dates}
             types={types}
+            tasks={allTasks}
             onSave={saveUpdatedTask}
             onCancel={() => setEditingTask(null)}
-            currentSprintId={sprint?.id}
           />
         )}
       </Modal>
