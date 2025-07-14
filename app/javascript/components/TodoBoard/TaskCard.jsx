@@ -43,12 +43,21 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
   const renderTaskDetails = () => (
      <div>
         <div className="flex justify-between items-start">
-            <div className="flex-1 text-gray-900">{item.task_id}</div>
+            <div className="flex-1 text-gray-900">
+              {item.task_url ? (
+                <a href={item.task_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+                  {item.task_id}
+                </a>
+              ) : (
+                item.task_id
+              )}
+            </div>
             <div className="flex flex-col gap-1 text-sm">
                 <button onClick={() => setIsEditing(true)} className="text-blue-500 hover:text-blue-700" title="Edit"><FiEdit2 /></button>
                 <button onClick={() => onDelete(columnId, item.id)} className="text-red-500 hover:text-red-700" title="Delete"><FiTrash2 /></button>
             </div>
         </div>
+        <div className="text-sm text-gray-800 mt-1">{item.title || 'No Title'}</div>
         {item.due && <div className={`text-xs mt-2 ${getDueColor(item.due)}`}>Due: {item.due}</div>}
         {item.tags && (
             <div className="flex flex-wrap gap-1 mt-2">
@@ -56,7 +65,10 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
             </div>
         )}
         {item.createdBy && <div className="text-xs text-gray-600 mt-1">Created by: {item.createdBy}</div>}
-        {item.assigned_to_user && <div className="text-xs text-gray-600">Assigned to: {item.assigned_to_user}</div>}
+        {item.assigned_user && (
+          <div className="text-xs text-gray-600">Assigned to: {item.assigned_user.first_name || item.assigned_user.email}</div>
+        )}
+        {item.end_date && <div className="text-xs text-gray-600">End Date: {item.end_date}</div>}
     </div>
   );
 
