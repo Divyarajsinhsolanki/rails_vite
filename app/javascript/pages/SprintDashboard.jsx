@@ -43,7 +43,7 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
 
   return (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <div className="relative bg-white rounded-xl shadow-2xl p-8 w-full max-w-2xl transform transition-all scale-100 opacity-100 overflow-y-auto max-h-[90vh]">
+            <div className="relative bg-white rounded-xl shadow-2xl p-8 w-full max-w-4xl transform transition-all scale-100 opacity-100 overflow-y-auto max-h-[80vh]">
                 <button
                     type="button"
                     onClick={onClose}
@@ -53,7 +53,7 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
                 </button>
                 <h2 className="text-3xl font-bold text-indigo-700 mb-6 text-center">Task Details</h2>
                 <form onSubmit={handleSubmit}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                         <div>
                             <label htmlFor="taskId" className="block text-sm font-medium text-gray-700 mb-1">
                                 Task ID
@@ -64,7 +64,7 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
                                 name="id"
                                 value={editedTask.id}
                                 onChange={handleChange}
-                                className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 readOnly
                             />
                         </div>
@@ -78,10 +78,10 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
                                 name="link"
                                 value={editedTask.link}
                                 onChange={handleChange}
-                                className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                         </div>
-                        <div className="col-span-2">
+                        <div className="md:col-span-2 lg:col-span-3">
                             <label htmlFor="taskTitle" className="block text-sm font-medium text-gray-700 mb-1">
                                 Task Title
                             </label>
@@ -91,10 +91,10 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
                                 value={editedTask.title}
                                 onChange={handleChange}
                                 rows="2"
-                                className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             ></textarea>
                         </div>
-                        <div className="col-span-2">
+                        <div className="md:col-span-2 lg:col-span-3">
                             <label htmlFor="taskDescription" className="block text-sm font-medium text-gray-700 mb-1">
                                 Description
                             </label>
@@ -103,8 +103,8 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
                                 name="description"
                                 value={editedTask.description}
                                 onChange={handleChange}
-                                rows="5"
-                                className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                rows="4"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             ></textarea>
                         </div>
                         <div>
@@ -117,7 +117,7 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
                                 name="estimatedHours"
                                 value={editedTask.estimatedHours}
                                 onChange={handleChange}
-                                className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                         </div>
                         <div>
@@ -129,7 +129,7 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
                                 name="status"
                                 value={editedTask.status}
                                 onChange={handleChange}
-                                className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             >
                                 <option value="To Do">To Do</option>
                                 <option value="In Progress">In Progress</option>
@@ -146,7 +146,7 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
                                 multiple
                                 value={editedTask.assignedTo}
                                 onChange={handleDeveloperChange}
-                                className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 h-24"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 h-24"
                             >
                                 {developers.map(dev => (
                                     <option key={dev.id} value={dev.id}>
@@ -164,7 +164,7 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
                                 name="assignedUser"
                                 value={editedTask.assignedUser || ''}
                                 onChange={handleUserChange}
-                                className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             >
                                 <option value="">Select user</option>
                                 {users.map(u => (
@@ -184,7 +184,7 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
                                 name="startDate"
                                 value={editedTask.startDate}
                                 onChange={handleChange}
-                                className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                         </div>
                         <div>
@@ -197,7 +197,7 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
                                 name="endDate"
                                 value={editedTask.endDate}
                                 onChange={handleChange}
-                                className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                         </div>
                         <div>
@@ -210,7 +210,7 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
                                 name="order"
                                 value={editedTask.order}
                                 onChange={handleChange}
-                                className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                         </div>
                     </div>
