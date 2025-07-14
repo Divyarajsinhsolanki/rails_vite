@@ -165,19 +165,6 @@ export default function TodoBoard({ sprintId, onSprintChange }) {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-semibold text-blue-700 tracking-tight">MyForm Task Control Center</h1>
-          <select
-            className="border px-2 py-1 rounded-md"
-            value={selectedSprintId || ''}
-            onChange={e => {
-              const val = Number(e.target.value);
-              setSelectedSprintId(val);
-              onSprintChange && onSprintChange(val);
-            }}
-          >
-            {sprints.map(s => (
-              <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
-          </select>
         </div>
         <button onClick={() => setShowForm(prev => !prev)} className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-700 transition-all">
           {showForm ? 'Close Form' : '+ New Task'}

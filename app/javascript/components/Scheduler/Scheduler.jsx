@@ -6,7 +6,6 @@ import { SchedulerAPI } from '../api';
 // Assuming these are your existing form components
 import AddTaskForm from '../Scheduler/AddTaskForm';
 import EditTaskForm from '../Scheduler/EditTaskForm';
-import SprintManager from '../Scheduler/SprintManager';
 
 import {
   PlusCircleIcon,
@@ -17,8 +16,6 @@ import {
   XCircleIcon,
   Bars3Icon, // Drag Handle
   CalendarDaysIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
   UserGroupIcon,
   TableCellsIcon,
   ExclamationTriangleIcon,
@@ -222,7 +219,6 @@ function Scheduler({ sprintId }) {
   const [tasks, setTasks] = useState([]);
   const types = useMemo(() => ['Code', 'Code review', 'Dev to QA', 'Planning', 'Testing', 'Bug Fixing'], []);
 
-  const [isHeaderExpanded, setIsHeaderExpanded] = useState(false); // New state for header expansion
   const [loading, setLoading] = useState({sprint: true, developers: true, tasks: true});
   const [error, setError] = useState(null);
   
@@ -454,9 +450,8 @@ function Scheduler({ sprintId }) {
   
   if (!sprint) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-          <SprintManager onSprintChange={(updatedSprint) => setSprint(updatedSprint)} />
-          {!loading.sprint && <p className="mt-4 text-gray-600">No active sprint found or failed to load. Please select or create a sprint.</p>}
+      <div className="min-h-screen flex items-center justify-center text-gray-600">
+        {!loading.sprint && <p>No active sprint selected.</p>}
       </div>
     );
   }
@@ -473,28 +468,7 @@ function Scheduler({ sprintId }) {
             <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center">
               <CalendarDaysIcon className="h-7 w-7 mr-2"/>Sprint Task Manager
             </h1>
-
-            {/* Collapsible area for sprint details */}
-            <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}>
-              {sprint && (
-                <p className="text-sm text-gray-600">
-                  Current Sprint: <span className="font-semibold">{sprint.name || `Sprint ending ${formatDate(sprint.end_date)}`}</span>
-                </p>
-              )}
-              {isHeaderExpanded ? (
-                <ChevronUpIcon className="h-5 w-5 text-gray-500" />
-              ) : (
-                <ChevronDownIcon className="h-5 w-5 text-gray-500" />
-              )}
-            </div>
           </div>
-
-          {/* Expanded content area - conditionally rendered */}
-          {isHeaderExpanded && (
-            <div className="mt-4 border-t border-gray-200 pt-4">
-              <SprintManager onSprintChange={(updatedSprint) => setSprint(updatedSprint)} currentSprint={sprint} />
-            </div>
-          )}
         </div>
       </header>
 
