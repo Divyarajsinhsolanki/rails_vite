@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react';
 
-export default function AddTaskForm({developers, dates, types, onAddTask, currentSprintId}) {
-  const [formData, setFormData] = useState({ developer_id: '', type: 'Code', date: '', task_id: '', task_url: '', estimated_hours: 1 });
+export default function AddTaskForm({developers, dates, types, tasks, onAddTask}) {
+  const [formData, setFormData] = useState({ developer_id: '', type: 'Code', log_date: '', task_id: '', hours_logged: 1 });
 
   // If dates/devs/types update, reset defaults
   useEffect(() => {
     setFormData(f => ({
       ...f,
-      date: dates[0] || f.date,
+      log_date: dates[0] || f.log_date,
       developer_id: developers[0]?.id ?? f.developer_id,
-      sprint_id: currentSprintId ?? f.sprint_id,
-      estimated_hours: f.estimated_hours ?? 1
+      hours_logged: f.hours_logged ?? 1
     }));
-  }, [dates, developers, types, currentSprintId]);
+  }, [dates, developers, types]);
 
   // Show loading state if developers not fetched yet
   if (!developers.length) {
@@ -22,7 +21,7 @@ export default function AddTaskForm({developers, dates, types, onAddTask, curren
   const handleChange = e => {
     let { name, value } = e.target;
     // Cast numbers for IDs and hours
-    if (['developer_id', 'estimated_hours', 'sprint_id'].includes(name)) {
+    if (['developer_id', 'hours_logged'].includes(name)) {
       value = Number(value);
     }
     setFormData(f => ({ ...f, [name]: value }));
@@ -30,17 +29,15 @@ export default function AddTaskForm({developers, dates, types, onAddTask, curren
 
   const handleSubmit = e => {
     e.preventDefault();
-    const { date, developer_id, type, task_id } = formData;
-    if (!date || !developer_id || !type || !task_id.trim()) return;
+    const { log_date, developer_id, type, task_id } = formData;
+    if (!log_date || !developer_id || !type || !task_id) return;
     onAddTask(formData);
     // reset non-default fields
     setFormData(f => ({
-      date: dates[0] || '',
+      log_date: dates[0] || '',
       developer_id: developers[0]?.id || null,
       task_id: '',
-      task_url: '',
-      estimated_hours: 1,
-      sprint_id: currentSprintId || null
+      hours_logged: 1
     }));
   };
 
@@ -55,8 +52,8 @@ export default function AddTaskForm({developers, dates, types, onAddTask, curren
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">📅 Date</label>
           <select
-            name="date"
-            value={formData.date || ''}
+            name="log_date"
+            value={formData.log_date || ''}
             onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
@@ -98,57 +95,39 @@ export default function AddTaskForm({developers, dates, types, onAddTask, curren
           </select>
         </div>
   
-        {/* Estimated Hours */}
+        {/* Logged Hours */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">⏱ Estimated Hours</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">⏱ Hours Logged</label>
           <input
             type="number"
-            name="estimated_hours"
+            name="hours_logged"
             min="0"
             step="0.25"
-            value={formData.estimated_hours}
+            value={formData.hours_logged}
             onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
       </div>
   
-      {/* Row 2: Task URL and Button */}
+      {/* Row 2: Task Selection and Button */}
       <div className="flex flex-col sm:flex-row gap-4 items-end">
-          
+
         {/* Task ID */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">📌 Task ID</label>
-          <input
-            type="text"
+          <label className="block text-sm font-medium text-gray-700 mb-1">📌 Task</label>
+          <select
             name="task_id"
             value={formData.task_id || ''}
-            onChange={(e) => {
-              const input = e.target.value;
-              const match = input.match(/HME-\d+/i); // Regex for extracting Jira ticket
-              handleChange({
-                target: {
-                  name: 'task_id',
-                  value: match ? match[0] : input,
-                },
-              });
-            }}
-            placeholder="e.g., HME-123456"
+            onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
-          />
-        </div>
-
-        <div className="flex-grow">
-          <label className="block text-sm font-medium text-gray-700 mb-1">🔗 Task URL</label>
-          <input
-            type="url"
-            name="task_url"
-            value={formData.task_url || ''}
-            onChange={handleChange}
-            placeholder="https://..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          >
+            <option value="">Select Task</option>
+            {tasks.map(t => (
+              <option key={t.id} value={t.id}>{t.task_id}</option>
+            ))}
+          </select>
         </div>
 
         <button
@@ -158,11 +137,6 @@ export default function AddTaskForm({developers, dates, types, onAddTask, curren
           🛠️ Add Task
         </button>
       </div>
-  
-      {/* Hidden Sprint ID */}
-      {currentSprintId && (
-        <input type="hidden" name="sprint_id" value={formData.sprint_id} />
-      )}
     </form>
   );
 }
