@@ -11,9 +11,18 @@ export default function SprintDashboard() {
   const [sprint, setSprint] = useState(null);
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(false);
 
+  const isCurrentSprint = (s) => {
+    if (!s) return false;
+    const today = new Date();
+    const start = new Date(s.start_date);
+    const end = new Date(s.end_date);
+    return today >= start && today <= end;
+  };
+
   const handleSprintChange = (s) => {
     setSprint(s);
     setSprintId(s?.id || null);
+    setIsHeaderExpanded(false);
   };
 
   return (
@@ -27,7 +36,8 @@ export default function SprintDashboard() {
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}>
             {sprint && (
               <p className="text-sm text-gray-600">
-                Current Sprint: <span className="font-semibold">{sprint.name}</span>
+                {isCurrentSprint(sprint) ? 'Current Sprint:' : 'Selected Sprint:'}{' '}
+                <span className="font-semibold">{sprint.name}</span>
               </p>
             )}
             {isHeaderExpanded ? (
