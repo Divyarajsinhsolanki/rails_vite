@@ -2,19 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { SchedulerAPI, getUsers } from '../components/api';
 import { FiX } from 'react-icons/fi';
 
-// Helper to calculate working days between two dates excluding weekends
-const calculateWorkingDays = (start, end) => {
-  let count = 0;
-  const current = new Date(start);
-  const last = new Date(end);
-  while (current <= last) {
-    const day = current.getDay();
-    if (day !== 0 && day !== 6) count += 1; // exclude Sunday(0) and Saturday(6)
-    current.setDate(current.getDate() + 1);
-  }
-  return count;
-};
-
 // Task Details Modal Component
 const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
   const [editedTask, setEditedTask] = useState({ ...task });
@@ -302,7 +289,6 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
     };
 
     const currentSprint = sprints.find(s => s.id === selectedSprintId);
-    const workingDays = currentSprint ? calculateWorkingDays(currentSprint.start_date, currentSprint.end_date) : 0;
 
     const openTaskModal = (task) => {
         setCurrentTask(task);
@@ -327,28 +313,7 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 p-8 font-sans text-gray-800">
             <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-4">
-                {/* Current Sprint Overview */}
-                {selectedSprintId && (
-                    <div className="bg-indigo-50 p-3 rounded-xl shadow-inner mb-8">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-lg">
-                            <h2 className="text-2xl font-bold text-indigo-800 mb-4">
-                                Sprint: {sprints.find(s => s.id === selectedSprintId)?.name}
-                            </h2>
-                            <p>
-                                <span className="font-semibold">Start Date:</span>{' '}
-                                {currentSprint?.start_date}
-                            </p>
-                            <p>
-                                <span className="font-semibold">End Date:</span>{' '}
-                                {currentSprint?.end_date}
-                            </p>
-                            <p>
-                                <span className="font-semibold">Working Days:</span>{' '}
-                                {workingDays}
-                            </p>
-                        </div>
-                    </div>
-                )}
+
 
                 {/* Tasks Table */}
                 <div className="overflow-x-auto bg-white rounded-xl shadow-md">

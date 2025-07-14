@@ -5,6 +5,23 @@ import Scheduler from '../components/Scheduler/Scheduler';
 import TodoBoard from '../components/TodoBoard/TodoBoard';
 import SprintManager from '../components/Scheduler/SprintManager';
 
+const calculateWorkingDays = (start, end) => {
+  let count = 0;
+  const current = new Date(start);
+  const last = new Date(end);
+  while (current <= last) {
+    const day = current.getDay();
+    if (day !== 0 && day !== 6) count += 1;
+    current.setDate(current.getDate() + 1);
+  }
+  return count;
+};
+
+const formatDateRange = (start, end) => {
+  const fmt = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return `${fmt(start)} - ${fmt(end)}`;
+};
+
 export default function SprintDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [sprintId, setSprintId] = useState(null);
@@ -57,9 +74,9 @@ export default function SprintDashboard() {
     <div className="space-y-6">
       <header className="bg-white shadow-sm p-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-800 flex items-center">
+          <h1 className="text-xl font-bold text-gray-800 flex items-center">
             <CalendarDaysIcon className="h-7 w-7 mr-2 text-blue-600"/>
-            Sprint Manager
+            {sprint ? `Sprint: ${sprint.name} ${formatDateRange(sprint.start_date, sprint.end_date)} Working Days: ${calculateWorkingDays(sprint.start_date, sprint.end_date)}` : 'Sprint Manager'}
           </h1>
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}>
             {sprint && (
