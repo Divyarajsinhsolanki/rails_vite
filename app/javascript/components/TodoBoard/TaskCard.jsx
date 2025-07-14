@@ -26,7 +26,6 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
   const renderEditForm = () => (
     <div className="flex flex-col gap-2">
       <input value={editDetails.content} onChange={(e) => setEditDetails(prev => ({ ...prev, content: e.target.value }))} placeholder="Task content" className="border p-2 rounded" />
-      <input type="date" value={editDetails.due} onChange={(e) => setEditDetails(prev => ({ ...prev, due: e.target.value }))} className="border p-2 rounded" />
       <input value={editDetails.tags} onChange={(e) => setEditDetails(prev => ({ ...prev, tags: e.target.value }))} placeholder="Comma-separated tags" className="border p-2 rounded" />
       <input value={editDetails.assigned_to_user} onChange={(e) => setEditDetails(prev => ({ ...prev, assigned_to_user: e.target.value }))} placeholder="Assigned To" className="border p-2 rounded" />
       <select value={editDetails.recurring} onChange={(e) => setEditDetails(prev => ({ ...prev, recurring: e.target.value }))} className="border p-2 rounded">

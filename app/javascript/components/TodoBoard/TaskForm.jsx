@@ -37,7 +37,6 @@ const TaskForm = ({ onAddTask }) => {
     <div className="mb-4 flex flex-col sm:flex-row flex-wrap gap-4">
       <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Task title" className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all sm:w-1/3" />
       <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Task content" className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all sm:w-1/3" />
-      <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all sm:w-1/3" />
       <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Comma-separated tags" className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all sm:w-1/3" />
       <input value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)} placeholder="Assigned to" className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all" />
 

@@ -45,7 +45,7 @@ class Api::TasksController < Api::BaseController
       :task_id, :task_url, :type, :title, :description,
       :status, :order, :assigned_to_user, :assigned_to_developer,
       :created_by, :created_at, :updated_by, :updated_at,
-      :due_date, :date, :start_date, :end_date,
+      :start_date, :end_date,
       :estimated_hours, :sprint_id, :developer_id, :is_struck
     )
   end

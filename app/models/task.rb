@@ -9,7 +9,6 @@ class Task < ApplicationRecord
   self.inheritance_column = 'non_existent_type_column'
 
   validates :task_id,  presence: true
-  validates :date,     presence: true
   validates :developer, presence: true
   validates :type, presence: true
 end
