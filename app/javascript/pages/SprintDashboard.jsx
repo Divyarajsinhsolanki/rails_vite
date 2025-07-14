@@ -389,7 +389,7 @@ const SprintDashboard = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {filteredTasks.length > 0 ? (
                                 filteredTasks.map((task) => (
-                                    <tr key={task.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => openTaskModal(task)}>
+                                    <tr key={task.dbId} className="hover:bg-gray-50 cursor-pointer" onClick={() => openTaskModal(task)}>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                             {task.order}
                                         </td>
