@@ -538,6 +538,7 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
         try {
             const payload = {
                 ...newTask,
+                type: 'Code',
                 sprint_id: selectedSprintId,
                 developer_id: Number(newTask.developer_id) || null,
                 assigned_to_user: newTask.assigned_to_user || null,
