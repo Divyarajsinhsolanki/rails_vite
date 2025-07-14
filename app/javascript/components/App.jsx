@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import { AuthProvider } from "../context/AuthContext";
@@ -19,7 +19,7 @@ import Event from "../pages/Event";
 import Ticket from "../pages/Ticket";
 import Contact from "../pages/Contact";
 import Weather from "../pages/Weather";
-import Vault from "../pages/Vault";
+const Vault = lazy(() => import("../pages/Vault"));
 import Legal from "../pages/Legal";
 import SprintDashboard from "../pages/SprintDashboard";
 
@@ -32,13 +32,15 @@ function MainLayout({ children }) {
   return <main className="pt-20 pb-16 p-6 flex-grow">{children}</main>;
 }
 const App = () => {
+  const [showVault, setShowVault] = useState(false);
+
   return (
     <Router>
       <AuthProvider> {/* ✅ Wrap the entire app with AuthProvider */}
         <div className="flex flex-col min-h-screen">
 
           {/* ✅ Navbar */}
-          <Navbar />
+          <Navbar toggleVault={() => setShowVault(v => !v)} />
 
           {/* ✅ Page Content */}
             <Routes>
@@ -53,7 +55,6 @@ const App = () => {
               {/* 🔐 Protected */}
               <Route path="/" element={<PrivateRoute><MainLayout><PdfPage /></MainLayout></PrivateRoute>} />
               <Route path="/posts" element={<PrivateRoute><MainLayout><PostPage /></MainLayout></PrivateRoute>} />
-              <Route path="/vault" element={<PrivateRoute><MainLayout><Vault /></MainLayout></PrivateRoute>} />
               <Route path="/profile" element={<PrivateRoute><MainLayout><Profile /></MainLayout></PrivateRoute>} />
               <Route path="/pdf_editor" element={<PrivateRoute><MainLayout><PdfEditor /></MainLayout></PrivateRoute>} />
               <Route path="/knowledge" element={<PrivateRoute><MainLayout><KnowledgeDashboard /></MainLayout></PrivateRoute>} />
@@ -61,6 +62,22 @@ const App = () => {
               <Route path="/users" element={<PrivateRoute><MainLayout><Users /></MainLayout></PrivateRoute>} />
               <Route path="/admin" element={<PrivateRoute><MainLayout><Admin /></MainLayout></PrivateRoute>} />
               </Routes>
+
+          {showVault && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-start pt-20 z-50 overflow-auto">
+              <div className="bg-white w-full max-w-4xl mx-4 my-8 rounded shadow-lg relative">
+                <button
+                  onClick={() => setShowVault(false)}
+                  className="absolute top-2 right-2 text-gray-500"
+                >
+                  &times;
+                </button>
+                <Suspense fallback={<div className='p-4'>Loading...</div>}>
+                  <Vault />
+                </Suspense>
+              </div>
+            </div>
+          )}
 
           {/* ✅ Footer */}
           <Footer />

@@ -1,9 +1,10 @@
 import React, { useContext } from "react";
+import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { Link, NavLink } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import logo from "../images/logo.webp";
 
-const Navbar = () => {
+const Navbar = ({ toggleVault }) => {
   const { user, handleLogout } = useContext(AuthContext);
 
   return (
@@ -17,7 +18,7 @@ const Navbar = () => {
           <nav className="flex items-center gap-6">
             {user ? (
               <>
-                {["posts", "Event", "weather", "vault", "sprint_dashboard", "pdf_editor", "knowledge", "profile", "users", "admin", "contact"].map((route) => (
+                {["posts", "Event", "weather", "sprint_dashboard", "pdf_editor", "knowledge", "profile", "users", "admin", "contact"].map((route) => (
                   <NavLink
                     key={route}
                     to={`/${route}`}
@@ -30,6 +31,13 @@ const Navbar = () => {
                     {route.charAt(0).toUpperCase() + route.slice(1).replace("_", " ")}
                   </NavLink>
                 ))}
+
+                <button
+                  onClick={toggleVault}
+                  className="flex items-center text-gray-700 font-medium hover:text-indigo-600 transition"
+                >
+                  Vault <ChevronDownIcon className="h-4 w-4 ml-1" />
+                </button>
 
                 <button
                   onClick={handleLogout}
