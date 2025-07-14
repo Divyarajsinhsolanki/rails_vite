@@ -98,10 +98,11 @@ function TaskCard({ task, onEdit, onTaskUpdate }) {
   };
 
   const deleteTask = async () => {
-    if (!window.confirm(`Are you sure you want to delete task "${task.task_id}"?`)) return;
+    const title = task.task?.task_id || task.task_id;
+    if (!window.confirm(`Are you sure you want to delete task "${title}"?`)) return;
     onTaskUpdate({ ...task, deleted: true });
     try {
-      await SchedulerAPI.deleteTask(task.id);
+      await SchedulerAPI.deleteTaskLog(task.id);
     } catch (error) {
       console.error("Error deleting task:", error);
       onTaskUpdate({ ...task, deleted: false });
@@ -111,8 +112,9 @@ function TaskCard({ task, onEdit, onTaskUpdate }) {
 
   const copyLink = (e) => {
     e.stopPropagation();
-    if (task.task_url) {
-      navigator.clipboard.writeText(task.task_url)
+    const link = task.task?.task_url || task.task_url;
+    if (link) {
+      navigator.clipboard.writeText(link)
         .then(() => {
           setCopied(true);
           setTimeout(() => setCopied(false), 2000);
@@ -133,20 +135,20 @@ function TaskCard({ task, onEdit, onTaskUpdate }) {
             <Bars3Icon className="h-5 w-5" />
           </span>
           <div>
-            {task.task_url ? (
+            {task.task?.task_url || task.task_url ? (
               <a
-                href={task.task_url}
+                href={task.task?.task_url || task.task_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
                 className={`font-semibold text-sm hover:underline ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-indigo-600'} break-all`}
-                title={`Open: ${task.task_id}`}
+                title={`Open: ${task.task?.task_id || task.task_id}`}
               >
-                {task.task_id}
+                {task.task?.task_id || task.task_id}
               </a>
             ) : (
               <span className={`font-semibold text-sm ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-800'} break-all`}>
-                {task.task_id}
+                {task.task?.task_id || task.task_id}
               </span>
             )}
             <div className="text-xs text-gray-500 mt-0.5">
@@ -428,7 +430,7 @@ function Scheduler({ sprintId }) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <header ref={mainHeaderRef} className="bg-white shadow-sm p-4"> {/* Added ref here */}
-          <h1 className="text-2xl font-bold text-gray-800 flex items-center"><CalendarDaysIcon className="h-7 w-7 mr-2 text-blue-600"/>Sprint Task Manager</h1>
+          <h1 className="text-2xl font-bold text-gray-800 flex items-center"><CalendarDaysIcon className="h-7 w-7 mr-2 text-blue-600"/>Sprint Logs</h1>
         </header>
         <main className="flex-grow container mx-auto p-4 lg:p-6">
           <LoadingSpinner />
@@ -473,14 +475,14 @@ function Scheduler({ sprintId }) {
         <div className="container mx-auto px-4 py-3"> {/* Added some padding for better click area */}
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center">
-              <CalendarDaysIcon className="h-7 w-7 mr-2"/>Sprint Task Manager
+              <CalendarDaysIcon className="h-7 w-7 mr-2"/>Sprint Logs
             </h1>
             <button
               onClick={() => setIsAddTaskModalOpen(true)}
               className="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105"
               >
               <PlusCircleIcon className="h-5 w-5 mr-2" />
-              Add Task
+              Add Log
             </button>
           </div>
         </div>
