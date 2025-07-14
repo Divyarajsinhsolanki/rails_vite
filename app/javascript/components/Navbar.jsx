@@ -33,17 +33,17 @@ const Navbar = ({ toggleVault }) => {
                 ))}
 
                 <button
-                  onClick={toggleVault}
-                  className="flex items-center text-gray-700 font-medium hover:text-indigo-600 transition"
-                >
-                  Vault <ChevronDownIcon className="h-4 w-4 ml-1" />
-                </button>
-
-                <button
                   onClick={handleLogout}
                   className="ml-2 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md"
                 >
                   Logout
+                </button>
+
+                <button
+                  onClick={toggleVault}
+                  className="ml-2 flex items-center text-gray-700 font-medium hover:text-indigo-600 transition"
+                >
+                  Vault <ChevronDownIcon className="h-4 w-4 ml-1" />
                 </button>
               </>
             ) : (

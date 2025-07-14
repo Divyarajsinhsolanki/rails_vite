@@ -64,14 +64,14 @@ const App = () => {
               </Routes>
 
           {showVault && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-start pt-20 z-50 overflow-auto">
-              <div className="bg-white w-full max-w-4xl mx-4 my-8 rounded shadow-lg relative">
-                <button
-                  onClick={() => setShowVault(false)}
-                  className="absolute top-2 right-2 text-gray-500"
-                >
-                  &times;
-                </button>
+            <div className="fixed inset-0 bg-white z-50 overflow-auto">
+              <button
+                onClick={() => setShowVault(false)}
+                className="absolute top-4 right-4 text-gray-500"
+              >
+                &times;
+              </button>
+              <div className="pt-20 pb-10">
                 <Suspense fallback={<div className='p-4'>Loading...</div>}>
                   <Vault />
                 </Suspense>
