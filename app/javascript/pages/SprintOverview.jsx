@@ -580,7 +580,7 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
         const updates = [...sourceList, ...destList];
         await Promise.all(updates.map(t => {
             const devId = t.assignedTo?.[0] ? Number(t.assignedTo[0]) : null;
-            return SchedulerAPI.updateTask(t.dbId, { task: { developer_id: devId, order: t.order } });
+            return SchedulerAPI.updateTask(t.dbId, { developer_id: devId, order: t.order });
         }));
     };
 

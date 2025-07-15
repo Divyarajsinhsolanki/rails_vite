@@ -21,7 +21,15 @@ class Api::TasksController < Api::BaseController
 
   # PATCH/PUT /tasks/:id.json
   def update
+    old_sprint_id = @task.sprint_id
+    old_dev_id    = @task.developer_id
+    old_order     = @task.order
+
     if @task.update(task_params)
+      reorder_group(old_sprint_id, old_dev_id) if old_sprint_id && old_dev_id &&
+        (old_sprint_id != @task.sprint_id || old_dev_id != @task.developer_id || old_order != @task.order)
+      reorder_group(@task.sprint_id, @task.developer_id)
+
       render json: @task.as_json(include: { developer: {}, assigned_user: { only: [:id, :first_name, :email] } })
     else
       render json: { errors: @task.errors.full_messages }, status: :unprocessable_entity
@@ -41,12 +49,22 @@ class Api::TasksController < Api::BaseController
   end
 
   def task_params
-    params.require(:task).permit(
+    task_data = params.require(:task)
+    task_data = task_data[:task] if task_data[:task].is_a?(ActionController::Parameters)
+    task_data.permit(
       :task_id, :task_url, :type, :title, :description,
       :status, :order, :assigned_to_user, :assigned_to_developer,
       :created_by, :created_at, :updated_by, :updated_at,
       :start_date, :end_date,
       :estimated_hours, :sprint_id, :developer_id, :is_struck
     )
+  end
+
+  def reorder_group(sprint_id, developer_id)
+    tasks = Task.where(sprint_id: sprint_id, developer_id: developer_id).order(:order, :id)
+    tasks.each_with_index do |t, idx|
+      new_order = idx + 1
+      t.update_column(:order, new_order) if t.order != new_order
+    end
   end
 end

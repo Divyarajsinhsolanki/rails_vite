@@ -99,7 +99,7 @@ export default function TodoBoard({ sprintId, onSprintChange }) {
   
   const handleUpdateTask = async (colId, taskId, updates) => {
      try {
-        const { data } = await SchedulerAPI.updateTask(taskId, { task: updates });
+        const { data } = await SchedulerAPI.updateTask(taskId, updates);
         setColumns(prev => ({
             ...prev,
             [colId]: { ...prev[colId], items: prev[colId].items.map(t => t.id === data.id ? data : t) }
