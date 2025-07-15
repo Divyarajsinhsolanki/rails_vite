@@ -504,6 +504,35 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
 
     const filteredTasks = tasks.filter(task => task.sprintId === selectedSprintId);
 
+    // Group tasks by developer so we can display them together in the table
+    const developerMap = developers.reduce((acc, d) => {
+        acc[String(d.id)] = d;
+        return acc;
+    }, {});
+
+    const tasksByDeveloper = filteredTasks.reduce((acc, task) => {
+        const devId = task.assignedTo?.[0] ? String(task.assignedTo[0]) : 'unassigned';
+        if (!acc[devId]) acc[devId] = [];
+        acc[devId].push(task);
+        return acc;
+    }, {});
+
+    const sortDevelopers = (a, b) => {
+        const nameA = developerMap[a]?.name?.toLowerCase() || 'zzzz';
+        const nameB = developerMap[b]?.name?.toLowerCase() || 'zzzz';
+        if (nameA === 'ankitsir') return -1;
+        if (nameB === 'ankitsir') return 1;
+        return nameA.localeCompare(nameB);
+    };
+
+    const groupedTasks = Object.keys(tasksByDeveloper)
+        .sort(sortDevelopers)
+        .map(devId => ({
+            developer: developerMap[devId],
+            devId,
+            tasks: tasksByDeveloper[devId].sort((a, b) => (a.order || 0) - (b.order || 0))
+        }));
+
     const getDeveloperNames = (devIds) => devIds.map(id => developers.find(dev => String(dev.id) === String(id))?.name || 'Unknown').join(', ');
 
     const getUserName = (userId) => {
@@ -626,45 +655,54 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {filteredTasks.length > 0 ? (
-                                filteredTasks.map((task) => (
-                                    <tr key={task.dbId} className="hover:bg-gray-50 cursor-pointer" onClick={() => openTaskModal(task)}>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            {task.order}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-indigo-600 hover:underline">
-                                            <a href={task.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
-                                                {task.id}
-                                            </a>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-normal text-sm text-gray-900">
-                                            {task.title}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {task.estimatedHours}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {getDeveloperNames(task.assignedTo)}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {getUserName(task.assignedUser)}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {new Date(task.startDate).getDate()}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {new Date(task.endDate).getDate()}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                                                ${task.status === 'Done' ? 'bg-green-100 text-green-800' : ''}
-                                                ${task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' : ''}
-                                                ${task.status === 'To Do' ? 'bg-blue-100 text-blue-800' : ''}
-                                            `}>
-                                                {task.status}
-                                            </span>
-                                        </td>
-                                    </tr>
+                            {groupedTasks.length > 0 ? (
+                                groupedTasks.map(group => (
+                                    <React.Fragment key={group.devId}>
+                                        <tr className="bg-gray-100">
+                                            <td colSpan="9" className="px-6 py-2 font-semibold text-gray-700">
+                                                {group.developer ? group.developer.name : 'Unassigned'}
+                                            </td>
+                                        </tr>
+                                        {group.tasks.map(task => (
+                                            <tr key={task.dbId} className="hover:bg-gray-50 cursor-pointer" onClick={() => openTaskModal(task)}>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                    {task.order}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-indigo-600 hover:underline">
+                                                    <a href={task.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                                                        {task.id}
+                                                    </a>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-normal text-sm text-gray-900">
+                                                    {task.title}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    {task.estimatedHours}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    {getDeveloperNames(task.assignedTo)}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    {getUserName(task.assignedUser)}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    {new Date(task.startDate).getDate()}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    {new Date(task.endDate).getDate()}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                                        ${task.status === 'Done' ? 'bg-green-100 text-green-800' : ''}
+                                                        ${task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' : ''}
+                                                        ${task.status === 'To Do' ? 'bg-blue-100 text-blue-800' : ''}
+                                                    `}>
+                                                        {task.status}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </React.Fragment>
                                 ))
                             ) : (
                                 <tr>
