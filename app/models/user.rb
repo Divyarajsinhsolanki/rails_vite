@@ -7,7 +7,7 @@ class User < ApplicationRecord
          :recoverable, :rememberable, :validatable
 
   has_one_attached :profile_picture
-  has_many :posts
+  has_many :posts, dependent: :destroy
   has_many :tasks, foreign_key: :assigned_to_user
   has_many :items
 
