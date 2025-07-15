@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 export default function AddTaskForm({developers, dates, types, tasks, onAddTask}) {
   const [formData, setFormData] = useState({ developer_id: '', type: 'Code', log_date: '', task_id: '', hours_logged: 1 });
+  const [taskSearch, setTaskSearch] = useState('');
 
   // If dates/devs/types update, reset defaults
   useEffect(() => {
@@ -40,6 +41,10 @@ export default function AddTaskForm({developers, dates, types, tasks, onAddTask}
       hours_logged: 1
     }));
   };
+
+  const filteredTasks = tasks.filter(t =>
+    t.task_id.toLowerCase().includes(taskSearch.toLowerCase())
+  );
 
   return (
     <form
@@ -113,9 +118,16 @@ export default function AddTaskForm({developers, dates, types, tasks, onAddTask}
       {/* Row 2: Task Selection and Button */}
       <div className="flex flex-col sm:flex-row gap-4 items-end">
 
-        {/* Task ID */}
-        <div>
+        {/* Task ID with search */}
+        <div className="flex-1">
           <label className="block text-sm font-medium text-gray-700 mb-1">📌 Task</label>
+          <input
+            type="text"
+            value={taskSearch}
+            onChange={e => setTaskSearch(e.target.value)}
+            placeholder="Search tasks..."
+            className="w-full mb-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
           <select
             name="task_id"
             value={formData.task_id || ''}
@@ -124,10 +136,8 @@ export default function AddTaskForm({developers, dates, types, tasks, onAddTask}
             required
           >
             <option value="">Select Task</option>
-            {tasks.map(t => (
-              <option key={t.id} value={t.id}>
-                {t.task_id}
-              </option>
+            {filteredTasks.map(t => (
+              <option key={t.id} value={t.id}>{t.task_id}</option>
             ))}
           </select>
         </div>

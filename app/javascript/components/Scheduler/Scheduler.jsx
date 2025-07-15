@@ -43,7 +43,7 @@ function Modal({ isOpen, onClose, title, children }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center z-50 p-4 transition-opacity duration-300 ease-in-out">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg transform transition-all duration-300 ease-in-out scale-95 opacity-0 animate-modalShow">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl transform transition-all duration-300 ease-in-out scale-95 opacity-0 animate-modalShow">
         <div className="flex justify-between items-center p-4 border-b border-gray-200">
           <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
           <button
