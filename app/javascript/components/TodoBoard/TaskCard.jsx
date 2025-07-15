@@ -7,33 +7,54 @@ import { getDueColor } from '/utils/taskUtils';
 const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editDetails, setEditDetails] = useState({
-      content: item.task_id,
-      due: item.due || '',
-      tags: (item.tags || []).join(', '),
+      title: item.title || '',
+      type: item.type || '',
+      status: item.status || 'todo',
       assigned_to_user: item.assigned_to_user || '',
-      recurring: item.recurring || ''
+      end_date: item.end_date || ''
   });
 
   const handleSave = () => {
-    const updates = {
-        ...editDetails,
-        tags: editDetails.tags.split(',').map(t => t.trim())
-    };
+    const updates = { ...editDetails };
     onUpdate(columnId, item.id, updates);
     setIsEditing(false);
-  }
+  };
 
   const renderEditForm = () => (
     <div className="flex flex-col gap-2">
-      <input value={editDetails.content} onChange={(e) => setEditDetails(prev => ({ ...prev, content: e.target.value }))} placeholder="Task content" className="border p-2 rounded" />
-      <input value={editDetails.tags} onChange={(e) => setEditDetails(prev => ({ ...prev, tags: e.target.value }))} placeholder="Comma-separated tags" className="border p-2 rounded" />
-      <input value={editDetails.assigned_to_user} onChange={(e) => setEditDetails(prev => ({ ...prev, assigned_to_user: e.target.value }))} placeholder="Assigned To" className="border p-2 rounded" />
-      <select value={editDetails.recurring} onChange={(e) => setEditDetails(prev => ({ ...prev, recurring: e.target.value }))} className="border p-2 rounded">
-        <option value="">One-time</option>
-        <option value="daily">Daily</option>
-        <option value="weekly">Weekly</option>
-        <option value="monthly">Monthly</option>
+      <input
+        value={editDetails.title}
+        onChange={(e) => setEditDetails(prev => ({ ...prev, title: e.target.value }))}
+        placeholder="Title"
+        className="border p-2 rounded"
+      />
+      <input
+        value={editDetails.type}
+        onChange={(e) => setEditDetails(prev => ({ ...prev, type: e.target.value }))}
+        placeholder="Type"
+        className="border p-2 rounded"
+      />
+      <select
+        value={editDetails.status}
+        onChange={(e) => setEditDetails(prev => ({ ...prev, status: e.target.value }))}
+        className="border p-2 rounded"
+      >
+        <option value="todo">To Do</option>
+        <option value="inprogress">In Progress</option>
+        <option value="done">Done</option>
       </select>
+      <input
+        value={editDetails.assigned_to_user}
+        onChange={(e) => setEditDetails(prev => ({ ...prev, assigned_to_user: e.target.value }))}
+        placeholder="Assigned User ID"
+        className="border p-2 rounded"
+      />
+      <input
+        type="date"
+        value={editDetails.end_date}
+        onChange={(e) => setEditDetails(prev => ({ ...prev, end_date: e.target.value }))}
+        className="border p-2 rounded"
+      />
       <button onClick={handleSave} className="bg-green-500 text-white px-4 py-2 rounded">Save</button>
       <button onClick={() => setIsEditing(false)} className="bg-gray-300 px-4 py-2 rounded">Cancel</button>
     </div>

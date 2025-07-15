@@ -2,55 +2,73 @@ import React, { useState } from 'react';
 
 const TaskForm = ({ onAddTask }) => {
   const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [tags, setTags] = useState("");
-  const [assignedTo, setAssignedTo] = useState("");
-  const [recurring, setRecurring] = useState("");
+  const [type, setType] = useState("");
+  const [status, setStatus] = useState("todo");
+  const [assignedToUser, setAssignedToUser] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   const handleSubmit = () => {
     if (!title) {
-        // You should add proper validation and feedback
-        alert("Title is required.");
-        return;
+      alert("Title is required.");
+      return;
     }
     const newTask = {
       title,
-      content,
-      due: dueDate,
-      tags: tags.split(',').map(t => t.trim()),
-      assigned_to_user: assignedTo,
-      recurring,
-      status: 'todo'
+      type,
+      status,
+      assigned_to_user: assignedToUser,
+      end_date: endDate,
     };
     onAddTask(newTask);
     // Clear form
     setTitle("");
-    setContent("");
-    setDueDate("");
-    setTags("");
-    setAssignedTo("");
-    setRecurring("");
+    setType("");
+    setStatus("todo");
+    setAssignedToUser("");
+    setEndDate("");
   };
 
   return (
     <div className="mb-4 flex flex-col sm:flex-row flex-wrap gap-4">
-      <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Task title" className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all sm:w-1/3" />
-      <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Task content" className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all sm:w-1/3" />
-      <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Comma-separated tags" className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all sm:w-1/3" />
-      <input value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)} placeholder="Assigned to" className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all" />
-
-      <div className="sm:w-1/3 flex gap-4">
-        <select value={recurring} onChange={(e) => setRecurring(e.target.value)} className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all">
-          <option value="">One-time</option>
-          <option value="daily">Daily</option>
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-        </select>
-        <button onClick={handleSubmit} className="bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-all">
-          Add Task
-        </button>
-      </div>
+      <input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Title"
+        className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all sm:w-1/3"
+      />
+      <input
+        value={type}
+        onChange={(e) => setType(e.target.value)}
+        placeholder="Type"
+        className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all sm:w-1/3"
+      />
+      <select
+        value={status}
+        onChange={(e) => setStatus(e.target.value)}
+        className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all sm:w-1/3"
+      >
+        <option value="todo">To Do</option>
+        <option value="inprogress">In Progress</option>
+        <option value="done">Done</option>
+      </select>
+      <input
+        value={assignedToUser}
+        onChange={(e) => setAssignedToUser(e.target.value)}
+        placeholder="Assigned User ID"
+        className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all sm:w-1/3"
+      />
+      <input
+        type="date"
+        value={endDate}
+        onChange={(e) => setEndDate(e.target.value)}
+        className="border px-3 py-2 rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all sm:w-1/3"
+      />
+      <button
+        onClick={handleSubmit}
+        className="bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-all"
+      >
+        Add Task
+      </button>
     </div>
   );
 };
