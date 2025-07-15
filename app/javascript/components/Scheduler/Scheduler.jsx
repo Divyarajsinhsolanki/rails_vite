@@ -471,28 +471,24 @@ function Scheduler({ sprintId }) {
   return (
     <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 flex flex-col">
-      <header ref={mainHeaderRef} className="bg-white/80 backdrop-blur-md shadow-sm top-0 z-40">
-        <div className="container mx-auto px-4 py-3"> {/* Added some padding for better click area */}
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center">
-              <CalendarDaysIcon className="h-7 w-7 mr-2"/>Sprint Logs
-            </h1>
-            <button
-              onClick={() => setIsAddTaskModalOpen(true)}
-              className="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105"
-              >
-              <PlusCircleIcon className="h-5 w-5 mr-2" />
-              Add Log
-            </button>
-          </div>
-        </div>
-      </header>
-
         <main className="flex-grow container mx-auto p-4 lg:p-6">
           <section className="mb-8 bg-white/70 backdrop-blur-md shadow-xl rounded-xl overflow-hidden border border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-700 px-6 py-4 border-b border-gray-200 flex items-center">
-                  <TableCellsIcon className="h-6 w-6 mr-2 text-sky-600"/> Task Board
-              </h2>
+            <header ref={mainHeaderRef} className="bg-white/80 backdrop-blur-md shadow-sm top-0 z-40">
+              <div className="container mx-auto px-4 py-3"> {/* Added some padding for better click area */}
+                <div className="flex justify-between items-center">
+                  <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center">
+                    <TableCellsIcon className="h-6 w-6 mr-2 text-sky-600"/> Sprint Logs
+                  </h1>
+                  <button
+                    onClick={() => setIsAddTaskModalOpen(true)}
+                    className="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105"
+                    >
+                    <PlusCircleIcon className="h-5 w-5 mr-2" />
+                    Add Log
+                  </button>
+                </div>
+              </div>
+            </header>
               <div className="overflow-x-auto relative">
                   <table className="min-w-full divide-y divide-gray-200 border-collapse">
                   {/* **FIX 3: Adjusted sticky top position dynamically** */}
