@@ -606,7 +606,7 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 p-8 font-sans text-gray-800">
-            <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-4">
+            <div className="max-w-8xl mx-auto bg-white rounded-xl shadow-lg p-4">
                 <div className="flex justify-between items-center mb-4">
                     <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center">
                         <CalendarDaysIcon className="h-7 w-7 mr-2"/>Sprint Task Manager
@@ -665,33 +665,33 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                                         </tr>
                                         {group.tasks.map(task => (
                                             <tr key={task.dbId} className="hover:bg-gray-50 cursor-pointer" onClick={() => openTaskModal(task)}>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                                                     {task.order}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-indigo-600 hover:underline">
+                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-indigo-600 hover:underline">
                                                     <a href={task.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
                                                         {task.id}
                                                     </a>
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-normal text-sm text-gray-900">
+                                                <td className="px-6 py-3 whitespace-normal text-sm text-gray-900">
                                                     {task.title}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
                                                     {task.estimatedHours}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
                                                     {getDeveloperNames(task.assignedTo)}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
                                                     {getUserName(task.assignedUser)}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
                                                     {new Date(task.startDate).getDate()}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
                                                     {new Date(task.endDate).getDate()}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                <td className="px-6 py-3 whitespace-nowrap text-sm">
                                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
                                                         ${task.status === 'Done' ? 'bg-green-100 text-green-800' : ''}
                                                         ${task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' : ''}
@@ -706,7 +706,7 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="9" className="px-6 py-4 text-center text-gray-500">
+                                    <td colSpan="9" className="px-6 py-3 text-center text-gray-500">
                                         No tasks found for this sprint.
                                     </td>
                                 </tr>
