@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SchedulerAPI, getUsers } from '../components/api';
 import { FiX } from 'react-icons/fi';
 import { CalendarDaysIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 // Task Details Modal Component
 const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
@@ -548,6 +549,41 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
         setShowTaskModal(true);
     };
 
+    const onDragEnd = async (result) => {
+        if (!result.destination) return;
+
+        const srcDev = result.source.droppableId.replace('dev-', '');
+        const dstDev = result.destination.droppableId.replace('dev-', '');
+
+        // Build map of tasks by developer
+        const map = tasks.reduce((acc, t) => {
+            const d = t.assignedTo?.[0] ? String(t.assignedTo[0]) : 'unassigned';
+            if (!acc[d]) acc[d] = [];
+            acc[d].push({ ...t });
+            return acc;
+        }, {});
+
+        const sourceList = map[srcDev] || [];
+        const [moved] = sourceList.splice(result.source.index, 1);
+        moved.assignedTo = dstDev === 'unassigned' ? [] : [dstDev];
+        const destList = map[dstDev] || (map[dstDev] = []);
+        destList.splice(result.destination.index, 0, moved);
+
+        // Reassign orders
+        sourceList.forEach((t, i) => { t.order = i + 1; });
+        if (srcDev !== dstDev) destList.forEach((t, i) => { t.order = i + 1; });
+
+        const newTasks = Object.values(map).flat();
+        setTasks(newTasks);
+
+        // Persist changes for affected tasks
+        const updates = [...sourceList, ...destList];
+        await Promise.all(updates.map(t => {
+            const devId = t.assignedTo?.[0] ? Number(t.assignedTo[0]) : null;
+            return SchedulerAPI.updateTask(t.dbId, { task: { developer_id: devId, order: t.order } });
+        }));
+    };
+
         const handleUpdateTask = async (updatedTask) => {
         try {
             const payload = {
@@ -622,6 +658,7 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
 
                 {/* Tasks Table */}
                 <div className="overflow-x-auto bg-white rounded-xl shadow-md">
+                    <DragDropContext onDragEnd={onDragEnd}>
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
@@ -654,55 +691,63 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {groupedTasks.length > 0 ? (
-                                groupedTasks.map(group => (
-                                    <React.Fragment key={group.devId}>
-                                        <tr className="bg-gray-100">
-                                            <td colSpan="9" className="px-6 py-2 font-semibold text-gray-700">
-                                                {group.developer ? group.developer.name : 'Unassigned'}
-                                            </td>
-                                        </tr>
-                                        {group.tasks.map(task => (
-                                            <tr key={task.dbId} className="hover:bg-gray-50 cursor-pointer" onClick={() => openTaskModal(task)}>
-                                                <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                    {task.order}
-                                                </td>
-                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-indigo-600 hover:underline">
-                                                    <a href={task.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
-                                                        {task.id}
-                                                    </a>
-                                                </td>
-                                                <td className="px-6 py-3 whitespace-normal text-sm text-gray-900">
-                                                    {task.title}
-                                                </td>
-                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                                                    {task.estimatedHours}
-                                                </td>
-                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                                                    {getDeveloperNames(task.assignedTo)}
-                                                </td>
-                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                                                    {getUserName(task.assignedUser)}
-                                                </td>
-                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                                                    {new Date(task.startDate).getDate()}
-                                                </td>
-                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                                                    {new Date(task.endDate).getDate()}
-                                                </td>
-                                                <td className="px-6 py-3 whitespace-nowrap text-sm">
-                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                                                        ${task.status === 'Done' ? 'bg-green-100 text-green-800' : ''}
-                                                        ${task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' : ''}
-                                                        ${task.status === 'To Do' ? 'bg-blue-100 text-blue-800' : ''}
-                                                    `}>
-                                                        {task.status}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </React.Fragment>
+                        {groupedTasks.length > 0 ? (
+                            groupedTasks.map(group => (
+                                <Droppable droppableId={`dev-${group.devId}`} key={group.devId}>
+                                    {(provided) => (
+                                        <tbody ref={provided.innerRef} {...provided.droppableProps} className="bg-white divide-y divide-gray-200">
+                                                <tr className="bg-gray-100">
+                                                    <td colSpan="9" className="px-6 py-2 font-semibold text-gray-700">
+                                                        {group.developer ? group.developer.name : 'Unassigned'}
+                                                    </td>
+                                                </tr>
+                                                {group.tasks.map((task, idx) => (
+                                                    <Draggable key={task.dbId} draggableId={`task-${task.dbId}`} index={idx}>
+                                                        {(prov) => (
+                                                            <tr ref={prov.innerRef} {...prov.draggableProps} {...prov.dragHandleProps} className="hover:bg-gray-50 cursor-pointer" onClick={() => openTaskModal(task)}>
+                                                                <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                                    {task.order}
+                                                                </td>
+                                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-indigo-600 hover:underline">
+                                                                    <a href={task.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                                                                        {task.id}
+                                                                    </a>
+                                                                </td>
+                                                                <td className="px-6 py-3 whitespace-normal text-sm text-gray-900">
+                                                                    {task.title}
+                                                                </td>
+                                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                                                                    {task.estimatedHours}
+                                                                </td>
+                                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                                                                    {getDeveloperNames(task.assignedTo)}
+                                                                </td>
+                                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                                                                    {getUserName(task.assignedUser)}
+                                                                </td>
+                                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                                                                    {new Date(task.startDate).getDate()}
+                                                                </td>
+                                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                                                                    {new Date(task.endDate).getDate()}
+                                                                </td>
+                                                                <td className="px-6 py-3 whitespace-nowrap text-sm">
+                                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                                                        ${task.status === 'Done' ? 'bg-green-100 text-green-800' : ''}
+                                                                        ${task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' : ''}
+                                                                        ${task.status === 'To Do' ? 'bg-blue-100 text-blue-800' : ''}
+                                                                    `}>
+                                                                        {task.status}
+                                                                    </span>
+                                                                </td>
+                                                            </tr>
+                                                        )}
+                                                    </Draggable>
+                                                ))}
+                                                {provided.placeholder}
+                                            </tbody>
+                                        )}
+                                    </Droppable>
                                 ))
                             ) : (
                                 <tr>
@@ -711,8 +756,8 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                                     </td>
                                 </tr>
                             )}
-                        </tbody>
                     </table>
+                    </DragDropContext>
                 </div>
             </div>
 
