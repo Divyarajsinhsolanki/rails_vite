@@ -61,10 +61,15 @@ class Api::TasksController < Api::BaseController
   end
 
   def reorder_group(sprint_id, developer_id)
-    tasks = Task.where(sprint_id: sprint_id, developer_id: developer_id).order(:order, :id)
-    tasks.each_with_index do |t, idx|
-      new_order = idx + 1
-      t.update_column(:order, new_order) if t.order != new_order
+    Task.transaction do
+      tasks = Task.where(sprint_id: sprint_id, developer_id: developer_id)
+                   .order(:order, :id)
+                   .lock
+
+      tasks.each_with_index do |t, idx|
+        new_order = idx + 1
+        t.update_column(:order, new_order) if t.order != new_order
+      end
     end
   end
 end
