@@ -564,13 +564,17 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
         const srcDev = result.source.droppableId.replace('dev-', '');
         const dstDev = result.destination.droppableId.replace('dev-', '');
 
-        // Build map of tasks by developer
+        // Build map of tasks by developer sorted by order so
+        // indices from the UI match the underlying arrays
         const map = tasks.reduce((acc, t) => {
             const d = t.assignedTo?.[0] ? String(t.assignedTo[0]) : 'unassigned';
             if (!acc[d]) acc[d] = [];
             acc[d].push({ ...t });
             return acc;
         }, {});
+        Object.values(map).forEach(list =>
+            list.sort((a, b) => (a.order || 0) - (b.order || 0))
+        );
 
         const sourceList = map[srcDev] || [];
         const [moved] = sourceList.splice(result.source.index, 1);
