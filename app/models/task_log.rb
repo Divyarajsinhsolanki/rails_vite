@@ -9,14 +9,14 @@ class TaskLog < ApplicationRecord
   validates :task, :developer, :log_date, :hours_logged, presence: true
   validates :hours_logged, numericality: true
 
-  after_save :sync_task_dates, if: -> { type == 'code' }
+  after_save :sync_task_dates, if: -> { type == 'Code' }
 
   private
 
   def sync_task_dates
     return unless task
 
-    code_logs = task.task_logs.where(type: 'code')
+    code_logs = task.task_logs.where(type: 'Code')
     task.update(
       start_date: code_logs.minimum(:log_date),
       end_date: code_logs.maximum(:log_date)
