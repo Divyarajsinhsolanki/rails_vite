@@ -12,7 +12,10 @@ const KanbanColumn = ({ columnId, column, tasks, onDelete, onUpdate }) => {
           ref={provided.innerRef}
           {...provided.droppableProps}
         >
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">{column.name}</h2>
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">
+            {column.name}
+            <span className="text-sm text-gray-600 ml-2">({tasks.length})</span>
+          </h2>
           {tasks.length === 0 && <p className="text-sm italic text-gray-500">No matching tasks.</p>}
           
           {tasks.map((item, index) => (

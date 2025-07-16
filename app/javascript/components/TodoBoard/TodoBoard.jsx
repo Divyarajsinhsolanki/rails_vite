@@ -8,6 +8,24 @@ import TaskForm from "./TaskForm";
 import KanbanColumn from "./KanbanColumn";
 import Heatmap from "./Heatmap";
 import ProgressPieChart from "./ProgressPieChart";
+import { XCircleIcon } from '@heroicons/react/24/outline';
+
+function Modal({ isOpen, onClose, title, children }) {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-xl transform transition-all scale-95 opacity-0 animate-modalShow">
+        <div className="flex justify-between items-center p-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100">
+            <XCircleIcon className="h-6 w-6" />
+          </button>
+        </div>
+        <div className="p-6">{children}</div>
+      </div>
+    </div>
+  );
+}
 
 const initialData = {
   todo: { name: "To Do", color: "bg-blue-100", items: [] },
@@ -166,12 +184,14 @@ export default function TodoBoard({ sprintId, onSprintChange }) {
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-semibold text-blue-700 tracking-tight">MyForm Task Control Center</h1>
         </div>
-        <button onClick={() => setShowForm(prev => !prev)} className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-700 transition-all">
-          {showForm ? 'Close Form' : '+ New Task'}
+        <button onClick={() => setShowForm(true)} className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-700 transition-all">
+          + New Task
         </button>
       </div>
-      
-      {showForm && <TaskForm onAddTask={handleAddTask} />}
+
+      <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Add Task">
+        <TaskForm onAddTask={handleAddTask} onCancel={() => setShowForm(false)} />
+      </Modal>
 
       <div className="grid md:grid-cols-2 gap-4 mb-6">
         <Heatmap columns={columns} />
@@ -199,6 +219,17 @@ export default function TodoBoard({ sprintId, onSprintChange }) {
             ))}
         </div>
       </DragDropContext>
+      <style>{`
+        @keyframes modalShow {
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        .animate-modalShow {
+          animation: modalShow 0.3s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 }
