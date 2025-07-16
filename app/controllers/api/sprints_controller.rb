@@ -44,6 +44,6 @@ class Api::SprintsController < Api::BaseController
 
   private
   def sprint_params
-    params.require(:sprint).permit(:name, :start_date, :end_date, :description)
+    params.require(:sprint).permit(:name, :start_date, :end_date)
   end
 end
