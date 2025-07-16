@@ -7,7 +7,7 @@ export default function SprintManager({ onSprintChange }) {
   const [currentSprint, setCurrentSprint] = useState(null);
   const [loading, setLoading] = useState(true);
   const [formVisible, setFormVisible] = useState(false);
-  const [formData, setFormData] = useState({ name: '', start_date: '', end_date: '', description: '' });
+  const [formData, setFormData] = useState({ name: '', start_date: '', end_date: '' });
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Load all sprints when component mounts
@@ -43,10 +43,9 @@ export default function SprintManager({ onSprintChange }) {
 
     const payload = {
       sprint: {
-        name:        formData.name,
-        start_date:  formData.start_date,
-        end_date:    formData.end_date,
-        description: formData.description || ""
+        name:       formData.name,
+        start_date: formData.start_date,
+        end_date:   formData.end_date
       }
     };
 
@@ -70,7 +69,7 @@ export default function SprintManager({ onSprintChange }) {
         setCurrentSprint(saved);
         if (onSprintChange) onSprintChange(saved);
         setFormVisible(false);
-        setFormData({ name: '', start_date: '', end_date: '', description: '' });
+        setFormData({ name: '', start_date: '', end_date: '' });
       })
       .catch(err => console.error("Error saving sprint:", err));
   };
@@ -198,16 +197,7 @@ export default function SprintManager({ onSprintChange }) {
                       {formatDate(s.start_date)} - {formatDate(s.end_date)}
                     </span>
                   </div>
-                  
-                  {/*
-                  {s.description && (
-                    <div className="mt-3 text-gray-600 text-sm flex items-start">
-                      <FiInfo className="mt-0.5 mr-2 text-gray-400 flex-shrink-0" />
-                      <span className="line-clamp-2">{s.description}</span>
-                    </div>
-                  )}
-                  */}
-                  
+
                   <div className="mt-4">
                     <div className="flex items-center justify-between text-xs text-gray-500">
                       <span>Progress</span>
@@ -235,8 +225,7 @@ export default function SprintManager({ onSprintChange }) {
                         id:          s.id,
                         name:        s.name,
                         start_date:  formatDate(s.start_date),
-                        end_date:    formatDate(s.end_date),
-                        description: s.description || ""
+                        end_date:    formatDate(s.end_date)
                       });
                     }}
                     className={`
@@ -301,7 +290,7 @@ export default function SprintManager({ onSprintChange }) {
               whileTap={{ scale: 0.98 }}
               onClick={() => {
                 setFormVisible(true);
-                setFormData({ name: '', start_date: '', end_date: '', description: '' });
+                setFormData({ name: '', start_date: '', end_date: '' });
               }}
               className="mt-4 md:mt-0 px-5 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2"
             >
@@ -381,17 +370,7 @@ export default function SprintManager({ onSprintChange }) {
                     </div>
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                    <textarea
-                      name="description"
-                      value={formData.description}
-                      onChange={handleChange}
-                      placeholder="Add details about this sprint..."
-                      rows="3"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                    ></textarea>
-                  </div>
+
                   
                   <div className="flex justify-end gap-3 pt-4">
                     <motion.button
