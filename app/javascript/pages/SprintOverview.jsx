@@ -5,7 +5,7 @@ import { CalendarDaysIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 // Task Details Modal Component
-const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
+const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate, onDelete }) => {
   const [editedTask, setEditedTask] = useState({ ...task });
 
   const handleChange = (e) => {
@@ -202,7 +202,15 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
                             />
                         </div>
                     </div>
-                    <div className="flex justify-end space-x-4">
+                    <div className="flex justify-between items-center">
+                        <button
+                            type="button"
+                            onClick={() => onDelete(task.dbId)}
+                            className="px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition duration-200 ease-in-out shadow-md"
+                        >
+                            Delete Task
+                        </button>
+                        <div className="space-x-4">
                         <button
                             type="button"
                             onClick={onClose}
@@ -216,6 +224,7 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate }) => {
                         >
                             Save Changes
                         </button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -584,7 +593,7 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
         }));
     };
 
-        const handleUpdateTask = async (updatedTask) => {
+    const handleUpdateTask = async (updatedTask) => {
         try {
             const payload = {
                 title: updatedTask.title,
@@ -602,6 +611,16 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
             setTasks(tasks.map(t => t.id === updatedTask.id ? { ...updatedTask, title: updatedTask.title || "title not added" } : t));
         } catch (e) {
             console.error("Failed to update task", e);
+        }
+        setShowTaskModal(false);
+    };
+
+    const handleDeleteTask = async (dbId) => {
+        try {
+            await SchedulerAPI.deleteTask(dbId);
+            setTasks(tasks.filter(t => t.dbId !== dbId));
+        } catch (e) {
+            console.error('Failed to delete task', e);
         }
         setShowTaskModal(false);
     };
@@ -779,6 +798,7 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                     users={users}
                     onClose={() => setShowTaskModal(false)}
                     onUpdate={handleUpdateTask}
+                    onDelete={handleDeleteTask}
                 />
             )}
         </div>
