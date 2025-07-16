@@ -537,11 +537,16 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
 
     const groupedTasks = Object.keys(tasksByDeveloper)
         .sort(sortDevelopers)
-        .map(devId => ({
-            developer: developerMap[devId],
-            devId,
-            tasks: tasksByDeveloper[devId].sort((a, b) => (a.order || 0) - (b.order || 0))
-        }));
+        .map(devId => {
+            const taskList = tasksByDeveloper[devId].sort((a, b) => (a.order || 0) - (b.order || 0));
+            const totalHours = taskList.reduce((sum, t) => sum + (parseFloat(t.estimatedHours) || 0), 0);
+            return {
+                developer: developerMap[devId],
+                devId,
+                tasks: taskList,
+                totalHours
+            };
+        });
 
     const getDeveloperNames = (devIds) => devIds.map(id => developers.find(dev => String(dev.id) === String(id))?.name || 'Unknown').join(', ');
 
@@ -721,7 +726,7 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                                         <tbody ref={provided.innerRef} {...provided.droppableProps} className="bg-white divide-y divide-gray-200">
                                                 <tr className="bg-gray-100">
                                                     <td colSpan="9" className="px-6 py-2 font-semibold text-gray-700">
-                                                        {group.developer ? group.developer.name : 'Unassigned'}
+                                                        {group.developer ? group.developer.name : 'Unassigned'} - Total Est. Hours: {group.totalHours}
                                                     </td>
                                                 </tr>
                                                 {group.tasks.map((task, idx) => (
