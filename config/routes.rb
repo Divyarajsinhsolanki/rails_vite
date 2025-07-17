@@ -10,7 +10,6 @@ Rails.application.routes.draw do
 
   root "pages#index"
 
-  get "atharva-system-mail", to: "pages#atharva_system_mail"
 
   # PDF
   post "/upload_pdf", to: "pdfs#upload_pdf"
