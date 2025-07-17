@@ -144,16 +144,30 @@ const OptIn = () => {
         )}
 
         {fans.length > 0 && (
-          <div className="mt-6">
+          <div className="mt-6 overflow-x-auto">
             <h3 className="font-bold mb-2 text-center">Current Fans</h3>
-            <ul className="space-y-2">
-              {fans.map((fan) => (
-                <li key={fan.id} className="border rounded p-2">
-                  <div className="font-medium">{fan.name}</div>
-                  <div className="text-sm text-gray-600">{fan.email}</div>
-                </li>
-              ))}
-            </ul>
+            <table className="min-w-full text-left">
+              <thead>
+                <tr>
+                  <th className="px-2 py-1">Name</th>
+                  <th className="px-2 py-1">Email</th>
+                  <th className="px-2 py-1">Phone</th>
+                  <th className="px-2 py-1">Instagram</th>
+                  <th className="px-2 py-1">Keyword</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {fans.map((fan) => (
+                  <tr key={fan.id}>
+                    <td className="px-2 py-1">{fan.name}</td>
+                    <td className="px-2 py-1">{fan.email}</td>
+                    <td className="px-2 py-1">{fan.phone}</td>
+                    <td className="px-2 py-1">{fan.ig_handle}</td>
+                    <td className="px-2 py-1">{fan.keyword}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
