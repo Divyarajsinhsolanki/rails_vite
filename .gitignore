@@ -33,6 +33,9 @@
 /public/documents
 /public/uploads
 
+# Google service account credentials
+/config/google_service_account.json
+
 # Ignore master key for decrypting credentials and more.
 /config/master.key
 

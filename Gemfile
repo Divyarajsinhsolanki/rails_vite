@@ -81,6 +81,10 @@ gem 'bcrypt'
 gem 'stripe'
 gem 'rqrcode'
 
+# Access Google Sheets from Rails
+gem 'google-api-client', '~> 0.54.0'
+gem 'googleauth'
+
 group :production do
   # gem 'pdf_master', path: 'lib/pdf_master'
 end
