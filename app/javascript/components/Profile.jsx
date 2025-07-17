@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { fetchUserInfo, updateUserInfo, fetchPosts, SchedulerAPI } from "../components/api"; // Adjust the import path as necessary
 import { getStatusClasses } from '/utils/taskUtils';
 
@@ -97,6 +97,16 @@ const Profile = () => {
 
   const initial = (user?.first_name || user?.email || "").charAt(0).toUpperCase();
 
+  const todayStr = new Date().toISOString().split("T")[0];
+  const dueTodayTasks = useMemo(
+    () => tasks.filter((t) => (t.end_date || t.due_date) === todayStr),
+    [tasks, todayStr]
+  );
+  const otherTasks = useMemo(
+    () => tasks.filter((t) => (t.end_date || t.due_date) !== todayStr),
+    [tasks, todayStr]
+  );
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4">
       <div className={`w-full max-w-4xl transition-opacity duration-500 ${editMode ? 'opacity-0' : 'opacity-100'}`}>
@@ -154,6 +164,9 @@ const Profile = () => {
                         />
                       )}
                       <div className="p-5">
+                        <p className="text-sm text-gray-500 mb-1">
+                          Posted on {new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </p>
                         <p className="text-gray-600">{post.message}</p>
                       </div>
                     </div>
@@ -168,17 +181,40 @@ const Profile = () => {
             <div className="mt-12">
               <h2 className="text-2xl font-bold text-gray-700 mb-6">My Tasks</h2>
               {tasks.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {tasks.map((task) => (
-                    <div key={task.id} className="bg-white rounded-xl shadow-md p-5">
-                      <h3 className="text-lg font-semibold text-gray-800 break-all">{task.task_id}</h3>
-                      <span className={`text-sm px-2 py-1 rounded-full font-medium capitalize ${getStatusClasses(task.status)}`}>{task.status}</span>
-                      {task.due_date && (
-                        <p className="text-sm text-gray-500">Due {new Date(task.due_date).toLocaleDateString()}</p>
-                      )}
+                <>
+                  {dueTodayTasks.length > 0 && (
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-700 mb-4">Due Today</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {dueTodayTasks.map((task) => (
+                          <div key={task.id} className="bg-white rounded-xl shadow-md p-5">
+                            <h3 className="text-lg font-semibold text-gray-800 break-all">{task.task_id}</h3>
+                            <span className={`text-sm px-2 py-1 rounded-full font-medium capitalize ${getStatusClasses(task.status)}`}>{task.status}</span>
+                            {(task.end_date || task.due_date) && (
+                              <p className="text-sm text-gray-500">Due {new Date(task.end_date || task.due_date).toLocaleDateString()}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
-                </div>
+                  )}
+                  {otherTasks.length > 0 && (
+                    <div className={dueTodayTasks.length > 0 ? "mt-8" : ""}>
+                      <h3 className="text-xl font-semibold text-gray-700 mb-4">All Tasks</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {otherTasks.map((task) => (
+                          <div key={task.id} className="bg-white rounded-xl shadow-md p-5">
+                            <h3 className="text-lg font-semibold text-gray-800 break-all">{task.task_id}</h3>
+                            <span className={`text-sm px-2 py-1 rounded-full font-medium capitalize ${getStatusClasses(task.status)}`}>{task.status}</span>
+                            {(task.end_date || task.due_date) && (
+                              <p className="text-sm text-gray-500">Due {new Date(task.end_date || task.due_date).toLocaleDateString()}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
               ) : (
                 <p className="text-center text-gray-500 py-8">No tasks assigned.</p>
               )}
