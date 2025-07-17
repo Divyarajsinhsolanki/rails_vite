@@ -6,7 +6,8 @@
     "esbuild": "^0.25.0",
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.1",
-    "vite-plugin-ruby": "^5.1.0"
+    "vite-plugin-ruby": "^5.1.0",
+    "vite-plugin-node-polyfills": "^0.20.0"
   },
   "scripts": {
     "build": "esbuild app/javascript/*.* --bundle --sourcemap --format=esm --outdir=app/assets/builds --public-path=/assets"
@@ -41,6 +42,7 @@
     "@supabase/supabase-js": "^2.43.5",
     "vite": "^6.2.0",
     "resend": "^0.25.0",
-    "twilio": "^4.19.0"
+    "twilio": "^4.19.0",
+    "util": "^0.12.5"
   }
 }
