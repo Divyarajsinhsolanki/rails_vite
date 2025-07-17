@@ -143,7 +143,7 @@ app.post('/webhook/ig', async (req, res) => {
   const { ig_handle, message } = req.body;
 
   await supabase.from("fans").update({
-    events: Supabase.raw(`jsonb_set(events, '{dm_received}', to_jsonb(now()))`),
+    events: Supabase.raw(\`jsonb_set(events, '{dm_received}', to_jsonb(now()))\`),
     last_engaged: new Date()
   }).eq("ig_handle", ig_handle);
 
