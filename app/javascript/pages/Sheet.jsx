@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { fetchSheetData } from '../components/api';
 
-const Sheet = () => {
+const Sheet = ({ sheetName }) => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -9,7 +9,8 @@ const Sheet = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const { data } = await fetchSheetData();
+        const params = sheetName ? { sheet: sheetName } : undefined;
+        const { data } = await fetchSheetData(params);
         setRows(data.rows || []);
       } catch (err) {
         setError(err.response?.data?.error || 'Failed to load data');
@@ -18,7 +19,7 @@ const Sheet = () => {
       }
     };
     load();
-  }, []);
+  }, [sheetName]);
 
   if (loading) return <p className="text-center">Loading...</p>;
   if (error) return <p className="text-center text-red-600">{error}</p>;
