@@ -337,6 +337,10 @@ GEM
     timeout (0.4.3)
     ttfunk (1.8.0)
       bigdecimal (~> 3.1)
+    twilio-ruby (7.6.5)
+      faraday (>= 0.9, < 3.0)
+      jwt (>= 1.5, < 3.0)
+      nokogiri (>= 1.6, < 2.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     uri (1.0.3)
@@ -407,6 +411,7 @@ DEPENDENCIES
   sqlite3 (~> 1.4)
   stimulus-rails
   stripe
+  twilio-ruby
   tzinfo-data
   vite_rails (~> 3.0)
   web-console

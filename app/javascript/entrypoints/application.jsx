@@ -21,6 +21,7 @@ import { inherits } from 'util';
 // Expose util.inherits for libraries expecting the Node util module
 if (typeof window !== 'undefined') {
   window.util = { inherits };
+  window.process = { env: {} }; // 👈 ADD THIS TOO
 }
 
 
