@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
+import { sendEmail, sendSMS } from '../utils/notifications';
 
 const OptIn = () => {
   const [formData, setFormData] = useState({
@@ -9,7 +10,7 @@ const OptIn = () => {
     ig_handle: '',
     keyword: ''
   });
-  const [status, setStatus] = useState(null);
+  const [messages, setMessages] = useState([]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -18,13 +19,27 @@ const OptIn = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setStatus(null);
-    const { error } = await supabase.from('fans').insert(formData);
-    if (error) {
-      setStatus({ type: 'error', text: error.message });
-    } else {
-      setStatus({ type: 'success', text: 'Thank you for signing up!' });
+    const msgs = [];
+    setMessages([]);
+
+    try {
+      const { error } = await supabase.from('fans').insert(formData);
+      if (error) throw new Error(error.message);
+      msgs.push('main done');
+
+      await sendEmail(formData.email);
+      msgs.push('mail done');
+
+      if (formData.phone) {
+        await sendSMS(formData.phone);
+        msgs.push('sms done');
+      }
+
+      setMessages(msgs);
       setFormData({ name: '', email: '', phone: '', ig_handle: '', keyword: '' });
+    } catch (err) {
+      msgs.push(`error: ${err.message}`);
+      setMessages(msgs);
     }
   };
 
@@ -82,15 +97,11 @@ const OptIn = () => {
             Submit
           </button>
         </form>
-        {status && (
-          <div
-            className={`mt-4 p-2 rounded ${
-              status.type === 'error'
-                ? 'bg-red-100 text-red-700'
-                : 'bg-green-100 text-green-700'
-            }`}
-          >
-            {status.text}
+        {messages.length > 0 && (
+          <div className="mt-4 p-2 rounded bg-green-100 text-green-700 space-y-1">
+            {messages.map((msg, idx) => (
+              <div key={idx}>{msg}</div>
+            ))}
           </div>
         )}
       </div>
