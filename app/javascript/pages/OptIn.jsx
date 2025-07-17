@@ -10,7 +10,8 @@ const OptIn = () => {
     ig_handle: '',
     keyword: ''
   });
-  const [messages, setMessages] = useState([]);
+  // Logs for each action (supabase, email, sms)
+  const [logs, setLogs] = useState([]);
   const [fans, setFans] = useState([]);
 
   const fetchFans = async () => {
@@ -32,29 +33,43 @@ const OptIn = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const msgs = [];
-    setMessages([]);
+    const entries = [];
+    setLogs([]);
 
+    // Insert fan into supabase
     try {
       const { error } = await supabase.from('fans').insert(formData);
       if (error) throw new Error(error.message);
-      msgs.push('main done');
+      entries.push({ service: 'supabase', success: true, message: 'saved' });
+    } catch (err) {
+      entries.push({ service: 'supabase', success: false, message: err.message });
+    }
 
+    // Send confirmation email
+    try {
       await sendEmail(formData.email);
-      msgs.push('mail done');
+      entries.push({ service: 'mail', success: true, message: 'sent' });
+    } catch (err) {
+      entries.push({ service: 'mail', success: false, message: err.message });
+    }
 
-      if (formData.phone) {
+    // Send SMS if phone provided
+    if (formData.phone) {
+      try {
         await sendSMS(formData.phone);
-        msgs.push('sms done');
+        entries.push({ service: 'twilio', success: true, message: 'sent' });
+      } catch (err) {
+        entries.push({ service: 'twilio', success: false, message: err.message });
       }
+    }
 
-      setMessages(msgs);
+    setLogs(entries);
+    if (entries.every((l) => l.success)) {
       fetchFans();
       setFormData({ name: '', email: '', phone: '', ig_handle: '', keyword: '' });
-    } catch (err) {
-      msgs.push(`error: ${err.message}`);
-      setMessages(msgs);
     }
+    // also print to console for debugging
+    console.log('optin log', entries);
   };
 
   return (
@@ -111,10 +126,19 @@ const OptIn = () => {
             Submit
           </button>
         </form>
-        {messages.length > 0 && (
-          <div className="mt-4 p-2 rounded bg-green-100 text-green-700 space-y-1">
-            {messages.map((msg, idx) => (
-              <div key={idx}>{msg}</div>
+        {logs.length > 0 && (
+          <div className="mt-4 space-y-1">
+            {logs.map((log, idx) => (
+              <div
+                key={idx}
+                className={
+                  log.success
+                    ? 'p-2 rounded bg-green-100 text-green-700'
+                    : 'p-2 rounded bg-red-100 text-red-700'
+                }
+              >
+                {log.service}: {log.message}
+              </div>
             ))}
           </div>
         )}
