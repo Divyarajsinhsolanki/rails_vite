@@ -4,6 +4,7 @@ import SprintOverview from './SprintOverview';
 import Scheduler from '../components/Scheduler/Scheduler';
 import TodoBoard from '../components/TodoBoard/TodoBoard';
 import SprintManager from '../components/Scheduler/SprintManager';
+import Sheet from './Sheet';
 
 const calculateWorkingDays = (start, end) => {
   let count = 0;
@@ -140,11 +141,21 @@ export default function SprintDashboard() {
                 ? 'bg-blue-500 text-white shadow-lg'
                 : 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'
               }`}
-            onClick={() => setActiveTab('todo')}
-          >
-            Todo
-          </button>
-        </div>
+          onClick={() => setActiveTab('todo')}
+        >
+          Todo
+        </button>
+        <button
+          className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
+            ${activeTab === 'sheet'
+              ? 'bg-blue-500 text-white shadow-lg'
+              : 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+            }`}
+          onClick={() => setActiveTab('sheet')}
+        >
+          Sheet
+        </button>
+      </div>
       </div>
       {activeTab === 'overview' && (
         <SprintOverview sprintId={sprintId} onSprintChange={handleSprintChange} />
@@ -154,6 +165,9 @@ export default function SprintDashboard() {
       )}
       {activeTab === 'todo' && (
         <TodoBoard sprintId={sprintId} onSprintChange={handleSprintChange} />
+      )}
+      {activeTab === 'sheet' && (
+        <Sheet sheetName={sprint?.name} />
       )}
     </div>
   );
