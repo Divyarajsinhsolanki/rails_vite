@@ -36,7 +36,7 @@ Rails.application.routes.draw do
   post "/encrypt_pdf", to: "pdf_modifiers#encrypt_pdf"
   post "/decrypt_pdf", to: "pdf_modifiers#decrypt_pdf"
 
-  get "/sheet", to: "sheets#show"
+  # React now handles the /sheet route. Data is provided via the API below.
 
   namespace :api do
     post 'signup', to: 'auth#signup'
@@ -51,6 +51,7 @@ Rails.application.routes.draw do
     get 'english_tense', to: 'english_tenses#show'
     get 'english_phrase', to: 'english_phrases#show'
     get 'weather', to: 'weather#show'
+    get 'sheet', to: 'sheets#show'
 
     resources :users, only: [:index, :update, :destroy]
     resources :posts, only: [:index, :create, :update, :destroy]

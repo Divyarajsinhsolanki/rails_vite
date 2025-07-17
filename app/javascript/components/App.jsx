@@ -22,6 +22,7 @@ import Weather from "../pages/Weather";
 import Vault from "../pages/Vault";
 import Legal from "../pages/Legal";
 import SprintDashboard from "../pages/SprintDashboard";
+import Sheet from "../pages/Sheet";
 
 
 function AuthLayout({ children }) {
@@ -47,6 +48,7 @@ const App = () => {
               <Route path="/event" element={<MainLayout><Event /></MainLayout>} />
               <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
               <Route path="/weather" element={<MainLayout><Weather /></MainLayout>} />
+              <Route path="/sheet" element={<MainLayout><Sheet /></MainLayout>} />
               <Route path="/ticket" element={<MainLayout><Ticket /></MainLayout>} />
               <Route path="/legal" element={<MainLayout><Legal /></MainLayout>} />
 
