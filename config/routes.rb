@@ -55,7 +55,12 @@ Rails.application.routes.draw do
 
     resources :users, only: [:index, :update, :destroy]
     resources :posts, only: [:index, :create, :update, :destroy]
-    resources :sprints, only: [:index, :create, :update, :destroy]
+    resources :sprints, only: [:index, :create, :update, :destroy] do
+      member do
+        post 'import_tasks'
+        post 'export_tasks'
+      end
+    end
     resources :developers, only: [:index]
     resources :tasks, only: [:index, :create, :update, :destroy]
     resources :task_logs, only: [:index, :create, :update, :destroy]

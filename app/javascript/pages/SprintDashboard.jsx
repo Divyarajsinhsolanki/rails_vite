@@ -71,6 +71,26 @@ export default function SprintDashboard() {
     setIsHeaderExpanded(false);
   };
 
+  const handleImport = async () => {
+    if (!sprintId) return;
+    try {
+      await SchedulerAPI.importSprintTasks(sprintId);
+      alert('Imported tasks from sheet');
+    } catch (e) {
+      alert('Import failed');
+    }
+  };
+
+  const handleExport = async () => {
+    if (!sprintId) return;
+    try {
+      await SchedulerAPI.exportSprintTasks(sprintId);
+      alert('Exported tasks to sheet');
+    } catch (e) {
+      alert('Export failed');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <header className="bg-white shadow-sm p-2">
@@ -113,7 +133,7 @@ export default function SprintDashboard() {
         </div>
       </header>
       {/* Tab Navigation */}
-      <div className="flex justify-center mb-8">
+      <div className="flex justify-between items-center mb-8">
         <div className="flex bg-white rounded-full p-1 shadow-md border border-gray-100">
           <button
             className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out
@@ -155,6 +175,21 @@ export default function SprintDashboard() {
         >
           Sheet
         </button>
+        </div>
+        <div className="flex space-x-2 ml-4">
+          <button
+            onClick={handleImport}
+            className="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600"
+          >
+            Import from Sheet
+          </button>
+          <button
+            onClick={handleExport}
+            className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600"
+          >
+            Export to Sheet
+          </button>
+        </div>
       </div>
       </div>
       {activeTab === 'overview' && (
