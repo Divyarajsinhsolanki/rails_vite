@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { sendEmail, sendSMS } from '../utils/notifications';
 
@@ -11,6 +11,19 @@ const OptIn = () => {
     keyword: ''
   });
   const [messages, setMessages] = useState([]);
+  const [fans, setFans] = useState([]);
+
+  const fetchFans = async () => {
+    const { data, error } = await supabase
+      .from('fans')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (!error) setFans(data);
+  };
+
+  useEffect(() => {
+    fetchFans();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -36,6 +49,7 @@ const OptIn = () => {
       }
 
       setMessages(msgs);
+      fetchFans();
       setFormData({ name: '', email: '', phone: '', ig_handle: '', keyword: '' });
     } catch (err) {
       msgs.push(`error: ${err.message}`);
@@ -102,6 +116,20 @@ const OptIn = () => {
             {messages.map((msg, idx) => (
               <div key={idx}>{msg}</div>
             ))}
+          </div>
+        )}
+
+        {fans.length > 0 && (
+          <div className="mt-6">
+            <h3 className="font-bold mb-2 text-center">Current Fans</h3>
+            <ul className="space-y-2">
+              {fans.map((fan) => (
+                <li key={fan.id} className="border rounded p-2">
+                  <div className="font-medium">{fan.name}</div>
+                  <div className="text-sm text-gray-600">{fan.email}</div>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </div>
