@@ -17,7 +17,7 @@ const Navbar = () => {
           <nav className="flex items-center gap-6">
             {user ? (
               <>
-                {["posts", "Event", "weather", "vault", "sprint_dashboard", "pdf_editor", "knowledge", "profile", "users", "admin", "contact", "atharva-system-mail"].map((route) => (
+                {["posts", "Event", "weather", "vault", "sprint_dashboard", "pdf_editor", "knowledge", "profile", "users", "admin", "contact", "optin"].map((route) => (
                   <NavLink
                     key={route}
                     to={`/${route}`}
@@ -40,6 +40,9 @@ const Navbar = () => {
               </>
             ) : (
               <>
+                <NavLink to="/optin" className="text-gray-700 font-medium hover:text-indigo-600 transition">
+                  OptIn
+                </NavLink>
                 <NavLink to="/login" className="text-gray-700 font-medium hover:text-indigo-600 transition">
                   Login
                 </NavLink>
