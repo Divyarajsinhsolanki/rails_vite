@@ -42,6 +42,25 @@ class Api::SprintsController < Api::BaseController
     end
   end
 
+  def import_tasks
+    sprint = Sprint.find(params[:id])
+    service = TaskSheetService.new(sprint.name)
+    service.import_tasks(sprint_id: sprint.id, created_by_id: current_user.id)
+    head :no_content
+  rescue StandardError => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
+  def export_tasks
+    sprint = Sprint.find(params[:id])
+    tasks = Task.where(sprint_id: sprint.id).order(:order)
+    service = TaskSheetService.new(sprint.name)
+    service.export_tasks(tasks)
+    head :no_content
+  rescue StandardError => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
   private
   def sprint_params
     params.require(:sprint).permit(:name, :start_date, :end_date)
