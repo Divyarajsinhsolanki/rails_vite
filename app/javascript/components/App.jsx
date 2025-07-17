@@ -23,6 +23,7 @@ import Vault from "../pages/Vault";
 import Legal from "../pages/Legal";
 import SprintDashboard from "../pages/SprintDashboard";
 import AtharvaSystemMail from "../pages/AtharvaSystemMail";
+import OptIn from "../pages/OptIn";
 
 
 function AuthLayout({ children }) {
@@ -47,6 +48,7 @@ const App = () => {
               <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
               <Route path="/event" element={<MainLayout><Event /></MainLayout>} />
               <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
+              <Route path="/optin" element={<MainLayout><OptIn /></MainLayout>} />
               <Route path="/weather" element={<MainLayout><Weather /></MainLayout>} />
               <Route path="/ticket" element={<MainLayout><Ticket /></MainLayout>} />
               <Route path="/legal" element={<MainLayout><Legal /></MainLayout>} />
