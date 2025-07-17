@@ -3,5 +3,6 @@ class PagesController < ApplicationController
   end
 
   def atharva_system_mail
+    render :index
   end
 end

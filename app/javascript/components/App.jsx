@@ -22,6 +22,7 @@ import Weather from "../pages/Weather";
 import Vault from "../pages/Vault";
 import Legal from "../pages/Legal";
 import SprintDashboard from "../pages/SprintDashboard";
+import AtharvaSystemMail from "../pages/AtharvaSystemMail";
 import OptIn from "../pages/OptIn";
 
 
@@ -51,6 +52,7 @@ const App = () => {
               <Route path="/weather" element={<MainLayout><Weather /></MainLayout>} />
               <Route path="/ticket" element={<MainLayout><Ticket /></MainLayout>} />
               <Route path="/legal" element={<MainLayout><Legal /></MainLayout>} />
+              <Route path="/atharva-system-mail" element={<MainLayout><AtharvaSystemMail /></MainLayout>} />
 
               {/* 🔐 Protected */}
               <Route path="/" element={<PrivateRoute><MainLayout><PdfPage /></MainLayout></PrivateRoute>} />
