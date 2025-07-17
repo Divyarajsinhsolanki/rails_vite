@@ -16,6 +16,13 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "../components/App";
 import "../stylesheets/application.css";
+import { inherits } from 'util';
+
+// Expose util.inherits for libraries expecting the Node util module
+if (typeof window !== 'undefined') {
+  window.util = { inherits };
+  window.process = { env: {} }; // 👈 ADD THIS TOO
+}
 
 
 const rootElement = document.getElementById("root");

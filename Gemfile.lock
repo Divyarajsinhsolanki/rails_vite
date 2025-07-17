@@ -131,6 +131,10 @@ GEM
     devise-jwt (0.12.1)
       devise (~> 4.0)
       warden-jwt_auth (~> 0.10)
+    dotenv (3.1.8)
+    dotenv-rails (3.1.8)
+      dotenv (= 3.1.8)
+      railties (>= 6.1)
     drb (2.2.1)
     dry-auto_inject (1.1.0)
       dry-core (~> 1.1)
@@ -337,6 +341,10 @@ GEM
     timeout (0.4.3)
     ttfunk (1.8.0)
       bigdecimal (~> 3.1)
+    twilio-ruby (7.6.5)
+      faraday (>= 0.9, < 3.0)
+      jwt (>= 1.5, < 3.0)
+      nokogiri (>= 1.6, < 2.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     uri (1.0.3)
@@ -393,6 +401,7 @@ DEPENDENCIES
   debug
   devise (~> 4.9)
   devise-jwt (~> 0.12.1)
+  dotenv-rails
   faraday (~> 2.7)
   firebase_id_token
   jbuilder
@@ -407,6 +416,7 @@ DEPENDENCIES
   sqlite3 (~> 1.4)
   stimulus-rails
   stripe
+  twilio-ruby
   tzinfo-data
   vite_rails (~> 3.0)
   web-console

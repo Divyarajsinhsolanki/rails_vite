@@ -10,6 +10,7 @@ Rails.application.routes.draw do
 
   root "pages#index"
 
+
   # PDF
   post "/upload_pdf", to: "pdfs#upload_pdf"
 
@@ -49,6 +50,7 @@ Rails.application.routes.draw do
     get 'english_tense', to: 'english_tenses#show'
     get 'english_phrase', to: 'english_phrases#show'
     get 'weather', to: 'weather#show'
+    post 'send_sms', to: 'twilio#send_sms'
 
     resources :users, only: [:index, :update, :destroy]
     resources :posts, only: [:index, :create, :update, :destroy]

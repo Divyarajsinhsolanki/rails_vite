@@ -4,11 +4,14 @@ import RubyPlugin from 'vite-plugin-ruby';
 
 export default defineConfig({
   plugins: [RubyPlugin()],
+  define: {
+    'process.env': '{}',
+  },
   build: {
     rollupOptions: {
       input: {
-        application: 'app/javascript/entrypoints/application.jsx'
-      }
-    }
-  }
+        application: 'app/javascript/entrypoints/application.jsx',
+      },
+    },
+  },
 });
