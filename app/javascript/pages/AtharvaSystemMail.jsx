@@ -1,11 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 
-const AtharvaSystemMail = () => (
-  <div className="p-4">
-    <h1 className="text-2xl font-bold mb-4">Atharva System Mail - Add me to aslack channel</h1>
-    <pre className="whitespace-pre-wrap text-sm">
-{`
-Based on the document titled "Atharva System Mail - Add me to aslack channel", it outlines a project roadmap for a system combining:
+const instructions = `Based on the document titled "Atharva System Mail - Add me to aslack channel", it outlines a project roadmap for a system combining:
 
 Claude AI
 Supabase (as a backend/CRM)
@@ -161,9 +156,19 @@ Automation JSON:
   "action": "send_email",
   "delay_days": 3
 }
-`}
-    </pre>
-  </div>
-);
+`;
+
+const AtharvaSystemMail = () => {
+  const [showRaw, setShowRaw] = useState(false);
+  return (
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-4">Atharva System Mail - Add me to aslack channel</h1>
+      <button className="mb-4 px-3 py-1 border rounded" onClick={() => setShowRaw(!showRaw)}>
+        {showRaw ? "Hide raw" : "Show raw"}
+      </button>
+      {showRaw && <pre className="whitespace-pre-wrap text-sm">{instructions}</pre>}
+    </div>
+  );
+};
 
 export default AtharvaSystemMail;

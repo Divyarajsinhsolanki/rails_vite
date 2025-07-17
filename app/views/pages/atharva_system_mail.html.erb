@@ -1,5 +1,6 @@
 <h1>Atharva System Mail - Add me to aslack channel</h1>
-<pre>
+<button id="toggle-raw" class="mb-4 px-3 py-1 border rounded">Show raw</button>
+<pre id="instructions" style="display:none;">
 Based on the document titled "Atharva System Mail - Add me to aslack channel", it outlines a project roadmap for a system combining:
 
 Claude AI
@@ -138,7 +139,7 @@ app.post('/webhook/ig', async (req, res) => {
   const { ig_handle, message } = req.body;
 
   await supabase.from("fans").update({
-    events: Supabase.raw(`jsonb_set(events, '{dm_received}', to_jsonb(now()))`),
+    events: Supabase.raw(\`jsonb_set(events, '{dm_received}', to_jsonb(now()))\`),
     last_engaged: new Date()
   }).eq("ig_handle", ig_handle);
 
@@ -157,3 +158,18 @@ Automation JSON:
   "delay_days": 3
 }
 </pre>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("toggle-raw");
+    const pre = document.getElementById("instructions");
+    btn.addEventListener("click", () => {
+      if (pre.style.display === "none") {
+        pre.style.display = "block";
+        btn.textContent = "Hide raw";
+      } else {
+        pre.style.display = "none";
+        btn.textContent = "Show raw";
+      }
+    });
+  });
+</script>
