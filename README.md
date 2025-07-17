@@ -72,3 +72,15 @@ bin/rails assets:precompile
 
 You can also build the Docker image using the provided `Dockerfile`.
 
+## Google Sheets Integration
+
+The app includes a small example page that reads data from a Google Sheet using
+a service account. To configure it:
+
+1. Add the service account JSON key to `config/google_service_account.json` (the
+   file is ignored by Git).
+2. Edit `SPREADSHEET_ID` in `app/services/google_sheets_reader.rb` to match your
+   sheet ID.
+3. Visit `/sheet` in your browser to see the raw rows rendered in a table. Pass
+   `?sheet=TabName` to view a specific tab.
+

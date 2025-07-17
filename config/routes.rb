@@ -36,6 +36,8 @@ Rails.application.routes.draw do
   post "/encrypt_pdf", to: "pdf_modifiers#encrypt_pdf"
   post "/decrypt_pdf", to: "pdf_modifiers#decrypt_pdf"
 
+  get "/sheet", to: "sheets#show"
+
   namespace :api do
     post 'signup', to: 'auth#signup'
     post 'login', to: 'auth#login'
