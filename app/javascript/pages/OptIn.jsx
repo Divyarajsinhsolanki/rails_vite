@@ -18,8 +18,14 @@ const OptIn = () => {
     const { data, error } = await supabase
       .from('fans')
       .select('*')
-      .order('created_at', { ascending: false });
-    if (!error) setFans(data);
+  
+    console.log('📦 fetched fans:', { data, error });
+  
+    if (error) {
+      setLogs((prev) => [...prev, { service: 'supabase-fetch', success: false, message: error.message }]);
+    } else {
+      setFans(data);
+    }
   };
 
   useEffect(() => {

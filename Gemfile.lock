@@ -131,6 +131,10 @@ GEM
     devise-jwt (0.12.1)
       devise (~> 4.0)
       warden-jwt_auth (~> 0.10)
+    dotenv (3.1.8)
+    dotenv-rails (3.1.8)
+      dotenv (= 3.1.8)
+      railties (>= 6.1)
     drb (2.2.1)
     dry-auto_inject (1.1.0)
       dry-core (~> 1.1)
@@ -397,6 +401,7 @@ DEPENDENCIES
   debug
   devise (~> 4.9)
   devise-jwt (~> 0.12.1)
+  dotenv-rails
   faraday (~> 2.7)
   firebase_id_token
   jbuilder
