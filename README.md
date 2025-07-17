@@ -72,3 +72,15 @@ bin/rails assets:precompile
 
 You can also build the Docker image using the provided `Dockerfile`.
 
+## Instagram DM Webhook
+
+To log Instagram DMs from Inrō, this project includes a small Express server.
+Install dependencies with `npm install` and run:
+
+```bash
+npm run webhook
+```
+
+Set `SUPABASE_URL` and `SUPABASE_KEY` in your environment so the webhook can
+update the `fans` table when a DM is received.
+
