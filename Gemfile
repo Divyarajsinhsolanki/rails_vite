@@ -80,6 +80,7 @@ gem 'jwt'
 gem 'bcrypt'
 gem 'stripe'
 gem 'rqrcode'
+gem 'twilio-ruby'
 
 group :production do
   # gem 'pdf_master', path: 'lib/pdf_master'

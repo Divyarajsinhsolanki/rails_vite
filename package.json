@@ -42,7 +42,6 @@
     "@supabase/supabase-js": "^2.43.5",
     "vite": "^6.2.0",
     "resend": "^0.25.0",
-    "twilio": "^4.19.0",
     "util": "^0.12.5"
   }
 }
