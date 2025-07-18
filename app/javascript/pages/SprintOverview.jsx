@@ -668,6 +668,26 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
         setShowAddModal(false);
     };
 
+    const handleImport = async () => {
+        if (!selectedSprintId) return;
+        try {
+            await SchedulerAPI.importSprintTasks(selectedSprintId);
+            alert('Imported tasks from sheet');
+        } catch (e) {
+            alert('Import failed');
+        }
+    };
+
+    const handleExport = async () => {
+        if (!selectedSprintId) return;
+        try {
+            await SchedulerAPI.exportSprintTasks(selectedSprintId);
+            alert('Exported tasks to sheet');
+        } catch (e) {
+            alert('Export failed');
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 p-8 font-sans text-gray-800">
             <div className="max-w-8xl mx-auto bg-white rounded-xl shadow-lg p-4">
@@ -675,13 +695,27 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                     <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center">
                         <CalendarDaysIcon className="h-7 w-7 mr-2"/>Sprint Task Manager
                     </h1>
-                    <button
-                        onClick={() => setShowAddModal(true)}
-                        className="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
-                    >
-                        <PlusCircleIcon className="h-5 w-5 mr-2" />
-                        Add Task
-                    </button>
+                    <div className="flex space-x-2">
+                        <button
+                            onClick={() => setShowAddModal(true)}
+                            className="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
+                        >
+                            <PlusCircleIcon className="h-5 w-5 mr-2" />
+                            Add Task
+                        </button>
+                        <button
+                            onClick={handleImport}
+                            className="flex items-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
+                        >
+                            Import from Sheet
+                        </button>
+                        <button
+                            onClick={handleExport}
+                            className="flex items-center bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
+                        >
+                            Export to Sheet
+                        </button>
+                    </div>
                 </div>
 
                 {/* Tasks Table */}
