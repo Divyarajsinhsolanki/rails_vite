@@ -59,6 +59,7 @@ Rails.application.routes.draw do
       member do
         post 'import_tasks'
         post 'export_tasks'
+        post 'export_logs'
       end
     end
     resources :developers, only: [:index]
