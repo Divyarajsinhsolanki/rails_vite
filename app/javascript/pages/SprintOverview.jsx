@@ -722,14 +722,14 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                     <div className="flex space-x-2">
                         <button
                             onClick={() => setShowAddModal(true)}
-                            className="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
+                            className="flex items-center bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
                         >
                             <PlusCircleIcon className="h-5 w-5 mr-2" />
                             Add Task
                         </button>
                         <button
                             onClick={handleImport}
-                            className="flex items-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
+                            className="flex items-center bg-green-500 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
                         >
                             Import from Sheet
                         </button>

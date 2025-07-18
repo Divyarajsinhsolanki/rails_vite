@@ -18,7 +18,7 @@ class SchedulerSheetService
     dates.each { |d| matrix[d] = Hash.new { |h, k| h[k] = [] } }
 
     logs.each do |log|
-      matrix[log.log_date][log.developer.name] << "#{log.task.task_id} (#{log.hours_logged}h)"
+      matrix[log.log_date][log.developer.name] << "#{log.task.task_id} (#{log.hours_logged}h) - #{log.type}"
     end
 
     values = [['Date'] + developers.map(&:name)]
