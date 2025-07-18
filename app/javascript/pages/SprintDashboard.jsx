@@ -71,25 +71,6 @@ export default function SprintDashboard() {
     setIsHeaderExpanded(false);
   };
 
-  const handleImport = async () => {
-    if (!sprintId) return;
-    try {
-      await SchedulerAPI.importSprintTasks(sprintId);
-      alert('Imported tasks from sheet');
-    } catch (e) {
-      alert('Import failed');
-    }
-  };
-
-  const handleExport = async () => {
-    if (!sprintId) return;
-    try {
-      await SchedulerAPI.exportSprintTasks(sprintId);
-      alert('Exported tasks to sheet');
-    } catch (e) {
-      alert('Export failed');
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -175,20 +156,6 @@ export default function SprintDashboard() {
         >
           Sheet
         </button>
-        </div>
-        <div className="flex space-x-2 ml-4">
-          <button
-            onClick={handleImport}
-            className="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600"
-          >
-            Import from Sheet
-          </button>
-          <button
-            onClick={handleExport}
-            className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600"
-          >
-            Export to Sheet
-          </button>
         </div>
       </div>
       {activeTab === 'overview' && (
