@@ -499,7 +499,7 @@ function Scheduler({ sprintId }) {
                     </button>
                     <button
                       onClick={handleExportScheduler}
-                      className="flex items-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105"
+                      className="flex items-center bg-green-500 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105"
                     >
                       <TableCellsIcon className="h-5 w-5 mr-2" />
                       Export to Scheduler Sheet

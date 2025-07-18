@@ -847,11 +847,13 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                                     </Droppable>
                                 ))
                             ) : (
-                                <tr>
-                                    <td colSpan="9" className="px-6 py-3 text-center text-gray-500">
-                                        No tasks found for this sprint.
-                                    </td>
-                                </tr>
+                                <tbody>
+                                    <tr>
+                                        <td colSpan="9" className="px-6 py-3 text-center text-gray-500">
+                                            No tasks found for this sprint.
+                                        </td>
+                                    </tr>
+                                </tbody>
                             )}
                     </table>
                     </DragDropContext>
