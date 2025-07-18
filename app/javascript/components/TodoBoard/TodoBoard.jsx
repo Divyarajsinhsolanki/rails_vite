@@ -190,12 +190,37 @@ export default function TodoBoard({ sprintId, onSprintChange }) {
     <div className="p-4 bg-gradient-to-br from-slate-50 to-sky-100">
       <Toaster position="top-right" />
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-semibold text-blue-700 tracking-tight">MyForm Task Control Center</h1>
+        <h1 className="text-3xl font-semibold text-blue-700 tracking-tight">MyForm Task Control Center</h1>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
+          >
+            + Add Log
+          </button>
+          <div className="flex bg-white rounded-full p-1 shadow-md border border-gray-100">
+            <button
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ${
+                taskView === 'all'
+                  ? 'bg-blue-500 text-white shadow-lg'
+                  : 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+              }`}
+              onClick={() => setTaskView('all')}
+            >
+              All Tasks
+            </button>
+            <button
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ml-2 ${
+                taskView === 'my'
+                  ? 'bg-blue-500 text-white shadow-lg'
+                  : 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+              }`}
+              onClick={() => setTaskView('my')}
+            >
+              My Tasks
+            </button>
+          </div>
         </div>
-        <button onClick={() => setShowForm(true)} className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-700 transition-all">
-          + New Task
-        </button>
       </div>
 
       <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Add Task">

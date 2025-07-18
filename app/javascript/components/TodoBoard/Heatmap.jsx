@@ -24,24 +24,7 @@ const Heatmap = ({ columns, view, onViewChange }) => {
   return (
     <div className="bg-white p-6 shadow-md rounded-lg">
       <h3 className="font-semibold mb-3">Due Date Heatmap</h3>
-      <div className="mb-3 flex space-x-2">
-        <button
-          className={`px-3 py-1 rounded-md text-sm font-medium ${
-            view === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-200'
-          }`}
-          onClick={() => onViewChange('all')}
-        >
-          All Tasks
-        </button>
-        <button
-          className={`px-3 py-1 rounded-md text-sm font-medium ${
-            view === 'my' ? 'bg-blue-500 text-white' : 'bg-gray-200'
-          }`}
-          onClick={() => onViewChange('my')}
-        >
-          My Tasks
-        </button>
-      </div>
+      {/* View toggle moved to TodoBoard header */}
       <div className="flex gap-2">
         {data.map((d, i) => (
           <div
