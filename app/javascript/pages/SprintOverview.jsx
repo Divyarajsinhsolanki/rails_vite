@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SchedulerAPI, getUsers } from '../components/api';
 import { FiX } from 'react-icons/fi';
-import { CalendarDaysIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
+import { CalendarDaysIcon, PlusCircleIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 // Task Details Modal Component
@@ -461,6 +461,8 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
     const [users, setUsers] = useState([]);
     const [tasks, setTasks] = useState([]);
     const [selectedSprintId, setSelectedSprintId] = useState(sprintId || null);
+    const [showUserFilter, setShowUserFilter] = useState(false);
+    const [filterUsers, setFilterUsers] = useState([]);
 
     useEffect(() => {
         if (sprintId) setSelectedSprintId(sprintId);
@@ -468,6 +470,12 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
     const [showTaskModal, setShowTaskModal] = useState(false);
     const [currentTask, setCurrentTask] = useState(null);
     const [showAddModal, setShowAddModal] = useState(false);
+
+    const toggleUserFilter = (id) => {
+        setFilterUsers(prev =>
+            prev.includes(id) ? prev.filter(u => u !== id) : [...prev, id]
+        );
+    };
 
     useEffect(() => {
         SchedulerAPI.getDevelopers().then(res => setDevelopers(res.data));
@@ -512,7 +520,11 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
         });
     }, [selectedSprintId]);
 
-    const filteredTasks = tasks.filter(task => task.sprintId === selectedSprintId);
+    const filteredTasks = tasks.filter(task => {
+        if (task.sprintId !== selectedSprintId) return false;
+        if (filterUsers.length && !filterUsers.includes(String(task.assignedUser))) return false;
+        return true;
+    });
 
     // Group tasks by developer so we can display them together in the table
     const developerMap = developers.reduce((acc, d) => {
@@ -694,6 +706,9 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                 <div className="flex justify-between items-center mb-4">
                     <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center">
                         <CalendarDaysIcon className="h-7 w-7 mr-2"/>Sprint Task Manager
+                        <button onClick={() => setShowUserFilter(!showUserFilter)} className="ml-2 text-gray-600 hover:text-gray-800">
+                            <FunnelIcon className="h-5 w-5" />
+                        </button>
                     </h1>
                     <div className="flex space-x-2">
                         <button
@@ -717,6 +732,26 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                         </button>
                     </div>
                 </div>
+                {showUserFilter && (
+                    <div className="flex flex-wrap items-center mb-4 space-x-2">
+                        {users.map(u => (
+                            <div
+                                key={u.id}
+                                onClick={() => toggleUserFilter(String(u.id))}
+                                className={`cursor-pointer w-8 h-8 rounded-full border-2 ${filterUsers.includes(String(u.id)) ? 'border-blue-500' : 'border-transparent'}`}
+                            >
+                                {u.profile_picture && u.profile_picture !== 'null' ? (
+                                    <img src={u.profile_picture} alt={u.first_name}
+                                         className="w-8 h-8 rounded-full object-cover" />
+                                ) : (
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-blue-500 text-white text-xs font-bold flex items-center justify-center">
+                                        {(u.first_name || u.email).charAt(0).toUpperCase()}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 {/* Tasks Table */}
                 <div className="overflow-x-auto bg-white rounded-xl shadow-md">
