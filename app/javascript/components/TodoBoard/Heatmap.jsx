@@ -16,6 +16,11 @@ const Heatmap = ({ columns, view, onViewChange }) => {
 
   const data = getHeatmapData(filteredColumns);
 
+  const todayISO = new Date().toISOString().split('T')[0];
+  const tasksDueToday = Object.values(filteredColumns)
+    .flatMap(col => col.items)
+    .filter(t => (t.end_date || t.due) === todayISO);
+
   return (
     <div className="bg-white p-6 shadow-md rounded-lg">
       <h3 className="font-semibold mb-3">Due Date Heatmap</h3>
@@ -50,6 +55,18 @@ const Heatmap = ({ columns, view, onViewChange }) => {
             {d.count}
           </div>
         ))}
+      </div>
+      <div className="mt-4">
+        <h4 className="font-semibold mb-2">Tasks Due Today</h4>
+        {tasksDueToday.length ? (
+          <ul className="list-disc pl-5 text-sm">
+            {tasksDueToday.map(t => (
+              <li key={t.id}>{t.title || t.task_id}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-gray-500">None</p>
+        )}
       </div>
     </div>
   );
