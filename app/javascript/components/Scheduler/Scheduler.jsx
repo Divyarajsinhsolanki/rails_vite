@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { DndContext, useDraggable, useDroppable, closestCenter } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { SchedulerAPI } from '../api';
+import { Toaster, toast } from 'react-hot-toast';
+import SpinnerOverlay from '../ui/SpinnerOverlay';
 
 // Assuming these are your existing form components
 import AddTaskForm from '../Scheduler/AddTaskForm';
@@ -93,7 +95,7 @@ function TaskCard({ task, onEdit, onTaskUpdate }) {
     } catch (error) {
       console.error("Error updating status:", error);
       onTaskUpdate({ ...task, status: task.status });
-      alert("Error: Could not update task status.");
+      toast.error("Error: Could not update task status.");
     }
   };
 
@@ -106,7 +108,7 @@ function TaskCard({ task, onEdit, onTaskUpdate }) {
     } catch (error) {
       console.error("Error deleting task:", error);
       onTaskUpdate({ ...task, deleted: false });
-      alert("Error: Could not delete task.");
+      toast.error("Error: Could not delete task.");
     }
   };
 
@@ -227,6 +229,7 @@ function Scheduler({ sprintId }) {
   
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+  const [processing, setProcessing] = useState(false);
   const [mainHeaderHeight, setMainHeaderHeight] = useState(0); // State to store main header height
 
   // Ref for the main header
@@ -315,38 +318,40 @@ function Scheduler({ sprintId }) {
     setTasks(prev => [...prev, newTask]);
     setIsAddTaskModalOpen(false);
 
-    try {
-      const { data: created } = await SchedulerAPI.createTaskLog({ ...formData });
-      setTasks(prev => prev.map(t => t.id === tempId ? created : t));
-    } catch (error) {
-      console.error("Error adding task:", error);
-      setTasks(prev => prev.filter(t => t.id !== tempId));
-      alert(`Error: Could not add task. ${error.message}`);
-    }
-  };
+  try {
+    const { data: created } = await SchedulerAPI.createTaskLog({ ...formData });
+    setTasks(prev => prev.map(t => t.id === tempId ? created : t));
+  } catch (error) {
+    console.error("Error adding task:", error);
+    setTasks(prev => prev.filter(t => t.id !== tempId));
+    toast.error(`Error: Could not add task. ${error.message}`);
+  }
+};
 
   const saveUpdatedTask = async (formData) => {
     const taskId = formData.id;
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...formData, developer_id: Number(formData.developer_id), hours_logged: parseFloat(formData.hours_logged) } : t));
     setEditingTask(null);
 
-    try {
-      const { data: updated } = await SchedulerAPI.updateTaskLog(taskId, formData);
-      setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
-    } catch (error) {
-      console.error("Error updating task:", error);
-      alert(`Error: Could not update task. ${error.message}`);
-    }
-  };
+  try {
+    const { data: updated } = await SchedulerAPI.updateTaskLog(taskId, formData);
+    setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
+  } catch (error) {
+    console.error("Error updating task:", error);
+    toast.error(`Error: Could not update task. ${error.message}`);
+  }
+};
 
   const handleExportScheduler = async () => {
     if (!sprint) return;
     try {
+      setProcessing(true);
       await SchedulerAPI.exportSprintLogs(sprint.id);
-      alert('Exported logs to sheet');
-    } catch (e) {
-      alert('Export failed');
-    }
+      toast.success('Exported logs to sheet');
+  } catch (e) {
+      toast.error('Export failed');
+  }
+    setProcessing(false);
   };
 
   const handleTaskUpdate = useCallback((updatedTask) => {
@@ -379,7 +384,7 @@ function Scheduler({ sprintId }) {
     } catch (error) {
       console.error("Error moving task:", error);
       setTasks(prev => prev.map(t => t.id === taskId ? original : t));
-      alert(`Error: Could not move task. ${error.message}`);
+      toast.error(`Error: Could not move task. ${error.message}`);
     }
   };
   
@@ -481,6 +486,8 @@ function Scheduler({ sprintId }) {
   return (
     <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 flex flex-col">
+        <Toaster position="top-right" />
+        {processing && <SpinnerOverlay />}
         <main className="flex-grow container mx-auto p-4 lg:p-6">
           <section className="mb-8 bg-white/70 backdrop-blur-md shadow-xl rounded-xl overflow-hidden border border-gray-200">
             <header ref={mainHeaderRef} className="bg-white/80 backdrop-blur-md shadow-sm top-0 z-40">

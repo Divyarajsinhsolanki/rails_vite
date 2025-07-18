@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'react-hot-toast';
 
 const TaskForm = ({ onAddTask, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -16,7 +17,7 @@ const TaskForm = ({ onAddTask, onCancel }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.title) return alert('Title is required.');
+    if (!formData.title) return toast.error('Title is required.');
     onAddTask(formData);
     setFormData({ title: '', type: '', status: 'todo', assigned_to_user: '', end_date: '' });
   };
