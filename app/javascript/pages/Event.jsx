@@ -1,5 +1,6 @@
 import React from "react";
 import { bookEvent } from "../components/api";
+import { Toaster, toast } from "react-hot-toast";
 
 const Event = () => {
   const handleBook = async () => {
@@ -7,12 +8,13 @@ const Event = () => {
       const { data } = await bookEvent();
       window.location.href = data.url; // Redirect to Stripe Checkout
     } catch {
-      alert("Unable to start checkout. Please try again.");
+      toast.error("Unable to start checkout. Please try again.");
     }
   };
 
   return (
     <div className="max-w-2xl mx-auto p-8">
+      <Toaster position="top-right" />
       <h1 className="text-3xl font-bold mb-4">Tech Conference 2024</h1>
       <p className="mb-2">Join us for an exciting day of talks and workshops about the latest in technology.</p>
       <ul className="mb-4">

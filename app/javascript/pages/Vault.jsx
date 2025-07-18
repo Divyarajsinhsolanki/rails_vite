@@ -121,7 +121,7 @@ const Vault = () => {
   };
 
   const handleExportAll = () => {
-    if (items.length === 0) return alert("No items to export.");
+    if (items.length === 0) return toast.error("No items to export.");
     const dataStr = JSON.stringify(items, null, 2);
     const blob = new Blob([dataStr], { type: "application/json" });
     const url = URL.createObjectURL(blob);

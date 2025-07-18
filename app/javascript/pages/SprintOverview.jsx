@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SchedulerAPI, getUsers } from '../components/api';
+import { Toaster, toast } from 'react-hot-toast';
+import SpinnerOverlay from '../components/ui/SpinnerOverlay';
 import { FiX } from 'react-icons/fi';
 import { CalendarDaysIcon, PlusCircleIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -463,6 +465,7 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
     const [selectedSprintId, setSelectedSprintId] = useState(sprintId || null);
     const [showUserFilter, setShowUserFilter] = useState(false);
     const [filterUsers, setFilterUsers] = useState([]);
+    const [processing, setProcessing] = useState(false);
 
     useEffect(() => {
         if (sprintId) setSelectedSprintId(sprintId);
@@ -683,25 +686,31 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
     const handleImport = async () => {
         if (!selectedSprintId) return;
         try {
+            setProcessing(true);
             await SchedulerAPI.importSprintTasks(selectedSprintId);
-            alert('Imported tasks from sheet');
+            toast.success('Imported tasks from sheet');
         } catch (e) {
-            alert('Import failed');
+            toast.error('Import failed');
         }
+        setProcessing(false);
     };
 
     const handleExport = async () => {
         if (!selectedSprintId) return;
         try {
+            setProcessing(true);
             await SchedulerAPI.exportSprintTasks(selectedSprintId);
-            alert('Exported tasks to sheet');
+            toast.success('Exported tasks to sheet');
         } catch (e) {
-            alert('Export failed');
+            toast.error('Export failed');
         }
+        setProcessing(false);
     };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 p-8 font-sans text-gray-800">
+            <Toaster position="top-right" />
+            {processing && <SpinnerOverlay />}
             <div className="max-w-8xl mx-auto bg-white rounded-xl shadow-lg p-4">
                 <div className="flex justify-between items-center mb-4">
                     <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center">
