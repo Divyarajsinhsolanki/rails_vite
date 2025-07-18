@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { DragDropContext } from "@hello-pangea/dnd";
 import { Toaster, toast } from "react-hot-toast";
 import { SchedulerAPI } from '../api';
+import { AuthContext } from '../../context/AuthContext';
 
 // Component Imports
 import TaskForm from "./TaskForm";
@@ -34,11 +35,13 @@ const initialData = {
 };
 
 export default function TodoBoard({ sprintId, onSprintChange }) {
+  const { user } = useContext(AuthContext);
   const [columns, setColumns] = useState(initialData);
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [sprints, setSprints] = useState([]);
   const [selectedSprintId, setSelectedSprintId] = useState(sprintId || null);
+  const [taskView, setTaskView] = useState('all');
 
   useEffect(() => {
     if (sprintId) setSelectedSprintId(sprintId);
@@ -163,8 +166,14 @@ export default function TodoBoard({ sprintId, onSprintChange }) {
         }));
     }
   };
-  
-  const filteredColumns = Object.entries(columns).reduce((acc, [colId, colData]) => {
+  const applyView = cols =>
+    taskView === 'my' && user
+      ? Object.fromEntries(
+          Object.entries(cols).map(([k, col]) => [k, { ...col, items: col.items.filter(t => t.assigned_to_user === user.id) }])
+        )
+      : cols;
+
+  const filteredColumns = Object.entries(applyView(columns)).reduce((acc, [colId, colData]) => {
       const term = (searchTerm || "").toLowerCase();
       acc[colId] = {
         ...colData,
@@ -194,8 +203,8 @@ export default function TodoBoard({ sprintId, onSprintChange }) {
       </Modal>
 
       <div className="grid md:grid-cols-2 gap-4 mb-6">
-        <Heatmap columns={columns} />
-        <ProgressPieChart columns={columns} />
+        <Heatmap columns={columns} view={taskView} onViewChange={setTaskView} />
+        <ProgressPieChart columns={applyView(columns)} />
       </div>
 
       <input

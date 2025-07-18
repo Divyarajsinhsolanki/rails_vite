@@ -1,12 +1,11 @@
 // src/components/Heatmap.js
-import React, { useContext, useState } from 'react';
+import React, { useContext } from 'react';
 import { format, parseISO } from 'date-fns';
 import { getHeatmapData } from '/utils/taskUtils';
 import { AuthContext } from '../../context/AuthContext';
 
-const Heatmap = ({ columns }) => {
+const Heatmap = ({ columns, view, onViewChange }) => {
   const { user } = useContext(AuthContext);
-  const [view, setView] = useState('all');
 
   const filteredColumns =
     view === 'my' && user
@@ -25,7 +24,7 @@ const Heatmap = ({ columns }) => {
           className={`px-3 py-1 rounded-md text-sm font-medium ${
             view === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-200'
           }`}
-          onClick={() => setView('all')}
+          onClick={() => onViewChange('all')}
         >
           All Tasks
         </button>
@@ -33,7 +32,7 @@ const Heatmap = ({ columns }) => {
           className={`px-3 py-1 rounded-md text-sm font-medium ${
             view === 'my' ? 'bg-blue-500 text-white' : 'bg-gray-200'
           }`}
-          onClick={() => setView('my')}
+          onClick={() => onViewChange('my')}
         >
           My Tasks
         </button>
