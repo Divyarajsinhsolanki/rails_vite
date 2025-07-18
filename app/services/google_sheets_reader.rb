@@ -2,7 +2,7 @@ require 'google/apis/sheets_v4'
 require 'googleauth'
 
 class GoogleSheetsReader
-  SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID'
+  SPREADSHEET_ID = ENV['GOOGLE_SPREADSHEET_ID']
 
   def initialize(sheet_name)
     @sheet_name = sheet_name

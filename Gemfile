@@ -80,9 +80,10 @@ gem 'jwt'
 gem 'bcrypt'
 gem 'stripe'
 gem 'rqrcode'
+gem 'dotenv-rails', groups: [:development, :test]
 
 # Access Google Sheets from Rails
-gem 'google-api-client', '~> 0.54.0'
+gem 'google-api-client', '~> 0.53.0'
 gem 'googleauth'
 
 group :production do

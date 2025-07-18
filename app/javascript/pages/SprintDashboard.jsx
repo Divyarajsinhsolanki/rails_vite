@@ -191,7 +191,6 @@ export default function SprintDashboard() {
           </button>
         </div>
       </div>
-      </div>
       {activeTab === 'overview' && (
         <SprintOverview sprintId={sprintId} onSprintChange={handleSprintChange} />
       )}

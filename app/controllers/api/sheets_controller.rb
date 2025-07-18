@@ -2,7 +2,7 @@ class Api::SheetsController < Api::BaseController
   skip_before_action :authenticate_user!, only: [:show]
 
   def show
-    sheet_name = params[:sheet] || 'Sheet1'
+    sheet_name = params[:sheet] || 'X2'
     reader = GoogleSheetsReader.new(sheet_name)
     rows = reader.read_data
     render json: { rows: rows }
