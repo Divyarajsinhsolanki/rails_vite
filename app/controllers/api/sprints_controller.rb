@@ -61,6 +61,17 @@ class Api::SprintsController < Api::BaseController
     render json: { error: e.message }, status: :unprocessable_entity
   end
 
+  def export_logs
+    sprint = Sprint.find(params[:id])
+    logs = TaskLog.joins(:task).where(tasks: { sprint_id: sprint.id }).includes(:task, :developer)
+    sheet_name = "#{sprint.name} Scheduler"
+    service = SchedulerSheetService.new(sheet_name)
+    service.export_logs(logs)
+    head :no_content
+  rescue StandardError => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
   private
   def sprint_params
     params.require(:sprint).permit(:name, :start_date, :end_date)

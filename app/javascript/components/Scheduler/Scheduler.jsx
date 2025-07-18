@@ -339,6 +339,16 @@ function Scheduler({ sprintId }) {
     }
   };
 
+  const handleExportScheduler = async () => {
+    if (!sprint) return;
+    try {
+      await SchedulerAPI.exportSprintLogs(sprint.id);
+      alert('Exported logs to sheet');
+    } catch (e) {
+      alert('Export failed');
+    }
+  };
+
   const handleTaskUpdate = useCallback((updatedTask) => {
     setTasks(prevTasks => {
       if (updatedTask.deleted) {
@@ -479,13 +489,22 @@ function Scheduler({ sprintId }) {
                   <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center">
                     <TableCellsIcon className="h-6 w-6 mr-2 text-sky-600"/> Sprint Logs
                   </h1>
-                  <button
-                    onClick={() => setIsAddTaskModalOpen(true)}
-                    className="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105"
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => setIsAddTaskModalOpen(true)}
+                      className="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105"
                     >
-                    <PlusCircleIcon className="h-5 w-5 mr-2" />
-                    Add Log
-                  </button>
+                      <PlusCircleIcon className="h-5 w-5 mr-2" />
+                      Add Log
+                    </button>
+                    <button
+                      onClick={handleExportScheduler}
+                      className="flex items-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105"
+                    >
+                      <TableCellsIcon className="h-5 w-5 mr-2" />
+                      Export to Scheduler Sheet
+                    </button>
+                  </div>
                 </div>
               </div>
             </header>
