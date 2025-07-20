@@ -235,7 +235,7 @@ export default function TodoBoard({ sprintId, onSprintChange }) {
       <input
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        placeholder="Search by keyword or tag..."
+        placeholder="Search by Task ID..."
         className="mb-4 border px-3 py-2 w-full rounded-lg shadow-md focus:ring-2 focus:ring-blue-400 transition-all"
       />
       
