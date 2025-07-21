@@ -24,7 +24,7 @@ const mapTask = (t) => ({
 });
 
 // Task Details Modal Component
-const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate, onDelete }) => {
+const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate, onDelete }) => {
   const [editedTask, setEditedTask] = useState({ ...task });
 
   const handleChange = (e) => {
@@ -73,7 +73,6 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate, onDelete
                                 value={editedTask.id}
                                 onChange={handleChange}
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                readOnly
                             />
                         </div>
                         <div>
@@ -177,6 +176,25 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate, onDelete
                                 {users.map(u => (
                                     <option key={u.id} value={u.id}>
                                         {u.first_name ? `${u.first_name}` : u.email}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="sprintId" className="block text-sm font-medium text-gray-700 mb-1">
+                                Sprint
+                            </label>
+                            <select
+                                id="sprintId"
+                                name="sprintId"
+                                value={editedTask.sprintId || ''}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            >
+                                <option value="">Unassigned</option>
+                                {sprints.map(s => (
+                                    <option key={s.id} value={s.id}>
+                                        {s.name}
                                     </option>
                                 ))}
                             </select>
@@ -658,6 +676,8 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
     const handleUpdateTask = async (updatedTask) => {
         try {
             const payload = {
+                task_id: updatedTask.id,
+                sprint_id: updatedTask.sprintId ? Number(updatedTask.sprintId) : null,
                 title: updatedTask.title,
                 description: updatedTask.description,
                 start_date: updatedTask.startDate,
@@ -670,10 +690,24 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                 order: updatedTask.order
             };
             await SchedulerAPI.updateTask(updatedTask.dbId, payload);
-            if (editingBacklog) {
-                setBacklogTasks(backlogTasks.map(t => t.id === updatedTask.id ? { ...updatedTask, title: updatedTask.title || "title not added" } : t));
+
+            const mapped = { ...updatedTask, sprintId: payload.sprint_id, id: payload.task_id };
+
+            if (payload.sprint_id === null) {
+                setTasks(tasks.filter(t => t.dbId !== updatedTask.dbId));
+                setBacklogTasks(prev => {
+                    const others = prev.filter(t => t.dbId !== updatedTask.dbId);
+                    return [...others, mapped];
+                });
+            } else if (payload.sprint_id === selectedSprintId) {
+                setBacklogTasks(prev => prev.filter(t => t.dbId !== updatedTask.dbId));
+                setTasks(prev => {
+                    const others = prev.filter(t => t.dbId !== updatedTask.dbId);
+                    return [...others, mapped];
+                });
             } else {
-                setTasks(tasks.map(t => t.id === updatedTask.id ? { ...updatedTask, title: updatedTask.title || "title not added" } : t));
+                setTasks(prev => prev.filter(t => t.dbId !== updatedTask.dbId));
+                setBacklogTasks(prev => prev.filter(t => t.dbId !== updatedTask.dbId));
             }
         } catch (e) {
             console.error("Failed to update task", e);
@@ -992,6 +1026,7 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                     task={currentTask}
                     developers={developers}
                     users={users}
+                    sprints={sprints}
                     onClose={() => setShowTaskModal(false)}
                     onUpdate={handleUpdateTask}
                     onDelete={handleDeleteTask}
