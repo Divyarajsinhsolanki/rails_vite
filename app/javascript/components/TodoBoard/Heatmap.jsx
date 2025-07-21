@@ -43,7 +43,7 @@ const Heatmap = ({ columns, view, onViewChange }) => {
         {tasksDueToday.length ? (
           <ul className="list-disc pl-5 text-sm">
             {tasksDueToday.map(t => (
-              <li key={t.id}>{t.title || t.task_id}</li>
+              <li key={t.id}>{t.task_id + ' - '+ t.title}</li>
             ))}
           </ul>
         ) : (
