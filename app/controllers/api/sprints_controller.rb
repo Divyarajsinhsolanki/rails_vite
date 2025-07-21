@@ -53,7 +53,7 @@ class Api::SprintsController < Api::BaseController
 
   def export_tasks
     sprint = Sprint.find(params[:id])
-    tasks = Task.where(sprint_id: sprint.id).order(:order)
+    tasks = Task.where(sprint_id: sprint.id).order(:developer_id, :start_date)
     service = TaskSheetService.new(sprint.name)
     service.export_tasks(tasks)
     head :no_content
