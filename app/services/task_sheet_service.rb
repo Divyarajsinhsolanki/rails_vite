@@ -122,6 +122,7 @@ class TaskSheetService
     )
 
     highlight_completed_rows(tasks)
+    highlight_in_progress_rows(tasks)
   end
 
   def clear_sheet
@@ -148,6 +149,41 @@ class TaskSheetService
                 red: 0.85,
                 green: 0.94,
                 blue: 0.72
+              )
+            )
+          ),
+          fields: 'userEnteredFormat.backgroundColor'
+        )
+      )
+    end
+
+    return if requests.empty?
+
+    batch_request = Google::Apis::SheetsV4::BatchUpdateSpreadsheetRequest.new(requests: requests)
+    @service.batch_update_spreadsheet(SPREADSHEET_ID, batch_request)
+  end
+
+  def highlight_in_progress_rows(tasks)
+    requests = []
+    tasks.each_with_index do |task, index|
+      status = task.status.to_s.downcase
+      next unless status == 'in progress' || status == 'inprogress'
+
+      requests << Google::Apis::SheetsV4::Request.new(
+        repeat_cell: Google::Apis::SheetsV4::RepeatCellRequest.new(
+          range: Google::Apis::SheetsV4::GridRange.new(
+            sheet_id: sheet_id,
+            start_row_index: index + 1,
+            end_row_index: index + 2,
+            start_column_index: 0,
+            end_column_index: 9
+          ),
+          cell: Google::Apis::SheetsV4::CellData.new(
+            user_entered_format: Google::Apis::SheetsV4::CellFormat.new(
+              background_color: Google::Apis::SheetsV4::Color.new(
+                red: 1.0,
+                green: 1.0,
+                blue: 0.6
               )
             )
           ),
