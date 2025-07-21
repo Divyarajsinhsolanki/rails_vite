@@ -54,7 +54,7 @@ const TaskForm = ({ onAddTask, onCancel }) => {
           >
             <option value="todo">To Do</option>
             <option value="inprogress">In Progress</option>
-            <option value="done">Done</option>
+            <option value="completed">Completed</option>
           </select>
         </div>
         <div>

@@ -51,7 +51,7 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
       >
         <option value="todo">To Do</option>
         <option value="inprogress">In Progress</option>
-        <option value="done">Done</option>
+        <option value="completed">Completed</option>
       </select>
       <select
         value={editDetails.assigned_to_user}

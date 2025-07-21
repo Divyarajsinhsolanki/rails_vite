@@ -85,7 +85,7 @@ const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate, onDelete
                             >
                                 <option value="To Do">To Do</option>
                                 <option value="In Progress">In Progress</option>
-                                <option value="Done">Done</option>
+                                <option value="Completed">Completed</option>
                             </select>
                         </div>
                         <div className="md:col-span-2 lg:col-span-3">
@@ -316,7 +316,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate }) => {
                             >
                                 <option value="todo">To Do</option>
                                 <option value="inprogress">In Progress</option>
-                                <option value="done">Done</option>
+                                <option value="completed">Completed</option>
                             </select>
                         </div>
                         <div className="md:col-span-2 lg:col-span-3">
@@ -511,7 +511,7 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                 description: t.description || '',
                 link: t.task_url,
                 estimatedHours: t.estimated_hours,
-                status: t.status === 'done' ? 'Done' : t.status === 'inprogress' ? 'In Progress' : 'To Do',
+                status: t.status === 'completed' ? 'Completed' : t.status === 'inprogress' ? 'In Progress' : 'To Do',
                 assignedTo: [t.developer_id].filter(Boolean).map(String),
                 assignedUser: t.assigned_to_user,
                 assignedDeveloper: t.assigned_to_developer,
@@ -668,7 +668,7 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                 description: data.description || '',
                 link: data.task_url,
                 estimatedHours: data.estimated_hours,
-                status: data.status === 'done' ? 'Done' : data.status === 'inprogress' ? 'In Progress' : 'To Do',
+                status: data.status === 'completed' ? 'Completed' : data.status === 'inprogress' ? 'In Progress' : 'To Do',
                 assignedTo: [data.developer_id].filter(Boolean).map(String),
                 assignedUser: data.assigned_to_user,
                 assignedDeveloper: data.assigned_to_developer,
@@ -839,7 +839,7 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                                                                 </td>
                                                                 <td className="px-6 py-3 whitespace-nowrap text-sm">
                                                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                                                                        ${task.status === 'Done' ? 'bg-green-100 text-green-800' : ''}
+                                                                        ${task.status === 'Completed' ? 'bg-green-100 text-green-800' : ''}
                                                                         ${task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' : ''}
                                                                         ${task.status === 'To Do' ? 'bg-blue-100 text-blue-800' : ''}
                                                                     `}>

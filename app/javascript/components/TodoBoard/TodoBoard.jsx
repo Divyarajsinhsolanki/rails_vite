@@ -31,7 +31,7 @@ function Modal({ isOpen, onClose, title, children }) {
 const initialData = {
   todo: { name: "To Do", color: "bg-blue-100", items: [] },
   inprogress: { name: "In Progress", color: "bg-yellow-100", items: [] },
-  done: { name: "Completed", color: "bg-green-100", items: [] },
+  completed: { name: "Completed", color: "bg-green-100", items: [] },
 };
 
 export default function TodoBoard({ sprintId, onSprintChange }) {

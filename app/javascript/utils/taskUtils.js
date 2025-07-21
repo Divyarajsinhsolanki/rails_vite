@@ -35,7 +35,7 @@ export const getDueColor = (due) => {
 
 export const getStatusClasses = (status) => {
     const normalized = (status || '').toLowerCase();
-    if (normalized === 'done') return 'bg-green-100 text-green-800';
+    if (normalized === 'completed') return 'bg-green-100 text-green-800';
     if (normalized === 'inprogress' || normalized === 'in progress') return 'bg-yellow-100 text-yellow-800';
     return 'bg-blue-100 text-blue-800';
 };
