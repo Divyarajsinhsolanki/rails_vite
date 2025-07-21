@@ -42,6 +42,14 @@ class Api::TasksController < Api::BaseController
     head :no_content
   end
 
+  def import_backlog
+    service = TaskSheetService.new('Backlog')
+    service.import_tasks(sprint_id: nil, created_by_id: current_user.id)
+    head :no_content
+  rescue StandardError => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
   private
 
   def set_task
