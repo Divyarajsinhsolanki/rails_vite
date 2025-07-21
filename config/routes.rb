@@ -63,7 +63,11 @@ Rails.application.routes.draw do
       end
     end
     resources :developers, only: [:index]
-    resources :tasks, only: [:index, :create, :update, :destroy]
+    resources :tasks, only: [:index, :create, :update, :destroy] do
+      collection do
+        post 'import_backlog'
+      end
+    end
     resources :task_logs, only: [:index, :create, :update, :destroy]
 
     resources :items, only: [:index, :create, :update, :destroy]

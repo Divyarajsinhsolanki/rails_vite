@@ -764,6 +764,20 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
         setProcessing(false);
     };
 
+    const handleBacklogImport = async () => {
+        try {
+            setProcessing(true);
+            await SchedulerAPI.importBacklogTasks();
+            toast.success('Imported backlog from sheet');
+            const res = await SchedulerAPI.getTasks();
+            const mapped = res.data.filter(t => !t.sprint_id).map(mapTask);
+            setBacklogTasks(mapped);
+        } catch (e) {
+            toast.error('Import failed');
+        }
+        setProcessing(false);
+    };
+
     const handleExport = async () => {
         if (!selectedSprintId) return;
         try {
@@ -951,6 +965,12 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                         >
                             <PlusCircleIcon className="h-5 w-5 mr-2" />
                             Add Task
+                        </button>
+                        <button
+                            onClick={handleBacklogImport}
+                            className="flex items-center bg-green-500 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
+                        >
+                            Import Backlog
                         </button>
                     </div>
                 </div>
