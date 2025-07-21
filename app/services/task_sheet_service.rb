@@ -120,10 +120,54 @@ class TaskSheetService
       value_range,
       value_input_option: 'RAW'
     )
+
+    highlight_completed_rows(tasks)
   end
 
   def clear_sheet
     @service.clear_values(SPREADSHEET_ID, "#{@sheet_name}!A1:Z")
+  end
+
+  def highlight_completed_rows(tasks)
+    requests = []
+    tasks.each_with_index do |task, index|
+      next unless task.status.to_s.downcase == 'completed'
+
+      requests << Google::Apis::SheetsV4::Request.new(
+        repeat_cell: Google::Apis::SheetsV4::RepeatCellRequest.new(
+          range: Google::Apis::SheetsV4::GridRange.new(
+            sheet_id: sheet_id,
+            start_row_index: index + 1,
+            end_row_index: index + 2,
+            start_column_index: 0,
+            end_column_index: 9
+          ),
+          cell: Google::Apis::SheetsV4::CellData.new(
+            user_entered_format: Google::Apis::SheetsV4::CellFormat.new(
+              background_color: Google::Apis::SheetsV4::Color.new(
+                red: 0.85,
+                green: 0.94,
+                blue: 0.72
+              )
+            )
+          ),
+          fields: 'userEnteredFormat.backgroundColor'
+        )
+      )
+    end
+
+    return if requests.empty?
+
+    batch_request = Google::Apis::SheetsV4::BatchUpdateSpreadsheetRequest.new(requests: requests)
+    @service.batch_update_spreadsheet(SPREADSHEET_ID, batch_request)
+  end
+
+  def sheet_id
+    @sheet_id ||= begin
+      spreadsheet = @service.get_spreadsheet(SPREADSHEET_ID)
+      sheet = spreadsheet.sheets.find { |s| s.properties.title == @sheet_name }
+      sheet.properties.sheet_id
+    end
   end
 end
 
