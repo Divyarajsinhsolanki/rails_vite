@@ -1,8 +1,10 @@
 // src/components/TaskCard.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Draggable } from "@hello-pangea/dnd";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import { getDueColor } from '/utils/taskUtils';
+import { getUsers } from '../api';
+import { toast } from 'react-hot-toast';
 
 const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -13,6 +15,14 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
       assigned_to_user: item.assigned_to_user || '',
       end_date: item.end_date || ''
   });
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    if (!isEditing) return;
+    getUsers()
+      .then(res => setUsers(Array.isArray(res.data) ? res.data : []))
+      .catch(() => toast.error('Failed to load users'));
+  }, [isEditing]);
 
   const handleSave = () => {
     const updates = { ...editDetails };
@@ -43,12 +53,18 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
         <option value="inprogress">In Progress</option>
         <option value="done">Done</option>
       </select>
-      <input
+      <select
         value={editDetails.assigned_to_user}
         onChange={(e) => setEditDetails(prev => ({ ...prev, assigned_to_user: e.target.value }))}
-        placeholder="Assigned User ID"
         className="border p-2 rounded"
-      />
+      >
+        <option value="">Unassigned</option>
+        {users.map(u => (
+          <option key={u.id} value={u.id}>
+            {u.first_name ? u.first_name : u.email}
+          </option>
+        ))}
+      </select>
       <input
         type="date"
         value={editDetails.end_date}
@@ -85,10 +101,14 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
             </div>
         )}
         {item.createdBy && <div className="text-xs text-gray-600 mt-1">Created by: {item.createdBy}</div>}
-        {item.assigned_user && (
-          <div className="text-xs text-gray-600">Assigned to: {item.assigned_user.first_name || item.assigned_user.email}</div>
+        {(item.end_date || item.assigned_user) && (
+          <div className="flex justify-between text-xs text-gray-600 mt-1">
+            {item.end_date && <span>End Date: {item.end_date}</span>}
+            {item.assigned_user && (
+              <span className="ml-auto">Assigned to: {item.assigned_user.first_name || item.assigned_user.email}</span>
+            )}
+          </div>
         )}
-        {item.end_date && <div className="text-xs text-gray-600">End Date: {item.end_date}</div>}
     </div>
   );
 
