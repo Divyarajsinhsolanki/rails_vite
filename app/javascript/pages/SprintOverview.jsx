@@ -6,6 +6,23 @@ import { FiX } from 'react-icons/fi';
 import { CalendarDaysIcon, PlusCircleIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
+const mapTask = (t) => ({
+    id: t.task_id,
+    dbId: t.id,
+    sprintId: t.sprint_id,
+    title: t.title || 'title not added',
+    description: t.description || '',
+    link: t.task_url,
+    estimatedHours: t.estimated_hours,
+    status: t.status === 'completed' ? 'Completed' : t.status === 'inprogress' ? 'In Progress' : 'To Do',
+    assignedTo: [t.developer_id].filter(Boolean).map(String),
+    assignedUser: t.assigned_to_user,
+    assignedDeveloper: t.assigned_to_developer,
+    order: t.order,
+    startDate: t.start_date || t.date,
+    endDate: t.end_date || t.due_date || t.date,
+});
+
 // Task Details Modal Component
 const TaskDetailsModal = ({ task, developers, users, onClose, onUpdate, onDelete }) => {
   const [editedTask, setEditedTask] = useState({ ...task });
@@ -462,6 +479,7 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
     const [developers, setDevelopers] = useState([]);
     const [users, setUsers] = useState([]);
     const [tasks, setTasks] = useState([]);
+    const [backlogTasks, setBacklogTasks] = useState([]);
     const [selectedSprintId, setSelectedSprintId] = useState(sprintId || null);
     const [showUserFilter, setShowUserFilter] = useState(false);
     const [filterUsers, setFilterUsers] = useState([]);
@@ -473,6 +491,8 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
     const [showTaskModal, setShowTaskModal] = useState(false);
     const [currentTask, setCurrentTask] = useState(null);
     const [showAddModal, setShowAddModal] = useState(false);
+    const [editingBacklog, setEditingBacklog] = useState(false);
+    const [addingToBacklog, setAddingToBacklog] = useState(false);
 
     const toggleUserFilter = (id) => {
         setFilterUsers(prev =>
@@ -503,25 +523,17 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
     useEffect(() => {
         if (selectedSprintId === null) return;
         SchedulerAPI.getTasks({ sprint_id: selectedSprintId }).then(res => {
-            const mapped = res.data.map(t => ({
-                id: t.task_id,
-                dbId: t.id,
-                sprintId: t.sprint_id,
-                title: t.title || 'title not added',
-                description: t.description || '',
-                link: t.task_url,
-                estimatedHours: t.estimated_hours,
-                status: t.status === 'completed' ? 'Completed' : t.status === 'inprogress' ? 'In Progress' : 'To Do',
-                assignedTo: [t.developer_id].filter(Boolean).map(String),
-                assignedUser: t.assigned_to_user,
-                assignedDeveloper: t.assigned_to_developer,
-                order: t.order,
-                startDate: t.start_date || t.date,
-                endDate: t.end_date || t.due_date || t.date,
-            }));
+            const mapped = res.data.map(mapTask);
             setTasks(mapped);
         });
     }, [selectedSprintId]);
+
+    useEffect(() => {
+        SchedulerAPI.getTasks().then(res => {
+            const mapped = res.data.filter(t => !t.sprint_id).map(mapTask);
+            setBacklogTasks(mapped);
+        });
+    }, []);
 
     const filteredTasks = tasks.filter(task => {
         if (task.sprintId !== selectedSprintId) return false;
@@ -563,6 +575,31 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
             };
         });
 
+    const filteredBacklogTasks = backlogTasks.filter(task => {
+        if (filterUsers.length && !filterUsers.includes(String(task.assignedUser))) return false;
+        return true;
+    });
+
+    const backlogByDeveloper = filteredBacklogTasks.reduce((acc, task) => {
+        const devId = task.assignedTo?.[0] ? String(task.assignedTo[0]) : 'unassigned';
+        if (!acc[devId]) acc[devId] = [];
+        acc[devId].push(task);
+        return acc;
+    }, {});
+
+    const groupedBacklog = Object.keys(backlogByDeveloper)
+        .sort(sortDevelopers)
+        .map(devId => {
+            const taskList = backlogByDeveloper[devId].sort((a, b) => (a.order || 0) - (b.order || 0));
+            const totalHours = taskList.reduce((sum, t) => sum + (parseFloat(t.estimatedHours) || 0), 0);
+            return {
+                developer: developerMap[devId],
+                devId,
+                tasks: taskList,
+                totalHours
+            };
+        });
+
     const getDeveloperNames = (devIds) => devIds.map(id => developers.find(dev => String(dev.id) === String(id))?.name || 'Unknown').join(', ');
 
     const getUserName = (userId) => {
@@ -573,8 +610,9 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
 
     const currentSprint = sprints.find(s => s.id === selectedSprintId);
 
-    const openTaskModal = (task) => {
+    const openTaskModal = (task, backlog = false) => {
         setCurrentTask(task);
+        setEditingBacklog(backlog);
         setShowTaskModal(true);
     };
 
@@ -632,7 +670,11 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                 order: updatedTask.order
             };
             await SchedulerAPI.updateTask(updatedTask.dbId, payload);
-            setTasks(tasks.map(t => t.id === updatedTask.id ? { ...updatedTask, title: updatedTask.title || "title not added" } : t));
+            if (editingBacklog) {
+                setBacklogTasks(backlogTasks.map(t => t.id === updatedTask.id ? { ...updatedTask, title: updatedTask.title || "title not added" } : t));
+            } else {
+                setTasks(tasks.map(t => t.id === updatedTask.id ? { ...updatedTask, title: updatedTask.title || "title not added" } : t));
+            }
         } catch (e) {
             console.error("Failed to update task", e);
         }
@@ -642,7 +684,11 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
     const handleDeleteTask = async (dbId) => {
         try {
             await SchedulerAPI.deleteTask(dbId);
-            setTasks(tasks.filter(t => t.dbId !== dbId));
+            if (editingBacklog) {
+                setBacklogTasks(backlogTasks.filter(t => t.dbId !== dbId));
+            } else {
+                setTasks(tasks.filter(t => t.dbId !== dbId));
+            }
         } catch (e) {
             console.error('Failed to delete task', e);
         }
@@ -653,30 +699,19 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
             const payload = {
                 ...newTask,
                 type: 'Code',
-                sprint_id: selectedSprintId,
+                sprint_id: addingToBacklog ? null : selectedSprintId,
                 developer_id: Number(newTask.developer_id) || null,
                 assigned_to_user: newTask.assigned_to_user || null,
                 status: newTask.status,
                 date: newTask.start_date || new Date().toISOString().slice(0,10)
             };
             const { data } = await SchedulerAPI.createTask(payload);
-            const mapped = {
-                id: data.task_id,
-                dbId: data.id,
-                sprintId: data.sprint_id,
-                title: data.title || 'title not added',
-                description: data.description || '',
-                link: data.task_url,
-                estimatedHours: data.estimated_hours,
-                status: data.status === 'completed' ? 'Completed' : data.status === 'inprogress' ? 'In Progress' : 'To Do',
-                assignedTo: [data.developer_id].filter(Boolean).map(String),
-                assignedUser: data.assigned_to_user,
-                assignedDeveloper: data.assigned_to_developer,
-                order: data.order,
-                startDate: data.start_date || data.date,
-                endDate: data.end_date || data.due_date || data.date,
-            };
-            setTasks([...tasks, mapped]);
+            const mapped = mapTask(data);
+            if (addingToBacklog) {
+                setBacklogTasks([...backlogTasks, mapped]);
+            } else {
+                setTasks([...tasks, mapped]);
+            }
         } catch (e) {
             console.error('Failed to add task', e);
         }
@@ -721,7 +756,7 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                     </h1>
                     <div className="flex space-x-2">
                         <button
-                            onClick={() => setShowAddModal(true)}
+                            onClick={() => { setAddingToBacklog(false); setShowAddModal(true); }}
                             className="flex items-center bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
                         >
                             <PlusCircleIcon className="h-5 w-5 mr-2" />
@@ -866,6 +901,78 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                             )}
                     </table>
                     </DragDropContext>
+                </div>
+            </div>
+
+            {/* Backlog Tasks */}
+            <div className="max-w-8xl mx-auto bg-white rounded-xl shadow-lg p-4 mt-8">
+                <div className="flex justify-between items-center mb-4">
+                    <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center">
+                        <CalendarDaysIcon className="h-7 w-7 mr-2"/>Backlog
+                    </h1>
+                    <div className="flex space-x-2">
+                        <button
+                            onClick={() => { setAddingToBacklog(true); setShowAddModal(true); }}
+                            className="flex items-center bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
+                        >
+                            <PlusCircleIcon className="h-5 w-5 mr-2" />
+                            Add Task
+                        </button>
+                    </div>
+                </div>
+                <div className="overflow-x-auto bg-white rounded-xl shadow-md">
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-xl">Order</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task ID</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task Title</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Est. Hours</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To Developer</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned User</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-xl">Status</th>
+                            </tr>
+                        </thead>
+                        {groupedBacklog.length > 0 ? (
+                            groupedBacklog.map(group => (
+                                <tbody key={group.devId} className="bg-white divide-y divide-gray-200">
+                                    <tr className="bg-gray-100">
+                                        <td colSpan="9" className="px-6 py-2 font-semibold text-gray-700">
+                                            {group.developer ? group.developer.name : 'Unassigned'} - Total Est. Hours: {group.totalHours}
+                                        </td>
+                                    </tr>
+                                    {group.tasks.map(task => (
+                                        <tr key={task.dbId} className="hover:bg-gray-50 cursor-pointer" onClick={() => openTaskModal(task, true)}>
+                                            <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{task.order}</td>
+                                            <td className="px-6 py-3 whitespace-nowrap text-sm text-indigo-600 hover:underline">
+                                                <a href={task.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>{task.id}</a>
+                                            </td>
+                                            <td className="px-6 py-3 whitespace-normal text-sm text-gray-900">{task.title}</td>
+                                            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{task.estimatedHours}</td>
+                                            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{getDeveloperNames(task.assignedTo)}</td>
+                                            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{getUserName(task.assignedUser)}</td>
+                                            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{new Date(task.startDate).getDate()}</td>
+                                            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{new Date(task.endDate).getDate()}</td>
+                                            <td className="px-6 py-3 whitespace-nowrap text-sm">
+                                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                                    ${task.status === 'Completed' ? 'bg-green-100 text-green-800' : ''}
+                                                    ${task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' : ''}
+                                                    ${task.status === 'To Do' ? 'bg-blue-100 text-blue-800' : ''}`}>{task.status}</span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            ))
+                        ) : (
+                            <tbody>
+                                <tr>
+                                    <td colSpan="9" className="px-6 py-3 text-center text-gray-500">No backlog tasks found.</td>
+                                </tr>
+                            </tbody>
+                        )}
+                    </table>
                 </div>
             </div>
 
