@@ -121,7 +121,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_15_000000) do
     t.integer "assigned_to_user"
     t.integer "created_by"
     t.integer "updated_by"
-    t.integer "assigned_to_developer"
     t.string "title"
     t.text "description"
     t.date "start_date"

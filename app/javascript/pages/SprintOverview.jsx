@@ -17,7 +17,6 @@ const mapTask = (t) => ({
     status: t.status === 'completed' ? 'Completed' : t.status === 'inprogress' ? 'In Progress' : 'To Do',
     assignedTo: [t.developer_id].filter(Boolean).map(String),
     assignedUser: t.assigned_to_user,
-    assignedDeveloper: t.assigned_to_developer,
     order: t.order,
     startDate: t.start_date || t.date,
     endDate: t.end_date || t.due_date || t.date,

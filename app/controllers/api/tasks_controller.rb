@@ -61,7 +61,7 @@ class Api::TasksController < Api::BaseController
     task_data = task_data[:task] if task_data[:task].is_a?(ActionController::Parameters)
     task_data.permit(
       :task_id, :task_url, :type, :title, :description,
-      :status, :order, :assigned_to_user, :assigned_to_developer,
+      :status, :order, :assigned_to_user,
       :created_by, :created_at, :updated_by, :updated_at,
       :start_date, :end_date,
       :estimated_hours, :sprint_id, :developer_id, :is_struck

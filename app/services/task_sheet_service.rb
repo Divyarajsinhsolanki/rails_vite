@@ -77,7 +77,6 @@ class TaskSheetService
         assigned_to_user: user&.id,
         created_by: created_by_id,
         updated_by: created_by_id,
-        assigned_to_developer: developer&.id,
         title: title,
         description: task.description.presence || '',
         start_date: start_date,
