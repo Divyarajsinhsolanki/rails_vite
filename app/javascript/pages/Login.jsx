@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { auth, getRedirectResult } from "../firebaseConfig";
+import { Toaster, toast } from "react-hot-toast";
 
 const Login = () => {
   const { handleLogin, handleGoogleLogin } = useContext(AuthContext);
@@ -20,9 +21,11 @@ const Login = () => {
 
     try {
       await handleLogin({ auth: formData });
-      navigate("/posts");
+      toast.success("Logged in successfully");
     } catch (err) {
-      setError("Invalid email or password. Please try again.");
+      const msg = "Invalid email or password. Please try again.";
+      setError(msg);
+      toast.error(msg);
     }
   };
 
@@ -36,6 +39,7 @@ const Login = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
+      <Toaster position="top-right" />
       <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl transition-transform transform hover:scale-[1.01] border border-gray-100">
         <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">Welcome Back</h2>
 
