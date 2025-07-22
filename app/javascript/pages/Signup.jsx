@@ -2,6 +2,7 @@ import React, { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import submitForm from "../utils/formSubmit";
+import { Toaster, toast } from "react-hot-toast";
 
 const Signup = () => {
   const { handleSignup, handleGoogleLogin } = useContext(AuthContext);
@@ -29,14 +30,18 @@ const Signup = () => {
 
     try {
       await submitForm("/api/signup", "POST", submissionData);
-      navigate("/login");
+      toast.success("Account created. Please log in.");
+      setTimeout(() => navigate("/login"), 1000);
     } catch (err) {
-      setError(err.response?.data?.errors?.join(", ") || "Signup failed. Please try again.");
+      const msg = err.response?.data?.errors?.join(", ") || "Signup failed. Please try again.";
+      setError(msg);
+      toast.error(msg);
     }
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
+      <Toaster position="top-right" />
       <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl transition-transform transform hover:scale-[1.01] border border-gray-100">
         <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">Create Account</h2>
 
