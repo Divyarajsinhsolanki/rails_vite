@@ -21,13 +21,20 @@ Ensure these versions are available on your machine or use the provided `Dockerf
 
    This script runs `bundle install`, `yarn install`, prepares the database and clears logs.
 
-2. Create and migrate the database:
+2. Copy `.env.example` to `.env` and fill in your SMTP credentials:
+
+   ```bash
+   cp .env.example .env
+   # edit .env with your mail server details
+   ```
+
+3. Create and migrate the database:
 
    ```bash
    bin/rails db:create db:migrate
    ```
 
-3. Start the application in development:
+4. Start the application in development:
 
    ```bash
    bin/dev
