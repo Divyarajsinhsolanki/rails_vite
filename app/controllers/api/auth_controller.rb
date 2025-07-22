@@ -4,7 +4,9 @@ class Api::AuthController < Api::BaseController
 
   def signup
     user = User.new(user_params)
-    user.profile_picture = params[:profile_picture] if params[:profile_picture].present? && params[:profile_picture] != "null"
+    if params.dig(:auth, :profile_picture).present? && params.dig(:auth, :profile_picture) != "null"
+      user.profile_picture = params[:auth][:profile_picture]
+    end
 
     if user.save
       render json: { message: "User created successfully", user: user }, status: :created
@@ -63,13 +65,16 @@ class Api::AuthController < Api::BaseController
 
   def update_profile
     current_user.update(user_params)
+    if params.dig(:auth, :profile_picture).present? && params.dig(:auth, :profile_picture) != "null"
+      current_user.profile_picture = params[:auth][:profile_picture]
+    end
     render json: { message: "User details updated successfully" }
   end
 
   private
 
   def user_params
-    params.require(:auth).permit(:first_name, :last_name, :date_of_birth, :email, :password, :uid, :profile_picture)
+    params.require(:auth).permit(:first_name, :last_name, :date_of_birth, :email, :password, :uid)
   end
 
   def verify_firebase_token(token)
