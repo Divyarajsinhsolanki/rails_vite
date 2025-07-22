@@ -12,6 +12,7 @@ const Users = () => {
     date_of_birth: "",
     profile_picture: null,
   });
+  const [userToDelete, setUserToDelete] = useState(null);
 
   const fetchUsers = async () => {
     try {
@@ -19,6 +20,7 @@ const Users = () => {
       setUsers(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching users:", error);
+      setUsers([]); // Ensure users is always an array
     }
   };
 
@@ -80,113 +82,91 @@ const Users = () => {
   };
 
   const filtered = users.filter(u =>
-    `${u.first_name || ''} ${u.last_name || ''} ${u.email}`
+    `${u.first_name || ''} ${u.last_name || ''} ${u.email || ''}`
       .toLowerCase()
       .includes(search.toLowerCase())
   );
 
+  // Base styles for the 3D effect buttons
+  const buttonBaseStyle = "px-5 py-2 rounded-full text-sm font-semibold text-white shadow-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-4";
+  const inputBaseStyle = "w-full bg-blue-100/50 border border-blue-500/30 rounded-lg p-2 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400";
+
   return (
-    <div className="max-w-6xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8 text-center">User Directory</h1>
+    <div className="min-h-screen bg-blue-50 text-gray-800 font-sans p-4 sm:p-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">User Directory</h1>
+        <p className="text-center mb-8 text-gray-600">A futuristic interface to manage your users.</p>
+        
+        <div className="mb-10 max-w-xl mx-auto">
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-white border-2 border-gray-200 rounded-full px-6 py-3 text-gray-900 placeholder-gray-400 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+          />
+        </div>
 
-      <input
-        type="text"
-        placeholder="Search users..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="mb-8 w-full md:w-1/2 mx-auto block border rounded-lg px-4 py-2 shadow-sm focus:ring-2 focus:ring-blue-400"
-      />
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {filtered.map((user) => (
-          <div key={user.id} className="bg-white border border-gray-100 shadow-md rounded-xl p-6 flex flex-col items-center text-center">
-            {editingId === user.id ? (
-              <form onSubmit={handleUpdate} className="w-full" encType="multipart/form-data">
-                <input
-                  type="text"
-                  name="first_name"
-                  value={formData.first_name}
-                  onChange={handleChange}
-                  placeholder="First Name"
-                  className="w-full mb-2 p-2 border rounded"
-                  required
-                />
-                <input
-                  type="text"
-                  name="last_name"
-                  value={formData.last_name}
-                  onChange={handleChange}
-                  placeholder="Last Name"
-                  className="w-full mb-2 p-2 border rounded"
-                  required
-                />
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="Email"
-                  className="w-full mb-2 p-2 border rounded"
-                  required
-                />
-                <input
-                  type="date"
-                  name="date_of_birth"
-                  value={formData.date_of_birth || ''}
-                  onChange={handleChange}
-                  className="w-full mb-2 p-2 border rounded"
-                />
-                <input
-                  type="file"
-                  name="profile_picture"
-                  onChange={handleChange}
-                  className="w-full mb-4"
-                  accept="image/*"
-                />
-                <div className="flex justify-center space-x-2">
-                  <button type="submit" className="px-4 py-1 bg-green-500 text-white rounded">
-                    Update
-                  </button>
-                  <button type="button" onClick={handleCancel} className="px-4 py-1 bg-gray-400 text-white rounded">
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <>
-                {user.profile_picture && user.profile_picture !== 'null' ? (
-                  <img
-                    src={user.profile_picture}
-                    alt="Profile"
-                    className="w-20 h-20 mb-4 rounded-full object-cover border-2 border-gray-200"
-                  />
-                ) : (
-                  <div className="w-20 h-20 mb-4 rounded-full bg-gradient-to-tr from-indigo-500 to-blue-500 text-white text-3xl font-bold flex items-center justify-center">
-                    {(user.first_name || user.email).charAt(0).toUpperCase()}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          {filtered.map((user) => (
+            <div key={user.id} className="bg-white/60 backdrop-blur-md border border-gray-200 shadow-2xl shadow-blue-500/10 rounded-3xl p-6 flex flex-col items-center text-center transition-all duration-300 hover:bg-white/80 hover:shadow-blue-500/20">
+              {editingId === user.id ? (
+                <form onSubmit={handleUpdate} className="w-full flex flex-col gap-3" encType="multipart/form-data">
+                  <input type="text" name="first_name" value={formData.first_name} onChange={handleChange} placeholder="First Name" className={inputBaseStyle} required />
+                  <input type="text" name="last_name" value={formData.last_name} onChange={handleChange} placeholder="Last Name" className={inputBaseStyle} required />
+                  <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" className={inputBaseStyle} required />
+                  <input type="date" name="date_of_birth" value={formData.date_of_birth || ''} onChange={handleChange} className={`${inputBaseStyle} text-gray-500`} />
+                  <input type="file" name="profile_picture" onChange={handleChange} className="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-200 file:text-blue-700 hover:file:bg-blue-300" accept="image/*" />
+                  
+                  <div className="flex justify-center space-x-3 mt-2">
+                    <button type="submit" className={`${buttonBaseStyle} bg-gradient-to-br from-green-400 to-teal-500 focus:ring-green-400/50`}>Update</button>
+                    <button type="button" onClick={handleCancel} className={`${buttonBaseStyle} bg-gradient-to-br from-gray-500 to-gray-700 focus:ring-gray-500/50`}>Cancel</button>
                   </div>
-                )}
-                <h2 className="text-lg font-semibold mb-1">
-                  {user.first_name} {user.last_name}
-                </h2>
-                <p className="text-gray-500 text-sm mb-1">{user.email}</p>
-                {user.date_of_birth && (
-                  <p className="text-gray-400 text-xs mb-2">
-                    DOB: {new Date(user.date_of_birth).toLocaleDateString()}
-                  </p>
-                )}
-                <div className="flex space-x-2 mt-2">
-                  <button onClick={() => handleEdit(user)} className="px-3 py-1 bg-blue-500 text-white rounded">
-                    Edit
-                  </button>
-                  <button onClick={() => handleDelete(user.id)} className="px-3 py-1 bg-red-500 text-white rounded">
-                    Delete
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        ))}
+                </form>
+              ) : (
+                <>
+                  <div className="relative mb-4">
+                    <img
+                      src={user.profile_picture || `https://placehold.co/100x100/EFF6FF/1E40AF?text=${(user.first_name || user.email || 'U').charAt(0).toUpperCase()}`}
+                      alt="Profile"
+                      className="w-24 h-24 rounded-full object-cover border-4 border-blue-500/50 shadow-lg"
+                      onError={(e) => { e.target.onerror = null; e.target.src=`https://placehold.co/100x100/F9FAFB/9CA3AF?text=Err`; }}
+                    />
+                     <div className="absolute inset-0 rounded-full border-2 border-black/10 animate-pulse"></div>
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    {user.first_name} {user.last_name}
+                  </h2>
+                  <p className="text-blue-600 text-sm mb-1">{user.email}</p>
+                  {user.date_of_birth && (
+                    <p className="text-gray-500 text-xs mb-4">
+                      Born: {new Date(user.date_of_birth).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+                  )}
+                  <div className="flex space-x-3 mt-auto pt-4">
+                    <button onClick={() => handleEdit(user)} className={`${buttonBaseStyle} bg-gradient-to-br from-sky-500 to-indigo-500 focus:ring-sky-500/50`}>Edit</button>
+                    <button onClick={() => handleDelete(user.id)} className={`${buttonBaseStyle} bg-gradient-to-br from-pink-500 to-red-600 focus:ring-pink-500/50`}>Delete</button>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {userToDelete && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white/80 border border-red-300 rounded-2xl p-8 shadow-2xl text-center max-w-sm mx-4">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Confirm Deletion</h3>
+            <p className="text-gray-700 mb-6">Are you sure you want to permanently delete this user?</p>
+            <div className="flex justify-center space-x-4">
+              <button onClick={confirmDelete} className={`${buttonBaseStyle} bg-gradient-to-br from-pink-500 to-red-600 focus:ring-pink-500/50`}>Yes, Delete</button>
+              <button onClick={() => setUserToDelete(null)} className={`${buttonBaseStyle} bg-gradient-to-br from-gray-500 to-gray-700 focus:ring-gray-500/50`}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

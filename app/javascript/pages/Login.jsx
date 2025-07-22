@@ -21,6 +21,7 @@ const Login = () => {
 
     try {
       await handleLogin({ auth: formData });
+      navigate("/posts");
       toast.success("Logged in successfully");
     } catch (err) {
       const msg = "Invalid email or password. Please try again.";

@@ -30,8 +30,8 @@ const Signup = () => {
 
     try {
       await submitForm("/api/signup", "POST", submissionData);
+      navigate("/login")
       toast.success("Account created. Please log in.");
-      setTimeout(() => navigate("/login"), 1000);
     } catch (err) {
       const msg = err.response?.data?.errors?.join(", ") || "Signup failed. Please try again.";
       setError(msg);

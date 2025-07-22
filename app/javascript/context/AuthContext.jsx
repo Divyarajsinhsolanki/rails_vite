@@ -3,6 +3,7 @@ import api from "../components/api";
 import { useNavigate } from "react-router-dom";
 import { auth, googleProvider } from "../firebaseConfig";
 import { signInWithPopup } from "firebase/auth";
+import { toast } from "react-hot-toast";
 
 export const AuthContext = createContext();
 
@@ -53,14 +54,12 @@ export function AuthProvider({ children }) {
     const { data } = await api.post("/login", credentials);
     setUser(data.user);
     scheduleRefresh(data.exp);
-    navigate("/posts");
   };
 
   const handleSignup = async (payload) => {
     const { data } = await api.post("/signup", payload);
     setUser(data.user);
     scheduleRefresh(data.exp);
-    navigate("/posts");
   };
 
   const handleGoogleLogin = async () => {
@@ -75,6 +74,7 @@ export function AuthProvider({ children }) {
       setUser(data.user);
       scheduleRefresh(data.exp);
       navigate("/posts");
+      toast.success("Logged in successfully");
     } catch (error) {
       console.error("Google login failed:", error);
     }
