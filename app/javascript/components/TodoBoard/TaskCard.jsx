@@ -78,7 +78,7 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
   const renderTaskDetails = () => (
     <div className="space-y-3">
         <div className="flex justify-between items-start">
-            <span className="font-semibold text-lg text-gray-800 hover:text-blue-600 transition-colors">
+            <span className="font-semibold text-lg text-blue-600 transition-colors">
               {item.task_url ? (
                 <a href={item.task_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
                   {item.task_id}
