@@ -187,8 +187,9 @@ export default function TodoBoard({ sprintId, onSprintChange }) {
   }, {});
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
-      <Toaster position="top-right" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 p-8 font-sans text-gray-800">
+      <div className="max-w-8xl mx-auto bg-white rounded-xl shadow-lg p-4">
+        <Toaster position="top-right" />
       <header className="mb-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
           <div className="mb-4 sm:mb-0">
@@ -273,6 +274,7 @@ export default function TodoBoard({ sprintId, onSprintChange }) {
           animation: modalShow 0.3s ease-out forwards;
         }
       `}</style>
+    </div>
     </div>
   );
 }
