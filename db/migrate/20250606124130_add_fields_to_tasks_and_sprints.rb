@@ -3,7 +3,7 @@ class AddFieldsToTasksAndSprints < ActiveRecord::Migration[7.1]
     # Tasks table
     add_column :tasks, :status, :string, default: "todo"
     add_column :tasks, :order, :integer, default: 0
-    add_column :tasks, :assigned_to, :integer
+    add_column :tasks, :assigned_to_user, :integer
     add_column :tasks, :created_by, :integer
     add_column :tasks, :updated_by, :integer
     add_column :tasks, :due_date, :date
