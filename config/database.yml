@@ -8,14 +8,14 @@ development:
   database: pdf_master_development
   username: postgres
   password: postgres
-  host: localhost
+  host: <%= ENV.fetch('DB_HOST', 'localhost') %>
 
 test:
   <<: *default
   database: pdf_master_test
   username: postgres
   password: postgres
-  host: localhost
+  host: <%= ENV.fetch('DB_HOST', 'localhost') %>
 
 production:
   <<: *default
