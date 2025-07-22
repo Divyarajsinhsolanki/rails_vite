@@ -3,7 +3,7 @@ import { SchedulerAPI, getUsers } from '../components/api';
 import { Toaster, toast } from 'react-hot-toast';
 import SpinnerOverlay from '../components/ui/SpinnerOverlay';
 import { FiX } from 'react-icons/fi';
-import { CalendarDaysIcon, PlusCircleIcon, FunnelIcon } from '@heroicons/react/24/outline';
+import { CalendarDaysIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 const mapTask = (t) => ({
@@ -498,7 +498,6 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
     const [tasks, setTasks] = useState([]);
     const [backlogTasks, setBacklogTasks] = useState([]);
     const [selectedSprintId, setSelectedSprintId] = useState(sprintId || null);
-    const [showUserFilter, setShowUserFilter] = useState(false);
     const [filterUsers, setFilterUsers] = useState([]);
     const [processing, setProcessing] = useState(false);
 
@@ -795,12 +794,29 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
             {processing && <SpinnerOverlay />}
             <div className="max-w-8xl mx-auto bg-white rounded-xl shadow-lg p-4">
                 <div className="flex justify-between items-center mb-4">
-                    <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center">
-                        <CalendarDaysIcon className="h-7 w-7 mr-2"/>Sprint Task Manager
-                        <button onClick={() => setShowUserFilter(!showUserFilter)} className="ml-2 text-gray-600 hover:text-gray-800">
-                            <FunnelIcon className="h-5 w-5" />
-                        </button>
-                    </h1>
+                    <div className="flex items-center space-x-4">
+                        <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center">
+                            <CalendarDaysIcon className="h-7 w-7 mr-2"/>Sprint Task Manager
+                        </h1>
+                        <div className="flex flex-wrap items-center space-x-2">
+                            {users.map(u => (
+                                <div
+                                    key={u.id}
+                                    onClick={() => toggleUserFilter(String(u.id))}
+                                    className={`cursor-pointer w-8 h-8 rounded-full border-2 ${filterUsers.includes(String(u.id)) ? 'border-blue-500' : 'border-transparent'}`}
+                                >
+                                    {u.profile_picture && u.profile_picture !== 'null' ? (
+                                        <img src={u.profile_picture} alt={u.first_name}
+                                             className="w-8 h-8 rounded-full object-cover" />
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-blue-500 text-white text-xs font-bold flex items-center justify-center">
+                                            {(u.first_name || u.email).charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                     <div className="flex space-x-2">
                         <button
                             onClick={() => { setAddingToBacklog(false); setShowAddModal(true); }}
@@ -823,26 +839,6 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                         </button>
                     </div>
                 </div>
-                {showUserFilter && (
-                    <div className="flex flex-wrap items-center mb-4 space-x-2">
-                        {users.map(u => (
-                            <div
-                                key={u.id}
-                                onClick={() => toggleUserFilter(String(u.id))}
-                                className={`cursor-pointer w-8 h-8 rounded-full border-2 ${filterUsers.includes(String(u.id)) ? 'border-blue-500' : 'border-transparent'}`}
-                            >
-                                {u.profile_picture && u.profile_picture !== 'null' ? (
-                                    <img src={u.profile_picture} alt={u.first_name}
-                                         className="w-8 h-8 rounded-full object-cover" />
-                                ) : (
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-blue-500 text-white text-xs font-bold flex items-center justify-center">
-                                        {(u.first_name || u.email).charAt(0).toUpperCase()}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                )}
 
                 {/* Tasks Table */}
                 <div className="overflow-x-auto bg-white rounded-xl shadow-md">
