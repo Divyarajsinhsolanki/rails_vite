@@ -79,6 +79,19 @@ bin/rails assets:precompile
 
 You can also build the Docker image using the provided `Dockerfile`.
 
+### Running with Docker Compose
+
+To run the app and a PostgreSQL database locally, use the included
+`docker-compose.yml`:
+
+```bash
+docker compose build
+docker compose up
+```
+
+The web service loads environment variables from `.env`. The database service
+stores its data in the `db-data` volume.
+
 ## Google Sheets Integration
 
 The app includes a small example page that reads data from a Google Sheet using
