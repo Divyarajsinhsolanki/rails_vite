@@ -92,6 +92,51 @@ export default function SprintDashboard() {
               'Sprint Manager'
             )}
           </h1>
+          {/* Tab Navigation */}
+          <div className="flex justify-between items-center">
+            <div className="flex bg-white rounded-full p-1 shadow-md border border-gray-100">
+              <button
+                className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out
+                  ${activeTab === 'overview'
+                    ? 'bg-blue-500 text-white shadow-lg'
+                    : 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+                  }`}
+                onClick={() => setActiveTab('overview')}
+              >
+                Overview
+              </button>
+              <button
+                className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
+                  ${activeTab === 'scheduler'
+                    ? 'bg-blue-500 text-white shadow-lg'
+                    : 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+                  }`}
+                onClick={() => setActiveTab('scheduler')}
+              >
+                Scheduler
+              </button>
+              <button
+                className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
+                  ${activeTab === 'todo'
+                    ? 'bg-blue-500 text-white shadow-lg'
+                    : 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+                  }`}
+              onClick={() => setActiveTab('todo')}
+            >
+              Todo
+            </button>
+            <button
+              className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
+                ${activeTab === 'sheet'
+                  ? 'bg-blue-500 text-white shadow-lg'
+                  : 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+                }`}
+              onClick={() => setActiveTab('sheet')}
+            >
+              Sheet
+            </button>
+            </div>
+          </div>
           <div
             className="flex items-center space-x-3 cursor-pointer select-none p-2 rounded-lg hover:bg-blue-50 transition-colors duration-200"
             onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}
@@ -113,51 +158,6 @@ export default function SprintDashboard() {
           <SprintManager onSprintChange={handleSprintChange} />
         </div>
       </header>
-      {/* Tab Navigation */}
-      <div className="flex justify-between items-center mb-8">
-        <div className="flex bg-white rounded-full p-1 shadow-md border border-gray-100">
-          <button
-            className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out
-              ${activeTab === 'overview'
-                ? 'bg-blue-500 text-white shadow-lg'
-                : 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'
-              }`}
-            onClick={() => setActiveTab('overview')}
-          >
-            Overview
-          </button>
-          <button
-            className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
-              ${activeTab === 'scheduler'
-                ? 'bg-blue-500 text-white shadow-lg'
-                : 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'
-              }`}
-            onClick={() => setActiveTab('scheduler')}
-          >
-            Scheduler
-          </button>
-          <button
-            className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
-              ${activeTab === 'todo'
-                ? 'bg-blue-500 text-white shadow-lg'
-                : 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'
-              }`}
-          onClick={() => setActiveTab('todo')}
-        >
-          Todo
-        </button>
-        <button
-          className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
-            ${activeTab === 'sheet'
-              ? 'bg-blue-500 text-white shadow-lg'
-              : 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'
-            }`}
-          onClick={() => setActiveTab('sheet')}
-        >
-          Sheet
-        </button>
-        </div>
-      </div>
       {activeTab === 'overview' && (
         <SprintOverview sprintId={sprintId} onSprintChange={handleSprintChange} />
       )}
