@@ -193,7 +193,9 @@ export default function TodoBoard({ sprintId, onSprintChange }) {
       <header className="mb-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
           <div className="mb-4 sm:mb-0">
-            <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 ">Taskboard</h1>
+            <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center">
+              <Squares2X2Icon className="h-7 w-7 mr-2" />Taskboard
+            </h1>
           </div>
           <div className="flex items-center gap-3">
             <button
