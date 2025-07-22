@@ -3,7 +3,7 @@ import { SchedulerAPI, getUsers } from '../components/api';
 import { Toaster, toast } from 'react-hot-toast';
 import SpinnerOverlay from '../components/ui/SpinnerOverlay';
 import { FiX } from 'react-icons/fi';
-import { CalendarDaysIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
+import { CalendarDaysIcon, PlusCircleIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 const mapTask = (t) => ({
@@ -796,7 +796,7 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                 <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center space-x-4">
                         <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center">
-                            <CalendarDaysIcon className="h-7 w-7 mr-2"/>Sprint Task Manager
+                            <Squares2X2Icon className="h-7 w-7 mr-2"/>Sprint Task Manager
                         </h1>
                         <div className="flex flex-wrap items-center space-x-2">
                             {users.map(u => (
