@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { Combobox } from '@headlessui/react';
 
 export default function AddTaskForm({developers, dates, types, tasks, onAddTask}) {
   const [formData, setFormData] = useState({ developer_id: '', type: 'Code', log_date: '', task_id: '', hours_logged: 1 });
-  const [taskSearch, setTaskSearch] = useState('');
+  const [taskQuery, setTaskQuery] = useState('');
+  const [selectedTask, setSelectedTask] = useState(null);
 
   // If dates/devs/types update, reset defaults
   useEffect(() => {
@@ -40,10 +42,12 @@ export default function AddTaskForm({developers, dates, types, tasks, onAddTask}
       task_id: '',
       hours_logged: 1
     }));
+    setSelectedTask(null);
+    setTaskQuery('');
   };
 
   const filteredTasks = tasks.filter(t =>
-    t.task_id.toLowerCase().includes(taskSearch.toLowerCase())
+    t.task_id.toLowerCase().includes(taskQuery.toLowerCase())
   );
 
   return (
@@ -118,28 +122,44 @@ export default function AddTaskForm({developers, dates, types, tasks, onAddTask}
       {/* Row 2: Task Selection and Button */}
       <div className="flex flex-col sm:flex-row gap-4 items-end">
 
-        {/* Task ID with search */}
+        {/* Task selection with Combobox */}
         <div className="flex-1">
           <label className="block text-sm font-medium text-gray-700 mb-1">📌 Task</label>
-          <input
-            type="text"
-            value={taskSearch}
-            onChange={e => setTaskSearch(e.target.value)}
-            placeholder="Search tasks..."
-            className="w-full mb-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <select
-            name="task_id"
-            value={formData.task_id || ''}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
+          <Combobox
+            value={selectedTask}
+            onChange={(task) => {
+              setSelectedTask(task);
+              setFormData(f => ({ ...f, task_id: task?.id || '' }));
+            }}
           >
-            <option value="">Select Task</option>
-            {filteredTasks.map(t => (
-              <option key={t.id} value={t.id}>{t.task_id}</option>
-            ))}
-          </select>
+            <div className="relative">
+              <Combobox.Input
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                displayValue={task => task ? task.task_id : taskQuery}
+                onChange={e => {
+                  setTaskQuery(e.target.value);
+                  setSelectedTask(null);
+                  setFormData(f => ({ ...f, task_id: '' }));
+                }}
+                placeholder="Search tasks..."
+                required
+              />
+              <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white border border-gray-300 shadow-lg">
+                {filteredTasks.map(t => (
+                  <Combobox.Option
+                    key={t.id}
+                    value={t}
+                    className={({ active }) => `cursor-default select-none p-2 ${active ? 'bg-blue-600 text-white' : 'text-gray-900'}`}
+                  >
+                    {t.task_id}
+                  </Combobox.Option>
+                ))}
+                {filteredTasks.length === 0 && (
+                  <div className="cursor-default select-none p-2 text-gray-500">No tasks found</div>
+                )}
+              </Combobox.Options>
+            </div>
+          </Combobox>
         </div>
 
         <button
