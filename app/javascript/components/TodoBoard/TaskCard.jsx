@@ -1,8 +1,7 @@
 // src/components/TaskCard.js
 import React, { useState, useEffect } from 'react';
 import { Draggable } from "@hello-pangea/dnd";
-import { FiEdit2, FiTrash2 } from "react-icons/fi";
-import { getDueColor } from '/utils/taskUtils';
+import { FiEdit2, FiTrash2, FiCalendar, FiUser, FiTag, FiCheckCircle } from "react-icons/fi";
 import { getUsers } from '../api';
 import { toast } from 'react-hot-toast';
 
@@ -77,46 +76,63 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
   );
 
   const renderTaskDetails = () => (
-     <div>
+    <div className="space-y-3">
         <div className="flex justify-between items-start">
-            <div className="flex-1 text-gray-900">
+            <span className="font-semibold text-lg text-gray-800 hover:text-blue-600 transition-colors">
               {item.task_url ? (
-                <a href={item.task_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+                <a href={item.task_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
                   {item.task_id}
                 </a>
               ) : (
                 item.task_id
               )}
-            </div>
-            <div className="flex flex-col gap-1 text-sm">
-                <button onClick={() => setIsEditing(true)} className="text-blue-500 hover:text-blue-700" title="Edit"><FiEdit2 /></button>
-                <button onClick={() => onDelete(columnId, item.id)} className="text-red-500 hover:text-red-700" title="Delete"><FiTrash2 /></button>
+            </span>
+            <div className="flex items-center gap-2">
+                <button onClick={() => setIsEditing(true)} className="text-gray-400 hover:text-blue-600 transition-colors" title="Edit"><FiEdit2 size={18} /></button>
+                <button onClick={() => onDelete(columnId, item.id)} className="text-gray-400 hover:text-red-600 transition-colors" title="Delete"><FiTrash2 size={18} /></button>
             </div>
         </div>
-        <div className="text-sm text-gray-800 mt-1">{item.title || 'No Title'}</div>
-        {item.due && <div className={`text-xs mt-2 ${getDueColor(item.due)}`}>Due: {item.due}</div>}
-        {item.tags && (
-            <div className="flex flex-wrap gap-1 mt-2">
-                {item.tags.map((tag, i) => <span key={i} className="text-xs bg-gray-200 text-gray-700 px-3 py-1 rounded-full">#{tag}</span>)}
+        <p className="text-gray-600 text-sm">{item.title || 'No Title'}</p>
+        
+        {item.tags && item.tags.length > 0 && (
+            <div className="flex items-center text-sm text-gray-500 mt-2">
+                <FiTag className="mr-2" />
+                <div className="flex flex-wrap gap-1">
+                    {item.tags.map((tag, tagIndex) => (
+                        <span key={tagIndex} className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                            {tag}
+                        </span>
+                    ))}
+                </div>
             </div>
         )}
-        {item.createdBy && <div className="text-xs text-gray-600 mt-1">Created by: {item.createdBy}</div>}
-        {(item.end_date || item.assigned_user) && (
-          <div className="flex justify-between text-xs text-gray-600 mt-1">
-            {item.end_date && <span>End Date: {item.end_date}</span>}
-            {item.assigned_user && (
-              <span className="ml-auto">Assigned to: {item.assigned_user.first_name || item.assigned_user.email}</span>
-            )}
-          </div>
-        )}
+        
+        <div className="border-t border-gray-200 mt-3 pt-3">
+            <div className="flex justify-between items-center text-sm text-gray-500">
+                <div className="flex items-center">
+                    <FiCalendar className="mr-2" />
+                    <span>End Date: {item.end_date || "Not set"}</span>
+                </div>
+                <div className="flex items-center">
+                    <FiUser className="mr-2" />
+                    <span>{item.assigned_user ? item.assigned_user.first_name || item.assigned_user.email : 'Unassigned'}</span>
+                </div>
+            </div>
+        </div>
     </div>
   );
 
   return (
     <Draggable key={String(item.id)} draggableId={String(item.id)} index={index}>
-      {(provided) => (
+      {(provided, snapshot) => (
         <div
-          className="bg-white p-4 mb-4 rounded-lg shadow-lg hover:bg-gray-100 transition-all"
+          className={`bg-white p-4 mb-4 rounded-lg shadow-md border-l-4 ${
+            {
+              todo: 'border-blue-500',
+              inprogress: 'border-yellow-500',
+              completed: 'border-green-500'
+            }[columnId]
+          } hover:shadow-xl transition-shadow transform hover:-translate-y-1 ${snapshot.isDragging ? 'ring-2 ring-blue-400' : ''}`}
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
