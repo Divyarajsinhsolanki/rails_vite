@@ -1,8 +1,17 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-bundle install --without development test
-yarn install --frozen-lockfile
+# Default to production environment if RAILS_ENV is not provided
+RAILS_ENV=${RAILS_ENV:-production}
 
-RAILS_ENV=production bin/vite build
+# Install Ruby gems in deployment mode
+bundle config set --local deployment 'true'
+bundle config set --local without 'development test'
+bundle install
+
+# Install JavaScript packages without updating lock file
+yarn install --frozen-lockfile --production=true
+
+# Compile assets for production
+bin/vite build
 bundle exec rails assets:precompile
