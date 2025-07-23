@@ -92,7 +92,8 @@ docker compose up
 ### Deploying to Render
 
 Render requires precompiling the Vite assets during the build phase. Use the
-included script as your **Build Command**:
+included script as your **Build Command**. It installs dependencies and
+precompiles assets, so it's safe to reuse in container builds like Docker:
 
 ```bash
 ./bin/render-build
