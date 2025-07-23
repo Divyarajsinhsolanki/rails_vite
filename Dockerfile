@@ -43,7 +43,8 @@ RUN yarn install --frozen-lockfile
 COPY . .
 
 RUN bundle exec bootsnap precompile app/ lib/ && \
-    RAILS_ENV=production bin/vite build
+    RAILS_ENV=production bin/vite build && \
+    RAILS_ENV=production bundle exec rails assets:precompile
 
 # --- Final Runtime Stage ---
 FROM base
