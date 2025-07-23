@@ -12,6 +12,8 @@ Rails.application.routes.draw do
 
   # PDF
   post "/upload_pdf", to: "pdfs#upload_pdf"
+  post "/reset_pdf", to: "pdfs#reset"
+  get  "/download_pdf", to: "pdfs#download"
 
   post "/api/update_pdf", to: "pdf_modifiers#update_pdf"
 
