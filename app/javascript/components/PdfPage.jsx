@@ -60,6 +60,24 @@ const PdfPage = () => {
     localStorage.removeItem("pdfUrl");
   };
 
+  const handleResetPdf = async () => {
+    try {
+      const response = await fetch("/reset_pdf", {
+        method: "POST",
+        headers: {
+          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content,
+        },
+      });
+      if (response.ok) setPdfUpdated((prev) => !prev);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleDownloadPdf = () => {
+    window.open("/download_pdf", "_blank");
+  };
+
   return (
     <div className="flex flex-col min-h-screen items-center bg-gray-100 p-6">
       {/* Upload Section */}
@@ -131,13 +149,26 @@ const PdfPage = () => {
           <div className="w-3/5 items-center">
             <PdfViewer pdfUrl={`${pdfUrl}?updated=${pdfUpdated}`} />
 
-            {/* Remove PDF Button */}
-            <button
-              className="bg-red-500 text-white px-6 py-2 mt-4 rounded shadow hover:bg-red-600 w-full max-w-xs"
-              onClick={handleRemovePdf}
-            >
-              Remove PDF
-            </button>
+            <div className="flex gap-4 mt-4">
+              <button
+                className="bg-yellow-500 text-white px-4 py-2 rounded shadow hover:bg-yellow-600 flex-1"
+                onClick={handleResetPdf}
+              >
+                Reset
+              </button>
+              <button
+                className="bg-blue-500 text-white px-4 py-2 rounded shadow hover:bg-blue-600 flex-1"
+                onClick={handleDownloadPdf}
+              >
+                Download
+              </button>
+              <button
+                className="bg-red-500 text-white px-4 py-2 rounded shadow hover:bg-red-600 flex-1"
+                onClick={handleRemovePdf}
+              >
+                Remove
+              </button>
+            </div>
           </div>
         </div>
       )}

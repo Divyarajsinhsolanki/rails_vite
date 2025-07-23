@@ -44,8 +44,8 @@ const FormComponent = ({ setActiveForm, setPdfUpdated, formFields = [], endpoint
         <FaArrowLeft className="mr-2" /> Back
       </button>
 
-      <h2 className="text-lg font-bold mb-2">{title}</h2>
-      <form onSubmit={handleSubmit} className="space-y-2">
+      <h2 className="text-lg font-bold mb-4">{title}</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
         {formFields.map((field, index) => (
           <input
             key={index}
@@ -54,11 +54,11 @@ const FormComponent = ({ setActiveForm, setPdfUpdated, formFields = [], endpoint
             placeholder={field.placeholder}
             value={formData[field.name] || ""}
             onChange={handleChange}
-            className="w-full p-2 border rounded"
+            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         ))}
         <input type="hidden" name="pdf_path" value={pdfPath} />
-        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded w-full">Submit</button>
+        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded w-full hover:bg-blue-700">Submit</button>
       </form>
     </motion.div>
   );
