@@ -89,6 +89,21 @@ docker compose build
 docker compose up
 ```
 
+### Deploying to Render
+
+Render requires precompiling the Vite assets during the build phase. Use the
+included script as your **Build Command**:
+
+```bash
+./bin/render-build
+```
+
+Then set the **Start Command** to launch Rails:
+
+```bash
+bundle exec rails server
+```
+
 The web service loads environment variables from `.env`. The database service
 stores its data in the `db-data` volume.
 
