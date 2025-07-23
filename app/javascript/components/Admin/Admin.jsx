@@ -20,26 +20,24 @@ function Admin() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-blue-50 flex flex-col items-center p-4">
-      <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
-        <div className="mb-4">
-          <label className="mr-2 font-medium">Select Table:</label>
-          <select
-            value={selectedTable}
-            onChange={(e) => setSelectedTable(e.target.value)}
-            className="border rounded px-2 py-1"
-          >
-            <option value="">-- Choose a table --</option>
-            {tables.map((tbl) => (
-              <option key={tbl} value={tbl}>{tbl}</option>
-            ))}
-          </select>
-        </div>
-        {selectedTable && (
-          <DynamicAdminTable table={selectedTable} />
-        )}
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
+      <div className="mb-4">
+        <label className="mr-2 font-medium">Select Table:</label>
+        <select
+          value={selectedTable}
+          onChange={(e) => setSelectedTable(e.target.value)}
+          className="border rounded px-2 py-1"
+        >
+          <option value="">-- Choose a table --</option>
+          {tables.map((tbl) => (
+            <option key={tbl} value={tbl}>{tbl}</option>
+          ))}
+        </select>
       </div>
+      {selectedTable && (
+        <DynamicAdminTable table={selectedTable} />
+      )}
     </div>
   );
 }
