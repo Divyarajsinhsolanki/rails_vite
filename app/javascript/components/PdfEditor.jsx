@@ -34,7 +34,7 @@ const PdfEditor = ({ setPdfUpdated, pdfPath }) => {
           {!activeForm && (
             <motion.div
               key="buttons"
-              className="grid grid-cols-2 gap-4 bg-gray-100 p-4 rounded-lg shadow-lg"
+              className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-gray-100 p-4 rounded-lg shadow-lg"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -44,17 +44,22 @@ const PdfEditor = ({ setPdfUpdated, pdfPath }) => {
                 <button
                   key={index}
                   onClick={btn.action}
-                  className="flex items-center justify-center w-full h-[50px] px-4 bg-white rounded-lg shadow-lg transition hover:scale-105"
+                  className="flex items-center justify-center h-12 px-3 bg-white rounded-md shadow-md transition hover:bg-blue-50"
                 >
-                  <span className="text-lg">{btn.icon}</span> 
-                  <span className="ml-3 text-base">{btn.label}</span>
+                  <span className="text-lg">{btn.icon}</span>
+                  <span className="ml-2 text-sm font-medium">{btn.label}</span>
                 </button>
               ))}
             </motion.div>
           )}
 
           {/* Load Form Based on activeForm */}
-          <FormRenderer activeForm={activeForm} setActiveForm={setActiveForm} setPdfUpdated={setPdfUpdated} pdfPath={pdfPath} />
+          <FormRenderer
+            activeForm={activeForm}
+            setActiveForm={setActiveForm}
+            setPdfUpdated={setPdfUpdated}
+            pdfPath={pdfPath}
+          />
         </AnimatePresence>
       </div>
     </div>
