@@ -11,7 +11,6 @@ import Signup from "../pages/Signup";
 import Login from "../pages/Login";
 import PostPage from "../pages/PostPage";
 import Profile from "../components/Profile";
-import PdfEditor from '../pages/PdfEditor';
 import KnowledgeDashboard from "../pages/KnowledgeDashboard";
 import Admin from '../components/Admin/Admin';
 import Users from "../pages/Users";
@@ -55,7 +54,6 @@ const App = () => {
               <Route path="/posts" element={<PrivateRoute><MainLayout><PostPage /></MainLayout></PrivateRoute>} />
               <Route path="/vault" element={<PrivateRoute><MainLayout><Vault /></MainLayout></PrivateRoute>} />
               <Route path="/profile" element={<PrivateRoute><MainLayout><Profile /></MainLayout></PrivateRoute>} />
-              <Route path="/pdf_editor" element={<PrivateRoute><MainLayout><PdfEditor /></MainLayout></PrivateRoute>} />
               <Route path="/knowledge" element={<PrivateRoute><MainLayout><KnowledgeDashboard /></MainLayout></PrivateRoute>} />
               <Route path="/sprint_dashboard" element={<PrivateRoute><MainLayout><SprintDashboard /></MainLayout></PrivateRoute>} />
               <Route path="/users" element={<PrivateRoute><MainLayout><Users /></MainLayout></PrivateRoute>} />
