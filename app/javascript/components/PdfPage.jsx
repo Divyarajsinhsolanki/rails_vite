@@ -140,7 +140,6 @@ const PdfPage = () => {
   return (
     <div className="font-inter flex flex-col min-h-screen items-center bg-gray-50 p-4 sm:p-6 lg:p-8">
       <header className="w-full max-w-6xl text-center mb-8">
-        <h1 className="text-4xl font-extrabold text-gray-800 tracking-tight mb-2">PDFForge</h1>
         <p className="text-lg text-gray-600">Your all-in-one online PDF editor. Upload, edit, and manage your documents with ease.</p>
       </header>
 
@@ -214,15 +213,11 @@ const PdfPage = () => {
       )}
 
       {pdfUrl && (
-        <div className="w-full max-w-6xl flex flex-col lg:flex-row gap-6 mt-8">
+        <div className="w-full max-w-8xl flex flex-col lg:flex-row gap-6 mt-8">
           <div className="w-full lg:w-2/5 bg-white rounded-2xl shadow-xl p-6 border border-gray-200 flex flex-col">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">PDF Editor</h2>
-            <div className="flex-grow border border-gray-300 rounded-lg overflow-hidden flex items-center justify-center text-gray-500 text-center p-4 bg-gray-50">
-              <p>
-                <span className="font-semibold">PdfEditor</span> component placeholder.
-                <br />
-                (Actual editing functionality would be integrated here)
-              </p>
+            <div className="flex-grow border border-gray-300 rounded-lg overflow-hidden text-gray-500 p-4 bg-gray-50">
+              <PdfEditor setPdfUpdated={setPdfUpdated} pdfPath={pdfUrl} />
             </div>
           </div>
 

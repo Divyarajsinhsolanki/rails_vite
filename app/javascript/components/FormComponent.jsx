@@ -40,11 +40,6 @@ const FormComponent = ({ setActiveForm, setPdfUpdated, formFields = [], endpoint
       exit={{ opacity: 0, x: 30 }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
     >
-      <button onClick={() => setActiveForm(null)} className="mb-4 flex items-center bg-gray-300 px-3 py-2 rounded shadow">
-        <FaArrowLeft className="mr-2" /> Back
-      </button>
-
-      <h2 className="text-lg font-bold mb-4">{title}</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         {formFields.map((field, index) => (
           <div key={index} className="flex flex-col">
