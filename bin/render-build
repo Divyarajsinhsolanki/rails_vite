@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -e
+
+bundle install --without development test
+yarn install --frozen-lockfile
+
+RAILS_ENV=production bin/vite build
+bundle exec rails assets:precompile
