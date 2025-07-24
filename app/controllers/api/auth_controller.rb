@@ -1,3 +1,6 @@
+require 'net/http'
+require 'uri'
+
 class Api::AuthController < Api::BaseController
   include Rails.application.routes.url_helpers
   skip_before_action :authenticate_user!, only: [:login, :signup, :refresh]
@@ -83,8 +86,27 @@ class Api::AuthController < Api::BaseController
   end
 
   def verify_firebase_token(token)
-    FirebaseIdToken::Certificates.request
-    FirebaseIdToken::Signature.verify(token)
+    certs = Rails.cache.fetch('google_certs', expires_in: 1.hour) do
+      uri = URI('https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com')
+      JSON.parse(Net::HTTP.get(uri))
+    end
+
+    header = JWT.decode(token, nil, false).last
+    key_data = certs[header['kid']]
+    return nil unless key_data
+
+    public_key = OpenSSL::X509::Certificate.new(key_data).public_key
+    decoded, = JWT.decode(
+      token,
+      public_key,
+      true,
+      algorithm: 'RS256',
+      iss: 'https://securetoken.google.com/temppdfmodifier',
+      verify_iss: true,
+      aud: 'temppdfmodifier',
+      verify_aud: true
+    )
+    decoded
   rescue => e
     Rails.logger.error("Firebase token error: #{e}")
     nil
