@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { fetchUserInfo, updateUserInfo, fetchPosts, SchedulerAPI } from "../components/api"; // Adjust the import path as necessary
 import { getStatusClasses } from '/utils/taskUtils';
+import Vault from "../pages/Vault";
 
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -113,9 +114,10 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-blue-50 flex flex-col items-center p-4">
-      <div className={`w-full max-w-4xl transition-opacity duration-500 ${editMode ? 'opacity-0' : 'opacity-100'}`}>
-        {!editMode && (
-          <div className="bg-white rounded-2xl shadow-xl p-8">
+      <div className="w-full max-w-6xl flex flex-col lg:flex-row gap-8">
+        <div className={`flex-1 transition-opacity duration-500 ${editMode ? 'opacity-0' : 'opacity-100'}`}>
+          {!editMode && (
+            <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left">
               {/* Profile Image with a subtle border animation */}
               <div className="relative group">
@@ -259,6 +261,10 @@ const Profile = () => {
             </div>
           </div>
         )}
+        </div>
+        <div className="flex-1">
+          <Vault />
+        </div>
       </div>
 
       {/* Edit Form with a slide-in animation */}
