@@ -3,6 +3,7 @@ import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import submitForm from "../utils/formSubmit";
 import { Toaster, toast } from "react-hot-toast";
+import SpinnerOverlay from "../components/ui/SpinnerOverlay";
 
 const Signup = ({ switchToLogin }) => {
   const { handleSignup, handleGoogleLogin } = useContext(AuthContext);
@@ -14,6 +15,7 @@ const Signup = ({ switchToLogin }) => {
     profile_picture: null,
   });
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -28,6 +30,7 @@ const Signup = ({ switchToLogin }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setLoading(true);
 
     const submissionData = new FormData();
     submissionData.append("auth[first_name]", formData.first_name);
@@ -45,12 +48,15 @@ const Signup = ({ switchToLogin }) => {
       const msg = err.response?.data?.errors?.join(", ") || "Signup failed. Please try again.";
       setError(msg);
       toast.error(msg);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
       <Toaster position="top-right" />
+      {loading && <SpinnerOverlay />}
       <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl transition-transform transform hover:scale-[1.01] border border-gray-100">
         <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">Create Account</h2>
 
@@ -140,8 +146,15 @@ const Signup = ({ switchToLogin }) => {
         </div>
 
         {/* Google Signup Button */}
-        <button 
-          onClick={handleGoogleLogin}
+        <button
+          onClick={async () => {
+            setLoading(true);
+            try {
+              await handleGoogleLogin();
+            } finally {
+              setLoading(false);
+            }
+          }}
           className="w-full bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-lg font-medium transition-all flex items-center justify-center gap-2 shadow-md"
         >
           <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">

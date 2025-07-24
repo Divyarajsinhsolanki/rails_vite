@@ -3,11 +3,13 @@ import { AuthContext } from "../context/AuthContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { auth, getRedirectResult } from "../firebaseConfig";
 import { Toaster, toast } from "react-hot-toast";
+import SpinnerOverlay from "../components/ui/SpinnerOverlay";
 
 const Login = ({ switchToSignup }) => {
   const { handleLogin, handleGoogleLogin } = useContext(AuthContext);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [searchParams] = useSearchParams();
 
   const navigate = useNavigate();
@@ -19,6 +21,7 @@ const Login = ({ switchToSignup }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setLoading(true);
 
     try {
       await handleLogin({ auth: formData });
@@ -28,6 +31,8 @@ const Login = ({ switchToSignup }) => {
       const msg = "Invalid email or password. Please try again.";
       setError(msg);
       toast.error(msg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -48,6 +53,7 @@ const Login = ({ switchToSignup }) => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
       <Toaster position="top-right" />
+      {loading && <SpinnerOverlay />}
       <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl transition-transform transform hover:scale-[1.01] border border-gray-100">
         <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">Welcome Back</h2>
 
@@ -99,9 +105,17 @@ const Login = ({ switchToSignup }) => {
         </div>
 
         {/* Google Login Button */}
-        <button 
-          onClick={handleGoogleLogin} 
-          className="w-full bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-lg font-medium transition-all flex items-center justify-center gap-2 shadow-md">
+        <button
+          onClick={async () => {
+            setLoading(true);
+            try {
+              await handleGoogleLogin();
+            } finally {
+              setLoading(false);
+            }
+          }}
+          className="w-full bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-lg font-medium transition-all flex items-center justify-center gap-2 shadow-md"
+        >
           <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <path fill="currentColor" d="M12.545 10.239v3.821h5.445c-.712 2.315-2.647 3.972-5.445 3.972a6.033 6.033 0 110-12.064c1.835 0 3.456.705 4.691 1.942l3.099-3.101A10.113 10.113 0 0012.545 2C7.021 2 2.545 6.477 2.545 12s4.476 10 10 10c5.523 0 10-4.477 10-10a10.1 10.1 0 00-.167-1.785l-9.833-.006z"/>
           </svg>
