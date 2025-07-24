@@ -88,10 +88,6 @@ Rails.application.routes.draw do
       delete '/:id', to: 'admin#destroy'
     end
 
-    # Event booking
-    post 'event/book', to: 'events#book'
-    get 'ticket', to: 'tickets#show'
-    get 'ticket/download', to: 'tickets#download'
   end
 
   get "*path", to: "pages#index", constraints: lambda { |req|

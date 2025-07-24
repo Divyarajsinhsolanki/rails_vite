@@ -12,8 +12,6 @@ import Profile from "../components/Profile";
 import KnowledgeDashboard from "../pages/KnowledgeDashboard";
 import Admin from '../components/Admin/Admin';
 import Users from "../pages/Users";
-import Event from "../pages/Event";
-import Ticket from "../pages/Ticket";
 import Contact from "../pages/Contact";
 import Weather from "../pages/Weather";
 import Vault from "../pages/Vault";
@@ -39,10 +37,8 @@ const App = () => {
 
           {/* ✅ Page Content */}
             <Routes>
-              <Route path="/event" element={<MainLayout><Event /></MainLayout>} />
               <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
               <Route path="/weather" element={<MainLayout><Weather /></MainLayout>} />
-              <Route path="/ticket" element={<MainLayout><Ticket /></MainLayout>} />
               <Route path="/legal" element={<MainLayout><Legal /></MainLayout>} />
 
               {/* 🔐 Protected */}
