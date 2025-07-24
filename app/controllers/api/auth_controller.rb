@@ -43,7 +43,11 @@ class Api::AuthController < Api::BaseController
     return render json: { error: "Account locked" }, status: :unauthorized if user.locked?
 
     set_jwt_cookie!(user)
-    render json: { message: "Login successful", user: user, exp: 15.minutes.from_now.to_i }
+    render json: {
+      message: "Login successful",
+      user: user.as_json(include: { roles: { only: [:name] } }),
+      exp: 15.minutes.from_now.to_i
+    }
   end
 
   def refresh
@@ -52,7 +56,10 @@ class Api::AuthController < Api::BaseController
 
     if payload && (user = User.find_by(id: payload["user_id"]))
       set_jwt_cookie!(user)
-      render json: { user: user, exp: 15.minutes.from_now.to_i }
+      render json: {
+        user: user.as_json(include: { roles: { only: [:name] } }),
+        exp: 15.minutes.from_now.to_i
+      }
     else
       render json: { error: "Unauthorized" }, status: :unauthorized
     end
@@ -66,7 +73,10 @@ class Api::AuthController < Api::BaseController
 
   def view_profile
     profile_picture_url = rails_blob_url(current_user.profile_picture, only_path: true) if current_user&.profile_picture&.attached?
-    render json: { user: current_user.as_json.merge(profile_picture: profile_picture_url) }
+    render json: {
+      user: current_user.as_json(include: { roles: { only: [:name] } })
+                      .merge(profile_picture: profile_picture_url)
+    }
   end
 
   def update_profile

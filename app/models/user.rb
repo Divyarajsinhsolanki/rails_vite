@@ -22,9 +22,31 @@ class User < ApplicationRecord
 
   cattr_accessor :current_user
 
+  after_create :assign_default_role
+
+  def has_role?(name)
+    roles.exists?(name: name.to_s)
+  end
+
+  def owner?
+    has_role?(:owner)
+  end
+
+  def admin?
+    has_role?(:admin)
+  end
+
+  def member?
+    has_role?(:member)
+  end
+
   private
 
   def after_confirmation
     update_column(:status, "active")
+  end
+
+  def assign_default_role
+    roles << Role.find_by(name: 'member') if roles.empty?
   end
 end

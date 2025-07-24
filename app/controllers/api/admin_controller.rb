@@ -1,4 +1,5 @@
-class Api::AdminController < ApplicationController
+class Api::AdminController < Api::BaseController
+  before_action :authorize_owner!
   before_action :set_model, except: [:tables]
   
   def tables
@@ -88,5 +89,9 @@ class Api::AdminController < ApplicationController
 
   def record_params
     params.require(:record).permit(@model.column_names.map(&:to_sym))
+  end
+
+  def authorize_owner!
+    head :forbidden unless current_user&.owner?
   end
 end

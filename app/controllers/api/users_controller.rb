@@ -1,5 +1,6 @@
 class Api::UsersController < Api::BaseController
   include Rails.application.routes.url_helpers
+  before_action :authorize_owner!
   before_action :set_user, only: [:update, :destroy, :update_profile]
 
   # GET /api/users.json
@@ -52,5 +53,9 @@ class Api::UsersController < Api::BaseController
       profile_picture: user.profile_picture.attached? ?
         rails_blob_url(user.profile_picture, only_path: true) : nil
     }
+  end
+
+  def authorize_owner!
+    head :forbidden unless current_user&.owner?
   end
 end
