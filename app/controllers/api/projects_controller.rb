@@ -1,4 +1,5 @@
 class Api::ProjectsController < Api::BaseController
+  include Rails.application.routes.url_helpers
   before_action :set_project, only: [:update, :destroy]
   before_action :authorize_owner!, only: [:create, :update, :destroy]
 
@@ -54,6 +55,8 @@ class Api::ProjectsController < Api::BaseController
           id: pu.user_id,
           project_user_id: pu.id,
           name: [pu.user.first_name, pu.user.last_name].compact.join(' '),
+          profile_picture: pu.user.profile_picture.attached? ?
+            rails_blob_url(pu.user.profile_picture, only_path: true) : nil,
           role: pu.role,
           status: pu.status
         }
