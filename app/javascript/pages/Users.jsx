@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { getUsers, deleteUser, updateUser } from "../components/api";
+import {
+  getUsers,
+  deleteUser,
+  updateUser,
+  fetchTeams,
+  fetchProjects,
+} from "../components/api";
 
 const ROLE_OPTIONS = ["owner", "admin", "member"];
 
@@ -16,6 +22,8 @@ const Users = () => {
     roles: [],
   });
   const [userToDelete, setUserToDelete] = useState(null);
+  const [teams, setTeams] = useState([]);
+  const [projects, setProjects] = useState([]);
 
   const fetchUsers = async () => {
     try {
@@ -27,8 +35,30 @@ const Users = () => {
     }
   };
 
+  const fetchTeamsData = async () => {
+    try {
+      const { data } = await fetchTeams();
+      setTeams(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error fetching teams:", error);
+      setTeams([]);
+    }
+  };
+
+  const fetchProjectsData = async () => {
+    try {
+      const { data } = await fetchProjects();
+      setProjects(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+      setProjects([]);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchTeamsData();
+    fetchProjectsData();
   }, []);
 
   const handleEdit = (user) => {
@@ -122,7 +152,10 @@ const Users = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {filtered.map((user) => (
+          {filtered.map((user) => {
+            const userTeams = teams.filter(t => t.users.some(u => u.id === user.id)).map(t => t.name);
+            const userProjects = projects.filter(p => p.users.some(u => u.id === user.id)).map(p => p.name);
+            return (
             <div key={user.id} className="bg-white/60 backdrop-blur-md border border-gray-200 shadow-2xl shadow-blue-500/10 rounded-3xl p-6 flex flex-col items-center text-center transition-all duration-300 hover:bg-white/80 hover:shadow-blue-500/20">
               {editingId === user.id ? (
                 <form onSubmit={handleUpdate} className="w-full flex flex-col gap-3" encType="multipart/form-data">
@@ -170,7 +203,13 @@ const Users = () => {
                     </p>
                   )}
                   {user.roles && (
-                    <p className="text-gray-500 text-xs mb-4">Roles: {user.roles.join(', ')}</p>
+                    <p className="text-gray-500 text-xs">Roles: {user.roles.join(', ')}</p>
+                  )}
+                  {userTeams.length > 0 && (
+                    <p className="text-gray-500 text-xs">Teams: {userTeams.join(', ')}</p>
+                  )}
+                  {userProjects.length > 0 && (
+                    <p className="text-gray-500 text-xs mb-4">Projects: {userProjects.join(', ')}</p>
                   )}
                   <div className="flex space-x-3 mt-auto pt-4">
                     <button onClick={() => handleEdit(user)} className={`${buttonBaseStyle} bg-gradient-to-br from-sky-500 to-indigo-500 focus:ring-sky-500/50`}>Edit</button>
@@ -179,7 +218,8 @@ const Users = () => {
                 </>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
