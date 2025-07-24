@@ -6,7 +6,13 @@ import { Toaster, toast } from "react-hot-toast";
 
 const Signup = () => {
   const { handleSignup, handleGoogleLogin } = useContext(AuthContext);
-  const [formData, setFormData] = useState({ email: "", password: "", profile_picture: null });
+  const [formData, setFormData] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    password: "",
+    profile_picture: null,
+  });
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
@@ -24,6 +30,8 @@ const Signup = () => {
     setError(null);
 
     const submissionData = new FormData();
+    submissionData.append("auth[first_name]", formData.first_name);
+    submissionData.append("auth[last_name]", formData.last_name);
     submissionData.append("auth[email]", formData.email);
     submissionData.append("auth[password]", formData.password);
     submissionData.append("auth[profile_picture]", formData.profile_picture);
@@ -47,6 +55,27 @@ const Signup = () => {
 
         {/* Signup Form */}
         <form onSubmit={handleSubmit} className="space-y-5" encType="multipart/form-data">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input
+              type="text"
+              name="first_name"
+              placeholder="First Name"
+              required
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder-gray-400"
+              value={formData.first_name}
+              onChange={handleChange}
+            />
+            <input
+              type="text"
+              name="last_name"
+              placeholder="Last Name"
+              required
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder-gray-400"
+              value={formData.last_name}
+              onChange={handleChange}
+            />
+          </div>
+
           <input
             type="email"
             name="email"
@@ -70,10 +99,15 @@ const Signup = () => {
           </div>
 
           <div className="relative">
+            <label htmlFor="profile_picture" className="block text-sm font-medium text-gray-600 mb-2">
+              Profile Picture
+            </label>
             <input
               type="file"
+              id="profile_picture"
               name="profile_picture"
               accept="image/*"
+              title="Profile Picture"
               onChange={handleChange}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
