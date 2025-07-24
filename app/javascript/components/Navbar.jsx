@@ -27,26 +27,6 @@ const Navbar = () => {
           <nav className="flex items-center gap-6">
             {user ? (
               <>
-                {[
-                  "posts",
-                  "vault",
-                ]
-                  .filter(Boolean)
-                  .map((route) => (
-                    <NavLink
-                      key={route}
-                      to={`/${route}`}
-                      className={({ isActive }) =>
-                        `relative pb-1 text-gray-700 font-medium hover:text-indigo-600 transition ${
-                          isActive
-                            ? "after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-indigo-500"
-                            : ""
-                        }`
-                      }
-                    >
-                      {route.charAt(0).toUpperCase() + route.slice(1).replace("_", " ")}
-                    </NavLink>
-                  ))}
 
                 {projects.map((p) => (
                   <NavLink
@@ -65,6 +45,7 @@ const Navbar = () => {
                 ))}
 
                 {[
+                  "posts",
                   "projects",
                   "teams",
                   "knowledge",

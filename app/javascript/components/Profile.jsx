@@ -114,7 +114,7 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-blue-50 flex flex-col items-center p-4">
-      <div className="w-full max-w-6xl flex flex-col lg:flex-row gap-8">
+      <div className="w-full max-w-8xl flex flex-col lg:flex-row gap-8">
         <div className={`flex-1 transition-opacity duration-500 ${editMode ? 'opacity-0' : 'opacity-100'}`}>
           {!editMode && (
             <div className="bg-white rounded-2xl shadow-xl p-8">
