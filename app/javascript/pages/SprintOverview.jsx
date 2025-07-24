@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SchedulerAPI, getUsers } from '../components/api';
+import { SchedulerAPI, getUsers, fetchProjects } from '../components/api';
 import { Toaster, toast } from 'react-hot-toast';
 import SpinnerOverlay from '../components/ui/SpinnerOverlay';
 import { FiX } from 'react-icons/fi';
@@ -491,7 +491,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate }) => {
 };
 
 // Main Component
-const SprintOverview = ({ sprintId, onSprintChange }) => {
+const SprintOverview = ({ sprintId, onSprintChange, projectId }) => {
     const [sprints, setSprints] = useState([]);
     const [developers, setDevelopers] = useState([]);
     const [users, setUsers] = useState([]);
@@ -518,7 +518,21 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
 
     useEffect(() => {
         SchedulerAPI.getDevelopers().then(res => setDevelopers(res.data));
-        getUsers().then(res => setUsers(Array.isArray(res.data) ? res.data : []));
+        if (projectId) {
+            fetchProjects().then(({ data }) => {
+                const list = Array.isArray(data) ? data : [];
+                const project = list.find(p => p.id === Number(projectId));
+                const members = (project ? project.users : []).map(u => ({
+                    id: u.id,
+                    first_name: u.name,
+                    email: u.name,
+                    profile_picture: u.profile_picture
+                }));
+                setUsers(members);
+            });
+        } else {
+            getUsers().then(res => setUsers(Array.isArray(res.data) ? res.data : []));
+        }
         fetch('/api/sprints.json')
             .then(res => res.json())
             .then(data => {
@@ -528,7 +542,7 @@ const SprintOverview = ({ sprintId, onSprintChange }) => {
                     if(onSprintChange) onSprintChange(data[0].id);
                 }
             });
-    }, []);
+    }, [projectId]);
 
     useEffect(() => {
         if (onSprintChange && selectedSprintId !== null) {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { fetchProjects } from '../components/api';
 import { CalendarDaysIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import SprintOverview from './SprintOverview';
 import Scheduler from '../components/Scheduler/Scheduler';
@@ -30,7 +31,17 @@ export default function SprintDashboard() {
   const [sprintId, setSprintId] = useState(null);
   const [sprint, setSprint] = useState(null);
   const [sprints, setSprints] = useState([]);
+  const [project, setProject] = useState(null);
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(false);
+
+  useEffect(() => {
+    if (!projectId) { setProject(null); return; }
+    fetchProjects().then(({ data }) => {
+      const list = Array.isArray(data) ? data : [];
+      const found = list.find(p => p.id === Number(projectId));
+      setProject(found || null);
+    });
+  }, [projectId]);
 
   // Load all sprints on mount and select the current one
   useEffect(() => {
@@ -78,6 +89,14 @@ export default function SprintDashboard() {
   return (
     <div className="space-y-6">
       <header className="bg-white shadow-sm p-2">
+        {project && (
+          <div className="mb-2">
+            <h2 className="text-lg font-semibold text-gray-800">{project.name}</h2>
+            {project.description && (
+              <p className="text-gray-500 text-sm">{project.description}</p>
+            )}
+          </div>
+        )}
         <div className="flex justify-between items-center">
           <h1 className="text-xl font-bold text-gray-800 flex items-center">
             <CalendarDaysIcon className="h-7 w-7 mr-2 text-blue-600"/>
@@ -162,13 +181,13 @@ export default function SprintDashboard() {
         </div>
       </header>
       {activeTab === 'overview' && (
-        <SprintOverview sprintId={sprintId} onSprintChange={handleSprintChange} />
+        <SprintOverview projectId={projectId} sprintId={sprintId} onSprintChange={handleSprintChange} />
       )}
       {activeTab === 'scheduler' && (
-        <Scheduler sprintId={sprintId} />
+        sprintId ? <Scheduler sprintId={sprintId} /> : <p className="p-4">No sprint selected</p>
       )}
       {activeTab === 'todo' && (
-        <TodoBoard sprintId={sprintId} onSprintChange={handleSprintChange} />
+        sprintId ? <TodoBoard sprintId={sprintId} onSprintChange={handleSprintChange} /> : <p className="p-4">No sprint selected</p>
       )}
       {activeTab === 'sheet' && (
         <Sheet sheetName={sprint?.name} />
