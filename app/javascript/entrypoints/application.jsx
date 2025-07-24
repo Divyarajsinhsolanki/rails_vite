@@ -3,7 +3,7 @@
 //
 //    <%= vite_client_tag %>
 //    <%= vite_javascript_tag 'application' %>
-console.log('Vite ⚡️ Rails')
+// console.log('Vite ⚡️ Rails')
 
 // import * as Turbo from '@hotwired/turbo'
 // Turbo.start()
