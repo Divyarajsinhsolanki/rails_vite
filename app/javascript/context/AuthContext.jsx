@@ -44,7 +44,7 @@ export function AuthProvider({ children }) {
         scheduleRefresh(data.exp);
       } catch {
         setUser(null);
-        navigate("/login");
+        navigate("/", { state: { mode: "login" } });
       }
     }, ms);
   }, [navigate]);
@@ -84,7 +84,7 @@ export function AuthProvider({ children }) {
     await api.delete("/logout");
     setUser(null);
     clearTimeout(refreshTimer.current);
-    navigate("/login");
+    navigate("/", { state: { mode: "login" } });
   };
 
   const value = {

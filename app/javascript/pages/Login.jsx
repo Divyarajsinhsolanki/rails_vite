@@ -1,10 +1,10 @@
 import React, { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { auth, getRedirectResult } from "../firebaseConfig";
 import { Toaster, toast } from "react-hot-toast";
 
-const Login = () => {
+const Login = ({ switchToSignup }) => {
   const { handleLogin, handleGoogleLogin } = useContext(AuthContext);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState(null);
@@ -110,9 +110,13 @@ const Login = () => {
   
         <p className="mt-6 text-center text-gray-600">
           Don't have an account?{" "}
-          <Link to="/signup" className="text-blue-500 hover:text-blue-600 font-medium transition-colors">
+          <button
+            type="button"
+            onClick={switchToSignup}
+            className="text-blue-500 hover:text-blue-600 font-medium transition-colors"
+          >
             Sign Up
-          </Link>
+          </button>
         </p>
       </div>
     </div>

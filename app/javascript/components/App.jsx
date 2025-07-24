@@ -7,8 +7,6 @@ import PrivateRoute from "../components/PrivateRoute";
 import Navbar from "../components/Navbar";
 import Footer from "./Footer";
 import PdfPage from "./PdfPage";
-import Signup from "../pages/Signup";
-import Login from "../pages/Login";
 import PostPage from "../pages/PostPage";
 import Profile from "../components/Profile";
 import KnowledgeDashboard from "../pages/KnowledgeDashboard";
@@ -41,8 +39,6 @@ const App = () => {
 
           {/* ✅ Page Content */}
             <Routes>
-              <Route path="/signup" element={<AuthLayout><Signup /></AuthLayout>} />
-              <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
               <Route path="/event" element={<MainLayout><Event /></MainLayout>} />
               <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
               <Route path="/weather" element={<MainLayout><Weather /></MainLayout>} />
