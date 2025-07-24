@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import { AuthProvider } from "../context/AuthContext";
 import PrivateRoute from "../components/PrivateRoute";
+import ProjectMemberRoute from "../components/ProjectMemberRoute";
 
 import Navbar from "../components/Navbar";
 import Footer from "./Footer";
@@ -51,7 +52,7 @@ const App = () => {
               <Route path="/knowledge" element={<PrivateRoute><MainLayout><KnowledgeDashboard /></MainLayout></PrivateRoute>} />
               <Route path="/projects" element={<PrivateRoute><MainLayout><Projects /></MainLayout></PrivateRoute>} />
               <Route path="/teams" element={<PrivateRoute><MainLayout><Teams /></MainLayout></PrivateRoute>} />
-              <Route path="/projects/:projectId/dashboard" element={<PrivateRoute><MainLayout><SprintDashboard /></MainLayout></PrivateRoute>} />
+              <Route path="/projects/:projectId/dashboard" element={<ProjectMemberRoute><MainLayout><SprintDashboard /></MainLayout></ProjectMemberRoute>} />
               <Route path="/users" element={<PrivateRoute ownerOnly><MainLayout><Users /></MainLayout></PrivateRoute>} />
               <Route path="/admin" element={<PrivateRoute ownerOnly><MainLayout><Admin /></MainLayout></PrivateRoute>} />
               </Routes>
