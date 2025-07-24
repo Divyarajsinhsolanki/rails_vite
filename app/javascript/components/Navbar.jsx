@@ -19,7 +19,6 @@ const Navbar = () => {
               <>
                 {[
                   "posts",
-                  "weather",
                   "vault",
                   "sprint_dashboard",
                   "projects",
