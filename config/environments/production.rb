@@ -78,7 +78,7 @@ Rails.application.configure do
     authentication: :plain,
     enable_starttls_auto: true
   }
-  config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "example.com") }
+  config.action_mailer.default_url_options = { host: ENV.fetch("BASE_URL", "example.com") }
   
 
   # Ignore bad email addresses and do not raise email delivery errors.
@@ -95,7 +95,7 @@ Rails.application.configure do
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
 
-  Rails.application.routes.default_url_options[:host] = ENV.fetch("APP_HOST", "example.com")
+  Rails.application.routes.default_url_options[:host] = ENV.fetch("BASE_URL", "example.com")
 
   # Enable DNS rebinding protection and other `Host` header attacks.
   # config.hosts = [
