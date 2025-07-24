@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { auth, getRedirectResult } from "../firebaseConfig";
 import { Toaster, toast } from "react-hot-toast";
 
@@ -8,6 +8,7 @@ const Login = () => {
   const { handleLogin, handleGoogleLogin } = useContext(AuthContext);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState(null);
+  const [searchParams] = useSearchParams();
 
   const navigate = useNavigate();
 
@@ -31,12 +32,18 @@ const Login = () => {
   };
 
   useEffect(() => {
-    getRedirectResult(auth).then((result) => {
-      if (result?.user) {
-        console.log("Redirect Login Success:", result.user);
-      }
-    }).catch(console.error);
-  }, []);
+    if (searchParams.get("confirmed")) {
+      toast.success("Email confirmed. Please log in.");
+    }
+
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          console.log("Redirect Login Success:", result.user);
+        }
+      })
+      .catch(console.error);
+  }, [searchParams]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
