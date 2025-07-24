@@ -55,6 +55,7 @@ class Api::TeamsController < Api::BaseController
           id: tu.user_id,
           team_user_id: tu.id,
           name: [tu.user.first_name, tu.user.last_name].compact.join(' '),
+          email: tu.user.email,
           profile_picture: tu.user.profile_picture.attached? ?
             rails_blob_url(tu.user.profile_picture, only_path: true) : nil,
           role: tu.role,
