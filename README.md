@@ -46,7 +46,6 @@ Ensure these versions are available on your machine or use the provided `Dockerf
 
 - **PDF manipulation** – endpoints allow uploading a PDF, adding pages or text, rotating, merging and more. See `PdfsController` and `PdfModifiersController` for details.
 - **Authentication** – JWT based login, signup and refresh handled in `Api::AuthController`.
-- **Event booking** – `Api::EventsController` uses Stripe Checkout and `Api::TicketsController` generates a QR code ticket.
 
 ## Example Endpoints
 

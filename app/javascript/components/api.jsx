@@ -105,8 +105,6 @@ export const getRecords = (table) => api.get(`/admin/${table}`);
 export const createRecord = (table, data) => api.post(`/admin/${table}`, { record: data });
 export const updateRecord = (table, id, data) => api.patch(`/admin/${table}/${id}`, { record: data });
 export const deleteRecord = (table, id) => api.delete(`/admin/${table}/${id}`);
-export const bookEvent = () => api.post('/event/book');
-export const fetchTicket = (sessionId) => api.get(`/ticket`, { params: { session_id: sessionId } });
 
 export const sendContact = (data) => api.post('/contacts', { contact: data });
 
