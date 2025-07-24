@@ -67,6 +67,13 @@ const Teams = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (teams.length > 0 && !selectedTeamId) {
+      const userTeam = teams.find((t) => t.users.some((u) => u.id === user?.id));
+      setSelectedTeamId(userTeam ? userTeam.id : teams[0].id);
+    }
+  }, [teams, selectedTeamId, user]);
+
   // Event Handlers
   const handleFormChange = (e) => setTeamForm({ ...teamForm, [e.target.name]: e.target.value });
   const handleRoleChange = (e) => setMemberForm({ ...memberForm, role: e.target.value });
@@ -265,6 +272,10 @@ const Teams = () => {
                                         <div>
                                             <p className="font-medium text-slate-800">{member.name || "Invited User"}</p>
                                             <p className="text-sm text-slate-500 capitalize">{member.role}</p>
+                                            {member.email && (
+                                              <p className="text-sm text-slate-500">Email: {member.email}</p>
+                                            )}
+                                            <p className="text-sm text-slate-500">Department: ROR</p>
                                         </div>
                                     </div>
                                     {canManageMembers && user.id !== member.id && (
@@ -294,6 +305,10 @@ const Teams = () => {
                             </form>
                         )}
                     </div>
+                </div>
+            ) : isLoading ? (
+                <div className="text-center h-full flex flex-col items-center justify-center mt-[-5rem]">
+                    <p className="text-slate-500">Loading...</p>
                 </div>
             ) : (
                 // Empty State for Main Content
