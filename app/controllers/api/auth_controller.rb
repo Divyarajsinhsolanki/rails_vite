@@ -73,9 +73,27 @@ class Api::AuthController < Api::BaseController
 
   def view_profile
     profile_picture_url = rails_blob_url(current_user.profile_picture, only_path: true) if current_user&.profile_picture&.attached?
+    teams = current_user.team_users.includes(:team).map do |tu|
+      {
+        id: tu.team_id,
+        name: tu.team.name,
+        role: tu.role,
+        status: tu.status
+      }
+    end
+    projects = current_user.project_users.includes(:project).map do |pu|
+      {
+        id: pu.project_id,
+        name: pu.project.name,
+        role: pu.role,
+        status: pu.status
+      }
+    end
     render json: {
       user: current_user.as_json(include: { roles: { only: [:name] } })
-                      .merge(profile_picture: profile_picture_url)
+                      .merge(profile_picture: profile_picture_url),
+      teams: teams,
+      projects: projects
     }
   end
 

@@ -6,6 +6,8 @@ const Profile = () => {
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({
     first_name: "",
@@ -18,6 +20,8 @@ const Profile = () => {
     try {
       const { data } = await fetchUserInfo();
       setUser(data.user);
+      setTeams(Array.isArray(data.teams) ? data.teams : []);
+      setProjects(Array.isArray(data.projects) ? data.projects : []);
       setFormData({
         first_name: data.user.first_name,
         last_name: data.user.last_name,
@@ -216,7 +220,41 @@ const Profile = () => {
                   )}
                 </>
               ) : (
-                <p className="text-center text-gray-500 py-8">No tasks assigned.</p>
+              <p className="text-center text-gray-500 py-8">No tasks assigned.</p>
+              )}
+            </div>
+
+            {/* Teams Section */}
+            <div className="mt-12">
+              <h2 className="text-2xl font-bold text-gray-700 mb-6">My Teams</h2>
+              {teams.length > 0 ? (
+                <ul className="list-disc list-inside space-y-2">
+                  {teams.map((team) => (
+                    <li key={team.id}>
+                      {team.name}{" "}
+                      <span className="text-sm text-gray-500">({team.role})</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-center text-gray-500 py-8">No team memberships.</p>
+              )}
+            </div>
+
+            {/* Projects Section */}
+            <div className="mt-12">
+              <h2 className="text-2xl font-bold text-gray-700 mb-6">My Projects</h2>
+              {projects.length > 0 ? (
+                <ul className="list-disc list-inside space-y-2">
+                  {projects.map((project) => (
+                    <li key={project.id}>
+                      {project.name}{" "}
+                      <span className="text-sm text-gray-500">({project.role})</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-center text-gray-500 py-8">No projects assigned.</p>
               )}
             </div>
           </div>
