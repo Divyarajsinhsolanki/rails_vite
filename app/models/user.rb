@@ -6,8 +6,8 @@ class User < ApplicationRecord
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable, :confirmable
 
-  enum status: { new: "new", active: "active", locked: "locked" }, _default: "new"
-
+  enum status: {invited: "invited", active: "active", locked: "locked"}, _default: "invited"
+        
   after_confirmation :activate!
 
   has_one_attached :profile_picture

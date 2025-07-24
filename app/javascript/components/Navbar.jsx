@@ -11,7 +11,7 @@ const Navbar = () => {
       <div className="container mx-auto flex justify-between items-center py-3 px-4">
         <Link to="/" className="flex items-center space-x-3">
           <img src={logo} alt="Logo" className="h-10 w-auto" />
-          <h1 className="text-2xl font-semibold text-indigo-700">MyApp</h1>
+          <h1 className="text-2xl font-semibold text-indigo-700">Work Dashboard</h1>
         </Link>
 
           <nav className="flex items-center gap-6">
