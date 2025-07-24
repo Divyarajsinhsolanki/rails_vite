@@ -45,7 +45,8 @@ api.interceptors.response.use(
 // SCHEDULER ENDPOINTS
 export const SchedulerAPI = {
   // Sprints
-  getLastSprint: () => api.get("/sprints/last.json"),
+  getLastSprint: (projectId) =>
+    api.get("/sprints/last.json", { params: projectId ? { project_id: projectId } : {} }),
   getSprints: (projectId) =>
     api.get("/sprints.json", { params: projectId ? { project_id: projectId } : {} }),
   createSprint: (projectId, data) =>

@@ -217,7 +217,7 @@ function TaskCell({ date, devId, tasksInCell, setEditingTask, handleTaskUpdate, 
   );
 }
 
-function Scheduler({ sprintId }) {
+function Scheduler({ sprintId, projectId }) {
   const [sprint, setSprint] = useState(null);
   const [developers, setDevelopers] = useState([]);
   const [tasks, setTasks] = useState([]); // will hold task logs
@@ -242,7 +242,7 @@ function Scheduler({ sprintId }) {
 
   useEffect(() => {
     if (sprintId) {
-      SchedulerAPI.getSprints()
+      SchedulerAPI.getSprints(projectId)
         .then(res => {
           const found = res.data.find(s => s.id === sprintId);
           if (found) setSprint(found);
@@ -250,14 +250,14 @@ function Scheduler({ sprintId }) {
         .catch(() => setError("Could not load sprint"))
         .finally(() => setLoading(l => ({ ...l, sprint: false })));
     } else {
-      SchedulerAPI.getLastSprint()
+      SchedulerAPI.getLastSprint(projectId)
         .then(res => { setSprint(res.data); setLoading(l => ({ ...l, sprint: false })); })
         .catch(() => {
           setError("Could not load sprint");
           setLoading(l => ({ ...l, sprint: false }));
         });
     }
-  }, [sprintId]);
+  }, [sprintId, projectId]);
 
   useEffect(() => {
     const params = sprintId ? { sprint_id: sprintId } : {};
