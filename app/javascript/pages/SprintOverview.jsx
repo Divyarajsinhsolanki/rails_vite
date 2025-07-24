@@ -502,7 +502,12 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId }) => {
     const [processing, setProcessing] = useState(false);
 
     useEffect(() => {
-        if (sprintId) setSelectedSprintId(sprintId);
+        // keep local state in sync with sprintId prop
+        if (sprintId) {
+            setSelectedSprintId(sprintId);
+        } else {
+            setSelectedSprintId(null);
+        }
     }, [sprintId]);
     const [showTaskModal, setShowTaskModal] = useState(false);
     const [currentTask, setCurrentTask] = useState(null);
@@ -551,7 +556,10 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId }) => {
     }, [selectedSprintId]);
 
     useEffect(() => {
-        if (selectedSprintId === null) return;
+        if (selectedSprintId === null) {
+            setTasks([]);
+            return;
+        }
         SchedulerAPI.getTasks({ sprint_id: selectedSprintId }).then(res => {
             const mapped = res.data.map(mapTask);
             setTasks(mapped);
