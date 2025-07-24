@@ -70,6 +70,7 @@ Rails.application.routes.draw do
         post 'import_backlog'
       end
     end
+    resources :teams, only: [:index, :create, :update, :destroy]
     resources :task_logs, only: [:index, :create, :update, :destroy]
 
     resources :items, only: [:index, :create, :update, :destroy]

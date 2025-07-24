@@ -12,6 +12,7 @@ import Profile from "../components/Profile";
 import KnowledgeDashboard from "../pages/KnowledgeDashboard";
 import Admin from '../components/Admin/Admin';
 import Users from "../pages/Users";
+import Teams from "../pages/Teams";
 import Contact from "../pages/Contact";
 import Weather from "../pages/Weather";
 import Vault from "../pages/Vault";
@@ -47,6 +48,7 @@ const App = () => {
               <Route path="/vault" element={<PrivateRoute><MainLayout><Vault /></MainLayout></PrivateRoute>} />
               <Route path="/profile" element={<PrivateRoute><MainLayout><Profile /></MainLayout></PrivateRoute>} />
               <Route path="/knowledge" element={<PrivateRoute><MainLayout><KnowledgeDashboard /></MainLayout></PrivateRoute>} />
+              <Route path="/teams" element={<PrivateRoute><MainLayout><Teams /></MainLayout></PrivateRoute>} />
               <Route path="/sprint_dashboard" element={<PrivateRoute><MainLayout><SprintDashboard /></MainLayout></PrivateRoute>} />
               <Route path="/users" element={<PrivateRoute ownerOnly><MainLayout><Users /></MainLayout></PrivateRoute>} />
               <Route path="/admin" element={<PrivateRoute ownerOnly><MainLayout><Admin /></MainLayout></PrivateRoute>} />
