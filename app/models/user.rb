@@ -10,6 +10,12 @@ class User < ApplicationRecord
   has_many :posts, dependent: :destroy
   has_many :tasks, foreign_key: :assigned_to_user
   has_many :items
+  has_many :team_users, dependent: :destroy
+  has_many :teams, through: :team_users
+  has_many :user_roles, dependent: :destroy
+  has_many :roles, through: :user_roles
+  has_many :project_users, dependent: :destroy
+  has_many :projects, through: :project_users
 
   validates :first_name, presence: true
   validates :last_name, presence: true
