@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_01_003000) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_01_004000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -112,10 +112,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_01_003000) do
     t.datetime "updated_at", null: false
     t.string "status", default: "todo"
     t.integer "progress", default: 0
-    t.integer "project_id"
     t.integer "created_by"
     t.integer "updated_by"
+    t.bigint "project_id", null: false
     t.index ["end_date"], name: "index_sprints_on_end_date"
+    t.index ["project_id"], name: "index_sprints_on_project_id"
     t.index ["start_date"], name: "index_sprints_on_start_date"
   end
 
@@ -218,6 +219,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_01_003000) do
   add_foreign_key "project_users", "projects"
   add_foreign_key "project_users", "users"
   add_foreign_key "projects", "users", column: "owner_id"
+  add_foreign_key "sprints", "projects"
   add_foreign_key "task_logs", "developers"
   add_foreign_key "task_logs", "tasks"
   add_foreign_key "tasks", "developers"
