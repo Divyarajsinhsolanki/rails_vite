@@ -5,8 +5,17 @@ import { AuthContext } from "../context/AuthContext";
 import { FiPlus, FiEdit, FiTrash2, FiUsers, FiSearch, FiX, FiUserPlus, FiChevronRight } from 'react-icons/fi';
 
 // A small utility component for user avatars
-const Avatar = ({ name }) => {
-  const initial = name ? name.charAt(0).toUpperCase() : '?';
+const Avatar = ({ name, src }) => {
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        className="w-8 h-8 rounded-full mr-3 object-cover"
+      />
+    );
+  }
+  const initial = name ? name.charAt(0).toUpperCase() : "?";
   return (
     <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm mr-3">
       {initial}
@@ -245,7 +254,7 @@ const Teams = () => {
                             {selectedTeam.users.map((member) => (
                                 <li key={member.team_user_id} className="flex justify-between items-center">
                                     <div className="flex items-center">
-                                        <Avatar name={member.name} />
+                                        <Avatar name={member.name} src={member.profile_picture} />
                                         <div>
                                             <p className="font-medium text-slate-800">{member.name || "Invited User"}</p>
                                             <p className="text-sm text-slate-500 capitalize">{member.role}</p>
