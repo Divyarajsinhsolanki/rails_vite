@@ -75,7 +75,9 @@ class Api::AuthController < Api::BaseController
   private
 
   def user_params
-    params.require(:auth).permit(:first_name, :last_name, :date_of_birth, :email, :password, :uid, :profile_picture)
+    permitted = params.require(:auth).permit(:first_name, :last_name, :date_of_birth, :email, :password, :uid, :profile_picture)
+    permitted.delete(:profile_picture) if permitted[:profile_picture] == "null"
+    permitted
   end
 
   def verify_firebase_token(token)
