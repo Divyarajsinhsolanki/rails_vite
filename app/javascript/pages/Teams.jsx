@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useContext } from "react";
 import { fetchTeams, createTeam, updateTeam, deleteTeam, addTeamUser, deleteTeamUser } from "../components/api";
+import UserMultiSelect from "../components/UserMultiSelect";
 import { AuthContext } from "../context/AuthContext";
 // Import icons (e.g., from Feather Icons)
-import { FiPlus, FiEdit, FiTrash2, FiUsers, FiSearch, FiX, FiUserPlus, FiChevronRight } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiUsers, FiSearch, FiUserPlus, FiChevronRight } from 'react-icons/fi';
 
 // A small utility component for user avatars
 const Avatar = ({ name, src }) => {
@@ -38,7 +39,8 @@ const Teams = () => {
   const [teamForm, setTeamForm] = useState({ name: "", description: "" });
   const [editingId, setEditingId] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [memberForm, setMemberForm] = useState({ user_id: "", role: "member" });
+  const [memberForm, setMemberForm] = useState({ role: "member" });
+  const [selectedUsersToAdd, setSelectedUsersToAdd] = useState([]);
 
   // Data Fetching
   const loadTeams = async () => {
@@ -67,7 +69,7 @@ const Teams = () => {
 
   // Event Handlers
   const handleFormChange = (e) => setTeamForm({ ...teamForm, [e.target.name]: e.target.value });
-  const handleMemberFormChange = (e) => setMemberForm({ ...memberForm, [e.target.name]: e.target.value });
+  const handleRoleChange = (e) => setMemberForm({ ...memberForm, role: e.target.value });
 
   const resetAndCloseForms = () => {
     setEditingId(null);
@@ -123,11 +125,16 @@ const Teams = () => {
 
   const handleAddMember = async (e) => {
     e.preventDefault();
-    if (!memberForm.user_id) return;
+    if (selectedUsersToAdd.length === 0) return;
     try {
-      await addTeamUser({ ...memberForm, team_id: selectedTeamId });
-      setMemberForm({ user_id: "", role: "member" }); // Reset form
-      await loadTeams(); // Refresh data
+      await Promise.all(
+        selectedUsersToAdd.map((u) =>
+          addTeamUser({ team_id: selectedTeamId, user_id: u.id, role: memberForm.role })
+        )
+      );
+      setSelectedUsersToAdd([]);
+      setMemberForm({ role: "member" });
+      await loadTeams();
     } catch (err) {
       console.error("Failed to add member:", err);
     }
@@ -270,12 +277,12 @@ const Teams = () => {
                         {canManageMembers && (
                             <form onSubmit={handleAddMember} className="mt-6 pt-6 border-t border-slate-200 flex items-end gap-3">
                                 <div className="flex-grow">
-                                    <label htmlFor="user_id" className="block text-sm font-medium text-slate-700 mb-1">User ID</label>
-                                    <input id="user_id" name="user_id" value={memberForm.user_id} onChange={handleMemberFormChange} placeholder="Enter User ID" className="w-full border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Users</label>
+                                    <UserMultiSelect selectedUsers={selectedUsersToAdd} setSelectedUsers={setSelectedUsersToAdd} />
                                 </div>
                                 <div>
                                     <label htmlFor="role" className="block text-sm font-medium text-slate-700 mb-1">Role</label>
-                                    <select name="role" value={memberForm.role} onChange={handleMemberFormChange} className="border border-slate-300 rounded-md p-2 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                                    <select name="role" value={memberForm.role} onChange={handleRoleChange} className="border border-slate-300 rounded-md p-2 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
                                         <option value="admin">Admin</option>
                                         <option value="member">Member</option>
                                         <option value="viewer">Viewer</option>
