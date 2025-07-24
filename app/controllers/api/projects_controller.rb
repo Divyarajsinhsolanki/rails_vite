@@ -1,0 +1,63 @@
+class Api::ProjectsController < Api::BaseController
+  before_action :set_project, only: [:update, :destroy]
+  before_action :authorize_owner!, only: [:create, :update, :destroy]
+
+  def index
+    projects = Project.includes(project_users: :user).order(:name)
+    render json: projects.map { |p| serialize_project(p) }
+  end
+
+  def create
+    project = Project.new(project_params)
+    project.owner ||= current_user
+    if project.save
+      render json: serialize_project(project), status: :created
+    else
+      render json: { errors: project.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  def update
+    if @project.update(project_params)
+      render json: serialize_project(@project)
+    else
+      render json: { errors: @project.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  def destroy
+    @project.destroy
+    head :no_content
+  end
+
+  private
+
+  def set_project
+    @project = Project.find(params[:id])
+  end
+
+  def project_params
+    params.require(:project).permit(:name, :description)
+  end
+
+  def authorize_owner!
+    head :forbidden unless current_user&.owner?
+  end
+
+  def serialize_project(project)
+    {
+      id: project.id,
+      name: project.name,
+      description: project.description,
+      users: project.project_users.map do |pu|
+        {
+          id: pu.user_id,
+          project_user_id: pu.id,
+          name: [pu.user.first_name, pu.user.last_name].compact.join(' '),
+          role: pu.role,
+          status: pu.status
+        }
+      end
+    }
+  end
+end
