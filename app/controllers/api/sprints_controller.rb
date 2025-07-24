@@ -12,7 +12,12 @@ class Api::SprintsController < Api::BaseController
   end
 
   def last
-    sprint = Sprint.where("start_date <= ? AND end_date >= ?", Date.today, Date.today).first || Sprint.order(start_date: :desc).first
+    sprints = Sprint.all
+    sprints = sprints.where(project_id: params[:project_id]) if params[:project_id].present?
+
+    sprint = sprints.where("start_date <= ? AND end_date >= ?", Date.today, Date.today).first ||
+             sprints.order(start_date: :desc).first
+
     render json: sprint
   end
 
