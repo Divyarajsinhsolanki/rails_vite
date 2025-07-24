@@ -1,6 +1,6 @@
 class Api::TeamsController < Api::BaseController
   before_action :set_team, only: [:update, :destroy]
-  before_action :authorize_admin!, only: [:create, :update, :destroy]
+  before_action :authorize_owner!, only: [:create, :update, :destroy]
 
   def index
     teams = Team.includes(team_users: :user).order(:name)
@@ -40,10 +40,8 @@ class Api::TeamsController < Api::BaseController
     params.require(:team).permit(:name, :description)
   end
 
-  def authorize_admin!
-    unless current_user&.owner? || current_user&.admin?
-      head :forbidden
-    end
+  def authorize_owner!
+    head :forbidden unless current_user&.owner?
   end
 
   def serialize_team(team)
@@ -54,8 +52,10 @@ class Api::TeamsController < Api::BaseController
       users: team.team_users.map do |tu|
         {
           id: tu.user_id,
+          team_user_id: tu.id,
           name: [tu.user.first_name, tu.user.last_name].compact.join(' '),
-          role: tu.role
+          role: tu.role,
+          status: tu.status
         }
       end
     }
