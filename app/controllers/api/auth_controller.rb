@@ -37,6 +37,8 @@ class Api::AuthController < Api::BaseController
       return render json: { error: "Email not verified" }, status: :unauthorized unless user.confirmed?
     end
 
+    return render json: { error: "Account locked" }, status: :unauthorized if user.locked?
+
     set_jwt_cookie!(user)
     render json: { message: "Login successful", user: user, exp: 15.minutes.from_now.to_i }
   end

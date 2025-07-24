@@ -6,6 +6,10 @@ class User < ApplicationRecord
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable, :confirmable
 
+  enum status: { new: "new", active: "active", locked: "locked" }, _default: "new"
+
+  after_confirmation :activate!
+
   has_one_attached :profile_picture
   has_many :posts, dependent: :destroy
   has_many :tasks, foreign_key: :assigned_to_user
@@ -17,4 +21,10 @@ class User < ApplicationRecord
   # This is a class attribute that will store the current user for the current request.
   # It needs to be thread-safe.
   cattr_accessor :current_user
+
+  private
+
+  def activate!
+    update_column(:status, "active")
+  end
 end
