@@ -6,6 +6,7 @@ class Api::SprintsController < Api::BaseController
       render json: sprint
     else
       sprints = Sprint.order(created_at: :desc)
+      sprints = sprints.where(project_id: params[:project_id]) if params[:project_id].present?
       render json: sprints
     end
   end
@@ -74,6 +75,6 @@ class Api::SprintsController < Api::BaseController
 
   private
   def sprint_params
-    params.require(:sprint).permit(:name, :start_date, :end_date)
+    params.require(:sprint).permit(:name, :start_date, :end_date, :project_id)
   end
 end

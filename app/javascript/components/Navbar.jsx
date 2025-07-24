@@ -1,10 +1,20 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { fetchProjects } from "./api";
 import logo from "../images/logo.webp";
 
 const Navbar = () => {
   const { user, handleLogout } = useContext(AuthContext);
+  const [projects, setProjects] = useState([]);
+
+  useEffect(() => {
+    if (!user) { setProjects([]); return; }
+    fetchProjects().then(({ data }) => {
+      const list = Array.isArray(data) ? data.filter(p => p.users.some(u => u.id === user.id)) : [];
+      setProjects(list);
+    });
+  }, [user]);
 
   return (
     <header className="bg-white shadow-md fixed top-0 w-full z-50">
@@ -21,7 +31,6 @@ const Navbar = () => {
                   "posts",
                   "weather",
                   "vault",
-                  "sprint_dashboard",
                   "projects",
                   "teams",
                   "knowledge",
@@ -46,6 +55,22 @@ const Navbar = () => {
                       {route.charAt(0).toUpperCase() + route.slice(1).replace("_", " ")}
                     </NavLink>
                   ))}
+
+                {projects.map((p) => (
+                  <NavLink
+                    key={`project-${p.id}`}
+                    to={`/projects/${p.id}/dashboard`}
+                    className={({ isActive }) =>
+                      `relative pb-1 text-gray-700 font-medium hover:text-indigo-600 transition ${
+                        isActive
+                          ? "after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-indigo-500"
+                          : ""
+                      }`
+                    }
+                  >
+                    {p.name} Dashboard
+                  </NavLink>
+                ))}
 
                 <button
                   onClick={handleLogout}

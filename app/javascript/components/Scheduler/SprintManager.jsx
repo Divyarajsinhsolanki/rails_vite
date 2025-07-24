@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FiEdit2, FiTrash2, FiPlus, FiX, FiCalendar, FiChevronLeft, FiChevronRight, FiAlertTriangle } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function SprintManager({ onSprintChange }) {
+export default function SprintManager({ onSprintChange, projectId }) {
   const [sprints, setSprints] = useState([]);
   const [currentSprint, setCurrentSprint] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -12,9 +12,10 @@ export default function SprintManager({ onSprintChange }) {
   const [deleteCandidate, setDeleteCandidate] = useState(null);
   const timelineRef = useRef(null);
 
-  // Load all sprints when component mounts
+  // Load all sprints when component mounts or project changes
   useEffect(() => {
-    fetch('/api/sprints.json')
+    const query = projectId ? `?project_id=${projectId}` : '';
+    fetch(`/api/sprints.json${query}`)
       .then(res => res.json())
       .then(data => {
         const sortedData = data?.sort((a, b) => new Date(a.start_date) - new Date(b.start_date)) || [];
@@ -33,7 +34,7 @@ export default function SprintManager({ onSprintChange }) {
       })
       .catch(err => console.error("Error fetching sprints:", err))
       .finally(() => setLoading(false));
-  }, []);
+  }, [projectId]);
 
   // Scroll to active sprint on load or change
   useEffect(() => {
@@ -53,7 +54,7 @@ export default function SprintManager({ onSprintChange }) {
     setIsSubmitting(true);
     const method = formData.id ? 'PATCH' : 'POST';
     const url = formData.id ? `/api/sprints/${formData.id}.json` : '/api/sprints.json';
-    const payload = { sprint: { name: formData.name, start_date: formData.start_date, end_date: formData.end_date } };
+    const payload = { sprint: { name: formData.name, start_date: formData.start_date, end_date: formData.end_date, project_id: projectId } };
 
     fetch(url, {
       method,
