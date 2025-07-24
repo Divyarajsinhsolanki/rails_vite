@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import { fetchProjects, createProject, updateProject, deleteProject, addProjectUser, deleteProjectUser } from "../components/api";
+import { fetchProjects, createProject, updateProject, deleteProject, addProjectUser, deleteProjectUser, getUsers } from "../components/api";
 import { AuthContext } from "../context/AuthContext";
 // Import icons (e.g., from Feather Icons)
 import { FiPlus, FiEdit, FiTrash2, FiUsers, FiSearch, FiX, FiUserPlus, FiChevronRight } from 'react-icons/fi';
@@ -24,12 +24,14 @@ const Projects = () => {
   const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [users, setUsers] = useState([]);
+  const [userSearch, setUserSearch] = useState("");
   
   // Form States
   const [projectForm, setProjectForm] = useState({ name: "", description: "" });
   const [editingId, setEditingId] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [memberForm, setMemberForm] = useState({ user_id: "", role: "member" });
+  const [memberForm, setMemberForm] = useState({ user_id: "", role: "collaborator" });
 
   // Data Fetching
   const loadProjects = async () => {
@@ -53,6 +55,15 @@ const Projects = () => {
 
   useEffect(() => {
     loadProjects();
+    const loadUsers = async () => {
+      try {
+        const { data } = await getUsers();
+        setUsers(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Failed to fetch users:", err);
+      }
+    };
+    loadUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -117,7 +128,7 @@ const Projects = () => {
     if (!memberForm.user_id) return;
     try {
       await addProjectUser({ ...memberForm, project_id: selectedProjectId });
-      setMemberForm({ user_id: "", role: "member" }); // Reset form
+      setMemberForm({ user_id: "", role: "collaborator" }); // Reset form
       await loadProjects(); // Refresh data
     } catch (err) {
       console.error("Failed to add member:", err);
@@ -139,6 +150,12 @@ const Projects = () => {
     `${t.name} ${t.users.map((u) => u.name).join(" ")}`
       .toLowerCase()
       .includes(searchQuery.toLowerCase())
+  );
+
+  const filteredUsers = users.filter((u) =>
+    `${u.first_name} ${u.last_name} ${u.email}`
+      .toLowerCase()
+      .includes(userSearch.toLowerCase())
   );
   
   const selectedProject = projects.find((t) => t.id === selectedProjectId);
@@ -261,14 +278,34 @@ const Projects = () => {
                         {canManageMembers && (
                             <form onSubmit={handleAddMember} className="mt-6 pt-6 border-t border-slate-200 flex items-end gap-3">
                                 <div className="flex-grow">
-                                    <label htmlFor="user_id" className="block text-sm font-medium text-slate-700 mb-1">User ID</label>
-                                    <input id="user_id" name="user_id" value={memberForm.user_id} onChange={handleMemberFormChange} placeholder="Enter User ID" className="w-full border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+                                    <label htmlFor="user_search" className="block text-sm font-medium text-slate-700 mb-1">Find User</label>
+                                    <input
+                                        id="user_search"
+                                        value={userSearch}
+                                        onChange={(e) => setUserSearch(e.target.value)}
+                                        placeholder="Search users..."
+                                        className="w-full border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                    />
+                                    <select
+                                        name="user_id"
+                                        value={memberForm.user_id}
+                                        onChange={handleMemberFormChange}
+                                        className="w-full mt-2 border border-slate-300 rounded-md p-2 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                    >
+                                        <option value="">Select user</option>
+                                        {filteredUsers.map((u) => (
+                                            <option key={u.id} value={u.id}>
+                                                {`${u.first_name} ${u.last_name}`.trim() || u.email}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div>
                                     <label htmlFor="role" className="block text-sm font-medium text-slate-700 mb-1">Role</label>
                                     <select name="role" value={memberForm.role} onChange={handleMemberFormChange} className="border border-slate-300 rounded-md p-2 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
-                                        <option value="admin">Admin</option>
-                                        <option value="member">Member</option>
+                                        <option value="owner">Owner</option>
+                                        <option value="manager">Manager</option>
+                                        <option value="collaborator">Collaborator</option>
                                         <option value="viewer">Viewer</option>
                                     </select>
                                 </div>
