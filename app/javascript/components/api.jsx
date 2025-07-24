@@ -104,6 +104,9 @@ export const fetchTeams = () => api.get('/teams.json');
 export const createTeam = (data) => api.post('/teams.json', { team: data });
 export const updateTeam = (id, data) => api.patch(`/teams/${id}.json`, { team: data });
 export const deleteTeam = (id) => api.delete(`/teams/${id}.json`);
+export const addTeamUser = (data) => api.post('/team_users.json', { team_user: data });
+export const updateTeamUser = (id, data) => api.patch(`/team_users/${id}.json`, { team_user: data });
+export const deleteTeamUser = (id) => api.delete(`/team_users/${id}.json`);
 
 export const getTables = () => api.get('/admin/tables');
 export const getMeta = (table) => api.get(`/admin_meta/${table}`);
