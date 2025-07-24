@@ -48,8 +48,8 @@ const App = () => {
               <Route path="/profile" element={<PrivateRoute><MainLayout><Profile /></MainLayout></PrivateRoute>} />
               <Route path="/knowledge" element={<PrivateRoute><MainLayout><KnowledgeDashboard /></MainLayout></PrivateRoute>} />
               <Route path="/sprint_dashboard" element={<PrivateRoute><MainLayout><SprintDashboard /></MainLayout></PrivateRoute>} />
-              <Route path="/users" element={<PrivateRoute><MainLayout><Users /></MainLayout></PrivateRoute>} />
-              <Route path="/admin" element={<PrivateRoute><MainLayout><Admin /></MainLayout></PrivateRoute>} />
+              <Route path="/users" element={<PrivateRoute ownerOnly><MainLayout><Users /></MainLayout></PrivateRoute>} />
+              <Route path="/admin" element={<PrivateRoute ownerOnly><MainLayout><Admin /></MainLayout></PrivateRoute>} />
               </Routes>
 
           {/* ✅ Footer */}

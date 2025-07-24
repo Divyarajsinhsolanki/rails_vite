@@ -17,19 +17,33 @@ const Navbar = () => {
           <nav className="flex items-center gap-6">
             {user ? (
               <>
-                {["posts", "weather", "vault", "sprint_dashboard", "knowledge", "profile", "users", "admin", "contact"].map((route) => (
-                  <NavLink
-                    key={route}
-                    to={`/${route}`}
-                    className={({ isActive }) =>
-                      `relative pb-1 text-gray-700 font-medium hover:text-indigo-600 transition ${
-                        isActive ? "after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-indigo-500" : ""
-                      }`
-                    }
-                  >
-                    {route.charAt(0).toUpperCase() + route.slice(1).replace("_", " ")}
-                  </NavLink>
-                ))}
+                {[
+                  "posts",
+                  "weather",
+                  "vault",
+                  "sprint_dashboard",
+                  "knowledge",
+                  "profile",
+                  "contact",
+                  user.roles?.some((r) => r.name === "owner") && "users",
+                  user.roles?.some((r) => r.name === "owner") && "admin",
+                ]
+                  .filter(Boolean)
+                  .map((route) => (
+                    <NavLink
+                      key={route}
+                      to={`/${route}`}
+                      className={({ isActive }) =>
+                        `relative pb-1 text-gray-700 font-medium hover:text-indigo-600 transition ${
+                          isActive
+                            ? "after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-indigo-500"
+                            : ""
+                        }`
+                      }
+                    >
+                      {route.charAt(0).toUpperCase() + route.slice(1).replace("_", " ")}
+                    </NavLink>
+                  ))}
 
                 <button
                   onClick={handleLogout}
