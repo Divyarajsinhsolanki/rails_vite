@@ -9,7 +9,7 @@ class Api::AuthController < Api::BaseController
     end
 
     if user.save
-      render json: { message: "User created successfully", user: user }, status: :created
+      render json: { message: "User created successfully. Please check your email to verify your account.", user: user }, status: :created
     else
       render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
     end
@@ -34,6 +34,7 @@ class Api::AuthController < Api::BaseController
     else
       user = User.find_by(email: params[:auth][:email])
       return render json: { error: "Invalid credentials" }, status: :unauthorized unless user&.valid_password?(params[:auth][:password])
+      return render json: { error: "Email not verified" }, status: :unauthorized unless user.confirmed?
     end
 
     set_jwt_cookie!(user)
