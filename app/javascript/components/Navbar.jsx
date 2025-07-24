@@ -40,10 +40,18 @@ const Navbar = () => {
               </>
             ) : (
               <>
-                <NavLink to="/login" className="text-gray-700 font-medium hover:text-indigo-600 transition">
+                <NavLink
+                  to="/"
+                  state={{ mode: "login" }}
+                  className="text-gray-700 font-medium hover:text-indigo-600 transition"
+                >
                   Login
                 </NavLink>
-                <NavLink to="/signup" className="text-gray-700 font-medium hover:text-indigo-600 transition">
+                <NavLink
+                  to="/"
+                  state={{ mode: "signup" }}
+                  className="text-gray-700 font-medium hover:text-indigo-600 transition"
+                >
                   Sign Up
                 </NavLink>
               </>

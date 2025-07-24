@@ -1,10 +1,10 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import submitForm from "../utils/formSubmit";
 import { Toaster, toast } from "react-hot-toast";
 
-const Signup = () => {
+const Signup = ({ switchToLogin }) => {
   const { handleSignup, handleGoogleLogin } = useContext(AuthContext);
   const [formData, setFormData] = useState({
     first_name: "",
@@ -38,7 +38,8 @@ const Signup = () => {
 
     try {
       await submitForm("/api/signup", "POST", submissionData);
-      navigate("/login")
+      if (switchToLogin) switchToLogin();
+      else navigate("/", { state: { mode: "login" } });
       toast.success("Account created. Please log in.");
     } catch (err) {
       const msg = err.response?.data?.errors?.join(", ") || "Signup failed. Please try again.";
@@ -151,12 +152,13 @@ const Signup = () => {
 
         <p className="mt-6 text-center text-gray-600">
           Already have an account?{" "}
-          <Link 
-            to="/login" 
+          <button
+            type="button"
+            onClick={switchToLogin}
             className="text-blue-500 hover:text-blue-600 font-medium transition-colors"
           >
             Log in
-          </Link>
+          </button>
         </p>
       </div>
     </div>
