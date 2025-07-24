@@ -275,7 +275,7 @@ const Teams = () => {
                                             {member.email && (
                                               <p className="text-sm text-slate-500">Email: {member.email}</p>
                                             )}
-                                            <p className="text-sm text-slate-500">Department: ROR</p>
+                                            <p className="text-sm text-slate-500">Team: {selectedTeam.name}</p>
                                         </div>
                                     </div>
                                     {canManageMembers && user.id !== member.id && (
