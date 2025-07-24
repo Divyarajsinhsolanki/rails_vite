@@ -22,6 +22,7 @@ const Navbar = () => {
                   "weather",
                   "vault",
                   "sprint_dashboard",
+                  "teams",
                   "knowledge",
                   "profile",
                   "contact",

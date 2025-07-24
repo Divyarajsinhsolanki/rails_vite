@@ -99,6 +99,12 @@ export const createItem = (d) => api.post('/items.json', { item: d });
 export const updateItem = (id, d) => api.patch(`/items/${id}.json`, { item: d });
 export const deleteItem = (id) => api.delete(`/items/${id}.json`);
 
+// TEAM ENDPOINTS
+export const fetchTeams = () => api.get('/teams.json');
+export const createTeam = (data) => api.post('/teams.json', { team: data });
+export const updateTeam = (id, data) => api.patch(`/teams/${id}.json`, { team: data });
+export const deleteTeam = (id) => api.delete(`/teams/${id}.json`);
+
 export const getTables = () => api.get('/admin/tables');
 export const getMeta = (table) => api.get(`/admin_meta/${table}`);
 export const getRecords = (table) => api.get(`/admin/${table}`);
