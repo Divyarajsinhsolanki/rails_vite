@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { CalendarDaysIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import SprintOverview from './SprintOverview';
 import Scheduler from '../components/Scheduler/Scheduler';
@@ -24,6 +25,7 @@ const formatDateRange = (start, end) => {
 };
 
 export default function SprintDashboard() {
+  const { projectId } = useParams();
   const [activeTab, setActiveTab] = useState('overview');
   const [sprintId, setSprintId] = useState(null);
   const [sprint, setSprint] = useState(null);
@@ -32,7 +34,8 @@ export default function SprintDashboard() {
 
   // Load all sprints on mount and select the current one
   useEffect(() => {
-    fetch('/api/sprints.json')
+    const query = projectId ? `?project_id=${projectId}` : '';
+    fetch(`/api/sprints.json${query}`)
       .then(res => res.json())
       .then(data => {
         setSprints(data || []);
@@ -49,7 +52,7 @@ export default function SprintDashboard() {
           }
         }
       });
-  }, []);
+  }, [projectId]);
 
   const isCurrentSprint = (s) => {
     if (!s) return false;
@@ -155,7 +158,7 @@ export default function SprintDashboard() {
           </div>
         </div>
         <div className={`mt-4 border-t border-gray-200 pt-4 ${isHeaderExpanded ? '' : 'hidden'}`}>
-          <SprintManager onSprintChange={handleSprintChange} />
+          <SprintManager onSprintChange={handleSprintChange} projectId={projectId} />
         </div>
       </header>
       {activeTab === 'overview' && (
