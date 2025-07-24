@@ -30,13 +30,6 @@ const Navbar = () => {
                 {[
                   "posts",
                   "vault",
-                  "projects",
-                  "teams",
-                  "knowledge",
-                  "profile",
-                  "contact",
-                  user.roles?.some((r) => r.name === "owner") && "users",
-                  user.roles?.some((r) => r.name === "owner") && "admin",
                 ]
                   .filter(Boolean)
                   .map((route) => (
@@ -67,9 +60,35 @@ const Navbar = () => {
                       }`
                     }
                   >
-                    {p.name} Dashboard
+                    {p.name} board
                   </NavLink>
                 ))}
+
+                {[
+                  "projects",
+                  "teams",
+                  "knowledge",
+                  "profile",
+                  "contact",
+                  user.roles?.some((r) => r.name === "owner") && "users",
+                  user.roles?.some((r) => r.name === "owner") && "admin",
+                ]
+                  .filter(Boolean)
+                  .map((route) => (
+                    <NavLink
+                      key={route}
+                      to={`/${route}`}
+                      className={({ isActive }) =>
+                        `relative pb-1 text-gray-700 font-medium hover:text-indigo-600 transition ${
+                          isActive
+                            ? "after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-indigo-500"
+                            : ""
+                        }`
+                      }
+                    >
+                      {route.charAt(0).toUpperCase() + route.slice(1).replace("_", " ")}
+                    </NavLink>
+                  ))}
 
                 <button
                   onClick={handleLogout}

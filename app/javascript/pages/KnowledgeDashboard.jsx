@@ -24,10 +24,9 @@ export default function KnowledgeDashboard() {
       <header className="mb-8 text-center max-w-3xl mx-auto">
         <h1 className="text-4xl font-black tracking-tight mb-1">📚 Knowledge Dashboard</h1>
         <p className="text-md text-gray-600 dark:text-gray-400">Curated daily intelligence at a glance</p>
-        {/* Add dark mode toggle & date picker here */}
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-8xl mx-auto">
         <div className="lg:col-span-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <AnimatedCard><TodayInHistoryCard /></AnimatedCard>
