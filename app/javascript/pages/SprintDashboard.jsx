@@ -43,8 +43,12 @@ export default function SprintDashboard() {
     });
   }, [projectId]);
 
-  // Load all sprints on mount and select the current one
+  // Load sprints when project changes and select the active one
   useEffect(() => {
+    setSprint(null);
+    setSprintId(null);
+    setSprints([]);
+
     const query = projectId ? `?project_id=${projectId}` : '';
     fetch(`/api/sprints.json${query}`)
       .then(res => res.json())
@@ -57,9 +61,10 @@ export default function SprintDashboard() {
             const end = new Date(s.end_date);
             return today >= start && today <= end;
           });
-          if (current) {
-            setSprint(current);
-            setSprintId(current.id);
+          const selected = current || data[0];
+          if (selected) {
+            setSprint(selected);
+            setSprintId(selected.id);
           }
         }
       });
