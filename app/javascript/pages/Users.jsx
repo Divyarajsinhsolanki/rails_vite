@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { getUsers, deleteUser, updateUser } from "../components/api";
 
+const ROLE_OPTIONS = ["owner", "admin", "member"];
+
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
@@ -11,6 +13,7 @@ const Users = () => {
     email: "",
     date_of_birth: "",
     profile_picture: null,
+    roles: [],
   });
   const [userToDelete, setUserToDelete] = useState(null);
 
@@ -36,6 +39,7 @@ const Users = () => {
       email: user.email || "",
       date_of_birth: user.date_of_birth || "",
       profile_picture: null,
+      roles: user.roles || [],
     });
   };
 
@@ -51,6 +55,15 @@ const Users = () => {
     }));
   };
 
+  const handleRoleChange = (role) => {
+    setFormData((prev) => {
+      const roles = prev.roles.includes(role)
+        ? prev.roles.filter((r) => r !== role)
+        : [...prev.roles, role];
+      return { ...prev, roles };
+    });
+  };
+
   const handleUpdate = async (e) => {
     e.preventDefault();
     if (!editingId) return;
@@ -63,6 +76,7 @@ const Users = () => {
       if (formData.profile_picture) {
         data.append("user[profile_picture]", formData.profile_picture);
       }
+      formData.roles.forEach((r) => data.append("user[role_names][]", r));
       await updateUser(editingId, data);
       setEditingId(null);
       fetchUsers();
@@ -117,6 +131,18 @@ const Users = () => {
                   <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" className={inputBaseStyle} required />
                   <input type="date" name="date_of_birth" value={formData.date_of_birth || ''} onChange={handleChange} className={`${inputBaseStyle} text-gray-500`} />
                   <input type="file" name="profile_picture" onChange={handleChange} className="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-200 file:text-blue-700 hover:file:bg-blue-300" accept="image/*" />
+                  <div className="flex justify-center space-x-4">
+                    {ROLE_OPTIONS.map((role) => (
+                      <label key={role} className="flex items-center space-x-1">
+                        <input
+                          type="checkbox"
+                          checked={formData.roles.includes(role)}
+                          onChange={() => handleRoleChange(role)}
+                        />
+                        <span className="text-sm capitalize">{role}</span>
+                      </label>
+                    ))}
+                  </div>
                   
                   <div className="flex justify-center space-x-3 mt-2">
                     <button type="submit" className={`${buttonBaseStyle} bg-gradient-to-br from-green-400 to-teal-500 focus:ring-green-400/50`}>Update</button>
@@ -139,9 +165,12 @@ const Users = () => {
                   </h2>
                   <p className="text-blue-600 text-sm mb-1">{user.email}</p>
                   {user.date_of_birth && (
-                    <p className="text-gray-500 text-xs mb-4">
+                    <p className="text-gray-500 text-xs mb-1">
                       Born: {new Date(user.date_of_birth).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
+                  )}
+                  {user.roles && (
+                    <p className="text-gray-500 text-xs mb-4">Roles: {user.roles.join(', ')}</p>
                   )}
                   <div className="flex space-x-3 mt-auto pt-4">
                     <button onClick={() => handleEdit(user)} className={`${buttonBaseStyle} bg-gradient-to-br from-sky-500 to-indigo-500 focus:ring-sky-500/50`}>Edit</button>

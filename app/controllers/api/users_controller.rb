@@ -11,8 +11,11 @@ class Api::UsersController < Api::BaseController
 
   # PATCH /api/users/:id.json
   def update
+    role_names = params[:user].delete(:role_names) if params[:user]
+
     if @user.update(user_params)
-      render json: @user
+      @user.roles = Role.where(name: role_names) if role_names
+      render json: serialize_user(@user)
     else
       render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
     end
@@ -51,7 +54,8 @@ class Api::UsersController < Api::BaseController
       last_name: user.last_name,
       date_of_birth: user.date_of_birth,
       profile_picture: user.profile_picture.attached? ?
-        rails_blob_url(user.profile_picture, only_path: true) : nil
+        rails_blob_url(user.profile_picture, only_path: true) : nil,
+      roles: user.roles.pluck(:name)
     }
   end
 
