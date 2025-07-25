@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FiEdit2, FiTrash2, FiPlus, FiX, FiCalendar, FiChevronLeft, FiChevronRight, FiAlertTriangle } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function SprintManager({ onSprintChange, projectId }) {
+export default function SprintManager({ onSprintChange, projectId, projectName }) {
   const [sprints, setSprints] = useState([]);
   const [currentSprint, setCurrentSprint] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -155,7 +155,9 @@ export default function SprintManager({ onSprintChange, projectId }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">MyForms Timeline</h2>
+          <h2 className="text-2xl font-bold text-slate-900">
+            {projectName ? `${projectName} Timeline` : 'Project Timeline'}
+          </h2>
           <p className="text-slate-500 mt-1">Select a sprint to view its details and tasks.</p>
         </div>
         <motion.button

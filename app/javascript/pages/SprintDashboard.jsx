@@ -182,7 +182,11 @@ export default function SprintDashboard() {
           </div>
         </div>
         <div className={`mt-4 border-t border-gray-200 pt-4 ${isHeaderExpanded ? '' : 'hidden'}`}>
-          <SprintManager onSprintChange={handleSprintChange} projectId={projectId} />
+          <SprintManager
+            onSprintChange={handleSprintChange}
+            projectId={projectId}
+            projectName={project?.name}
+          />
         </div>
       </header>
       {activeTab === 'overview' && (
