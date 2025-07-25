@@ -190,6 +190,13 @@ const Projects = () => {
       .includes(searchQuery.toLowerCase())
   );
 
+  const groupedProjects = filteredProjects.reduce((acc, project) => {
+    const status = project.status || 'running';
+    acc[status] = acc[status] || [];
+    acc[status].push(project);
+    return acc;
+  }, {});
+
   
   const selectedProject = projects.find((t) => t.id === selectedProjectId);
   const isFormVisible = isCreating || editingId;
@@ -223,22 +230,34 @@ const Projects = () => {
           {isLoading ? (
             <p className="p-4 text-slate-500">Loading projects...</p>
           ) : filteredProjects.length > 0 ? (
-            <ul>
-              {filteredProjects.map((project) => (
-                <li key={project.id}>
-                  <button
-                    onClick={() => handleSelectProject(project.id)}
-                    className={`w-full text-left flex items-center justify-between p-4 border-b border-slate-100 transition-colors ${selectedProjectId === project.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-slate-100'}`}
-                  >
-                    <div>
-                        <p className="font-semibold">{project.name}</p>
-                        <p className="text-xs text-slate-500">{project.users.length} member(s)</p>
-                    </div>
-                    <FiChevronRight className={`transition-transform ${selectedProjectId === project.id ? 'translate-x-1' : ''}`} />
-                  </button>
-                </li>
-              ))}
-            </ul>
+            ['upcoming', 'running', 'completed'].map((status) => (
+              groupedProjects[status] && groupedProjects[status].length > 0 && (
+                <div key={status}>
+                  <h3 className="px-4 pt-4 pb-2 text-xs font-semibold text-slate-500 uppercase">
+                    {status}
+                  </h3>
+                  <ul>
+                    {groupedProjects[status].map((project) => (
+                      <li key={project.id}>
+                        <button
+                          onClick={() => handleSelectProject(project.id)}
+                          className={`w-full text-left flex items-center justify-between p-4 border-b border-slate-100 transition-colors ${selectedProjectId === project.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-slate-100'}`}
+                        >
+                          <div>
+                            <p className="font-semibold">
+                              {project.name}
+                              <span className="ml-2 text-xs text-slate-500 capitalize">{project.status}</span>
+                            </p>
+                            <p className="text-xs text-slate-500">{project.users.length} member(s)</p>
+                          </div>
+                          <FiChevronRight className={`transition-transform ${selectedProjectId === project.id ? 'translate-x-1' : ''}`} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            ))
           ) : (
             <div className="p-6 text-center text-slate-500">
                 <FiUsers className="mx-auto text-4xl text-slate-300 mb-2"/>
@@ -282,10 +301,12 @@ const Projects = () => {
                                 <span className="text-sm font-medium text-slate-700">Enable Sheet Integration</span>
                             </label>
                         </div>
+                        {projectForm.sheet_integration_enabled && (
                         <div>
                             <label htmlFor="sheet_id" className="block text-sm font-medium text-slate-700 mb-1">Sheet ID</label>
                             <input id="sheet_id" name="sheet_id" value={projectForm.sheet_id} onChange={handleFormChange} className="w-full border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
                         </div>
+                        )}
                         <div className="flex items-center gap-3">
                             <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">{editingId ? "Save Changes" : "Create Project"}</button>
                             <button type="button" onClick={resetAndCloseForms} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 transition-colors">Cancel</button>
