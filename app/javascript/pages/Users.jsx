@@ -9,6 +9,11 @@ import {
 } from "../components/api";
 
 const Users = () => {
+  const formatRole = (role) =>
+    role
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState(null);
@@ -183,7 +188,7 @@ const Users = () => {
                           checked={formData.roles.includes(role)}
                           onChange={() => handleRoleChange(role)}
                         />
-                        <span className="text-sm capitalize">{role}</span>
+                        <span className="text-sm">{formatRole(role)}</span>
                       </label>
                     ))}
                   </div>
@@ -214,7 +219,7 @@ const Users = () => {
                     </p>
                   )}
                   {user.roles && (
-                    <p className="text-gray-500 text-xs">Roles: {user.roles.join(', ')}</p>
+                    <p className="text-gray-500 text-xs">Roles: {user.roles.map(formatRole).join(', ')}</p>
                   )}
                   {userTeams.length > 0 && (
                     <p className="text-gray-500 text-xs">Teams: {userTeams.join(', ')}</p>
