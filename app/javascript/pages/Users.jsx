@@ -5,9 +5,8 @@ import {
   updateUser,
   fetchTeams,
   fetchProjects,
+  fetchRoles,
 } from "../components/api";
-
-const ROLE_OPTIONS = ["owner", "admin", "member"];
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -24,6 +23,7 @@ const Users = () => {
   const [userToDelete, setUserToDelete] = useState(null);
   const [teams, setTeams] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [roles, setRoles] = useState([]);
 
   const fetchUsers = async () => {
     try {
@@ -55,10 +55,21 @@ const Users = () => {
     }
   };
 
+  const fetchRolesData = async () => {
+    try {
+      const { data } = await fetchRoles();
+      setRoles(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+      setRoles([]);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
     fetchTeamsData();
     fetchProjectsData();
+    fetchRolesData();
   }, []);
 
   const handleEdit = (user) => {
@@ -165,7 +176,7 @@ const Users = () => {
                   <input type="date" name="date_of_birth" value={formData.date_of_birth || ''} onChange={handleChange} className={`${inputBaseStyle} text-gray-500`} />
                   <input type="file" name="profile_picture" onChange={handleChange} className="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-200 file:text-blue-700 hover:file:bg-blue-300" accept="image/*" />
                   <div className="flex justify-center space-x-4">
-                    {ROLE_OPTIONS.map((role) => (
+                    {roles.map((role) => (
                       <label key={role} className="flex items-center space-x-1">
                         <input
                           type="checkbox"
