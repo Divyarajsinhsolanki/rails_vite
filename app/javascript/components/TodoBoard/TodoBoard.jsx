@@ -134,35 +134,49 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
   const onDragEnd = async result => {
     const { source, destination } = result;
     if (!destination) return;
-  
-    const srcCol = columns[source.droppableId];
-    const item = srcCol.items[source.index];
 
-    // Optimistic UI Update
-    const newSrcItems = Array.from(srcCol.items);
-    newSrcItems.splice(source.index, 1);
-    const newDstItems = Array.from(columns[destination.droppableId].items);
-    const updatedItem = { ...item, status: destination.droppableId };
-    newDstItems.splice(destination.index, 0, updatedItem);
+    // Reordering within the same column
+    if (source.droppableId === destination.droppableId) {
+      if (source.index === destination.index) return; // nothing changed
+
+      const column = columns[source.droppableId];
+      const newItems = Array.from(column.items);
+      const [movedItem] = newItems.splice(source.index, 1);
+      newItems.splice(destination.index, 0, movedItem);
+
+      setColumns(prev => ({
+        ...prev,
+        [source.droppableId]: { ...column, items: newItems }
+      }));
+      return;
+    }
+
+    const srcCol = columns[source.droppableId];
+    const dstCol = columns[destination.droppableId];
+    const srcItems = Array.from(srcCol.items);
+    const [movedItem] = srcItems.splice(source.index, 1);
+    const dstItems = Array.from(dstCol.items);
+    const updatedItem = { ...movedItem, status: destination.droppableId };
+    dstItems.splice(destination.index, 0, updatedItem);
 
     setColumns(prev => ({
       ...prev,
-      [source.droppableId]: { ...srcCol, items: newSrcItems },
-      [destination.droppableId]: { ...columns[destination.droppableId], items: newDstItems }
+      [source.droppableId]: { ...srcCol, items: srcItems },
+      [destination.droppableId]: { ...dstCol, items: dstItems }
     }));
     
     // API Call
     try {
-        await SchedulerAPI.moveTask(item.id, { task: { status: updatedItem.status } });
+        await SchedulerAPI.moveTask(movedItem.id, { task: { status: updatedItem.status } });
     } catch (error) {
         toast.error("Failed to move task. Reverting.");
         // Revert UI on failure
-        newDstItems.splice(destination.index, 1);
-        newSrcItems.splice(source.index, 0, item);
+        dstItems.splice(destination.index, 1);
+        srcItems.splice(source.index, 0, movedItem);
         setColumns(prev => ({
             ...prev,
-            [source.droppableId]: { ...srcCol, items: newSrcItems },
-            [destination.droppableId]: { ...columns[destination.droppableId], items: newDstItems }
+            [source.droppableId]: { ...srcCol, items: srcItems },
+            [destination.droppableId]: { ...dstCol, items: dstItems }
         }));
     }
   };
