@@ -196,7 +196,7 @@ export default function SprintDashboard() {
         sprintId ? <Scheduler sprintId={sprintId} projectId={projectId} /> : <p className="p-4">No sprint selected</p>
       )}
       {activeTab === 'todo' && (
-        sprintId ? <TodoBoard sprintId={sprintId} onSprintChange={handleSprintChange} /> : <p className="p-4">No sprint selected</p>
+        sprintId ? <TodoBoard sprintId={sprintId} projectId={projectId} onSprintChange={handleSprintChange} /> : <p className="p-4">No sprint selected</p>
       )}
       {activeTab === 'sheet' && (
         <Sheet sheetName={sprint?.name} />
