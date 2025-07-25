@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import toast from "react-hot-toast";
 import { createPost } from "../components/api";
-import { FiImage, FiSend } from 'react-icons/fi';
+import { FiImage, FiSend, FiX } from 'react-icons/fi';
 
 const PostForm = ({ refreshPosts }) => {
   const [message, setMessage] = useState("");
@@ -13,6 +13,10 @@ const PostForm = ({ refreshPosts }) => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size should be less than 5MB");
+        return;
+      }
       setImage(file);
       setImagePreview(URL.createObjectURL(file));
     }
@@ -27,7 +31,7 @@ const PostForm = ({ refreshPosts }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!message.trim() && !image) {
-      toast.error("Please write a message or upload an image.");
+      toast.error("Please write a message or upload an image");
       return;
     }
 
@@ -38,7 +42,7 @@ const PostForm = ({ refreshPosts }) => {
 
     try {
       await createPost(formData);
-      toast.success("Post created successfully!");
+      toast.success("Posted successfully!");
       setMessage("");
       removeImage();
       refreshPosts();
@@ -51,47 +55,82 @@ const PostForm = ({ refreshPosts }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-xl p-5 mb-8 border" encType="multipart/form-data">
-      <textarea
-        placeholder="What's on your mind?"
-        className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow resize-none"
-        rows="3"
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        disabled={isSubmitting}
-      />
-
-      {imagePreview && (
-        <div className="mt-4 relative w-32 h-32">
-          <img src={imagePreview} alt="Preview" className="rounded-lg object-cover w-full h-full" />
-          <button type="button" onClick={removeImage} className="absolute -top-2 -right-2 bg-slate-700 text-white rounded-full p-1 text-xs hover:bg-slate-900">
-            &times;
-          </button>
+    <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6" encType="multipart/form-data">
+      <div className="flex items-start space-x-3">
+        <div className="flex-shrink-0">
+          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
+            Y
+          </div>
         </div>
-      )}
+        <div className="flex-1">
+          <textarea
+            placeholder="What's on your mind?"
+            className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
+            rows="3"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            disabled={isSubmitting}
+          />
 
-      <div className="flex justify-between items-center mt-4">
-        {/* Custom File Input Button */}
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-2 text-slate-500 hover:text-blue-600 transition-colors disabled:opacity-50"
-          disabled={isSubmitting}
-        >
-          <FiImage size={20} />
-          <span className="font-medium text-sm">Add Image</span>
-        </button>
-        <input type="file" ref={fileInputRef} className="hidden" onChange={handleImageChange} accept="image/*" />
+          {imagePreview && (
+            <div className="mt-4 relative rounded-lg overflow-hidden border border-slate-200">
+              <img 
+                src={imagePreview} 
+                alt="Preview" 
+                className="w-full h-auto max-h-80 object-contain" 
+              />
+              <button 
+                type="button" 
+                onClick={removeImage}
+                className="absolute top-2 right-2 bg-white/90 rounded-full p-1 shadow-sm hover:bg-white transition-colors"
+              >
+                <FiX className="text-slate-700" />
+              </button>
+            </div>
+          )}
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          className="flex items-center gap-2 bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-slate-300 disabled:cursor-not-allowed transition-all"
-          disabled={(!message.trim() && !image) || isSubmitting}
-        >
-          {isSubmitting ? 'Posting...' : 'Post'}
-          {!isSubmitting && <FiSend />}
-        </button>
+          <div className="flex justify-between items-center mt-4">
+            <div className="flex space-x-2">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 text-slate-600 hover:text-blue-600 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors disabled:opacity-50"
+                disabled={isSubmitting}
+              >
+                <FiImage size={18} />
+                <span className="text-sm font-medium">Photo</span>
+              </button>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                onChange={handleImageChange} 
+                accept="image/*" 
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="flex items-center gap-2 bg-blue-600 text-white font-medium py-2 px-5 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-slate-300 disabled:cursor-not-allowed transition-all"
+              disabled={(!message.trim() && !image) || isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Posting...
+                </>
+              ) : (
+                <>
+                  Post
+                  <FiSend size={16} />
+                </>
+              )}
+            </button>
+          </div>
+        </div>
       </div>
     </form>
   );

@@ -53,10 +53,10 @@ const Navbar = () => {
                     ["owner", "team_leader"].includes(r.name)
                   ) && "teams",
                   "knowledge",
-                  "profile",
-                  "contact",
                   user.roles?.some((r) => r.name === "owner") && "users",
                   user.roles?.some((r) => r.name === "owner") && "admin",
+                  "profile",
+                  "contact",
                 ]
                   .filter(Boolean)
                   .map((route) => (
