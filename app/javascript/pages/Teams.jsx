@@ -26,7 +26,7 @@ const Avatar = ({ name, src }) => {
 
 const Teams = () => {
   const { user } = useContext(AuthContext);
-  const canEdit = user?.roles?.some((r) => r.name === "owner");
+  const canEdit = user?.roles?.some((r) => ["owner", "team_leader"].includes(r.name));
   const canManageMembers = user?.roles?.some((r) => r.name === "admin");
 
   // State Management

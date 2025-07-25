@@ -1,7 +1,7 @@
 class Api::TeamsController < Api::BaseController
   include Rails.application.routes.url_helpers
   before_action :set_team, only: [:update, :destroy]
-  before_action :authorize_owner!, only: [:create, :update, :destroy]
+  before_action :authorize_leader!, only: [:create, :update, :destroy]
 
   def index
     teams = Team.includes(team_users: :user).order(:name)
@@ -41,8 +41,9 @@ class Api::TeamsController < Api::BaseController
     params.require(:team).permit(:name, :description)
   end
 
-  def authorize_owner!
-    head :forbidden unless current_user&.owner?
+  def authorize_leader!
+    allowed = current_user&.owner? || current_user&.team_leader?
+    head :forbidden unless allowed
   end
 
   def serialize_team(team)

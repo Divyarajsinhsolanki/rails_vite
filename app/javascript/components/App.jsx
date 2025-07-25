@@ -50,8 +50,8 @@ const App = () => {
               <Route path="/vault" element={<PrivateRoute><MainLayout><Vault /></MainLayout></PrivateRoute>} />
               <Route path="/profile" element={<PrivateRoute><MainLayout><Profile /></MainLayout></PrivateRoute>} />
               <Route path="/knowledge" element={<PrivateRoute><MainLayout><KnowledgeDashboard /></MainLayout></PrivateRoute>} />
-              <Route path="/projects" element={<PrivateRoute><MainLayout><Projects /></MainLayout></PrivateRoute>} />
-              <Route path="/teams" element={<PrivateRoute><MainLayout><Teams /></MainLayout></PrivateRoute>} />
+              <Route path="/projects" element={<PrivateRoute allowedRoles={["owner","project_manager"]}><MainLayout><Projects /></MainLayout></PrivateRoute>} />
+              <Route path="/teams" element={<PrivateRoute allowedRoles={["owner","team_leader"]}><MainLayout><Teams /></MainLayout></PrivateRoute>} />
               <Route path="/projects/:projectId/dashboard" element={<ProjectMemberRoute><MainLayout><SprintDashboard /></MainLayout></ProjectMemberRoute>} />
               <Route path="/users" element={<PrivateRoute ownerOnly><MainLayout><Users /></MainLayout></PrivateRoute>} />
               <Route path="/admin" element={<PrivateRoute ownerOnly><MainLayout><Admin /></MainLayout></PrivateRoute>} />
