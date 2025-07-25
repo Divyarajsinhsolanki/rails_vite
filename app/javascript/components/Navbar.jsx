@@ -46,8 +46,12 @@ const Navbar = () => {
 
                 {[
                   "posts",
-                  "projects",
-                  "teams",
+                  user.roles?.some((r) =>
+                    ["owner", "project_manager"].includes(r.name)
+                  ) && "projects",
+                  user.roles?.some((r) =>
+                    ["owner", "team_leader"].includes(r.name)
+                  ) && "teams",
                   "knowledge",
                   "profile",
                   "contact",
