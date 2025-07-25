@@ -372,13 +372,42 @@ const Projects = () => {
                     </div>
                 </div>
             ) : (
-                // Empty State for Main Content
-                <div className="text-center h-full flex flex-col items-center justify-center mt-[-5rem]">
-                    <FiUsers className="text-6xl text-slate-300 mb-4" />
-                    <h2 className="text-xl font-semibold text-slate-700">Welcome to Projects</h2>
-                    <p className="text-slate-500 mt-1">
-                        {projects.length > 0 ? "Select a project from the sidebar to view its details." : "Create a new project to get started."}
-                    </p>
+                // Show list of project cards when no project is selected
+                <div>
+                    {projects.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {projects.map((project) => (
+                                <div key={project.id} className="border border-slate-200 rounded-lg shadow-sm p-4 bg-white flex flex-col justify-between">
+                                    <div className="mb-4">
+                                        <div className="flex justify-between items-start">
+                                            <h3 className="text-lg font-semibold text-slate-800">{project.name}</h3>
+                                            <span className="text-xs text-slate-500 capitalize">{project.status}</span>
+                                        </div>
+                                        {project.description && (
+                                            <p className="text-sm text-slate-500 mt-1 line-clamp-2">{project.description}</p>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center -space-x-2 mb-4">
+                                        {project.users.slice(0,3).map((member) => (
+                                            <Avatar key={member.id} name={member.name} src={member.profile_picture} />
+                                        ))}
+                                        {project.users.length > 3 && (
+                                            <span className="text-xs text-slate-500 ml-2">+{project.users.length - 3} more</span>
+                                        )}
+                                    </div>
+                                    <button onClick={() => handleSelectProject(project.id)} className="self-start text-sm text-blue-600 hover:underline">
+                                        View Details
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center h-full flex flex-col items-center justify-center mt-[-5rem]">
+                            <FiUsers className="text-6xl text-slate-300 mb-4" />
+                            <h2 className="text-xl font-semibold text-slate-700">Welcome to Projects</h2>
+                            <p className="text-slate-500 mt-1">Create a new project to get started.</p>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
