@@ -37,7 +37,14 @@ const Projects = () => {
 
   
   // Form States
-  const [projectForm, setProjectForm] = useState({ name: "", description: "" });
+  const [projectForm, setProjectForm] = useState({
+    name: "",
+    description: "",
+    start_date: "",
+    end_date: "",
+    sheet_integration_enabled: false,
+    sheet_id: "",
+  });
   const [editingId, setEditingId] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
   const [memberForm, setMemberForm] = useState({ role: "collaborator" });
@@ -69,13 +76,24 @@ const Projects = () => {
   }, []);
 
   // Event Handlers
-  const handleFormChange = (e) => setProjectForm({ ...projectForm, [e.target.name]: e.target.value });
+  const handleFormChange = (e) =>
+    setProjectForm({
+      ...projectForm,
+      [e.target.name]: e.target.type === 'checkbox' ? e.target.checked : e.target.value,
+    });
   const handleRoleChange = (e) => setMemberForm({ ...memberForm, role: e.target.value });
 
   const resetAndCloseForms = () => {
     setEditingId(null);
     setIsCreating(false);
-    setProjectForm({ name: "", description: "" });
+    setProjectForm({
+      name: "",
+      description: "",
+      start_date: "",
+      end_date: "",
+      sheet_integration_enabled: false,
+      sheet_id: "",
+    });
   };
   
   const handleSelectProject = (id) => {
@@ -99,7 +117,14 @@ const Projects = () => {
   const handleEditClick = (project) => {
     setEditingId(project.id);
     setIsCreating(false);
-    setProjectForm({ name: project.name, description: project.description || "" });
+    setProjectForm({
+      name: project.name,
+      description: project.description || "",
+      start_date: project.start_date || "",
+      end_date: project.end_date || "",
+      sheet_integration_enabled: project.sheet_integration_enabled || false,
+      sheet_id: project.sheet_id || "",
+    });
     setSelectedProjectId(project.id);
   };
   
@@ -107,7 +132,14 @@ const Projects = () => {
       setIsCreating(true);
       setEditingId(null);
       setSelectedProjectId(null); // Deselect any project
-      setProjectForm({ name: "", description: "" });
+      setProjectForm({
+        name: "",
+        description: "",
+        start_date: "",
+        end_date: "",
+        sheet_integration_enabled: false,
+        sheet_id: "",
+      });
   }
 
   const handleDeleteProject = async (id) => {
@@ -230,9 +262,29 @@ const Projects = () => {
                             <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">Project Name</label>
                             <input id="name" name="name" value={projectForm.name} onChange={handleFormChange} placeholder="e.g. Engineering" required className="w-full border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"/>
                         </div>
-                         <div>
+                        <div>
                             <label htmlFor="description" className="block text-sm font-medium text-slate-700 mb-1">Description</label>
                             <textarea id="description" name="description" value={projectForm.description} onChange={handleFormChange} placeholder="A short description of the project's purpose" className="w-full border border-slate-300 rounded-md p-2 h-24 resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label htmlFor="start_date" className="block text-sm font-medium text-slate-700 mb-1">Start Date</label>
+                                <input type="date" id="start_date" name="start_date" value={projectForm.start_date} onChange={handleFormChange} className="w-full border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+                            </div>
+                            <div>
+                                <label htmlFor="end_date" className="block text-sm font-medium text-slate-700 mb-1">End Date</label>
+                                <input type="date" id="end_date" name="end_date" value={projectForm.end_date} onChange={handleFormChange} className="w-full border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="inline-flex items-center gap-2">
+                                <input type="checkbox" name="sheet_integration_enabled" checked={projectForm.sheet_integration_enabled} onChange={handleFormChange} className="rounded" />
+                                <span className="text-sm font-medium text-slate-700">Enable Sheet Integration</span>
+                            </label>
+                        </div>
+                        <div>
+                            <label htmlFor="sheet_id" className="block text-sm font-medium text-slate-700 mb-1">Sheet ID</label>
+                            <input id="sheet_id" name="sheet_id" value={projectForm.sheet_id} onChange={handleFormChange} className="w-full border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
                         </div>
                         <div className="flex items-center gap-3">
                             <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">{editingId ? "Save Changes" : "Create Project"}</button>
