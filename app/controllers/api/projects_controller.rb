@@ -38,7 +38,14 @@ class Api::ProjectsController < Api::BaseController
   end
 
   def project_params
-    params.require(:project).permit(:name, :description)
+    params.require(:project).permit(
+      :name,
+      :description,
+      :start_date,
+      :end_date,
+      :sheet_integration_enabled,
+      :sheet_id
+    )
   end
 
   def authorize_owner!
@@ -50,6 +57,11 @@ class Api::ProjectsController < Api::BaseController
       id: project.id,
       name: project.name,
       description: project.description,
+      start_date: project.start_date,
+      end_date: project.end_date,
+      status: project.status,
+      sheet_integration_enabled: project.sheet_integration_enabled,
+      sheet_id: project.sheet_id,
       users: project.project_users.map do |pu|
         {
           id: pu.user_id,
