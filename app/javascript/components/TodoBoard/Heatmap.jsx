@@ -64,11 +64,18 @@ const Heatmap = ({ columns, view, onViewChange }) => {
         {tasksDueToday.length > 0 ? (
           <ul className="space-y-2 text-sm">
             {tasksDueToday.map(t => (
-              <li key={t.id} className="flex items-center bg-gray-50 p-2 rounded-md">
+              <li
+                key={t.id}
+                className={`flex items-center p-2 rounded-md ${
+                  t.status && t.status.toLowerCase() === 'completed'
+                    ? 'bg-green-50 border border-green-200 text-green-700'
+                    : 'bg-gray-50'
+                }`}
+              >
                 <FiInfo className="text-blue-500 mr-3 shrink-0" />
-                <span className="font-semibold text-gray-800">{t.task_id}</span>
+                <span className="font-semibold">{t.task_id}</span>
                 <span className="text-gray-600 mx-2">-</span>
-                <span className="truncate text-gray-600">{t.title}</span>
+                <span className="truncate">{t.title}</span>
               </li>
             ))}
           </ul>
