@@ -21,9 +21,11 @@ export default function KnowledgeDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-gray-200 p-6 pt-[100px] transition-colors duration-500">
-      <header className="mb-8 text-center max-w-3xl mx-auto">
-        <h1 className="text-4xl font-black tracking-tight mb-1">📚 Knowledge Dashboard</h1>
-        <p className="text-md text-gray-600 dark:text-gray-400">Curated daily intelligence at a glance</p>
+      <header className="mb-10 text-center max-w-3xl mx-auto">
+        <h1 className="text-5xl font-extrabold tracking-tight mb-2 bg-gradient-to-r from-indigo-600 to-blue-500 text-transparent bg-clip-text">
+          📚 Knowledge Dashboard
+        </h1>
+        <p className="text-lg text-gray-600 dark:text-gray-400">Curated daily intelligence at a glance</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-8xl mx-auto">
@@ -47,7 +49,9 @@ export default function KnowledgeDashboard() {
           </div>
         </div>
         <div className="lg:col-span-1">
-          <Weather />
+          <AnimatedCard>
+            <Weather />
+          </AnimatedCard>
         </div>
       </div>
 

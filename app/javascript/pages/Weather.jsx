@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { getWeather } from '../components/api';
+import {
+  MapPinIcon,
+  MagnifyingGlassIcon,
+  ArrowPathIcon,
+  CloudIcon,
+} from '@heroicons/react/24/outline';
 
 const defaultCities = [
   { name: 'Ahmedabad', query: 'Ahmedabad,320008' },
@@ -70,32 +76,43 @@ const Weather = () => {
   }, []);
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md mt-8">
-      <h1 className="text-2xl font-semibold mb-4 text-center">Weather</h1>
-      <form onSubmit={handleSubmit} className="flex mb-4 space-x-2">
+    <div className="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg space-y-4">
+      <h1 className="flex items-center justify-center text-xl font-semibold">
+        <CloudIcon className="h-6 w-6 text-blue-600 mr-2" />
+        Weather
+      </h1>
+      <form onSubmit={handleSubmit} className="flex items-center space-x-2">
         <input
           type="text"
           value={city}
           onChange={(e) => setCity(e.target.value)}
           placeholder="Enter city"
-          className="flex-grow border border-gray-300 rounded px-3 py-2"
+          className="flex-grow border border-gray-300 rounded px-3 py-2 focus:outline-none"
         />
         <button
           type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded"
         >
-          Search
+          <MagnifyingGlassIcon className="h-5 w-5" />
+        </button>
+        <button
+          type="button"
+          onClick={fetchByLocation}
+          className="p-2 border border-gray-300 rounded hover:bg-gray-100"
+          title="Use my location"
+        >
+          <MapPinIcon className="h-5 w-5 text-gray-600" />
         </button>
       </form>
-      {loading && <p className="text-center">Loading...</p>}
-      {error && <p className="text-red-600 text-center">{error}</p>}
+      {loading && <p className="text-center text-sm text-gray-500 flex items-center justify-center"><ArrowPathIcon className="h-4 w-4 mr-1 animate-spin" /> Loading...</p>}
+      {error && <p className="text-red-600 text-center text-sm">{error}</p>}
 
       {/* Default cities */}
       {defaultWeather.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           {defaultWeather.map((w) => (
-            <div key={w.name} className="p-4 bg-gray-50 rounded shadow text-center">
-              <h3 className="font-semibold mb-2">{w.name}</h3>
+            <div key={w.name} className="p-4 rounded-lg bg-gray-50 dark:bg-gray-700 shadow text-center">
+              <h3 className="font-semibold mb-2 text-gray-700 dark:text-gray-200">{w.name}</h3>
               {w.current.icon_url && (
                 <img src={w.current.icon_url} alt="icon" className="mx-auto h-12" />
               )}
@@ -109,19 +126,19 @@ const Weather = () => {
       )}
 
       {weather && !loading && (
-        <div className="text-center">
-          <h2 className="text-xl font-medium mb-2">{weather.location}</h2>
+        <div className="text-center space-y-2">
+          <h2 className="text-xl font-medium">{weather.location}</h2>
           {weather.current.icon_url && (
             <img src={weather.current.icon_url} alt="icon" className="mx-auto h-16" />
           )}
-          <p className="text-lg">
+          <p className="text-lg font-medium">
             {weather.current.temp_c}&deg;C / {weather.current.temp_f}&deg;F
           </p>
           <p className="capitalize text-gray-600 mb-4">{weather.current.description}</p>
           {weather.forecast && (
             <div className="flex overflow-x-auto space-x-2 justify-center">
               {weather.forecast.map((day) => (
-                <div key={day.date} className="bg-gray-100 p-2 rounded w-24 flex-shrink-0">
+                <div key={day.date} className="bg-gray-100 dark:bg-gray-700 p-2 rounded w-24 flex-shrink-0 text-gray-700 dark:text-gray-200">
                   <p className="text-xs mb-1">{day.date}</p>
                   {day.icon_url && (
                     <img src={day.icon_url} alt="icon" className="mx-auto h-8" />
