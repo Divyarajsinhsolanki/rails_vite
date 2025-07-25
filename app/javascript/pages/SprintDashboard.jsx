@@ -94,14 +94,14 @@ export default function SprintDashboard() {
   return (
     <div className="space-y-6">
       <header className="bg-white shadow-sm p-2">
-        {project && (
+        {/* {project && (
           <div className="mb-2">
             <h2 className="text-lg font-semibold text-gray-800">{project.name}</h2>
             {project.description && (
               <p className="text-gray-500 text-sm">{project.description}</p>
             )}
           </div>
-        )}
+        )} */}
         <div className="flex justify-between items-center">
           <h1 className="text-xl font-bold text-gray-800 flex items-center">
             <CalendarDaysIcon className="h-7 w-7 mr-2 text-blue-600"/>

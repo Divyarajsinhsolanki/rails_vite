@@ -199,6 +199,7 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
           </div>
           <div className="flex items-center gap-3">
             <button
+              disabled
               onClick={() => setShowForm(true)}
               className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all transform hover:scale-105"
             >
