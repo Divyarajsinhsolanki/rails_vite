@@ -49,10 +49,9 @@ const Teams = () => {
       const { data } = await fetchTeams();
       const validTeams = Array.isArray(data) ? data : [];
       setTeams(validTeams);
-      // If a team was selected, keep it selected. Otherwise, select the user's team or the first one.
+      // Keep the currently selected team id if it still exists
       if (!validTeams.some(t => t.id === selectedTeamId)) {
-        const userTeam = validTeams.find((t) => t.users.some((u) => u.id === user?.id));
-        setSelectedTeamId(userTeam ? userTeam.id : (validTeams[0]?.id || null));
+        setSelectedTeamId(null);
       }
     } catch (error) {
       console.error("Failed to fetch teams:", error);
@@ -67,12 +66,12 @@ const Teams = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // When teams are reloaded, ensure a non-existent selection is cleared
   useEffect(() => {
-    if (teams.length > 0 && !selectedTeamId) {
-      const userTeam = teams.find((t) => t.users.some((u) => u.id === user?.id));
-      setSelectedTeamId(userTeam ? userTeam.id : teams[0].id);
+    if (selectedTeamId && !teams.some(t => t.id === selectedTeamId)) {
+      setSelectedTeamId(null);
     }
-  }, [teams, selectedTeamId, user]);
+  }, [teams, selectedTeamId]);
 
   // Event Handlers
   const handleFormChange = (e) => setTeamForm({ ...teamForm, [e.target.name]: e.target.value });
@@ -311,13 +310,39 @@ const Teams = () => {
                     <p className="text-slate-500">Loading...</p>
                 </div>
             ) : (
-                // Empty State for Main Content
-                <div className="text-center h-full flex flex-col items-center justify-center mt-[-5rem]">
-                    <FiUsers className="text-6xl text-slate-300 mb-4" />
-                    <h2 className="text-xl font-semibold text-slate-700">Welcome to Teams</h2>
-                    <p className="text-slate-500 mt-1">
-                        {teams.length > 0 ? "Select a team from the sidebar to view its details." : "Create a new team to get started."}
-                    </p>
+                // Show list of team cards when no team is selected
+                <div>
+                    {teams.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {teams.map((team) => (
+                                <div key={team.id} className="border border-slate-200 rounded-lg shadow-sm p-4 bg-white flex flex-col justify-between">
+                                    <div className="mb-4">
+                                        <h3 className="text-lg font-semibold text-slate-800">{team.name}</h3>
+                                        {team.description && (
+                                            <p className="text-sm text-slate-500 mt-1 line-clamp-2">{team.description}</p>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center -space-x-2 mb-4">
+                                        {team.users.slice(0,3).map((member) => (
+                                            <Avatar key={member.id} name={member.name} src={member.profile_picture} />
+                                        ))}
+                                        {team.users.length > 3 && (
+                                            <span className="text-xs text-slate-500 ml-2">+{team.users.length - 3} more</span>
+                                        )}
+                                    </div>
+                                    <button onClick={() => handleSelectTeam(team.id)} className="self-start text-sm text-blue-600 hover:underline">
+                                        View Details
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center h-full flex flex-col items-center justify-center mt-[-5rem]">
+                            <FiUsers className="text-6xl text-slate-300 mb-4" />
+                            <h2 className="text-xl font-semibold text-slate-700">Welcome to Teams</h2>
+                            <p className="text-slate-500 mt-1">Create a new team to get started.</p>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
