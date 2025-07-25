@@ -175,7 +175,7 @@ const Users = () => {
                   <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" className={inputBaseStyle} required />
                   <input type="date" name="date_of_birth" value={formData.date_of_birth || ''} onChange={handleChange} className={`${inputBaseStyle} text-gray-500`} />
                   <input type="file" name="profile_picture" onChange={handleChange} className="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-200 file:text-blue-700 hover:file:bg-blue-300" accept="image/*" />
-                  <div className="flex justify-center space-x-4">
+                  <div className="flex flex-wrap justify-center gap-2">
                     {roles.map((role) => (
                       <label key={role} className="flex items-center space-x-1">
                         <input
