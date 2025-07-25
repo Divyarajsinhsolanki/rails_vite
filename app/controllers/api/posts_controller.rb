@@ -52,7 +52,12 @@ class Api::PostsController < Api::BaseController
       message: post.message,
       image_url: post.image.attached? ? rails_blob_url(post.image, disposition: "attachment", only_path: true) : nil, 
       created_at: post.created_at.strftime("%Y-%m-%d %H:%M"),
-      user: { id: post.user.id, email: post.user.email }
+      user: {
+        id: post.user.id,
+        email: post.user.email,
+        profile_picture: post.user.profile_picture.attached? ?
+          rails_blob_url(post.user.profile_picture, only_path: true) : nil
+      }
     }
   end
 end
