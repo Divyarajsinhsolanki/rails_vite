@@ -538,13 +538,18 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId }) => {
         } else {
             getUsers().then(res => setUsers(Array.isArray(res.data) ? res.data : []));
         }
-        fetch('/api/sprints.json')
+        const query = projectId ? `?project_id=${projectId}` : '';
+        fetch(`/api/sprints.json${query}`)
             .then(res => res.json())
             .then(data => {
-                setSprints(data);
-                if (data.length && !sprintId) {
-                    setSelectedSprintId(data[0].id);
-                    if(onSprintChange) onSprintChange(data[0].id);
+                const list = Array.isArray(data) ? data : [];
+                setSprints(list);
+                if (list.length && !sprintId) {
+                    setSelectedSprintId(list[0].id);
+                    if(onSprintChange) onSprintChange(list[0].id);
+                } else if (!list.length) {
+                    setSelectedSprintId(null);
+                    if(onSprintChange) onSprintChange(null);
                 }
             });
     }, [projectId]);
