@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { formatDistanceToNow } from 'date-fns';
 import { FiTrash2 } from 'react-icons/fi';
 import { deletePost } from "../components/api";
+import Avatar from "./ui/Avatar";
 
 const PostList = ({ posts, refreshPosts }) => {
   const handleDelete = async (id) => {
@@ -27,9 +28,11 @@ const PostList = ({ posts, refreshPosts }) => {
             {/* Post Header */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-11 h-11 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                  {post.user.email[0].toUpperCase()}
-                </div>
+                <Avatar
+                  name={post.user.email}
+                  src={post.user.profile_picture}
+                  className="w-11 h-11 text-lg"
+                />
                 <div>
                   <p className="text-slate-800 font-semibold">{post.user.email}</p>
                   <p className="text-slate-500 text-sm">
