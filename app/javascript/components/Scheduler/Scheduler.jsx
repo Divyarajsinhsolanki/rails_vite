@@ -260,7 +260,9 @@ function Scheduler({ sprintId, projectId }) {
   }, [sprintId, projectId]);
 
   useEffect(() => {
-    const params = sprintId ? { sprint_id: sprintId } : {};
+    const params = { project_id: projectId };
+    if (sprintId) params.sprint_id = sprintId;
+
     Promise.all([
       SchedulerAPI.getDevelopers(),
       SchedulerAPI.getTaskLogs(params),
@@ -276,7 +278,7 @@ function Scheduler({ sprintId, projectId }) {
         setError("Could not load developers or tasks");
         setLoading(l => ({ ...l, developers: false, tasks: false }));
       });
-  }, [sprintId]);
+  }, [sprintId, projectId]);
   
   const getWeekdaysInRange = useCallback((start, end) => {
     const datesArr = [];

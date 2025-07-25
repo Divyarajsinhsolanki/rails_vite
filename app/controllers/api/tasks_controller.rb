@@ -3,9 +3,16 @@ class Api::TasksController < Api::BaseController
 
   # GET /tasks.json
   def index
-    @tasks = Task.includes(:assigned_user).order(end_date: :asc)
+    @tasks = Task.includes(:assigned_user)
+                 .order(end_date: :asc)
+
     @tasks = @tasks.where(assigned_to_user: params[:assigned_to_user]) if params[:assigned_to_user].present?
     @tasks = @tasks.where(sprint_id: params[:sprint_id]) if params[:sprint_id].present?
+
+    if params[:project_id].present?
+      @tasks = @tasks.joins(:sprint).where(sprints: { project_id: params[:project_id] })
+    end
+
     render json: @tasks.as_json(include: { assigned_user: { only: [:id, :first_name, :email] } })
   end
 

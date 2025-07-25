@@ -34,7 +34,7 @@ const initialData = {
   completed: { name: "Completed", color: "bg-green-100", items: [] },
 };
 
-export default function TodoBoard({ sprintId, onSprintChange }) {
+export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
   const { user } = useContext(AuthContext);
   const [columns, setColumns] = useState(initialData);
   const [searchTerm, setSearchTerm] = useState("");
@@ -49,7 +49,7 @@ export default function TodoBoard({ sprintId, onSprintChange }) {
 
   // --- DATA FETCHING & INITIALIZATION ---
   useEffect(() => {
-    SchedulerAPI.getSprints()
+    SchedulerAPI.getSprints(projectId)
       .then(res => {
         setSprints(res.data);
         if (res.data.length) {
@@ -60,17 +60,17 @@ export default function TodoBoard({ sprintId, onSprintChange }) {
         }
       })
       .catch(() => toast.error("Could not load sprints"));
-  }, []);
+  }, [projectId]);
 
   useEffect(() => {
     if (!selectedSprintId) return;
-    SchedulerAPI.getTasks({ sprint_id: selectedSprintId })
+    SchedulerAPI.getTasks({ sprint_id: selectedSprintId, project_id: projectId })
       .then(res => {
         const grouped = groupBy(res.data);
         setColumns(grouped);
       })
       .catch(() => toast.error("Could not load tasks"));
-  }, [selectedSprintId]);
+  }, [selectedSprintId, projectId]);
 
   useEffect(() => {
     if (onSprintChange && selectedSprintId) {
