@@ -40,6 +40,14 @@ class User < ApplicationRecord
     has_role?(:member)
   end
 
+  def project_manager?
+    has_role?(:project_manager)
+  end
+
+  def team_leader?
+    has_role?(:team_leader)
+  end
+
   private
 
   def after_confirmation

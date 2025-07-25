@@ -26,7 +26,7 @@ const Avatar = ({ name, src }) => {
 
 const Projects = () => {
   const { user } = useContext(AuthContext);
-  const canEdit = user?.roles?.some((r) => r.name === "owner");
+  const canEdit = user?.roles?.some((r) => ["owner", "project_manager"].includes(r.name));
   const canManageMembers = user?.roles?.some((r) => r.name === "admin");
 
   // State Management

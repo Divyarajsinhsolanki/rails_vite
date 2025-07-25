@@ -1,7 +1,7 @@
 class Api::ProjectsController < Api::BaseController
   include Rails.application.routes.url_helpers
   before_action :set_project, only: [:update, :destroy]
-  before_action :authorize_owner!, only: [:create, :update, :destroy]
+  before_action :authorize_manager!, only: [:create, :update, :destroy]
 
   def index
     projects = Project.includes(project_users: :user).order(:name)
@@ -48,8 +48,9 @@ class Api::ProjectsController < Api::BaseController
     )
   end
 
-  def authorize_owner!
-    head :forbidden unless current_user&.owner?
+  def authorize_manager!
+    allowed = current_user&.owner? || current_user&.project_manager?
+    head :forbidden unless allowed
   end
 
   def serialize_project(project)
