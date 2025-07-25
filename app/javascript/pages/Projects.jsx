@@ -57,10 +57,10 @@ const Projects = () => {
       const { data } = await fetchProjects();
       const validProjects = Array.isArray(data) ? data : [];
       setProjects(validProjects);
-      // If a project was selected, keep it selected. Otherwise, select the user's project or the first one.
-      if (!validProjects.some(t => t.id === selectedProjectId)) {
-        const userProject = validProjects.find((t) => t.users.some((u) => u.id === user?.id));
-        setSelectedProjectId(userProject ? userProject.id : (validProjects[0]?.id || null));
+      // Keep the previously selected project if it still exists.
+      // Otherwise, leave no project selected to show the full listing.
+      if (!validProjects.some((t) => t.id === selectedProjectId)) {
+        setSelectedProjectId(null);
       }
     } catch (error) {
       console.error("Failed to fetch projects:", error);
