@@ -147,7 +147,7 @@ const Vault = () => {
       <input className="w-full border rounded p-1 mb-2" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="Title" />
       <input className="w-full border rounded p-1 mb-2" value={editCategory} onChange={(e) => setEditCategory(e.target.value)} placeholder="Category" />
       <textarea className="w-full border rounded p-1 mb-2" rows="3" value={editContent} onChange={(e) => setEditContent(e.target.value)} />
-      <button className="bg-indigo-600 text-white px-3 py-1 rounded" onClick={() => handleUpdateItem(id)}>Save</button>
+      <button className="bg-[var(--theme-color)] text-white px-3 py-1 rounded" onClick={() => handleUpdateItem(id)}>Save</button>
       <button className="ml-2 text-sm" onClick={() => setEditingId(null)}>Cancel</button>
     </div>
   );
@@ -359,7 +359,7 @@ const Vault = () => {
       <div className="grid gap-4 md:grid-cols-3">
         <div className="md:col-span-1">
           <div className="rounded-lg overflow-hidden shadow">
-            <div className="bg-blue-500 text-white px-3 py-2 flex justify-between items-center">
+            <div className="bg-[var(--theme-color)] text-white px-3 py-2 flex justify-between items-center">
               <span>Credentials</span>
               <div className="space-x-2">
                 <button onClick={() => openModal('Credential')} className="font-bold">+</button>
@@ -375,7 +375,7 @@ const Vault = () => {
         </div>
         <div className="md:col-span-2">
           <div className="rounded-lg overflow-hidden shadow">
-            <div className="bg-green-500 text-white px-3 py-2 flex justify-between items-center">
+            <div className="bg-[var(--theme-color)] text-white px-3 py-2 flex justify-between items-center">
               <span>Commands</span>
               <div className="space-x-2">
                 <button onClick={() => openModal('Command')} className="font-bold">+</button>
@@ -392,7 +392,7 @@ const Vault = () => {
       </div>
 
       <div className="rounded-lg overflow-hidden shadow">
-        <div className="bg-orange-500 text-white px-3 py-2 flex justify-between items-center">
+        <div className="bg-[var(--theme-color)] text-white px-3 py-2 flex justify-between items-center">
           <span>Tokens</span>
           <div className="space-x-2">
             <button onClick={() => openModal('Token')} className="font-bold">+</button>
@@ -408,7 +408,7 @@ const Vault = () => {
 
       {others.length > 0 && (
         <div className="rounded-lg overflow-hidden shadow">
-          <div className="bg-purple-500 text-white px-3 py-2 flex justify-between items-center">
+          <div className="bg-[var(--theme-color)] text-white px-3 py-2 flex justify-between items-center">
             <span>Other Items</span>
             <div className="space-x-2">
               <button onClick={() => openModal('')} className="font-bold">+</button>
@@ -455,7 +455,7 @@ const Vault = () => {
               />
               <div className="flex justify-end space-x-2 pt-2">
                 <button type="button" onClick={closeModal} className="px-4 py-2">Cancel</button>
-                <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded">Add</button>
+                <button type="submit" className="bg-[var(--theme-color)] text-white px-4 py-2 rounded">Add</button>
               </div>
             </form>
           </div>

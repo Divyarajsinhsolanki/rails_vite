@@ -51,8 +51,8 @@ const PostPage = () => {
         {/* Page Header */}
         <header className="mb-10 text-center">
           <div className="inline-flex items-center justify-center bg-white p-3 rounded-full shadow-sm border border-slate-200 mb-6">
-            <div className="bg-blue-100 p-3 rounded-full">
-              <FiMessageSquare className="text-blue-600 text-2xl" />
+            <div className="bg-[var(--theme-color)/0.1] p-3 rounded-full">
+              <FiMessageSquare className="text-[var(--theme-color)] text-2xl" />
             </div>
           </div>
           <h1 className="text-4xl font-bold text-slate-800 tracking-tight mb-3">
@@ -67,8 +67,8 @@ const PostPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
             <div className="flex items-center">
-              <div className="bg-blue-100 p-3 rounded-lg mr-4">
-                <FiMessageSquare className="text-blue-600" />
+              <div className="bg-[var(--theme-color)/0.1] p-3 rounded-lg mr-4">
+                <FiMessageSquare className="text-[var(--theme-color)]" />
               </div>
               <div>
                 <p className="text-slate-500 text-sm">Total Posts</p>
@@ -78,8 +78,8 @@ const PostPage = () => {
           </div>
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
             <div className="flex items-center">
-              <div className="bg-green-100 p-3 rounded-lg mr-4">
-                <FiUsers className="text-green-600" />
+              <div className="bg-[var(--theme-color)/0.1] p-3 rounded-lg mr-4">
+                <FiUsers className="text-[var(--theme-color)]" />
               </div>
               <div>
                 <p className="text-slate-500 text-sm">Active Users</p>
@@ -89,8 +89,8 @@ const PostPage = () => {
           </div>
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
             <div className="flex items-center">
-              <div className="bg-purple-100 p-3 rounded-lg mr-4">
-                <FiActivity className="text-purple-600" />
+              <div className="bg-[var(--theme-color)/0.1] p-3 rounded-lg mr-4">
+                <FiActivity className="text-[var(--theme-color)]" />
               </div>
               <div>
                 <p className="text-slate-500 text-sm">Recent Activity</p>
@@ -112,7 +112,7 @@ const PostPage = () => {
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="p-6 border-b border-slate-200">
               <h2 className="text-xl font-semibold text-slate-800 flex items-center">
-                <FiMessageSquare className="mr-2 text-blue-500" />
+                <FiMessageSquare className="mr-2 text-[var(--theme-color)]" />
                 Recent Posts
               </h2>
             </div>
