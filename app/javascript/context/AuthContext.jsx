@@ -5,6 +5,13 @@ import { auth, googleProvider } from "../firebaseConfig";
 import { signInWithPopup } from "firebase/auth";
 import { toast } from "react-hot-toast";
 
+const COLOR_MAP = {
+  blue: '#3b82f6',
+  purple: '#8b5cf6',
+  green: '#10b981',
+  red: '#ef4444',
+};
+
 export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
@@ -14,7 +21,8 @@ export function AuthProvider({ children }) {
   const refreshTimer = useRef();
 
   useEffect(() => {
-    const color = user?.color_theme || '#3b82f6';
+    const raw = user?.color_theme;
+    const color = COLOR_MAP[raw] || raw || '#3b82f6';
     document.documentElement.style.setProperty('--theme-color', color);
   }, [user]);
 

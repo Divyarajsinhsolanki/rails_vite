@@ -4,6 +4,13 @@ import { fetchUserInfo, updateUserInfo, fetchPosts, SchedulerAPI, fetchTeams } f
 import { getStatusClasses } from '/utils/taskUtils';
 import { Squares2X2Icon } from '@heroicons/react/24/outline';
 
+const COLOR_MAP = {
+  blue: '#3b82f6',
+  purple: '#8b5cf6',
+  green: '#10b981',
+  red: '#ef4444',
+};
+
 const Avatar = ({ name, src }) => {
   if (src) {
     return (
@@ -40,10 +47,11 @@ const Profile = () => {
     color_theme: "",
   });
 
-  const refreshUserInfo = async () => {
-    try {
-      const { data } = await fetchUserInfo();
-      setUser(data.user);
+    const refreshUserInfo = async () => {
+      try {
+        const { data } = await fetchUserInfo();
+        const theme = COLOR_MAP[data.user.color_theme] || data.user.color_theme;
+        setUser({ ...data.user, color_theme: theme });
 
       const basicTeams = Array.isArray(data.teams) ? data.teams : [];
       try {
@@ -59,14 +67,14 @@ const Profile = () => {
       }
 
       setProjects(Array.isArray(data.projects) ? data.projects : []);
-      setFormData({
-        first_name: data.user.first_name,
-        last_name: data.user.last_name,
-        date_of_birth: data.user.date_of_birth,
-        profile_picture: data.user.profile_picture,
-        cover_photo: data.user.cover_photo,
-        color_theme: data.user.color_theme || "",
-      });
+        setFormData({
+          first_name: data.user.first_name,
+          last_name: data.user.last_name,
+          date_of_birth: data.user.date_of_birth,
+          profile_picture: data.user.profile_picture,
+          cover_photo: data.user.cover_photo,
+          color_theme: theme || "",
+        });
       const postsResponse = await fetchPosts(data.user.id);
       setPosts(postsResponse.data);
       const tasksResponse = await SchedulerAPI.getTasks({ assigned_to_user: data.user.id });
@@ -78,7 +86,7 @@ const Profile = () => {
 
   useEffect(() => {
     if (user) {
-      const color = user.color_theme || '#3b82f6';
+      const color = COLOR_MAP[user.color_theme] || user.color_theme || '#3b82f6';
       document.documentElement.style.setProperty('--theme-color', color);
     }
   }, [user]);
@@ -654,17 +662,13 @@ const Profile = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Theme Color</label>
-                  <select
+                  <input
+                    type="color"
                     name="color_theme"
                     value={formData.color_theme}
                     onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)]"
-                  >
-                    <option value="blue">Blue</option>
-                    <option value="purple">Purple</option>
-                    <option value="green">Green</option>
-                    <option value="red">Red</option>
-                  </select>
+                    className="w-16 h-10 p-0 border-0 bg-transparent cursor-pointer"
+                  />
                 </div>
               </div>
               
