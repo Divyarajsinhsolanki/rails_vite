@@ -65,7 +65,7 @@ const Notification = ({ message, type, onClose }) => {
     const typeClasses = {
         success: "bg-green-100 border-green-400 text-green-700",
         error: "bg-red-100 border-red-400 text-red-700",
-        info: "bg-blue-100 border-blue-400 text-blue-700",
+        info: "bg-[var(--theme-color)]/10 border-[var(--theme-color)] text-[var(--theme-color)]",
     };
 
     const icon = {
@@ -284,12 +284,12 @@ const Teams = () => {
         <div className="flex h-screen bg-gray-100 font-sans text-gray-800">
             {/* Sidebar */}
             <aside className="w-80 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col shadow-lg">
-                <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-blue-600 text-white">
+                <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-theme text-white">
                     <h2 className="text-xl font-bold">Teams</h2>
                     {canEdit && (
                         <button
                             onClick={handleNewClick}
-                            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-700 hover:bg-blue-800 transition-colors rounded-full shadow-md active:scale-95 transform"
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-theme hover:brightness-110 transition-colors rounded-full shadow-md active:scale-95 transform"
                             title="Create New Team"
                         >
                             <FiPlus className="w-4 h-4" /> New Team
@@ -304,14 +304,14 @@ const Teams = () => {
                             placeholder="Search teams..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200"
+                            className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none transition-all duration-200"
                         />
                     </div>
                 </div>
                 <nav className="flex-1 overflow-y-auto custom-scrollbar">
                     {isLoading ? (
                         <div className="p-6 flex flex-col items-center justify-center text-gray-500">
-                            <FiLoader className="animate-spin text-3xl mb-3 text-blue-500" />
+                            <FiLoader className="animate-spin text-3xl mb-3 text-[var(--theme-color)]" />
                             <p>Loading teams...</p>
                         </div>
                     ) : filteredTeams.length > 0 ? (
@@ -320,13 +320,13 @@ const Teams = () => {
                                 <li key={team.id}>
                                     <button
                                         onClick={() => handleSelectTeam(team.id)}
-                                        className={`w-full text-left flex items-center justify-between p-4 border-b border-gray-100 transition-colors duration-200 ${selectedTeamId === team.id ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-600 font-semibold' : 'hover:bg-gray-50'}`}
+                                        className={`w-full text-left flex items-center justify-between p-4 border-b border-gray-100 transition-colors duration-200 ${selectedTeamId === team.id ? 'bg-[var(--theme-color)]/10 text-[var(--theme-color)] border-l-4 border-[var(--theme-color)] font-semibold' : 'hover:bg-gray-50'}`}
                                     >
                                         <div>
                                             <p className="text-base">{team.name}</p>
                                             <p className="text-xs text-gray-500">{team.users.length} member(s)</p>
                                         </div>
-                                        <FiChevronRight className={`text-gray-400 transition-transform duration-200 ${selectedTeamId === team.id ? 'translate-x-1 text-blue-600' : ''}`} />
+                                        <FiChevronRight className={`text-gray-400 transition-transform duration-200 ${selectedTeamId === team.id ? 'translate-x-1 text-[var(--theme-color)]' : ''}`} />
                                     </button>
                                 </li>
                             ))}
@@ -359,7 +359,7 @@ const Teams = () => {
                                         onChange={handleFormChange}
                                         placeholder="e.g. Product Development"
                                         required
-                                        className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200"
+                                        className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none transition-all duration-200"
                                     />
                                 </div>
                                 <div>
@@ -370,7 +370,7 @@ const Teams = () => {
                                         value={teamForm.description}
                                         onChange={handleFormChange}
                                         placeholder="A short description of the team's purpose and goals."
-                                        className="w-full border border-gray-300 rounded-lg p-3 h-32 resize-y text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200"
+                                        className="w-full border border-gray-300 rounded-lg p-3 h-32 resize-y text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none transition-all duration-200"
                                     />
                                 </div>
                                 <div className="flex items-center gap-4 justify-end">
@@ -384,7 +384,7 @@ const Teams = () => {
                                     </button>
                                     <button
                                         type="submit"
-                                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-md flex items-center gap-2 justify-center active:scale-95 transform"
+                                        className="px-6 py-2 bg-theme text-white rounded-lg hover:brightness-110 transition-colors font-semibold shadow-md flex items-center gap-2 justify-center active:scale-95 transform"
                                         disabled={isSaving}
                                     >
                                         {isSaving ? (
@@ -429,7 +429,7 @@ const Teams = () => {
                             {/* Member List */}
                             <div className="bg-gray-50 p-6 rounded-xl shadow-inner border border-gray-100">
                                 <h3 className="text-xl font-semibold text-gray-800 mb-5 flex items-center gap-2">
-                                    <FiUsers className="w-5 h-5 text-blue-600" /> Members ({selectedTeam.users.length})
+                                    <FiUsers className="w-5 h-5 text-[var(--theme-color)]" /> Members ({selectedTeam.users.length})
                                 </h3>
                                 {selectedTeam.users.length > 0 ? (
                                     <ul className="space-y-4">
@@ -474,7 +474,7 @@ const Teams = () => {
                                                 id="role"
                                                 value={memberForm.role}
                                                 onChange={handleRoleChange}
-                                                className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white pr-8"
+                                                className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none appearance-none bg-white pr-8"
                                             >
                                                 <option value="admin">Admin</option>
                                                 <option value="member">Member</option>
@@ -483,7 +483,7 @@ const Teams = () => {
                                         </div>
                                         <button
                                             type="submit"
-                                            className="md:col-span-3 lg:col-span-1 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-md flex items-center justify-center gap-2 active:scale-95 transform mt-4 md:mt-0"
+                                            className="md:col-span-3 lg:col-span-1 px-5 py-2.5 bg-theme text-white rounded-lg hover:brightness-110 transition-colors font-semibold shadow-md flex items-center justify-center gap-2 active:scale-95 transform mt-4 md:mt-0"
                                             disabled={isSaving || selectedUsersToAdd.length === 0}
                                         >
                                             {isSaving ? (
@@ -504,7 +504,7 @@ const Teams = () => {
                         // This case is handled by the initial isLoading check in the sidebar,
                         // but keeping a fallback here for clarity.
                         <div className="text-center h-full flex flex-col items-center justify-center min-h-[50vh]">
-                            <FiLoader className="animate-spin text-5xl mb-4 text-blue-500" />
+                            <FiLoader className="animate-spin text-5xl mb-4 text-[var(--theme-color)]" />
                             <p className="text-gray-600 text-lg">Loading team data...</p>
                         </div>
                     ) : (
@@ -512,11 +512,11 @@ const Teams = () => {
                         <div>
                             {teams.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
-                                    <div className="md:col-span-full bg-blue-50 border border-blue-200 rounded-xl p-6 mb-4 flex items-center gap-4 shadow-sm">
-                                        <FiInfo className="text-blue-500 text-3xl"/>
+                                    <div className="md:col-span-full bg-[var(--theme-color)]/10 border border-[var(--theme-color)] rounded-xl p-6 mb-4 flex items-center gap-4 shadow-sm">
+                                        <FiInfo className="text-[var(--theme-color)] text-3xl"/>
                                         <div>
-                                            <h2 className="text-xl font-semibold text-blue-800">Select a Team to View Details</h2>
-                                            <p className="text-blue-600 text-sm">Click on any team in the sidebar to manage its members and edit its information.</p>
+                                            <h2 className="text-xl font-semibold text-[var(--theme-color)]">Select a Team to View Details</h2>
+                                            <p className="text-[var(--theme-color)] text-sm">Click on any team in the sidebar to manage its members and edit its information.</p>
                                         </div>
                                     </div>
                                     {teams.map((team) => (
@@ -540,7 +540,7 @@ const Teams = () => {
                                                     <span className="text-sm text-gray-500 italic">No members yet</span>
                                                 )}
                                             </div>
-                                            <button className="self-start text-base text-blue-600 hover:underline flex items-center gap-1">
+                                            <button className="self-start text-base text-[var(--theme-color)] hover:underline flex items-center gap-1">
                                                 View Details <FiChevronRight className="w-4 h-4" />
                                             </button>
                                         </div>
@@ -556,7 +556,7 @@ const Teams = () => {
                                     {canEdit && (
                                         <button
                                             onClick={handleNewClick}
-                                            className="mt-8 px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-lg flex items-center gap-2 active:scale-95 transform"
+                                            className="mt-8 px-8 py-3 bg-theme text-white rounded-lg hover:brightness-110 transition-colors font-semibold shadow-lg flex items-center gap-2 active:scale-95 transform"
                                         >
                                             <FiPlus /> Create First Team
                                         </button>
