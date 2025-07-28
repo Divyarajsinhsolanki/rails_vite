@@ -141,7 +141,7 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
         {/* Save Button */}
         <button
           type="submit"
-          className="bg-green-600 text-white px-6 py-2 rounded-lg shadow hover:bg-green-700 transition"
+          className="bg-[var(--theme-color)] text-white px-6 py-2 rounded-lg shadow hover:brightness-110 transition"
         >
           💾 Save Changes
         </button>
