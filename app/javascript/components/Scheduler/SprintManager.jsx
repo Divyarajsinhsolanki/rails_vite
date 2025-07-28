@@ -184,7 +184,7 @@ export default function SprintManager({ onSprintChange, projectId, projectName }
                 onClick={() => handleSelectSprint(s)}
                 className={`relative flex-shrink-0 w-56 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 border flex flex-col justify-between
                   ${isActive 
-                    ? 'bg-[var(--theme-color)] border-[var(--theme-color)] shadow-lg shadow-[var(--theme-color)]/20 text-white' 
+                    ? 'bg-[var(--theme-color)] border-[var(--theme-color)] shadow-lg shadow-[rgb(var(--theme-color-rgb)/0.2)] text-white' 
                     : 'bg-white border-slate-200 text-slate-700 hover:border-blue-400 hover:shadow-md'
                   }`}
               >

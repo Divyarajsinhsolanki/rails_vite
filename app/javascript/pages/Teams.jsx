@@ -65,7 +65,7 @@ const Notification = ({ message, type, onClose }) => {
     const typeClasses = {
         success: "bg-green-100 border-green-400 text-green-700",
         error: "bg-red-100 border-red-400 text-red-700",
-        info: "bg-[var(--theme-color)]/10 border-[var(--theme-color)] text-[var(--theme-color)]",
+        info: "bg-[rgb(var(--theme-color-rgb)/0.1)] border-[var(--theme-color)] text-[var(--theme-color)]",
     };
 
     const icon = {
@@ -320,7 +320,7 @@ const Teams = () => {
                                 <li key={team.id}>
                                     <button
                                         onClick={() => handleSelectTeam(team.id)}
-                                        className={`w-full text-left flex items-center justify-between p-4 border-b border-gray-100 transition-colors duration-200 ${selectedTeamId === team.id ? 'bg-[var(--theme-color)]/10 text-[var(--theme-color)] border-l-4 border-[var(--theme-color)] font-semibold' : 'hover:bg-gray-50'}`}
+                                        className={`w-full text-left flex items-center justify-between p-4 border-b border-gray-100 transition-colors duration-200 ${selectedTeamId === team.id ? 'bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)] border-l-4 border-[var(--theme-color)] font-semibold' : 'hover:bg-gray-50'}`}
                                     >
                                         <div>
                                             <p className="text-base">{team.name}</p>
@@ -512,7 +512,7 @@ const Teams = () => {
                         <div>
                             {teams.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
-                                    <div className="md:col-span-full bg-[var(--theme-color)]/10 border border-[var(--theme-color)] rounded-xl p-6 mb-4 flex items-center gap-4 shadow-sm">
+                                    <div className="md:col-span-full bg-[rgb(var(--theme-color-rgb)/0.1)] border border-[var(--theme-color)] rounded-xl p-6 mb-4 flex items-center gap-4 shadow-sm">
                                         <FiInfo className="text-[var(--theme-color)] text-3xl"/>
                                         <div>
                                             <h2 className="text-xl font-semibold text-[var(--theme-color)]">Select a Team to View Details</h2>

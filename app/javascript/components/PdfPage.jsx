@@ -153,7 +153,7 @@ const PdfPage = () => {
             className={`
               w-full p-10 rounded-xl border-4 transition-all duration-300 ease-in-out
               flex flex-col items-center justify-center text-center cursor-pointer
-              ${isDragActive ? "border-[var(--theme-color)] bg-[var(--theme-color)/0.1] text-[var(--theme-color)] shadow-lg" : "border-gray-300 bg-gray-50 text-gray-600 hover:border-[var(--theme-color)] hover:bg-[var(--theme-color)/0.05]"}
+              ${isDragActive ? "border-[var(--theme-color)] bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)] shadow-lg" : "border-gray-300 bg-gray-50 text-gray-600 hover:border-[var(--theme-color)] hover:bg-[rgb(var(--theme-color-rgb)/0.05)]"}
             `}
           >
             <input {...getInputProps()} />
@@ -181,7 +181,7 @@ const PdfPage = () => {
           </div>
 
           <button
-            className="group relative inline-flex items-center justify-center px-8 py-3 text-lg font-medium tracking-wide text-white transition-all duration-300 ease-out bg-[var(--theme-color)] rounded-lg shadow-lg hover:brightness-110 focus:outline-none focus:ring-4 focus:ring-[var(--theme-color)]/50 active:scale-95"
+            className="group relative inline-flex items-center justify-center px-8 py-3 text-lg font-medium tracking-wide text-white transition-all duration-300 ease-out bg-[var(--theme-color)] rounded-lg shadow-lg hover:brightness-110 focus:outline-none focus:ring-4 focus:ring-[rgb(var(--theme-color-rgb)/0.5)] active:scale-95"
             onClick={() => {
               setPdfUrl("/documents/sample.pdf");
               localStorage.setItem("pdfUrl", "/documents/sample.pdf");
@@ -202,7 +202,7 @@ const PdfPage = () => {
               {pdfTools.map((tool, index) => (
                 <div
                   key={index}
-                  className="flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg shadow-sm hover:shadow-md hover:bg-[var(--theme-color)/0.05] transition-all duration-200 ease-in-out cursor-pointer border border-gray-200"
+                  className="flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg shadow-sm hover:shadow-md hover:bg-[rgb(var(--theme-color-rgb)/0.05)] transition-all duration-200 ease-in-out cursor-pointer border border-gray-200"
                 >
                   <tool.icon className="h-8 w-8 text-[var(--theme-color)] mb-2" />
                   <span className="text-sm font-medium text-gray-700 text-center">{tool.name}</span>
@@ -238,7 +238,7 @@ const PdfPage = () => {
                 Reset PDF
               </button>
               <button
-                className="group relative inline-flex items-center justify-center px-6 py-3 text-base font-medium tracking-wide text-white transition-all duration-300 ease-out bg-[var(--theme-color)] rounded-lg shadow-md hover:brightness-110 focus:outline-none focus:ring-4 focus:ring-[var(--theme-color)]/50 active:scale-95"
+                className="group relative inline-flex items-center justify-center px-6 py-3 text-base font-medium tracking-wide text-white transition-all duration-300 ease-out bg-[var(--theme-color)] rounded-lg shadow-md hover:brightness-110 focus:outline-none focus:ring-4 focus:ring-[rgb(var(--theme-color-rgb)/0.5)] active:scale-95"
                 onClick={handleDownloadPdf}
               >
                 <Download className="h-5 w-5 mr-2 transition-transform duration-300 group-hover:translate-y-1" />

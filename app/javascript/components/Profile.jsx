@@ -233,19 +233,19 @@ const Profile = () => {
                 )}
                 
                 <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-3">
-                  <div className="bg-[var(--theme-color)]/10 px-4 py-2 rounded-full flex items-center">
+                  <div className="bg-[rgb(var(--theme-color-rgb)/0.1)] px-4 py-2 rounded-full flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)] mr-2" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 12.094A5.973 5.973 0 004 15v1H1v-1a3 3 0 013.75-2.906z" />
                     </svg>
                     <span className="text-sm font-medium">{teams.length} Teams</span>
                   </div>
-                  <div className="bg-[var(--theme-color)]/10 px-4 py-2 rounded-full flex items-center">
+                  <div className="bg-[rgb(var(--theme-color-rgb)/0.1)] px-4 py-2 rounded-full flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)] mr-2" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2H5a1 1 0 010-2h12a2 2 0 001-2V4a2 2 0 00-2-2H6a2 2 0 00-2 2z" clipRule="evenodd" />
                     </svg>
                     <span className="text-sm font-medium">{projects.length} Projects</span>
                   </div>
-                  <div className="bg-[var(--theme-color)]/10 px-4 py-2 rounded-full flex items-center">
+                  <div className="bg-[rgb(var(--theme-color-rgb)/0.1)] px-4 py-2 rounded-full flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)] mr-2" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                     </svg>
@@ -338,7 +338,7 @@ const Profile = () => {
                     </svg>
                     <h3 className="mt-4 text-lg font-medium text-gray-700">No posts yet</h3>
                     <p className="mt-1 text-gray-500">Share your thoughts with your team!</p>
-                    <button className="mt-4 px-4 py-2 bg-[var(--theme-color)] text-white rounded-lg hover:bg-[var(--theme-color)]/90 transition">
+                    <button className="mt-4 px-4 py-2 bg-[var(--theme-color)] text-white rounded-lg hover:bg-[rgb(var(--theme-color-rgb)/0.9)] transition">
                       Create your first post
                     </button>
                   </div>
@@ -483,7 +483,7 @@ const Profile = () => {
                         <div className="text-sm text-gray-500 mb-2">{team.users.length} members</div>
                         <button
                           onClick={() => navigate('/teams', { state: { teamId: team.id } })}
-                          className="mt-4 w-full py-2 text-sm font-medium text-[var(--theme-color)] hover:text-[var(--theme-color)] border border-[var(--theme-color)]/20 rounded-lg hover:bg-[var(--theme-color)]/10 transition"
+                          className="mt-4 w-full py-2 text-sm font-medium text-[var(--theme-color)] hover:text-[var(--theme-color)] border border-[rgb(var(--theme-color-rgb)/0.2)] rounded-lg hover:bg-[rgb(var(--theme-color-rgb)/0.1)] transition"
                         >
                           View Team
                         </button>
@@ -511,7 +511,7 @@ const Profile = () => {
                       <div key={project.id} className="border border-gray-100 rounded-lg p-6 hover:shadow-md transition">
                         <div className="flex items-center justify-between mb-4">
                           <h3 className="font-bold text-gray-800">{project.name}</h3>
-                          <span className="text-xs px-2 py-1 bg-[var(--theme-color)]/10 text-[var(--theme-color)] rounded-full">{project.role}</span>
+                          <span className="text-xs px-2 py-1 bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)] rounded-full">{project.role}</span>
                         </div>
                         <p className="text-sm text-gray-500 mb-6 line-clamp-2">{project.description || 'No description provided.'}</p>
                         <div className="flex justify-between items-center">
@@ -547,7 +547,7 @@ const Profile = () => {
                         </div>
                         <button
                           onClick={() => navigate(`/projects/${project.id}/dashboard`)}
-                          className="mt-4 w-full py-2 text-sm font-medium text-[var(--theme-color)] hover:text-[var(--theme-color)] border border-[var(--theme-color)]/20 rounded-lg hover:bg-[var(--theme-color)]/10 transition"
+                          className="mt-4 w-full py-2 text-sm font-medium text-[var(--theme-color)] hover:text-[var(--theme-color)] border border-[rgb(var(--theme-color-rgb)/0.2)] rounded-lg hover:bg-[rgb(var(--theme-color-rgb)/0.1)] transition"
                         >
                           View Project
                         </button>

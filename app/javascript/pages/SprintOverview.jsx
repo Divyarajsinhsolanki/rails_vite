@@ -946,7 +946,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId }) => {
                                                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
                                                                         ${task.status === 'Completed' ? 'bg-green-100 text-green-800' : ''}
                                                                         ${task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' : ''}
-                                                                        ${task.status === 'To Do' ? 'bg-[var(--theme-color)]/10 text-[var(--theme-color)]' : ''}
+                                                                        ${task.status === 'To Do' ? 'bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)]' : ''}
                                                                     `}>
                                                                         {task.status}
                                                                     </span>
@@ -1035,7 +1035,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId }) => {
                                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
                                                     ${task.status === 'Completed' ? 'bg-green-100 text-green-800' : ''}
                                                     ${task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' : ''}
-                                                    ${task.status === 'To Do' ? 'bg-[var(--theme-color)]/10 text-[var(--theme-color)]' : ''}`}>{task.status}</span>
+                                                    ${task.status === 'To Do' ? 'bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)]' : ''}`}>{task.status}</span>
                                             </td>
                                         </tr>
                                     ))}

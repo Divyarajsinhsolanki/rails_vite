@@ -126,7 +126,7 @@ export default function SprintDashboard() {
                 className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out
                   ${activeTab === 'overview'
                     ? 'bg-[var(--theme-color)] text-white shadow-lg'
-                    : 'text-gray-700 hover:bg-[var(--theme-color)]/10 hover:text-[var(--theme-color)]'
+                    : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
                   }`}
                 onClick={() => setActiveTab('overview')}
               >
@@ -136,7 +136,7 @@ export default function SprintDashboard() {
                 className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
                   ${activeTab === 'scheduler'
                     ? 'bg-[var(--theme-color)] text-white shadow-lg'
-                    : 'text-gray-700 hover:bg-[var(--theme-color)]/10 hover:text-[var(--theme-color)]'
+                    : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
                   }`}
                 onClick={() => setActiveTab('scheduler')}
               >
@@ -146,7 +146,7 @@ export default function SprintDashboard() {
                 className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
                   ${activeTab === 'todo'
                     ? 'bg-[var(--theme-color)] text-white shadow-lg'
-                    : 'text-gray-700 hover:bg-[var(--theme-color)]/10 hover:text-[var(--theme-color)]'
+                    : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
                   }`}
               onClick={() => setActiveTab('todo')}
             >
@@ -156,7 +156,7 @@ export default function SprintDashboard() {
               className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
                 ${activeTab === 'sheet'
                   ? 'bg-[var(--theme-color)] text-white shadow-lg'
-                  : 'text-gray-700 hover:bg-[var(--theme-color)]/10 hover:text-[var(--theme-color)]'
+                  : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
                 }`}
               onClick={() => setActiveTab('sheet')}
             >
@@ -165,7 +165,7 @@ export default function SprintDashboard() {
             </div>
           </div>
           <div
-            className="flex items-center space-x-3 cursor-pointer select-none p-2 rounded-lg hover:bg-[var(--theme-color)]/10 transition-colors duration-200"
+            className="flex items-center space-x-3 cursor-pointer select-none p-2 rounded-lg hover:bg-[rgb(var(--theme-color-rgb)/0.1)] transition-colors duration-200"
             onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}
           >
             {sprint && (
