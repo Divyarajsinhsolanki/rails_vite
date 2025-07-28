@@ -12,7 +12,10 @@ class Api::AuthController < Api::BaseController
     end
 
     if user.save
-      render json: { message: "User created successfully. Please check your email to verify your account.", user: user }, status: :created
+      render json: {
+        message: "User created successfully. Please check your email to verify your account.",
+        user: user_payload(user)
+      }, status: :created
     else
       render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
     end
@@ -45,7 +48,7 @@ class Api::AuthController < Api::BaseController
     set_jwt_cookie!(user)
     render json: {
       message: "Login successful",
-      user: user.as_json(include: { roles: { only: [:name] } }),
+      user: user_payload(user),
       exp: 15.minutes.from_now.to_i
     }
   end
@@ -57,7 +60,7 @@ class Api::AuthController < Api::BaseController
     if payload && (user = User.find_by(id: payload["user_id"]))
       set_jwt_cookie!(user)
       render json: {
-        user: user.as_json(include: { roles: { only: [:name] } }),
+        user: user_payload(user),
         exp: 15.minutes.from_now.to_i
       }
     else
@@ -111,6 +114,11 @@ class Api::AuthController < Api::BaseController
     permitted = params.require(:auth).permit(:first_name, :last_name, :date_of_birth, :email, :password, :uid, :profile_picture)
     permitted.delete(:profile_picture) if permitted[:profile_picture] == "null"
     permitted
+  end
+
+  def user_payload(user)
+    profile_picture_url = rails_blob_url(user.profile_picture, only_path: true) if user.profile_picture.attached?
+    user.as_json(include: { roles: { only: [:name] } }).merge(profile_picture: profile_picture_url)
   end
 
   def verify_firebase_token(token)
