@@ -5,7 +5,7 @@ import TaskCard from './TaskCard';
 
 const KanbanColumn = ({ columnId, column, tasks, onDelete, onUpdate }) => {
   const columnStyles = {
-    'todo': 'border-t-4 border-blue-500',
+    'todo': 'border-t-4 border-[var(--theme-color)]',
     'inprogress': 'border-t-4 border-yellow-500',
     'completed': 'border-t-4 border-green-500'
   };

@@ -104,7 +104,7 @@ export default function SprintDashboard() {
         )} */}
         <div className="flex justify-between items-center">
           <h1 className="text-xl font-bold text-gray-800 flex items-center">
-            <CalendarDaysIcon className="h-7 w-7 mr-2 text-blue-600"/>
+            <CalendarDaysIcon className="h-7 w-7 mr-2 text-[var(--theme-color)]"/>
             {sprint ? (
               <span className="flex flex-col sm:flex-row sm:items-center">
                 <span className="truncate">Sprint: {sprint.name}</span>
@@ -125,8 +125,8 @@ export default function SprintDashboard() {
               <button
                 className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out
                   ${activeTab === 'overview'
-                    ? 'bg-blue-500 text-white shadow-lg'
-                    : 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+                    ? 'bg-[var(--theme-color)] text-white shadow-lg'
+                    : 'text-gray-700 hover:bg-[var(--theme-color)]/10 hover:text-[var(--theme-color)]'
                   }`}
                 onClick={() => setActiveTab('overview')}
               >
@@ -135,8 +135,8 @@ export default function SprintDashboard() {
               <button
                 className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
                   ${activeTab === 'scheduler'
-                    ? 'bg-blue-500 text-white shadow-lg'
-                    : 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+                    ? 'bg-[var(--theme-color)] text-white shadow-lg'
+                    : 'text-gray-700 hover:bg-[var(--theme-color)]/10 hover:text-[var(--theme-color)]'
                   }`}
                 onClick={() => setActiveTab('scheduler')}
               >
@@ -145,8 +145,8 @@ export default function SprintDashboard() {
               <button
                 className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
                   ${activeTab === 'todo'
-                    ? 'bg-blue-500 text-white shadow-lg'
-                    : 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+                    ? 'bg-[var(--theme-color)] text-white shadow-lg'
+                    : 'text-gray-700 hover:bg-[var(--theme-color)]/10 hover:text-[var(--theme-color)]'
                   }`}
               onClick={() => setActiveTab('todo')}
             >
@@ -155,8 +155,8 @@ export default function SprintDashboard() {
             <button
               className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
                 ${activeTab === 'sheet'
-                  ? 'bg-blue-500 text-white shadow-lg'
-                  : 'text-gray-700 hover:bg-blue-100 hover:text-blue-700'
+                  ? 'bg-[var(--theme-color)] text-white shadow-lg'
+                  : 'text-gray-700 hover:bg-[var(--theme-color)]/10 hover:text-[var(--theme-color)]'
                 }`}
               onClick={() => setActiveTab('sheet')}
             >
@@ -165,13 +165,13 @@ export default function SprintDashboard() {
             </div>
           </div>
           <div
-            className="flex items-center space-x-3 cursor-pointer select-none p-2 rounded-lg hover:bg-blue-50 transition-colors duration-200"
+            className="flex items-center space-x-3 cursor-pointer select-none p-2 rounded-lg hover:bg-[var(--theme-color)]/10 transition-colors duration-200"
             onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}
           >
             {sprint && (
               <p className="text-m text-gray-600">
                 {isCurrentSprint(sprint) ? 'Current Sprint:' : 'Selected Sprint:'}{' '}
-                <span className="font-semibold text-blue-700">{sprint.name}</span>
+                <span className="font-semibold text-[var(--theme-color)]">{sprint.name}</span>
               </p>
             )}
             {isHeaderExpanded ? (

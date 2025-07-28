@@ -31,7 +31,7 @@ const TaskForm = ({ onAddTask, onCancel }) => {
             name="title"
             value={formData.title}
             onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400"
+            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-[var(--theme-color)]"
             required
           />
         </div>
@@ -41,7 +41,7 @@ const TaskForm = ({ onAddTask, onCancel }) => {
             name="type"
             value={formData.type}
             onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400"
+            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-[var(--theme-color)]"
           />
         </div>
         <div>
@@ -50,7 +50,7 @@ const TaskForm = ({ onAddTask, onCancel }) => {
             name="status"
             value={formData.status}
             onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400"
+            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-[var(--theme-color)]"
           >
             <option value="todo">To Do</option>
             <option value="inprogress">In Progress</option>
@@ -63,7 +63,7 @@ const TaskForm = ({ onAddTask, onCancel }) => {
             name="assigned_to_user"
             value={formData.assigned_to_user}
             onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400"
+            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-[var(--theme-color)]"
           />
         </div>
         <div className="sm:col-span-2">
@@ -73,7 +73,7 @@ const TaskForm = ({ onAddTask, onCancel }) => {
             name="end_date"
             value={formData.end_date}
             onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400"
+            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-[var(--theme-color)]"
           />
         </div>
       </div>
@@ -89,7 +89,7 @@ const TaskForm = ({ onAddTask, onCancel }) => {
         )}
         <button
           type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
+          className="px-4 py-2 bg-[var(--theme-color)] text-white rounded-lg shadow hover:brightness-110"
         >
           Add Task
         </button>

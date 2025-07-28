@@ -36,7 +36,7 @@ const ProgressPieChart = ({ columns }) => {
   return (
     <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-100 h-full flex flex-col">
       <div className="flex items-center mb-4">
-        <FiPieChart className="text-blue-500 mr-3" size={24} />
+        <FiPieChart className="text-[var(--theme-color)] mr-3" size={24} />
         <h3 className="text-xl font-bold text-gray-800">Progress Overview</h3>
       </div>
       <div className="relative w-full flex-grow flex items-center justify-center min-h-[200px]">

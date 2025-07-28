@@ -64,7 +64,7 @@ export default function AddTaskForm({developers, dates, types, tasks, onAddTask}
             name="log_date"
             value={formData.log_date || ''}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
           >
             {dates.map(d => (
               <option key={d} value={d}>
@@ -81,7 +81,7 @@ export default function AddTaskForm({developers, dates, types, tasks, onAddTask}
             name="developer_id"
             value={formData.developer_id || ''}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
           >
             {developers.map(d => (
               <option key={d.id} value={d.id}>{d.name}</option>
@@ -96,7 +96,7 @@ export default function AddTaskForm({developers, dates, types, tasks, onAddTask}
             name="type"
             value={formData.type || ''}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
           >
             {types.map(t => (
               <option key={t} value={t}>{t}</option>
@@ -114,7 +114,7 @@ export default function AddTaskForm({developers, dates, types, tasks, onAddTask}
             step="0.25"
             value={formData.hours_logged}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
           />
         </div>
       </div>
@@ -134,7 +134,7 @@ export default function AddTaskForm({developers, dates, types, tasks, onAddTask}
           >
             <div className="relative">
               <Combobox.Input
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                 displayValue={task => task ? task.task_id : taskQuery}
                 onChange={e => {
                   setTaskQuery(e.target.value);
@@ -149,7 +149,7 @@ export default function AddTaskForm({developers, dates, types, tasks, onAddTask}
                   <Combobox.Option
                     key={t.id}
                     value={t}
-                    className={({ active }) => `cursor-default select-none p-2 ${active ? 'bg-blue-600 text-white' : 'text-gray-900'}`}
+                    className={({ active }) => `cursor-default select-none p-2 ${active ? 'bg-[var(--theme-color)] text-white' : 'text-gray-900'}`}
                   >
                     {t.task_id}
                   </Combobox.Option>
@@ -164,7 +164,7 @@ export default function AddTaskForm({developers, dates, types, tasks, onAddTask}
 
         <button
           type="submit"
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-700 transition"
+          className="bg-[var(--theme-color)] text-white px-6 py-2 rounded-lg shadow hover:brightness-110 transition"
         >
           🛠️ Add Log
         </button>

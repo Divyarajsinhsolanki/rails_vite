@@ -822,7 +822,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId }) => {
             <div className="max-w-8xl mx-auto bg-white rounded-xl shadow-lg p-4">
                 <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center space-x-4">
-                        <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center">
+                        <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] flex items-center">
                             <Squares2X2Icon className="h-7 w-7 mr-2"/>Sprint Task Manager
                         </h1>
                         <div className="flex flex-wrap items-center space-x-2">
@@ -830,13 +830,13 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId }) => {
                                 <div
                                     key={u.id}
                                     onClick={() => toggleUserFilter(String(u.id))}
-                                    className={`cursor-pointer w-8 h-8 rounded-full border-2 ${filterUsers.includes(String(u.id)) ? 'border-blue-500' : 'border-transparent'}`}
+                                    className={`cursor-pointer w-8 h-8 rounded-full border-2 ${filterUsers.includes(String(u.id)) ? 'border-[var(--theme-color)]' : 'border-transparent'}`}
                                 >
                                     {u.profile_picture && u.profile_picture !== 'null' ? (
                                         <img src={u.profile_picture} alt={u.first_name}
                                              className="w-8 h-8 rounded-full object-cover" />
                                     ) : (
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-blue-500 text-white text-xs font-bold flex items-center justify-center">
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-[var(--theme-color)] text-white text-xs font-bold flex items-center justify-center">
                                             {(u.first_name || u.email).charAt(0).toUpperCase()}
                                         </div>
                                     )}
@@ -847,7 +847,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId }) => {
                     <div className="flex space-x-2">
                         <button
                             onClick={() => { setAddingToBacklog(false); setShowAddModal(true); }}
-                            className="flex items-center bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
+                            className="flex items-center bg-[var(--theme-color)] hover:brightness-110 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
                         >
                             <PlusCircleIcon className="h-5 w-5 mr-2" />
                             Add Task
@@ -860,7 +860,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId }) => {
                         </button>
                         <button
                             onClick={handleExport}
-                            className="flex items-center bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
+                            className="flex items-center bg-[var(--theme-color)] hover:brightness-110 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
                         >
                             Export to Sheet
                         </button>
@@ -946,7 +946,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId }) => {
                                                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
                                                                         ${task.status === 'Completed' ? 'bg-green-100 text-green-800' : ''}
                                                                         ${task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' : ''}
-                                                                        ${task.status === 'To Do' ? 'bg-blue-100 text-blue-800' : ''}
+                                                                        ${task.status === 'To Do' ? 'bg-[var(--theme-color)]/10 text-[var(--theme-color)]' : ''}
                                                                     `}>
                                                                         {task.status}
                                                                     </span>
@@ -977,13 +977,13 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId }) => {
             {/* Backlog Tasks */}
             <div className="max-w-8xl mx-auto bg-white rounded-xl shadow-lg p-4 mt-8">
                 <div className="flex justify-between items-center mb-4">
-                    <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center">
+                    <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] flex items-center">
                         <CalendarDaysIcon className="h-7 w-7 mr-2"/>Backlog
                     </h1>
                     <div className="flex space-x-2">
                         <button
                             onClick={() => { setAddingToBacklog(true); setShowAddModal(true); }}
-                            className="flex items-center bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
+                            className="flex items-center bg-[var(--theme-color)] hover:brightness-110 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
                         >
                             <PlusCircleIcon className="h-5 w-5 mr-2" />
                             Add Task
@@ -1035,7 +1035,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId }) => {
                                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
                                                     ${task.status === 'Completed' ? 'bg-green-100 text-green-800' : ''}
                                                     ${task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' : ''}
-                                                    ${task.status === 'To Do' ? 'bg-blue-100 text-blue-800' : ''}`}>{task.status}</span>
+                                                    ${task.status === 'To Do' ? 'bg-[var(--theme-color)]/10 text-[var(--theme-color)]' : ''}`}>{task.status}</span>
                                             </td>
                                         </tr>
                                     ))}

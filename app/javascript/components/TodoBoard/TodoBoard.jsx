@@ -29,7 +29,7 @@ function Modal({ isOpen, onClose, title, children }) {
 }
 
 const initialData = {
-  todo: { name: "To Do", color: "bg-blue-100", items: [] },
+  todo: { name: "To Do", color: "bg-[var(--theme-color)]/10", items: [] },
   inprogress: { name: "In Progress", color: "bg-yellow-100", items: [] },
   completed: { name: "Completed", color: "bg-green-100", items: [] },
 };
@@ -207,7 +207,7 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
       <header className="mb-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
           <div className="mb-4 sm:mb-0">
-            <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center">
+            <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] flex items-center">
               <Squares2X2Icon className="h-7 w-7 mr-2" />Taskboard
             </h1>
           </div>
@@ -215,7 +215,7 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
             <button
               disabled
               onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all transform hover:scale-105"
+              className="flex items-center gap-2 bg-[var(--theme-color)] hover:brightness-110 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all transform hover:scale-105"
             >
               <PlusIcon className="h-5 w-5" />
               <span>Add Task</span>
@@ -224,8 +224,8 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
               <button
                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ${
                   taskView === 'all'
-                    ? 'bg-blue-500 text-white shadow'
-                    : 'text-gray-600 hover:bg-blue-100'
+                    ? 'bg-[var(--theme-color)] text-white shadow'
+                    : 'text-gray-600 hover:bg-[var(--theme-color)]/10'
                 }`}
                 onClick={() => setTaskView('all')}
               >
@@ -235,8 +235,8 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
               <button
                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ml-1 ${
                   taskView === 'my'
-                    ? 'bg-blue-500 text-white shadow'
-                    : 'text-gray-600 hover:bg-blue-100'
+                    ? 'bg-[var(--theme-color)] text-white shadow'
+                    : 'text-gray-600 hover:bg-[var(--theme-color)]/10'
                 }`}
                 onClick={() => setTaskView('my')}
               >
@@ -262,7 +262,7 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search tasks by ID, title or tag..."
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] transition-all"
         />
       </div> */}
       
