@@ -153,19 +153,19 @@ const PdfPage = () => {
             className={`
               w-full p-10 rounded-xl border-4 transition-all duration-300 ease-in-out
               flex flex-col items-center justify-center text-center cursor-pointer
-              ${isDragActive ? "border-blue-500 bg-blue-50 text-blue-700 shadow-lg" : "border-gray-300 bg-gray-50 text-gray-600 hover:border-blue-400 hover:bg-blue-50"}
+              ${isDragActive ? "border-[var(--theme-color)] bg-[var(--theme-color)/0.1] text-[var(--theme-color)] shadow-lg" : "border-gray-300 bg-gray-50 text-gray-600 hover:border-[var(--theme-color)] hover:bg-[var(--theme-color)/0.05]"}
             `}
           >
             <input {...getInputProps()} />
             {uploading ? (
-              <Loader2 className="h-12 w-12 text-blue-500 animate-spin mb-4" />
+              <Loader2 className="h-12 w-12 text-[var(--theme-color)] animate-spin mb-4" />
             ) : (
               <Upload className="h-12 w-12 text-gray-500 mb-4" />
             )}
             {isDragActive ? (
               <p className="text-xl font-semibold">Drop your PDF here!</p>
             ) : (
-              <p className="text-lg">Drag & drop a PDF file or <span className="font-semibold text-blue-600 underline">click to browse</span></p>
+              <p className="text-lg">Drag & drop a PDF file or <span className="font-semibold text-[var(--theme-color)] underline">click to browse</span></p>
             )}
             <p className="text-sm text-gray-500 mt-2">Only .pdf files are accepted (Max 25MB)</p>
           </div>
@@ -181,7 +181,7 @@ const PdfPage = () => {
           </div>
 
           <button
-            className="group relative inline-flex items-center justify-center px-8 py-3 text-lg font-medium tracking-wide text-white transition-all duration-300 ease-out bg-gradient-to-br from-purple-600 to-blue-500 rounded-lg shadow-lg hover:from-purple-700 hover:to-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-300 active:scale-95"
+            className="group relative inline-flex items-center justify-center px-8 py-3 text-lg font-medium tracking-wide text-white transition-all duration-300 ease-out bg-[var(--theme-color)] rounded-lg shadow-lg hover:brightness-110 focus:outline-none focus:ring-4 focus:ring-[var(--theme-color)]/50 active:scale-95"
             onClick={() => {
               setPdfUrl("/documents/sample.pdf");
               localStorage.setItem("pdfUrl", "/documents/sample.pdf");
@@ -202,9 +202,9 @@ const PdfPage = () => {
               {pdfTools.map((tool, index) => (
                 <div
                   key={index}
-                  className="flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg shadow-sm hover:shadow-md hover:bg-blue-50 transition-all duration-200 ease-in-out cursor-pointer border border-gray-200"
+                  className="flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg shadow-sm hover:shadow-md hover:bg-[var(--theme-color)/0.05] transition-all duration-200 ease-in-out cursor-pointer border border-gray-200"
                 >
-                  <tool.icon className="h-8 w-8 text-blue-600 mb-2" />
+                  <tool.icon className="h-8 w-8 text-[var(--theme-color)] mb-2" />
                   <span className="text-sm font-medium text-gray-700 text-center">{tool.name}</span>
                 </div>
               ))}
@@ -238,7 +238,7 @@ const PdfPage = () => {
                 Reset PDF
               </button>
               <button
-                className="group relative inline-flex items-center justify-center px-6 py-3 text-base font-medium tracking-wide text-white transition-all duration-300 ease-out bg-gradient-to-br from-blue-600 to-purple-500 rounded-lg shadow-md hover:from-blue-700 hover:to-purple-600 focus:outline-none focus:ring-4 focus:ring-blue-300 active:scale-95"
+                className="group relative inline-flex items-center justify-center px-6 py-3 text-base font-medium tracking-wide text-white transition-all duration-300 ease-out bg-[var(--theme-color)] rounded-lg shadow-md hover:brightness-110 focus:outline-none focus:ring-4 focus:ring-[var(--theme-color)]/50 active:scale-95"
                 onClick={handleDownloadPdf}
               >
                 <Download className="h-5 w-5 mr-2 transition-transform duration-300 group-hover:translate-y-1" />
