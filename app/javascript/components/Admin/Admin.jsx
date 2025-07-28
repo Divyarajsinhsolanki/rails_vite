@@ -21,13 +21,13 @@ function Admin() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
+      <h1 className="text-2xl font-bold mb-4 text-theme">Admin Dashboard</h1>
       <div className="mb-4">
         <label className="mr-2 font-medium">Select Table:</label>
         <select
           value={selectedTable}
           onChange={(e) => setSelectedTable(e.target.value)}
-          className="border rounded px-2 py-1"
+          className="border border-theme rounded px-2 py-1 focus:ring-2 focus:ring-[var(--theme-color)]"
         >
           <option value="">-- Choose a table --</option>
           {tables.map((tbl) => (
