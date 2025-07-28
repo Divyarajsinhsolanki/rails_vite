@@ -27,10 +27,6 @@ const Vault = () => {
   const [editContent, setEditContent] = useState("");
   const [openMenuId, setOpenMenuId] = useState(null);
   const [copiedKey, setCopiedKey] = useState(null);
-  const [showCredentials, setShowCredentials] = useState(true);
-  const [showCommands, setShowCommands] = useState(true);
-  const [showTokens, setShowTokens] = useState(true);
-  const [showOthers, setShowOthers] = useState(true);
 
   useEffect(() => {
     loadItems();
@@ -366,13 +362,10 @@ const Vault = () => {
             <div className="bg-blue-500 text-white px-3 py-2 flex justify-between items-center">
               <span>Credentials</span>
               <div className="space-x-2">
-                <button onClick={() => setShowCredentials((v) => !v)} className="text-sm underline">
-                  {showCredentials ? 'Hide' : 'Expand'}
-                </button>
                 <button onClick={() => openModal('Credential')} className="font-bold">+</button>
               </div>
             </div>
-            {showCredentials && (
+            {(
               <div className="p-4 space-y-4">
                 {credentials.map(renderCredential)}
                 {credentials.length === 0 && <p className="italic text-sm">No credentials</p>}
@@ -385,13 +378,10 @@ const Vault = () => {
             <div className="bg-green-500 text-white px-3 py-2 flex justify-between items-center">
               <span>Commands</span>
               <div className="space-x-2">
-                <button onClick={() => setShowCommands((v) => !v)} className="text-sm underline">
-                  {showCommands ? 'Hide' : 'Expand'}
-                </button>
                 <button onClick={() => openModal('Command')} className="font-bold">+</button>
               </div>
             </div>
-            {showCommands && (
+            {(
               <div className="p-4 space-y-4">
                 {commands.map(renderCommand)}
                 {commands.length === 0 && <p className="italic text-sm">No commands</p>}
@@ -405,13 +395,10 @@ const Vault = () => {
         <div className="bg-orange-500 text-white px-3 py-2 flex justify-between items-center">
           <span>Tokens</span>
           <div className="space-x-2">
-            <button onClick={() => setShowTokens((v) => !v)} className="text-sm underline">
-              {showTokens ? 'Hide' : 'Expand'}
-            </button>
             <button onClick={() => openModal('Token')} className="font-bold">+</button>
           </div>
         </div>
-        {showTokens && (
+        {(
           <div className="p-4 space-y-4">
             {tokens.map(renderToken)}
             {tokens.length === 0 && <p className="italic text-sm">No tokens</p>}
@@ -424,13 +411,10 @@ const Vault = () => {
           <div className="bg-purple-500 text-white px-3 py-2 flex justify-between items-center">
             <span>Other Items</span>
             <div className="space-x-2">
-              <button onClick={() => setShowOthers((v) => !v)} className="text-sm underline">
-                {showOthers ? 'Hide' : 'Expand'}
-              </button>
               <button onClick={() => openModal('')} className="font-bold">+</button>
             </div>
           </div>
-          {showOthers && (
+          {(
             <div className="p-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {others.map(renderOther)}
             </div>
