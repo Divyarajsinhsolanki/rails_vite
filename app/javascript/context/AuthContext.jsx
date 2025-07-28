@@ -13,6 +13,11 @@ export function AuthProvider({ children }) {
   const navigate = useNavigate();
   const refreshTimer = useRef();
 
+  useEffect(() => {
+    const color = user?.color_theme || '#3b82f6';
+    document.documentElement.style.setProperty('--theme-color', color);
+  }, [user]);
+
   // Clear timer on unmount
   useEffect(() => () => clearTimeout(refreshTimer.current), []);
 
