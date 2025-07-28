@@ -153,13 +153,15 @@ const Users = () => {
   );
 
   // Base styles for the 3D effect buttons
-  const buttonBaseStyle = "px-5 py-2 rounded-full text-sm font-semibold text-white shadow-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-4";
-  const inputBaseStyle = "w-full bg-blue-100/50 border border-blue-500/30 rounded-lg p-2 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400";
+  const buttonBaseStyle =
+    "px-5 py-2 rounded-full text-sm font-semibold text-white shadow-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-[var(--theme-color)]";
+  const inputBaseStyle =
+    "w-full bg-[var(--theme-color)]/5 border border-[var(--theme-color)]/30 rounded-lg p-2 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]";
 
   return (
-    <div className="min-h-screen bg-blue-50 text-gray-800 font-sans p-4 sm:p-8">
+    <div className="min-h-screen bg-[var(--theme-color)]/10 text-gray-800 font-sans p-4 sm:p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">User Directory</h1>
+        <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-center text-transparent bg-clip-text bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)]">User Directory</h1>
         <p className="text-center mb-8 text-gray-600">A futuristic interface to manage your users.</p>
         
         <div className="mb-10 max-w-xl mx-auto">
@@ -168,7 +170,7 @@ const Users = () => {
             placeholder="Search by name or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white border-2 border-gray-200 rounded-full px-6 py-3 text-gray-900 placeholder-gray-400 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+            className="w-full bg-white border-2 border-gray-200 rounded-full px-6 py-3 text-gray-900 placeholder-gray-400 shadow-md focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)] focus:border-transparent transition-all duration-300"
           />
         </div>
 
@@ -177,15 +179,15 @@ const Users = () => {
             const userTeams = teams.filter(t => t.users.some(u => u.id === user.id)).map(t => t.name);
             const userProjects = projects.filter(p => p.users.some(u => u.id === user.id)).map(p => p.name);
             return (
-            <div key={user.id} className="bg-white/60 backdrop-blur-md border border-gray-200 shadow-2xl shadow-blue-500/10 rounded-3xl p-6 flex flex-col items-center text-center transition-all duration-300 hover:bg-white/80 hover:shadow-blue-500/20">
+            <div key={user.id} className="bg-white/60 backdrop-blur-md border border-gray-200 shadow-2xl shadow-[var(--theme-color)]/10 rounded-3xl p-6 flex flex-col items-center text-center transition-all duration-300 hover:bg-white/80 hover:shadow-[var(--theme-color)]/20">
               {editingId === user.id ? (
                 <form onSubmit={handleUpdate} className="w-full flex flex-col gap-3" encType="multipart/form-data">
                   <input type="text" name="first_name" value={formData.first_name} onChange={handleChange} placeholder="First Name" className={inputBaseStyle} required />
                   <input type="text" name="last_name" value={formData.last_name} onChange={handleChange} placeholder="Last Name" className={inputBaseStyle} required />
                   <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" className={inputBaseStyle} required />
                   <input type="date" name="date_of_birth" value={formData.date_of_birth || ''} onChange={handleChange} className={`${inputBaseStyle} text-gray-500`} />
-                  <input type="file" name="profile_picture" onChange={handleChange} className="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-200 file:text-blue-700 hover:file:bg-blue-300" accept="image/*" />
-                  <input type="file" name="cover_photo" onChange={handleChange} className="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-200 file:text-blue-700 hover:file:bg-blue-300" accept="image/*" />
+                  <input type="file" name="profile_picture" onChange={handleChange} className="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[var(--theme-color)]/20 file:text-[var(--theme-color)] hover:file:bg-[var(--theme-color)]/30" accept="image/*" />
+                  <input type="file" name="cover_photo" onChange={handleChange} className="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[var(--theme-color)]/20 file:text-[var(--theme-color)] hover:file:bg-[var(--theme-color)]/30" accept="image/*" />
                   <div className="flex flex-wrap justify-center gap-2">
                     {roles.map((role) => (
                       <label key={role} className="flex items-center space-x-1">
@@ -210,7 +212,7 @@ const Users = () => {
                     <img
                       src={user.profile_picture || `https://placehold.co/100x100/EFF6FF/1E40AF?text=${(user.first_name || user.email || 'U').charAt(0).toUpperCase()}`}
                       alt="Profile"
-                      className="w-24 h-24 rounded-full object-cover border-4 border-blue-500/50 shadow-lg"
+                      className="w-24 h-24 rounded-full object-cover border-4 border-[var(--theme-color)]/50 shadow-lg"
                       onError={(e) => { e.target.onerror = null; e.target.src=`https://placehold.co/100x100/F9FAFB/9CA3AF?text=Err`; }}
                     />
                      <div className="absolute inset-0 rounded-full border-2 border-black/10 animate-pulse"></div>
@@ -218,7 +220,7 @@ const Users = () => {
                   <h2 className="text-xl font-bold text-gray-900">
                     {user.first_name} {user.last_name}
                   </h2>
-                  <p className="text-blue-600 text-sm mb-1">{user.email}</p>
+                  <p className="text-[var(--theme-color)] text-sm mb-1">{user.email}</p>
                   {user.date_of_birth && (
                     <p className="text-gray-500 text-xs mb-1">
                       Born: {new Date(user.date_of_birth).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
@@ -234,7 +236,7 @@ const Users = () => {
                     <p className="text-gray-500 text-xs mb-4">Projects: {userProjects.join(', ')}</p>
                   )}
                   <div className="flex space-x-3 mt-auto pt-4">
-                    <button onClick={() => handleEdit(user)} className={`${buttonBaseStyle} bg-gradient-to-br from-sky-500 to-indigo-500 focus:ring-sky-500/50`}>Edit</button>
+                    <button onClick={() => handleEdit(user)} className={`${buttonBaseStyle} bg-theme focus:ring-[var(--theme-color)]`}>Edit</button>
                     <button onClick={() => handleDelete(user.id)} className={`${buttonBaseStyle} bg-gradient-to-br from-pink-500 to-red-600 focus:ring-pink-500/50`}>Delete</button>
                   </div>
                 </>
