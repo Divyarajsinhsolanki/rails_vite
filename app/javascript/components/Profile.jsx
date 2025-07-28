@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { fetchUserInfo, updateUserInfo, fetchPosts, SchedulerAPI } from "../components/api";
 import { getStatusClasses } from '/utils/taskUtils';
 
 const Profile = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
   const [tasks, setTasks] = useState([]);
@@ -438,17 +440,42 @@ const Profile = () => {
                           <h3 className="font-bold text-gray-800">{project.name}</h3>
                           <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded-full">{project.role}</span>
                         </div>
-                        <p className="text-sm text-gray-500 mb-6 line-clamp-2">Project description would go here if available in the data...</p>
+                        <p className="text-sm text-gray-500 mb-6 line-clamp-2">{project.description || 'No description provided.'}</p>
                         <div className="flex justify-between items-center">
                           <div className="flex -space-x-2">
-                            {[1, 2, 3].map((i) => (
-                              <div key={i} className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white"></div>
+                            {project.members.slice(0,3).map((m) => (
+                              m.profile_picture ? (
+                                <img
+                                  key={m.id}
+                                  src={m.profile_picture}
+                                  alt={m.name}
+                                  className="w-8 h-8 rounded-full border-2 border-white object-cover"
+                                />
+                              ) : (
+                                <div
+                                  key={m.id}
+                                  className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs font-medium text-gray-500"
+                                >
+                                  {m.name.charAt(0).toUpperCase()}
+                                </div>
+                              )
                             ))}
-                            <div className="w-8 h-8 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center text-xs text-gray-500">+3</div>
+                            {project.members.length > 3 && (
+                              <div className="w-8 h-8 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center text-xs text-gray-500">
+                                +{project.members.length - 3}
+                              </div>
+                            )}
                           </div>
-                          <div className="text-xs text-gray-500">Due in 2 weeks</div>
+                          {project.end_date && (
+                            <div className="text-xs text-gray-500">
+                              Due {new Date(project.end_date).toLocaleDateString()}
+                            </div>
+                          )}
                         </div>
-                        <button className="mt-4 w-full py-2 text-sm font-medium text-purple-600 hover:text-purple-800 border border-purple-100 rounded-lg hover:bg-purple-50 transition">
+                        <button
+                          onClick={() => navigate(`/projects/${project.id}/dashboard`)}
+                          className="mt-4 w-full py-2 text-sm font-medium text-purple-600 hover:text-purple-800 border border-purple-100 rounded-lg hover:bg-purple-50 transition"
+                        >
                           View Project
                         </button>
                       </div>
