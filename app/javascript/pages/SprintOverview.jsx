@@ -58,7 +58,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                 >
                     <FiX className="w-5 h-5" />
                 </button>
-                <h2 className="text-3xl font-bold text-indigo-700 mb-6 text-center">Task Details</h2>
+                <h2 className="text-3xl font-bold text-[var(--theme-color)] mb-6 text-center">Task Details</h2>
                 <form onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                         <div>
@@ -71,7 +71,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                                 name="id"
                                 value={editedTask.id}
                                 onChange={handleChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                         <div>
@@ -84,7 +84,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                                 name="link"
                                 value={editedTask.link}
                                 onChange={handleChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                         <div>
@@ -96,7 +96,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                                 name="status"
                                 value={editedTask.status}
                                 onChange={handleChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             >
                                 <option value="To Do">To Do</option>
                                 <option value="In Progress">In Progress</option>
@@ -113,7 +113,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                                 value={editedTask.title}
                                 onChange={handleChange}
                                 rows="3"
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             ></textarea>
                         </div>
                         {/* <div className="md:col-span-2 lg:col-span-3">
@@ -126,7 +126,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                                 value={editedTask.description}
                                 onChange={handleChange}
                                 rows="2"
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             ></textarea>
                         </div> */}
                         <div>
@@ -139,7 +139,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                                 name="estimatedHours"
                                 value={editedTask.estimatedHours}
                                 onChange={handleChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                         <div>
@@ -151,7 +151,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                                 name="assignedTo"
                                 value={editedTask.assignedTo}
                                 onChange={handleDeveloperChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             >
                                 {developers.map(dev => (
                                     <option key={dev.id} value={dev.id}>
@@ -169,7 +169,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                                 name="assignedUser"
                                 value={editedTask.assignedUser || ''}
                                 onChange={handleUserChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             >
                                 <option value="">Select user</option>
                                 {users.map(u => (
@@ -188,7 +188,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                                 name="sprintId"
                                 value={editedTask.sprintId || ''}
                                 onChange={handleChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             >
                                 <option value="">Unassigned</option>
                                 {sprints.map(s => (
@@ -208,7 +208,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                                 name="startDate"
                                 value={editedTask.startDate}
                                 onChange={handleChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                         <div>
@@ -221,7 +221,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                                 name="endDate"
                                 value={editedTask.endDate}
                                 onChange={handleChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                         <div>
@@ -234,7 +234,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                                 name="order"
                                 value={editedTask.order}
                                 onChange={handleChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                     </div>
@@ -256,7 +256,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                         </button>
                         <button
                             type="submit"
-                            className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 ease-in-out shadow-md"
+                            className="px-6 py-3 bg-[var(--theme-color)] text-white rounded-lg font-semibold hover:brightness-110 transition duration-200 ease-in-out shadow-md"
                         >
                             Save Changes
                         </button>
@@ -308,7 +308,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate }) => {
                 >
                     <FiX className="w-5 h-5" />
                 </button>
-                <h2 className="text-3xl font-bold text-indigo-700 mb-6 text-center">Add Task</h2>
+                <h2 className="text-3xl font-bold text-[var(--theme-color)] mb-6 text-center">Add Task</h2>
                 <form onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                         <div>
@@ -321,7 +321,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate }) => {
                                 name="task_id"
                                 value={newTask.task_id}
                                 onChange={handleChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                         <div>
@@ -334,7 +334,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate }) => {
                                 name="task_url"
                                 value={newTask.task_url}
                                 onChange={handleChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                         <div>
@@ -346,7 +346,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate }) => {
                                 name="status"
                                 value={newTask.status}
                                 onChange={handleChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             >
                                 <option value="todo">To Do</option>
                                 <option value="inprogress">In Progress</option>
@@ -363,7 +363,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate }) => {
                                 value={newTask.title}
                                 onChange={handleChange}
                                 rows="3"
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             ></textarea>
                         </div>
                         {/* <div className="md:col-span-2 lg:col-span-3">
@@ -376,7 +376,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate }) => {
                                 value={newTask.description}
                                 onChange={handleChange}
                                 rows="2"
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             ></textarea>
                         </div> */}
                         <div>
@@ -389,7 +389,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate }) => {
                                 name="estimated_hours"
                                 value={newTask.estimated_hours}
                                 onChange={handleChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                         <div>
@@ -401,7 +401,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate }) => {
                                 name="developer_id"
                                 value={newTask.developer_id}
                                 onChange={handleChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             >
                                 {developers.map(dev => (
                                     <option key={dev.id} value={dev.id}>
@@ -419,7 +419,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate }) => {
                                 name="assigned_to_user"
                                 value={newTask.assigned_to_user}
                                 onChange={handleChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             >
                                 <option value="">Select user</option>
                                 {users.map(u => (
@@ -439,7 +439,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate }) => {
                                 name="start_date"
                                 value={newTask.start_date}
                                 onChange={handleChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                         <div>
@@ -452,7 +452,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate }) => {
                                 name="end_date"
                                 value={newTask.end_date}
                                 onChange={handleChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                         <div>
@@ -465,7 +465,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate }) => {
                                 name="order"
                                 value={newTask.order}
                                 onChange={handleChange}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                     </div>
@@ -479,7 +479,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate }) => {
                         </button>
                         <button
                             type="submit"
-                            className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 ease-in-out shadow-md"
+                            className="px-6 py-3 bg-[var(--theme-color)] text-white rounded-lg font-semibold hover:brightness-110 transition duration-200 ease-in-out shadow-md"
                         >
                             Create Task
                         </button>

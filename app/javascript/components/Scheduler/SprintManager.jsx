@@ -145,7 +145,7 @@ export default function SprintManager({ onSprintChange, projectId, projectName }
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[var(--theme-color)]"></div>
       </div>
     );
   }
@@ -163,7 +163,7 @@ export default function SprintManager({ onSprintChange, projectId, projectName }
         <motion.button
           whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
           onClick={() => openForm()}
-          className="mt-3 sm:mt-0 flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg shadow-sm hover:bg-blue-600 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-50 focus:ring-blue-500"
+          className="mt-3 sm:mt-0 flex items-center gap-2 px-4 py-2 bg-[var(--theme-color)] text-white rounded-lg shadow-sm hover:brightness-110 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-50 focus:ring-[var(--theme-color)]"
         >
           <FiPlus /><span>New Sprint</span>
         </motion.button>
@@ -184,7 +184,7 @@ export default function SprintManager({ onSprintChange, projectId, projectName }
                 onClick={() => handleSelectSprint(s)}
                 className={`relative flex-shrink-0 w-56 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 border flex flex-col justify-between
                   ${isActive 
-                    ? 'bg-blue-500 border-blue-500 shadow-lg shadow-blue-500/20 text-white' 
+                    ? 'bg-[var(--theme-color)] border-[var(--theme-color)] shadow-lg shadow-[var(--theme-color)]/20 text-white' 
                     : 'bg-white border-slate-200 text-slate-700 hover:border-blue-400 hover:shadow-md'
                   }`}
               >
@@ -244,23 +244,23 @@ export default function SprintManager({ onSprintChange, projectId, projectName }
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-slate-600 mb-1">Sprint Name</label>
-                      <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="e.g., Summer Release" required className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"/>
+                      <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="e.g., Summer Release" required className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] transition"/>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-slate-600 mb-1">Start Date</label>
-                        <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} required className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"/>
+                        <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} required className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] transition"/>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-slate-600 mb-1">End Date</label>
-                        <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} required className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"/>
+                        <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} required className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] transition"/>
                       </div>
                     </div>
                   </div>
                 </div>
                 <div className="bg-slate-50 px-6 py-4 flex justify-end gap-3 rounded-b-xl border-t border-slate-200">
                   <motion.button type="button" onClick={() => setFormVisible(false)} className="px-4 py-2 bg-white text-slate-700 rounded-md border border-slate-300 hover:bg-slate-100 transition" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>Cancel</motion.button>
-                  <motion.button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-blue-500 text-white rounded-md shadow-sm hover:bg-blue-600 transition disabled:bg-blue-300" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <motion.button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-[var(--theme-color)] text-white rounded-md shadow-sm hover:brightness-110 transition disabled:bg-blue-300" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                     {isSubmitting ? 'Saving...' : (formData.id ? 'Update Sprint' : 'Create Sprint')}
                   </motion.button>
                 </div>
