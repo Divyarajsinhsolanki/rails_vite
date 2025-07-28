@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { fetchUserInfo, updateUserInfo, fetchPosts, SchedulerAPI } from "../components/api"; // Adjust the import path as necessary
+import { fetchUserInfo, updateUserInfo, fetchPosts, SchedulerAPI } from "../components/api";
 import { getStatusClasses } from '/utils/taskUtils';
 
 const Profile = () => {
@@ -9,6 +9,7 @@ const Profile = () => {
   const [teams, setTeams] = useState([]);
   const [projects, setProjects] = useState([]);
   const [editMode, setEditMode] = useState(false);
+  const [activeTab, setActiveTab] = useState('posts');
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -112,223 +113,435 @@ const Profile = () => {
   );
 
   return (
-    <div className="min-h-screen bg-blue-50 flex flex-col items-center p-4">
-      <div className="w-full max-w-8xl flex flex-col lg:flex-row gap-8">
-        <div className={`flex-1 transition-opacity duration-500 ${editMode ? 'opacity-0' : 'opacity-100'}`}>
-          {!editMode && (
-            <div className="bg-white rounded-2xl shadow-xl p-8">
-            <div className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left">
-              {/* Profile Image with a subtle border animation */}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4 md:p-8">
+      {/* Main Container */}
+      <div className="max-w-7xl mx-auto">
+        {/* Profile Header */}
+        <div className="bg-white rounded-3xl shadow-xl overflow-hidden mb-8">
+          <div className="relative h-48 bg-gradient-to-r from-blue-500 to-indigo-600">
+            {/* Cover Photo */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+          </div>
+          
+          <div className="px-8 pb-8 -mt-16 relative z-10">
+            <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
+              {/* Profile Picture */}
               <div className="relative group">
                 {user?.profile_picture && user.profile_picture !== 'null' ? (
                   <img
                     src={user.profile_picture}
                     alt="Profile"
-                    className="w-40 h-40 rounded-full object-cover border-4 border-transparent group-hover:border-blue-300 transition-all duration-300"
+                    className="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-4 border-white shadow-lg transition-all duration-300 hover:shadow-xl"
                   />
                 ) : (
-                  <div className="w-40 h-40 rounded-full bg-gradient-to-tr from-indigo-500 to-blue-500 text-white text-6xl font-bold flex items-center justify-center">
+                  <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-tr from-indigo-500 to-blue-500 text-white text-5xl md:text-6xl font-bold flex items-center justify-center border-4 border-white shadow-lg">
                     {initial}
                   </div>
                 )}
-                <div className="absolute inset-0 rounded-full bg-black bg-opacity-25 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <p className="text-white text-lg">Change</p>
-                </div>
+                {editMode && (
+                  <label className="absolute bottom-2 right-2 bg-white p-2 rounded-full shadow-md cursor-pointer hover:bg-gray-100 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                    </svg>
+                    <input type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
+                  </label>
+                )}
               </div>
 
-              {/* User Info with more spacing and better typography */}
-              <div className="md:ml-8 mt-6 md:mt-0">
-                <h1 className="text-4xl font-extrabold text-gray-800">
+              {/* User Info */}
+              <div className="flex-1 text-center md:text-left">
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
                   {user ? displayName : "Loading..."}
                 </h1>
-                <p className="text-md text-gray-500 mt-1">{user?.email}</p>
+                <p className="text-blue-600 mt-1">{user?.email}</p>
                 {user?.date_of_birth && (
-                  <p className="text-md text-gray-500">Born on {new Date(user.date_of_birth).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  <p className="text-gray-500 mt-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 inline mr-1" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                    </svg>
+                    Born on {new Date(user.date_of_birth).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  </p>
                 )}
+                
+                <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-3">
+                  <div className="bg-blue-50 px-4 py-2 rounded-full flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 12.094A5.973 5.973 0 004 15v1H1v-1a3 3 0 013.75-2.906z" />
+                    </svg>
+                    <span className="text-sm font-medium">{teams.length} Teams</span>
+                  </div>
+                  <div className="bg-purple-50 px-4 py-2 rounded-full flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-600 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2H5a1 1 0 010-2h12a2 2 0 001-2V4a2 2 0 00-2-2H6a2 2 0 00-2 2z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-sm font-medium">{projects.length} Projects</span>
+                  </div>
+                  <div className="bg-green-50 px-4 py-2 rounded-full flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-sm font-medium">{tasks.length} Tasks</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Edit Button */}
+              {!editMode && (
                 <button
                   onClick={() => setEditMode(true)}
-                  className="mt-6 px-6 py-2 bg-blue-500 text-white font-semibold rounded-full hover:bg-blue-600 active:bg-blue-700 transition transform hover:scale-105"
+                  className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-full hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
                 >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                  </svg>
                   Edit Profile
                 </button>
-              </div>
-            </div>
-
-            {/* Posts Section with a cleaner grid */}
-            <div className="mt-12">
-              <h2 className="text-2xl font-bold text-gray-700 mb-6">My Posts</h2>
-              {posts.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {posts.map((post) => (
-                    <div key={post.id} className="bg-white rounded-xl shadow-md overflow-hidden transform hover:-translate-y-2 transition-transform duration-300">
-                      {post.image_url && (
-                        <img
-                          src={post.image_url}
-                          alt="Post"
-                          className="w-full h-48 object-cover"
-                        />
-                      )}
-                      <div className="p-5">
-                        <p className="text-sm text-gray-500 mb-1">
-                          Posted on {new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </p>
-                        <p className="text-gray-600">{post.message}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-gray-500 py-8">You haven't posted anything yet.</p>
-              )}
-            </div>
-
-            {/* Tasks Section */}
-            <div className="mt-12">
-              <h2 className="text-2xl font-bold text-gray-700 mb-6">My Tasks</h2>
-              {tasks.length > 0 ? (
-                <>
-                  {dueTodayTasks.length > 0 && (
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-700 mb-4">Due Today</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {dueTodayTasks.map((task) => (
-                          <div key={task.id} className="bg-white rounded-xl shadow-md p-5">
-                            <h3 className="text-lg font-semibold text-gray-800 break-all">{task.task_id}</h3>
-                            <span className={`text-sm px-2 py-1 rounded-full font-medium capitalize ${getStatusClasses(task.status)}`}>{task.status}</span>
-                            {(task.end_date || task.due_date) && (
-                              <p className="text-sm text-gray-500">Due {new Date(task.end_date || task.due_date).toLocaleDateString()}</p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {otherTasks.length > 0 && (
-                    <div className={dueTodayTasks.length > 0 ? "mt-8" : ""}>
-                      <h3 className="text-xl font-semibold text-gray-700 mb-4">All Tasks</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {otherTasks.map((task) => (
-                          <div key={task.id} className="bg-white rounded-xl shadow-md p-5">
-                            <h3 className="text-lg font-semibold text-gray-800 break-all">{task.task_id}</h3>
-                            <span className={`text-sm px-2 py-1 rounded-full font-medium capitalize ${getStatusClasses(task.status)}`}>{task.status}</span>
-                            {(task.end_date || task.due_date) && (
-                              <p className="text-sm text-gray-500">Due {new Date(task.end_date || task.due_date).toLocaleDateString()}</p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </>
-              ) : (
-              <p className="text-center text-gray-500 py-8">No tasks assigned.</p>
-              )}
-            </div>
-
-            {/* Teams Section */}
-            <div className="mt-12">
-              <h2 className="text-2xl font-bold text-gray-700 mb-6">My Teams</h2>
-              {teams.length > 0 ? (
-                <ul className="list-disc list-inside space-y-2">
-                  {teams.map((team) => (
-                    <li key={team.id}>
-                      {team.name}{" "}
-                      <span className="text-sm text-gray-500">({team.role})</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-center text-gray-500 py-8">No team memberships.</p>
-              )}
-            </div>
-
-            {/* Projects Section */}
-            <div className="mt-12">
-              <h2 className="text-2xl font-bold text-gray-700 mb-6">My Projects</h2>
-              {projects.length > 0 ? (
-                <ul className="list-disc list-inside space-y-2">
-                  {projects.map((project) => (
-                    <li key={project.id}>
-                      {project.name}{" "}
-                      <span className="text-sm text-gray-500">({project.role})</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-center text-gray-500 py-8">No projects assigned.</p>
               )}
             </div>
           </div>
-        )}
+        </div>
+
+        {/* Content Tabs */}
+        <div className="mb-8">
+          <div className="flex overflow-x-auto pb-2 scrollbar-hide">
+            <button
+              onClick={() => setActiveTab('posts')}
+              className={`px-6 py-3 font-medium rounded-t-lg whitespace-nowrap ${activeTab === 'posts' ? 'bg-white text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              My Posts
+            </button>
+            <button
+              onClick={() => setActiveTab('tasks')}
+              className={`px-6 py-3 font-medium rounded-t-lg whitespace-nowrap ${activeTab === 'tasks' ? 'bg-white text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              My Tasks
+            </button>
+            <button
+              onClick={() => setActiveTab('teams')}
+              className={`px-6 py-3 font-medium rounded-t-lg whitespace-nowrap ${activeTab === 'teams' ? 'bg-white text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              My Teams
+            </button>
+            <button
+              onClick={() => setActiveTab('projects')}
+              className={`px-6 py-3 font-medium rounded-t-lg whitespace-nowrap ${activeTab === 'projects' ? 'bg-white text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              My Projects
+            </button>
+          </div>
+          <div className="bg-white rounded-b-xl rounded-tr-xl shadow-lg p-6">
+            {activeTab === 'posts' && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">Recent Posts</h2>
+                {posts.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {posts.map((post) => (
+                      <div key={post.id} className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300">
+                        {post.image_url && (
+                          <img
+                            src={post.image_url}
+                            alt="Post"
+                            className="w-full h-48 object-cover"
+                          />
+                        )}
+                        <div className="p-5">
+                          <div className="flex items-center text-sm text-gray-500 mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            {new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </div>
+                          <p className="text-gray-700 line-clamp-3">{post.message}</p>
+                          <button className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
+                            Read more
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <h3 className="mt-4 text-lg font-medium text-gray-700">No posts yet</h3>
+                    <p className="mt-1 text-gray-500">Share your thoughts with your team!</p>
+                    <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                      Create your first post
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'tasks' && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">My Tasks</h2>
+                {tasks.length > 0 ? (
+                  <>
+                    {dueTodayTasks.length > 0 && (
+                      <div className="mb-8">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-xl font-semibold text-gray-700">Due Today</h3>
+                          <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                            {dueTodayTasks.length} urgent
+                          </span>
+                        </div>
+                        <div className="space-y-3">
+                          {dueTodayTasks.map((task) => (
+                            <div key={task.id} className="p-4 bg-white border border-gray-100 rounded-lg shadow-sm hover:shadow-md transition">
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <h3 className="font-medium text-gray-800">{task.task_id}</h3>
+                                  <div className="flex items-center mt-1 space-x-3">
+                                    <span className={`text-xs px-2 py-1 rounded-full font-medium capitalize ${getStatusClasses(task.status)}`}>
+                                      {task.status}
+                                    </span>
+                                    <span className="text-xs text-gray-500 flex items-center">
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                                      </svg>
+                                      Due today
+                                    </span>
+                                  </div>
+                                </div>
+                                <button className="text-gray-400 hover:text-gray-600">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-700 mb-4">All Tasks</h3>
+                      {otherTasks.length > 0 ? (
+                        <div className="space-y-3">
+                          {otherTasks.map((task) => (
+                            <div key={task.id} className="p-4 bg-white border border-gray-100 rounded-lg shadow-sm hover:shadow-md transition">
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <h3 className="font-medium text-gray-800">{task.task_id}</h3>
+                                  <div className="flex items-center mt-1 space-x-3">
+                                    <span className={`text-xs px-2 py-1 rounded-full font-medium capitalize ${getStatusClasses(task.status)}`}>
+                                      {task.status}
+                                    </span>
+                                    <span className="text-xs text-gray-500 flex items-center">
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                                      </svg>
+                                      Due {new Date(task.end_date || task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                    </span>
+                                  </div>
+                                </div>
+                                <button className="text-gray-400 hover:text-gray-600">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                          </svg>
+                          <p className="mt-4 text-gray-500">No upcoming tasks</p>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-12">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <h3 className="mt-4 text-lg font-medium text-gray-700">No tasks assigned</h3>
+                    <p className="mt-1 text-gray-500">You're all caught up!</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'teams' && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">My Teams</h2>
+                {teams.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {teams.map((team) => (
+                      <div key={team.id} className="border border-gray-100 rounded-lg p-6 hover:shadow-md transition">
+                        <div className="flex items-center mb-4">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
+                            {team.name.charAt(0)}
+                          </div>
+                          <div className="ml-4">
+                            <h3 className="font-bold text-gray-800">{team.name}</h3>
+                            <span className="text-xs text-gray-500">{team.role}</span>
+                          </div>
+                        </div>
+                        <div className="flex justify-between text-sm text-gray-500">
+                          <span>5 members</span>
+                          <span>3 projects</span>
+                        </div>
+                        <button className="mt-4 w-full py-2 text-sm font-medium text-blue-600 hover:text-blue-800 border border-blue-100 rounded-lg hover:bg-blue-50 transition">
+                          View Team
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <h3 className="mt-4 text-lg font-medium text-gray-700">No team memberships</h3>
+                    <p className="mt-1 text-gray-500">Join or create a team to collaborate</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'projects' && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">My Projects</h2>
+                {projects.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {projects.map((project) => (
+                      <div key={project.id} className="border border-gray-100 rounded-lg p-6 hover:shadow-md transition">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="font-bold text-gray-800">{project.name}</h3>
+                          <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded-full">{project.role}</span>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-6 line-clamp-2">Project description would go here if available in the data...</p>
+                        <div className="flex justify-between items-center">
+                          <div className="flex -space-x-2">
+                            {[1, 2, 3].map((i) => (
+                              <div key={i} className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white"></div>
+                            ))}
+                            <div className="w-8 h-8 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center text-xs text-gray-500">+3</div>
+                          </div>
+                          <div className="text-xs text-gray-500">Due in 2 weeks</div>
+                        </div>
+                        <button className="mt-4 w-full py-2 text-sm font-medium text-purple-600 hover:text-purple-800 border border-purple-100 rounded-lg hover:bg-purple-50 transition">
+                          View Project
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <h3 className="mt-4 text-lg font-medium text-gray-700">No projects assigned</h3>
+                    <p className="mt-1 text-gray-500">Get started by joining a project</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Edit Form with a slide-in animation */}
-      <div className={`w-full max-w-2xl mt-10 transition-transform duration-500 ${editMode ? 'translate-y-0' : 'translate-y-full'}`}>
-        {editMode && (
-          <form onSubmit={handleSubmit} className="bg-white shadow-2xl rounded-2xl p-8" encType="multipart/form-data">
-            <h3 className="text-3xl font-bold text-gray-800 mb-8 text-center">Edit Your Profile</h3>
+      {/* Edit Profile Modal */}
+      {editMode && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 text-white">
+              <h3 className="text-2xl font-bold">Edit Profile</h3>
+              <p className="opacity-90">Update your personal information</p>
+            </div>
             
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <input
-                  type="text"
-                  name="first_name"
-                  value={formData.first_name}
-                  onChange={handleInputChange}
-                  placeholder="First Name"
-                  className="w-full p-3 bg-gray-100 border border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  required
-                />
-                <input
-                  type="text"
-                  name="last_name"
-                  value={formData.last_name}
-                  onChange={handleInputChange}
-                  placeholder="Last Name"
-                  className="w-full p-3 bg-gray-100 border border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  required
-                />
+            <form onSubmit={handleSubmit} className="p-6" encType="multipart/form-data">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                  <input
+                    type="text"
+                    name="first_name"
+                    value={formData.first_name}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                  <input
+                    type="text"
+                    name="last_name"
+                    value={formData.last_name}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                  <input
+                    type="date"
+                    name="date_of_birth"
+                    value={formData.date_of_birth}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Profile Picture</label>
+                  <div className="mt-1 flex items-center">
+                    <label className="inline-block w-full overflow-hidden rounded-lg bg-gray-100">
+                      <div className="px-4 py-2 text-sm text-gray-500 flex items-center justify-between">
+                        <span>{formData.profile_picture instanceof File ? formData.profile_picture.name : 'Choose file...'}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <input
+                        type="file"
+                        id="profile_picture"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                </div>
               </div>
-              <input
-                type="date"
-                name="date_of_birth"
-                value={formData.date_of_birth}
-                onChange={handleInputChange}
-                className="w-full p-3 bg-gray-100 border border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                required
-              />
-              <div>
-                <label htmlFor="profile_picture" className="block text-sm font-medium text-gray-600 mb-2">Update Profile Picture</label>
-                <input
-                  type="file"
-                  id="profile_picture"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                />
+              
+              <div className="mt-8 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setEditMode(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Save Changes
+                </button>
               </div>
-            </div>
-
-            <div className="flex justify-around mt-10">
-              <button
-                type="submit"
-                className="px-8 py-3 bg-green-500 text-white font-bold rounded-full hover:bg-green-600 transition-transform transform hover:scale-105"
-              >
-                Save
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditMode(false)}
-                className="px-8 py-3 bg-red-500 text-white font-bold rounded-full hover:bg-red-600 transition-transform transform hover:scale-105"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
 export default Profile;
