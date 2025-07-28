@@ -88,12 +88,23 @@ class Api::AuthController < Api::BaseController
         status: tu.status
       }
     end
-    projects = current_user.project_users.includes(:project).map do |pu|
+    projects = current_user.project_users.includes(project: { project_users: :user }).map do |pu|
+      project = pu.project
       {
-        id: pu.project_id,
-        name: pu.project.name,
+        id: project.id,
+        name: project.name,
+        description: project.description,
+        end_date: project.end_date,
         role: pu.role,
-        status: pu.status
+        status: pu.status,
+        members: project.project_users.map do |member|
+          {
+            id: member.user_id,
+            name: [member.user.first_name, member.user.last_name].compact.join(' '),
+            profile_picture: member.user.profile_picture.attached? ?
+              rails_blob_url(member.user.profile_picture, only_path: true) : nil
+          }
+        end
       }
     end
     render json: {
