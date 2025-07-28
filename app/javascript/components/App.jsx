@@ -21,14 +21,6 @@ import Vault from "../pages/Vault";
 import Legal from "../pages/Legal";
 import SprintDashboard from "../pages/SprintDashboard";
 
-
-function AuthLayout({ children }) {
-  return <main className="flex-grow">{children}</main>;
-}
-
-function MainLayout({ children }) {
-  return <main className="pt-20 pb-16 p-6 flex-grow">{children}</main>;
-}
 const App = () => {
   return (
     <Router>
@@ -40,21 +32,21 @@ const App = () => {
 
           {/* ✅ Page Content */}
             <Routes>
-              <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
-              <Route path="/weather" element={<MainLayout><Weather /></MainLayout>} />
-              <Route path="/legal" element={<MainLayout><Legal /></MainLayout>} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/weather" element={<Weather />} />
+              <Route path="/legal" element={<Legal />} />
 
               {/* 🔐 Protected */}
-              <Route path="/" element={<PrivateRoute><MainLayout><PdfPage /></MainLayout></PrivateRoute>} />
-              <Route path="/posts" element={<PrivateRoute><MainLayout><PostPage /></MainLayout></PrivateRoute>} />
-              <Route path="/vault" element={<PrivateRoute><MainLayout><Vault /></MainLayout></PrivateRoute>} />
-              <Route path="/profile" element={<PrivateRoute><MainLayout><Profile /></MainLayout></PrivateRoute>} />
-              <Route path="/knowledge" element={<PrivateRoute><MainLayout><KnowledgeDashboard /></MainLayout></PrivateRoute>} />
-              <Route path="/projects" element={<PrivateRoute allowedRoles={["owner","project_manager"]}><MainLayout><Projects /></MainLayout></PrivateRoute>} />
-              <Route path="/teams" element={<PrivateRoute allowedRoles={["owner","team_leader"]}><MainLayout><Teams /></MainLayout></PrivateRoute>} />
-              <Route path="/projects/:projectId/dashboard" element={<ProjectMemberRoute><MainLayout><SprintDashboard /></MainLayout></ProjectMemberRoute>} />
-              <Route path="/users" element={<PrivateRoute ownerOnly><MainLayout><Users /></MainLayout></PrivateRoute>} />
-              <Route path="/admin" element={<PrivateRoute ownerOnly><MainLayout><Admin /></MainLayout></PrivateRoute>} />
+              <Route path="/" element={<PrivateRoute><PdfPage /></PrivateRoute>} />
+              <Route path="/posts" element={<PrivateRoute><PostPage /></PrivateRoute>} />
+              <Route path="/vault" element={<PrivateRoute><Vault /></PrivateRoute>} />
+              <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+              <Route path="/knowledge" element={<PrivateRoute><KnowledgeDashboard /></PrivateRoute>} />
+              <Route path="/projects" element={<PrivateRoute allowedRoles={["owner","project_manager"]}><Projects /></PrivateRoute>} />
+              <Route path="/teams" element={<PrivateRoute allowedRoles={["owner","team_leader"]}><Teams /></PrivateRoute>} />
+              <Route path="/projects/:projectId/dashboard" element={<ProjectMemberRoute><SprintDashboard /></ProjectMemberRoute>} />
+              <Route path="/users" element={<PrivateRoute ownerOnly><Users /></PrivateRoute>} />
+              <Route path="/admin" element={<PrivateRoute ownerOnly><Admin /></PrivateRoute>} />
               </Routes>
 
           {/* ✅ Footer */}
