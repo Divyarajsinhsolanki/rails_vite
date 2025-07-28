@@ -56,7 +56,7 @@ const PostPage = () => {
             </div>
           </div>
           <h1 className="text-4xl font-bold text-slate-800 tracking-tight mb-3">
-            Community Feed
+            Home
           </h1>
           <p className="text-slate-600 max-w-lg mx-auto">
             Connect with others, share your thoughts, and discover what's happening in our community.

@@ -25,7 +25,7 @@ const Login = ({ switchToSignup }) => {
 
     try {
       await handleLogin({ auth: formData });
-      navigate("/posts");
+      navigate("/");
       toast.success("Logged in successfully");
     } catch (err) {
       const msg = "Invalid email or password. Please try again.";
