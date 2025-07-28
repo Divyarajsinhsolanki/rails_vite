@@ -27,10 +27,10 @@ const Vault = () => {
   const [editContent, setEditContent] = useState("");
   const [openMenuId, setOpenMenuId] = useState(null);
   const [copiedKey, setCopiedKey] = useState(null);
-  const [showCredentials, setShowCredentials] = useState(false);
-  const [showCommands, setShowCommands] = useState(false);
-  const [showTokens, setShowTokens] = useState(false);
-  const [showOthers, setShowOthers] = useState(false);
+  const [showCredentials, setShowCredentials] = useState(true);
+  const [showCommands, setShowCommands] = useState(true);
+  const [showTokens, setShowTokens] = useState(true);
+  const [showOthers, setShowOthers] = useState(true);
 
   useEffect(() => {
     loadItems();
