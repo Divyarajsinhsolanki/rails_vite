@@ -99,7 +99,7 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
                 <FiTag className="mr-2" />
                 <div className="flex flex-wrap gap-1">
                     {item.tags.map((tag, tagIndex) => (
-                        <span key={tagIndex} className="bg-[var(--theme-color)]/10 text-[var(--theme-color)] text-xs font-medium px-2.5 py-0.5 rounded-full">
+                        <span key={tagIndex} className="bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)] text-xs font-medium px-2.5 py-0.5 rounded-full">
                             {tag}
                         </span>
                     ))}

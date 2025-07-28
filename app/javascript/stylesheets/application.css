@@ -4,6 +4,7 @@
 
 :root {
   --theme-color: #3b82f6;
+  --theme-color-rgb: 59 130 246;
 }
 
 .bg-theme {

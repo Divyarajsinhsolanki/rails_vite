@@ -198,7 +198,7 @@ function TaskCell({ date, devId, tasksInCell, setEditingTask, handleTaskUpdate, 
   return (
     <td
       ref={setNodeRef}
-      className={`p-2 border border-gray-200 align-top min-w-[200px] relative transition-colors duration-150 ease-in-out ${isOver ? 'bg-[var(--theme-color)]/10 outline outline-2 outline-[var(--theme-color)]' : 'bg-white hover:bg-gray-50'}`}
+      className={`p-2 border border-gray-200 align-top min-w-[200px] relative transition-colors duration-150 ease-in-out ${isOver ? 'bg-[rgb(var(--theme-color-rgb)/0.1)] outline outline-2 outline-[var(--theme-color)]' : 'bg-white hover:bg-gray-50'}`}
       style={{ minHeight: '100px' }}
     >
       <div className={`absolute bottom-0 left-0 right-0 h-1 ${capacityColor} opacity-70 transition-all duration-300`} style={{ width: `${hoursPercentage}%` }} title={`${totalHoursInCell}h / ${cellCapacity}h`}></div>

@@ -357,7 +357,7 @@ const Projects = () => {
                                             <li key={project.id}>
                                                 <button
                                                     onClick={() => handleSelectProject(project.id)}
-                                                    className={`w-full text-left flex items-center justify-between p-4 border-b border-gray-100 transition-colors duration-200 ${selectedProjectId === project.id ? 'bg-[var(--theme-color)/0.1] text-[var(--theme-color)] border-l-4 border-[var(--theme-color)] font-semibold' : 'hover:bg-gray-50'}`}
+                                                    className={`w-full text-left flex items-center justify-between p-4 border-b border-gray-100 transition-colors duration-200 ${selectedProjectId === project.id ? 'bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)] border-l-4 border-[var(--theme-color)] font-semibold' : 'hover:bg-gray-50'}`}
                                                 >
                                                     <div>
                                                         <p className="text-base">{project.name}</p>
@@ -627,7 +627,7 @@ const Projects = () => {
                         <div>
                             {projects.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
-                                    <div className="md:col-span-full bg-[var(--theme-color)/0.1] border border-[var(--theme-color)] rounded-xl p-6 mb-4 flex items-center gap-4 shadow-sm">
+                                    <div className="md:col-span-full bg-[rgb(var(--theme-color-rgb)/0.1)] border border-[var(--theme-color)] rounded-xl p-6 mb-4 flex items-center gap-4 shadow-sm">
                                         <FiInfo className="text-[var(--theme-color)] text-3xl"/>
                                         <div>
                                             <h2 className="text-xl font-semibold text-[var(--theme-color)]">Select a Project to View Details</h2>

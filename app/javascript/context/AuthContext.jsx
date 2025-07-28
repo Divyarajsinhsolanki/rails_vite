@@ -20,10 +20,20 @@ export function AuthProvider({ children }) {
   const navigate = useNavigate();
   const refreshTimer = useRef();
 
+  const toRgb = (color) => {
+    const temp = document.createElement('div');
+    temp.style.color = color;
+    document.body.appendChild(temp);
+    const match = getComputedStyle(temp).color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    document.body.removeChild(temp);
+    return match ? `${match[1]} ${match[2]} ${match[3]}` : '59 130 246';
+  };
+
   useEffect(() => {
     const raw = user?.color_theme;
     const color = COLOR_MAP[raw] || raw || '#3b82f6';
     document.documentElement.style.setProperty('--theme-color', color);
+    document.documentElement.style.setProperty('--theme-color-rgb', toRgb(color));
   }, [user]);
 
   // Clear timer on unmount

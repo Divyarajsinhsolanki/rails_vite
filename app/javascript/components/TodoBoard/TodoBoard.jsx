@@ -29,7 +29,7 @@ function Modal({ isOpen, onClose, title, children }) {
 }
 
 const initialData = {
-  todo: { name: "To Do", color: "bg-[var(--theme-color)]/10", items: [] },
+  todo: { name: "To Do", color: "bg-[rgb(var(--theme-color-rgb)/0.1)]", items: [] },
   inprogress: { name: "In Progress", color: "bg-yellow-100", items: [] },
   completed: { name: "Completed", color: "bg-green-100", items: [] },
 };
@@ -225,7 +225,7 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ${
                   taskView === 'all'
                     ? 'bg-[var(--theme-color)] text-white shadow'
-                    : 'text-gray-600 hover:bg-[var(--theme-color)]/10'
+                    : 'text-gray-600 hover:bg-[rgb(var(--theme-color-rgb)/0.1)]'
                 }`}
                 onClick={() => setTaskView('all')}
               >
@@ -236,7 +236,7 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ml-1 ${
                   taskView === 'my'
                     ? 'bg-[var(--theme-color)] text-white shadow'
-                    : 'text-gray-600 hover:bg-[var(--theme-color)]/10'
+                    : 'text-gray-600 hover:bg-[rgb(var(--theme-color-rgb)/0.1)]'
                 }`}
                 onClick={() => setTaskView('my')}
               >
