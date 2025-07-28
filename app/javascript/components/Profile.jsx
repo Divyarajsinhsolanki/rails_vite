@@ -77,6 +77,13 @@ const Profile = () => {
   };
 
   useEffect(() => {
+    if (user) {
+      const color = user.color_theme || '#3b82f6';
+      document.documentElement.style.setProperty('--theme-color', color);
+    }
+  }, [user]);
+
+  useEffect(() => {
     refreshUserInfo();
   }, []);
 
