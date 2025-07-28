@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchUserInfo, updateUserInfo, fetchPosts, SchedulerAPI, fetchTeams } from "../components/api";
 import { getStatusClasses } from '/utils/taskUtils';
+import { Squares2X2Icon } from '@heroicons/react/24/outline';
 
 const Avatar = ({ name, src }) => {
   if (src) {
@@ -364,6 +365,14 @@ const Profile = () => {
                                   </svg>
                                 </button>
                               </div>
+                              {task.sprint?.project_id && (
+                                <button
+                                  onClick={() => navigate(`/projects/${task.sprint.project_id}/dashboard`)}
+                                  className="mt-2 flex items-center text-sm text-blue-600 hover:underline"
+                                >
+                                  <Squares2X2Icon className="h-4 w-4 mr-1" />Board
+                                </button>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -397,6 +406,14 @@ const Profile = () => {
                                   </svg>
                                 </button>
                               </div>
+                              {task.sprint?.project_id && (
+                                <button
+                                  onClick={() => navigate(`/projects/${task.sprint.project_id}/dashboard`)}
+                                  className="mt-2 flex items-center text-sm text-blue-600 hover:underline"
+                                >
+                                  <Squares2X2Icon className="h-4 w-4 mr-1" />Board
+                                </button>
+                              )}
                             </div>
                           ))}
                         </div>
