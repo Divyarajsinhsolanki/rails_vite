@@ -346,7 +346,7 @@ const Vault = () => {
   );
 
   return (
-    <div className="max-w-1xl mx-auto p-4 space-y-6">
+    <div className="max-w-1xl  p-4 space-y-6">
       <Toaster position="top-right" />
       <div className="flex items-center">
         <input

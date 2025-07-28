@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { fetchUserInfo, updateUserInfo, fetchPosts, SchedulerAPI } from "../components/api"; // Adjust the import path as necessary
 import { getStatusClasses } from '/utils/taskUtils';
-import Vault from "../pages/Vault";
 
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -261,9 +260,6 @@ const Profile = () => {
             </div>
           </div>
         )}
-        </div>
-        <div className="flex-1">
-          <Vault />
         </div>
       </div>
 
