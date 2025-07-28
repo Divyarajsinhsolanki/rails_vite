@@ -1,7 +1,25 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchUserInfo, updateUserInfo, fetchPosts, SchedulerAPI } from "../components/api";
+import { fetchUserInfo, updateUserInfo, fetchPosts, SchedulerAPI, fetchTeams } from "../components/api";
 import { getStatusClasses } from '/utils/taskUtils';
+
+const Avatar = ({ name, src }) => {
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        className="w-8 h-8 rounded-full object-cover border-2 border-white"
+      />
+    );
+  }
+  const initial = name ? name.charAt(0).toUpperCase() : "?";
+  return (
+    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-500 border-2 border-white">
+      {initial}
+    </div>
+  );
+};
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -24,7 +42,20 @@ const Profile = () => {
     try {
       const { data } = await fetchUserInfo();
       setUser(data.user);
-      setTeams(Array.isArray(data.teams) ? data.teams : []);
+
+      const basicTeams = Array.isArray(data.teams) ? data.teams : [];
+      try {
+        const { data: allTeams } = await fetchTeams();
+        const filtered = Array.isArray(allTeams) ? allTeams.filter(t => basicTeams.some(bt => bt.id === t.id)) : [];
+        const merged = filtered.map(t => ({
+          ...t,
+          ...basicTeams.find(bt => bt.id === t.id)
+        }));
+        setTeams(merged);
+      } catch {
+        setTeams(basicTeams);
+      }
+
       setProjects(Array.isArray(data.projects) ? data.projects : []);
       setFormData({
         first_name: data.user.first_name,
@@ -399,19 +430,26 @@ const Profile = () => {
                     {teams.map((team) => (
                       <div key={team.id} className="border border-gray-100 rounded-lg p-6 hover:shadow-md transition">
                         <div className="flex items-center mb-4">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
-                            {team.name.charAt(0)}
+                          <div className="flex -space-x-2">
+                            {team.users.slice(0,3).map((m) => (
+                              <Avatar key={m.id} name={m.name} src={m.profile_picture} />
+                            ))}
+                            {team.users.length > 3 && (
+                              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs text-gray-500 border-2 border-white">
+                                +{team.users.length - 3}
+                              </div>
+                            )}
                           </div>
                           <div className="ml-4">
                             <h3 className="font-bold text-gray-800">{team.name}</h3>
                             <span className="text-xs text-gray-500">{team.role}</span>
                           </div>
                         </div>
-                        <div className="flex justify-between text-sm text-gray-500">
-                          <span>5 members</span>
-                          <span>3 projects</span>
-                        </div>
-                        <button className="mt-4 w-full py-2 text-sm font-medium text-blue-600 hover:text-blue-800 border border-blue-100 rounded-lg hover:bg-blue-50 transition">
+                        <div className="text-sm text-gray-500 mb-2">{team.users.length} members</div>
+                        <button
+                          onClick={() => navigate('/teams', { state: { teamId: team.id } })}
+                          className="mt-4 w-full py-2 text-sm font-medium text-blue-600 hover:text-blue-800 border border-blue-100 rounded-lg hover:bg-blue-50 transition"
+                        >
                           View Team
                         </button>
                       </div>

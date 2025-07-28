@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
+import { useLocation } from "react-router-dom";
 import { fetchTeams, createTeam, updateTeam, deleteTeam, addTeamUser, deleteTeamUser } from "../components/api";
 import UserMultiSelect from "../components/UserMultiSelect";
 import { AuthContext } from "../context/AuthContext";
@@ -26,6 +27,7 @@ const Avatar = ({ name, src }) => {
 
 const Teams = () => {
   const { user } = useContext(AuthContext);
+  const location = useLocation();
   const canEdit = user?.roles?.some((r) => ["owner", "team_leader"].includes(r.name));
   const canManageMembers = user?.roles?.some((r) => r.name === "admin");
 
@@ -65,6 +67,12 @@ const Teams = () => {
     loadTeams();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (teams.length > 0 && location.state?.teamId) {
+      setSelectedTeamId(location.state.teamId);
+    }
+  }, [teams, location.state]);
 
   // When teams are reloaded, ensure a non-existent selection is cleared
   useEffect(() => {
