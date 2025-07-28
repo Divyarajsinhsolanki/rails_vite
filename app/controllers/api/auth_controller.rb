@@ -10,6 +10,9 @@ class Api::AuthController < Api::BaseController
     if params.dig(:auth, :profile_picture).present? && params.dig(:auth, :profile_picture) != "null"
       user.profile_picture = params[:auth][:profile_picture]
     end
+    if params.dig(:auth, :cover_photo).present? && params.dig(:auth, :cover_photo) != "null"
+      user.cover_photo = params[:auth][:cover_photo]
+    end
 
     if user.save
       render json: {
@@ -76,6 +79,7 @@ class Api::AuthController < Api::BaseController
 
   def view_profile
     profile_picture_url = rails_blob_url(current_user.profile_picture, only_path: true) if current_user&.profile_picture&.attached?
+    cover_photo_url = rails_blob_url(current_user.cover_photo, only_path: true) if current_user&.cover_photo&.attached?
     teams = current_user.team_users.includes(:team).map do |tu|
       {
         id: tu.team_id,
@@ -94,7 +98,7 @@ class Api::AuthController < Api::BaseController
     end
     render json: {
       user: current_user.as_json(include: { roles: { only: [:name] } })
-                      .merge(profile_picture: profile_picture_url),
+                      .merge(profile_picture: profile_picture_url, cover_photo: cover_photo_url),
       teams: teams,
       projects: projects
     }
@@ -105,20 +109,25 @@ class Api::AuthController < Api::BaseController
     if params.dig(:auth, :profile_picture).present? && params.dig(:auth, :profile_picture) != "null"
       current_user.profile_picture = params[:auth][:profile_picture]
     end
+    if params.dig(:auth, :cover_photo).present? && params.dig(:auth, :cover_photo) != "null"
+      current_user.cover_photo = params[:auth][:cover_photo]
+    end
     render json: { message: "User details updated successfully" }
   end
 
   private
 
   def user_params
-    permitted = params.require(:auth).permit(:first_name, :last_name, :date_of_birth, :email, :password, :uid, :profile_picture)
+    permitted = params.require(:auth).permit(:first_name, :last_name, :date_of_birth, :email, :password, :uid, :profile_picture, :cover_photo)
     permitted.delete(:profile_picture) if permitted[:profile_picture] == "null"
+    permitted.delete(:cover_photo) if permitted[:cover_photo] == "null"
     permitted
   end
 
   def user_payload(user)
     profile_picture_url = rails_blob_url(user.profile_picture, only_path: true) if user.profile_picture.attached?
-    user.as_json(include: { roles: { only: [:name] } }).merge(profile_picture: profile_picture_url)
+    cover_photo_url = rails_blob_url(user.cover_photo, only_path: true) if user.cover_photo.attached?
+    user.as_json(include: { roles: { only: [:name] } }).merge(profile_picture: profile_picture_url, cover_photo: cover_photo_url)
   end
 
   def verify_firebase_token(token)

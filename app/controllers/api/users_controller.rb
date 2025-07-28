@@ -43,7 +43,7 @@ class Api::UsersController < Api::BaseController
   end
 
   def user_params
-    params.require(:user).permit(:first_name, :last_name, :email, :date_of_birth, :profile_picture)
+    params.require(:user).permit(:first_name, :last_name, :email, :date_of_birth, :profile_picture, :cover_photo)
   end
 
   def serialize_user(user)
@@ -55,6 +55,8 @@ class Api::UsersController < Api::BaseController
       date_of_birth: user.date_of_birth,
       profile_picture: user.profile_picture.attached? ?
         rails_blob_url(user.profile_picture, only_path: true) : nil,
+      cover_photo: user.cover_photo.attached? ?
+        rails_blob_url(user.cover_photo, only_path: true) : nil,
       roles: user.roles.pluck(:name)
     }
   end

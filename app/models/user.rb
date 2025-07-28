@@ -7,6 +7,7 @@ class User < ApplicationRecord
   enum status: { invited: "invited", active: "active", locked: "locked" }, _default: "invited"
 
   has_one_attached :profile_picture
+  has_one_attached :cover_photo
   has_many :posts, dependent: :destroy
   has_many :tasks, foreign_key: :assigned_to_user
   has_many :items

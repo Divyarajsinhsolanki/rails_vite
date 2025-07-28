@@ -15,6 +15,7 @@ const Profile = () => {
     last_name: "",
     date_of_birth: "",
     profile_picture: null,
+    cover_photo: null,
   });
 
   const refreshUserInfo = async () => {
@@ -28,6 +29,7 @@ const Profile = () => {
         last_name: data.user.last_name,
         date_of_birth: data.user.date_of_birth,
         profile_picture: data.user.profile_picture,
+        cover_photo: data.user.cover_photo,
       });
       const postsResponse = await fetchPosts(data.user.id);
       setPosts(postsResponse.data);
@@ -51,9 +53,10 @@ const Profile = () => {
   };
 
   const handleFileChange = (e) => {
+    const { name, files } = e.target;
     setFormData((prevData) => ({
       ...prevData,
-      profile_picture: e.target.files[0],
+      [name]: files[0],
     }));
   };
 
@@ -69,9 +72,12 @@ const Profile = () => {
     payload.append("auth[first_name]", formData.first_name);
     payload.append("auth[last_name]", formData.last_name);
     payload.append("auth[date_of_birth]", formData.date_of_birth);
-  
+
     if (formData.profile_picture instanceof File) {
       payload.append("auth[profile_picture]", formData.profile_picture);
+    }
+    if (formData.cover_photo instanceof File) {
+      payload.append("auth[cover_photo]", formData.cover_photo);
     }
 
     try {
@@ -120,7 +126,18 @@ const Profile = () => {
         <div className="bg-white rounded-3xl shadow-xl overflow-hidden mb-8">
           <div className="relative h-48 bg-gradient-to-r from-blue-500 to-indigo-600">
             {/* Cover Photo */}
+            {user?.cover_photo && user.cover_photo !== 'null' && (
+              <img src={user.cover_photo} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+            {editMode && (
+              <label className="absolute bottom-2 right-2 bg-white p-2 rounded-full shadow-md cursor-pointer hover:bg-gray-100 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                </svg>
+                <input type="file" name="cover_photo" className="hidden" onChange={handleFileChange} accept="image/*" />
+              </label>
+            )}
           </div>
           
           <div className="px-8 pb-8 -mt-16 relative z-10">
@@ -143,7 +160,7 @@ const Profile = () => {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                     </svg>
-                    <input type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
+                    <input type="file" name="profile_picture" className="hidden" onChange={handleFileChange} accept="image/*" />
                   </label>
                 )}
               </div>
@@ -512,6 +529,29 @@ const Profile = () => {
                       <input
                         type="file"
                         id="profile_picture"
+                        accept="image/*"
+                        name="profile_picture"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cover Photo</label>
+                  <div className="mt-1 flex items-center">
+                    <label className="inline-block w-full overflow-hidden rounded-lg bg-gray-100">
+                      <div className="px-4 py-2 text-sm text-gray-500 flex items-center justify-between">
+                        <span>{formData.cover_photo instanceof File ? formData.cover_photo.name : 'Choose file...'}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <input
+                        type="file"
+                        id="cover_photo"
+                        name="cover_photo"
                         accept="image/*"
                         onChange={handleFileChange}
                         className="hidden"
