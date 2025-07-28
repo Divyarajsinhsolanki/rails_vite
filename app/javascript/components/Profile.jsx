@@ -184,7 +184,7 @@ const Profile = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
             {editMode && (
               <label className="absolute bottom-2 right-2 bg-white p-2 rounded-full shadow-md cursor-pointer hover:bg-gray-100 transition">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)]" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                 </svg>
                 <input type="file" name="cover_photo" className="hidden" onChange={handleFileChange} accept="image/*" />
@@ -209,7 +209,7 @@ const Profile = () => {
                 )}
                 {editMode && (
                   <label className="absolute bottom-2 right-2 bg-white p-2 rounded-full shadow-md cursor-pointer hover:bg-gray-100 transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)]" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                     </svg>
                     <input type="file" name="profile_picture" className="hidden" onChange={handleFileChange} accept="image/*" />
@@ -222,7 +222,7 @@ const Profile = () => {
                 <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
                   {user ? displayName : "Loading..."}
                 </h1>
-                <p className="text-blue-600 mt-1">{user?.email}</p>
+                  <p className="text-[var(--theme-color)] mt-1">{user?.email}</p>
                 {user?.date_of_birth && (
                   <p className="text-gray-500 mt-1">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 inline mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -233,20 +233,20 @@ const Profile = () => {
                 )}
                 
                 <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-3">
-                  <div className="bg-blue-50 px-4 py-2 rounded-full flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <div className="bg-[var(--theme-color)]/10 px-4 py-2 rounded-full flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)] mr-2" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 12.094A5.973 5.973 0 004 15v1H1v-1a3 3 0 013.75-2.906z" />
                     </svg>
                     <span className="text-sm font-medium">{teams.length} Teams</span>
                   </div>
-                  <div className="bg-purple-50 px-4 py-2 rounded-full flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-600 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <div className="bg-[var(--theme-color)]/10 px-4 py-2 rounded-full flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)] mr-2" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2H5a1 1 0 010-2h12a2 2 0 001-2V4a2 2 0 00-2-2H6a2 2 0 00-2 2z" clipRule="evenodd" />
                     </svg>
                     <span className="text-sm font-medium">{projects.length} Projects</span>
                   </div>
-                  <div className="bg-green-50 px-4 py-2 rounded-full flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <div className="bg-[var(--theme-color)]/10 px-4 py-2 rounded-full flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)] mr-2" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                     </svg>
                     <span className="text-sm font-medium">{tasks.length} Tasks</span>
@@ -321,7 +321,7 @@ const Profile = () => {
                             {new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                           </div>
                           <p className="text-gray-700 line-clamp-3">{post.message}</p>
-                          <button className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
+                          <button className="mt-3 text-[var(--theme-color)] hover:text-[var(--theme-color)] text-sm font-medium flex items-center">
                             Read more
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -338,7 +338,7 @@ const Profile = () => {
                     </svg>
                     <h3 className="mt-4 text-lg font-medium text-gray-700">No posts yet</h3>
                     <p className="mt-1 text-gray-500">Share your thoughts with your team!</p>
-                    <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    <button className="mt-4 px-4 py-2 bg-[var(--theme-color)] text-white rounded-lg hover:bg-[var(--theme-color)]/90 transition">
                       Create your first post
                     </button>
                   </div>
@@ -386,7 +386,7 @@ const Profile = () => {
                               {task.sprint?.project_id && (
                                 <button
                                   onClick={() => navigate(`/projects/${task.sprint.project_id}/dashboard`)}
-                                  className="mt-2 flex items-center text-sm text-blue-600 hover:underline"
+                                  className="mt-2 flex items-center text-sm text-[var(--theme-color)] hover:underline"
                                 >
                                   <Squares2X2Icon className="h-4 w-4 mr-1" />Board
                                 </button>
@@ -427,7 +427,7 @@ const Profile = () => {
                               {task.sprint?.project_id && (
                                 <button
                                   onClick={() => navigate(`/projects/${task.sprint.project_id}/dashboard`)}
-                                  className="mt-2 flex items-center text-sm text-blue-600 hover:underline"
+                                  className="mt-2 flex items-center text-sm text-[var(--theme-color)] hover:underline"
                                 >
                                   <Squares2X2Icon className="h-4 w-4 mr-1" />Board
                                 </button>
@@ -483,7 +483,7 @@ const Profile = () => {
                         <div className="text-sm text-gray-500 mb-2">{team.users.length} members</div>
                         <button
                           onClick={() => navigate('/teams', { state: { teamId: team.id } })}
-                          className="mt-4 w-full py-2 text-sm font-medium text-blue-600 hover:text-blue-800 border border-blue-100 rounded-lg hover:bg-blue-50 transition"
+                          className="mt-4 w-full py-2 text-sm font-medium text-[var(--theme-color)] hover:text-[var(--theme-color)] border border-[var(--theme-color)]/20 rounded-lg hover:bg-[var(--theme-color)]/10 transition"
                         >
                           View Team
                         </button>
@@ -511,7 +511,7 @@ const Profile = () => {
                       <div key={project.id} className="border border-gray-100 rounded-lg p-6 hover:shadow-md transition">
                         <div className="flex items-center justify-between mb-4">
                           <h3 className="font-bold text-gray-800">{project.name}</h3>
-                          <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded-full">{project.role}</span>
+                          <span className="text-xs px-2 py-1 bg-[var(--theme-color)]/10 text-[var(--theme-color)] rounded-full">{project.role}</span>
                         </div>
                         <p className="text-sm text-gray-500 mb-6 line-clamp-2">{project.description || 'No description provided.'}</p>
                         <div className="flex justify-between items-center">
@@ -547,7 +547,7 @@ const Profile = () => {
                         </div>
                         <button
                           onClick={() => navigate(`/projects/${project.id}/dashboard`)}
-                          className="mt-4 w-full py-2 text-sm font-medium text-purple-600 hover:text-purple-800 border border-purple-100 rounded-lg hover:bg-purple-50 transition"
+                          className="mt-4 w-full py-2 text-sm font-medium text-[var(--theme-color)] hover:text-[var(--theme-color)] border border-[var(--theme-color)]/20 rounded-lg hover:bg-[var(--theme-color)]/10 transition"
                         >
                           View Project
                         </button>
@@ -587,7 +587,7 @@ const Profile = () => {
                     name="first_name"
                     value={formData.first_name}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)]"
                     required
                   />
                 </div>
@@ -599,7 +599,7 @@ const Profile = () => {
                     name="last_name"
                     value={formData.last_name}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)]"
                     required
                   />
                 </div>
@@ -611,7 +611,7 @@ const Profile = () => {
                     name="date_of_birth"
                     value={formData.date_of_birth}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)]"
                     required
                   />
                 </div>
