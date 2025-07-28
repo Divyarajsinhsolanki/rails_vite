@@ -31,7 +31,7 @@ const Heatmap = ({ columns, view, onViewChange }) => {
   return (
     <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-100">
       <div className="flex items-center mb-4">
-        <FiCalendar className="text-blue-500 mr-3" size={24} />
+        <FiCalendar className="text-[var(--theme-color)] mr-3" size={24} />
         <h3 className="text-xl font-bold text-gray-800">Due Date Heatmap</h3>
       </div>
       
@@ -72,7 +72,7 @@ const Heatmap = ({ columns, view, onViewChange }) => {
                     : 'bg-gray-50'
                 }`}
               >
-                <FiInfo className="text-blue-500 mr-3 shrink-0" />
+                <FiInfo className="text-[var(--theme-color)] mr-3 shrink-0" />
                 <span className="font-semibold">{t.task_id}</span>
                 <span className="text-gray-600 mx-2">-</span>
                 <span className="truncate">{t.title}</span>

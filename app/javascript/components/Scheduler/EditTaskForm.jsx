@@ -56,7 +56,7 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
             name="log_date"
             value={formData.log_date}
             onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]"
           >
             {dates.map(d => (
               <option key={d} value={d}>
@@ -73,7 +73,7 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
             name="developer_id"
             value={formData.developer_id}
             onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]"
           >
             {developers.map(dev => (
               <option key={dev.id} value={dev.id}>{dev.name}</option>
@@ -88,7 +88,7 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
             name="type"
             value={formData.type}
             onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]"
           >
             {types.map(t => (
               <option key={t} value={t}>{t}</option>
@@ -106,7 +106,7 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
             step="0.25"
             value={formData.hours_logged}
             onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]"
           />
         </div>
       </div>
@@ -121,13 +121,13 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
             value={taskSearch}
             onChange={e => setTaskSearch(e.target.value)}
             placeholder="Search tasks..."
-            className="w-full mb-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full mb-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
           />
           <select
             name="task_id"
             value={formData.task_id}
             onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]"
             required
           >
             <option value="">Select Task</option>

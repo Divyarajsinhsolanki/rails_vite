@@ -78,7 +78,7 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
   const renderTaskDetails = () => (
     <div className="space-y-3">
         <div className="flex justify-between items-start">
-            <span className="font-semibold text-lg text-blue-600 transition-colors">
+            <span className="font-semibold text-lg text-[var(--theme-color)] transition-colors">
               {item.task_url ? (
                 <a href={item.task_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
                   {item.task_id}
@@ -88,7 +88,7 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
               )}
             </span>
             <div className="flex items-center gap-2">
-                <button onClick={() => setIsEditing(true)} className="text-gray-400 hover:text-blue-600 transition-colors" title="Edit"><FiEdit2 size={18} /></button>
+                <button onClick={() => setIsEditing(true)} className="text-gray-400 hover:text-[var(--theme-color)] transition-colors" title="Edit"><FiEdit2 size={18} /></button>
                 <button onClick={() => onDelete(columnId, item.id)} className="text-gray-400 hover:text-red-600 transition-colors" title="Delete"><FiTrash2 size={18} /></button>
             </div>
         </div>
@@ -99,7 +99,7 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
                 <FiTag className="mr-2" />
                 <div className="flex flex-wrap gap-1">
                     {item.tags.map((tag, tagIndex) => (
-                        <span key={tagIndex} className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                        <span key={tagIndex} className="bg-[var(--theme-color)]/10 text-[var(--theme-color)] text-xs font-medium px-2.5 py-0.5 rounded-full">
                             {tag}
                         </span>
                     ))}
@@ -128,11 +128,11 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
         <div
           className={`bg-white p-4 mb-4 rounded-lg shadow-md border-l-4 ${
             {
-              todo: 'border-blue-500',
+              todo: 'border-[var(--theme-color)]',
               inprogress: 'border-yellow-500',
               completed: 'border-green-500'
             }[columnId]
-          } hover:shadow-xl transition-shadow transform hover:-translate-y-1 ${snapshot.isDragging ? 'ring-2 ring-blue-400' : ''}`}
+          } hover:shadow-xl transition-shadow transform hover:-translate-y-1 ${snapshot.isDragging ? 'ring-2 ring-[var(--theme-color)]' : ''}`}
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
