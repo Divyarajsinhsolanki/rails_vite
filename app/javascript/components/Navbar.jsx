@@ -209,7 +209,7 @@ const Navbar = () => {
     { to: "/", label: "Home", icon: FiHome, visible: !!user },
     { to: "/pdf", label: "PDF Modifier", icon: FiFileText, visible: !!user },
     { to: "/knowledge", label: "Knowledge", icon: FiBook, visible: !!user },
-    { to: "/vault", label: "Vault", visible: !!user },
+    { to: "/vault", label: "Vault", icon: FiMenu, visible: !!user },
     { 
       to: "/teams", 
       label: "Teams", 
