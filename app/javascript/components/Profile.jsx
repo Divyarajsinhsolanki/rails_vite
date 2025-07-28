@@ -37,6 +37,7 @@ const Profile = () => {
     date_of_birth: "",
     profile_picture: null,
     cover_photo: null,
+    color_theme: "",
   });
 
   const refreshUserInfo = async () => {
@@ -64,6 +65,7 @@ const Profile = () => {
         date_of_birth: data.user.date_of_birth,
         profile_picture: data.user.profile_picture,
         cover_photo: data.user.cover_photo,
+        color_theme: data.user.color_theme || "",
       });
       const postsResponse = await fetchPosts(data.user.id);
       setPosts(postsResponse.data);
@@ -106,6 +108,7 @@ const Profile = () => {
     payload.append("auth[first_name]", formData.first_name);
     payload.append("auth[last_name]", formData.last_name);
     payload.append("auth[date_of_birth]", formData.date_of_birth);
+    payload.append("auth[color_theme]", formData.color_theme);
 
     if (formData.profile_picture instanceof File) {
       payload.append("auth[profile_picture]", formData.profile_picture);
@@ -158,7 +161,7 @@ const Profile = () => {
       <div className="max-w-7xl mx-auto">
         {/* Profile Header */}
         <div className="bg-white rounded-3xl shadow-xl overflow-hidden mb-8">
-          <div className="relative h-48 bg-gradient-to-r from-blue-500 to-indigo-600">
+          <div className="relative h-48 bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)]">
             {/* Cover Photo */}
             {user?.cover_photo && user.cover_photo !== 'null' && (
               <img src={user.cover_photo} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
@@ -240,7 +243,7 @@ const Profile = () => {
               {!editMode && (
                 <button
                   onClick={() => setEditMode(true)}
-                  className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-full hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+                  className="flex items-center gap-2 px-6 py-3 bg-theme text-white font-semibold rounded-full hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -257,25 +260,25 @@ const Profile = () => {
           <div className="flex overflow-x-auto pb-2 scrollbar-hide">
             <button
               onClick={() => setActiveTab('posts')}
-              className={`px-6 py-3 font-medium rounded-t-lg whitespace-nowrap ${activeTab === 'posts' ? 'bg-white text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-6 py-3 font-medium rounded-t-lg whitespace-nowrap ${activeTab === 'posts' ? 'bg-white text-[var(--theme-color)] border-b-2 border-[var(--theme-color)]' : 'text-gray-500 hover:text-gray-700'}`}
             >
               My Posts
             </button>
             <button
               onClick={() => setActiveTab('tasks')}
-              className={`px-6 py-3 font-medium rounded-t-lg whitespace-nowrap ${activeTab === 'tasks' ? 'bg-white text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-6 py-3 font-medium rounded-t-lg whitespace-nowrap ${activeTab === 'tasks' ? 'bg-white text-[var(--theme-color)] border-b-2 border-[var(--theme-color)]' : 'text-gray-500 hover:text-gray-700'}`}
             >
               My Tasks
             </button>
             <button
               onClick={() => setActiveTab('teams')}
-              className={`px-6 py-3 font-medium rounded-t-lg whitespace-nowrap ${activeTab === 'teams' ? 'bg-white text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-6 py-3 font-medium rounded-t-lg whitespace-nowrap ${activeTab === 'teams' ? 'bg-white text-[var(--theme-color)] border-b-2 border-[var(--theme-color)]' : 'text-gray-500 hover:text-gray-700'}`}
             >
               My Teams
             </button>
             <button
               onClick={() => setActiveTab('projects')}
-              className={`px-6 py-3 font-medium rounded-t-lg whitespace-nowrap ${activeTab === 'projects' ? 'bg-white text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-6 py-3 font-medium rounded-t-lg whitespace-nowrap ${activeTab === 'projects' ? 'bg-white text-[var(--theme-color)] border-b-2 border-[var(--theme-color)]' : 'text-gray-500 hover:text-gray-700'}`}
             >
               My Projects
             </button>
@@ -555,7 +558,7 @@ const Profile = () => {
       {editMode && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 text-white">
+            <div className="bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] p-6 text-white">
               <h3 className="text-2xl font-bold">Edit Profile</h3>
               <p className="opacity-90">Update your personal information</p>
             </div>
@@ -641,6 +644,21 @@ const Profile = () => {
                     </label>
                   </div>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Theme Color</label>
+                  <select
+                    name="color_theme"
+                    value={formData.color_theme}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)]"
+                  >
+                    <option value="blue">Blue</option>
+                    <option value="purple">Purple</option>
+                    <option value="green">Green</option>
+                    <option value="red">Red</option>
+                  </select>
+                </div>
               </div>
               
               <div className="mt-8 flex justify-end space-x-3">
@@ -653,7 +671,7 @@ const Profile = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  className="px-4 py-2 bg-theme text-white rounded-lg hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)] focus:ring-offset-2"
                 >
                   Save Changes
                 </button>

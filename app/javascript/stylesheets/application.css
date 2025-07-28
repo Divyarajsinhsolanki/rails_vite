@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --theme-color: #3b82f6;
+}
+
+.bg-theme {
+  background-color: var(--theme-color);
+}
+
+.text-theme {
+  color: var(--theme-color);
+}
+
+.border-theme {
+  border-color: var(--theme-color);
+}

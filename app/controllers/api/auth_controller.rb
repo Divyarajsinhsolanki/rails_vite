@@ -129,7 +129,17 @@ class Api::AuthController < Api::BaseController
   private
 
   def user_params
-    permitted = params.require(:auth).permit(:first_name, :last_name, :date_of_birth, :email, :password, :uid, :profile_picture, :cover_photo)
+    permitted = params.require(:auth).permit(
+      :first_name,
+      :last_name,
+      :date_of_birth,
+      :email,
+      :password,
+      :uid,
+      :profile_picture,
+      :cover_photo,
+      :color_theme
+    )
     permitted.delete(:profile_picture) if permitted[:profile_picture] == "null"
     permitted.delete(:cover_photo) if permitted[:cover_photo] == "null"
     permitted

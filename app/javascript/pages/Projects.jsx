@@ -209,7 +209,7 @@ const Projects = () => {
         <div className="p-4 border-b border-slate-200 flex justify-between items-center">
           <h2 className="text-lg font-bold text-slate-800">Projects</h2>
           {canEdit && (
-            <button onClick={handleNewClick} className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+            <button onClick={handleNewClick} className="flex items-center gap-2 px-3 py-1.5 text-sm bg-theme text-white rounded-md hover:brightness-110 transition-colors">
               <FiPlus /> New Project
             </button>
           )}
@@ -222,7 +222,7 @@ const Projects = () => {
               placeholder="Search projects..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full border border-slate-300 rounded-md pl-9 pr-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full border border-slate-300 rounded-md pl-9 pr-4 py-2 text-sm focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none"
             />
           </div>
         </div>
@@ -241,7 +241,7 @@ const Projects = () => {
                       <li key={project.id}>
                         <button
                           onClick={() => handleSelectProject(project.id)}
-                          className={`w-full text-left flex items-center justify-between p-4 border-b border-slate-100 transition-colors ${selectedProjectId === project.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-slate-100'}`}
+                          className={`w-full text-left flex items-center justify-between p-4 border-b border-slate-100 transition-colors ${selectedProjectId === project.id ? 'bg-[color-mix(in_srgb,var(--theme-color),white_90%)] text-[var(--theme-color)]' : 'hover:bg-slate-100'}`}
                         >
                           <div>
                             <p className="font-semibold">
@@ -279,20 +279,20 @@ const Projects = () => {
                     <form onSubmit={handleProjectSubmit} className="space-y-4 bg-white p-6 border border-slate-200 rounded-lg shadow-sm">
                         <div>
                             <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">Project Name</label>
-                            <input id="name" name="name" value={projectForm.name} onChange={handleFormChange} placeholder="e.g. Engineering" required className="w-full border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"/>
+                            <input id="name" name="name" value={projectForm.name} onChange={handleFormChange} placeholder="e.g. Engineering" required className="w-full border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none"/>
                         </div>
                         <div>
                             <label htmlFor="description" className="block text-sm font-medium text-slate-700 mb-1">Description</label>
-                            <textarea id="description" name="description" value={projectForm.description} onChange={handleFormChange} placeholder="A short description of the project's purpose" className="w-full border border-slate-300 rounded-md p-2 h-24 resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+                            <textarea id="description" name="description" value={projectForm.description} onChange={handleFormChange} placeholder="A short description of the project's purpose" className="w-full border border-slate-300 rounded-md p-2 h-24 resize-none focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none" />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label htmlFor="start_date" className="block text-sm font-medium text-slate-700 mb-1">Start Date</label>
-                                <input type="date" id="start_date" name="start_date" value={projectForm.start_date} onChange={handleFormChange} className="w-full border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+                                <input type="date" id="start_date" name="start_date" value={projectForm.start_date} onChange={handleFormChange} className="w-full border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none" />
                             </div>
                             <div>
                                 <label htmlFor="end_date" className="block text-sm font-medium text-slate-700 mb-1">End Date</label>
-                                <input type="date" id="end_date" name="end_date" value={projectForm.end_date} onChange={handleFormChange} className="w-full border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+                                <input type="date" id="end_date" name="end_date" value={projectForm.end_date} onChange={handleFormChange} className="w-full border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none" />
                             </div>
                         </div>
                         <div>
@@ -304,11 +304,11 @@ const Projects = () => {
                         {projectForm.sheet_integration_enabled && (
                         <div>
                             <label htmlFor="sheet_id" className="block text-sm font-medium text-slate-700 mb-1">Sheet ID</label>
-                            <input id="sheet_id" name="sheet_id" value={projectForm.sheet_id} onChange={handleFormChange} className="w-full border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+                            <input id="sheet_id" name="sheet_id" value={projectForm.sheet_id} onChange={handleFormChange} className="w-full border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none" />
                         </div>
                         )}
                         <div className="flex items-center gap-3">
-                            <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">{editingId ? "Save Changes" : "Create Project"}</button>
+                            <button type="submit" className="px-4 py-2 bg-theme text-white rounded-md hover:brightness-110 transition-colors">{editingId ? "Save Changes" : "Create Project"}</button>
                             <button type="button" onClick={resetAndCloseForms} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 transition-colors">Cancel</button>
                         </div>
                     </form>
@@ -357,7 +357,7 @@ const Projects = () => {
                                 </div>
                                 <div>
                                     <label htmlFor="role" className="block text-sm font-medium text-slate-700 mb-1">Role</label>
-                                    <select name="role" value={memberForm.role} onChange={handleRoleChange} className="border border-slate-300 rounded-md p-2 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                                    <select name="role" value={memberForm.role} onChange={handleRoleChange} className="border border-slate-300 rounded-md p-2 pr-8 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none">
                                         <option value="owner">Owner</option>
                                         <option value="manager">Manager</option>
                                         <option value="collaborator">Collaborator</option>
@@ -395,7 +395,7 @@ const Projects = () => {
                                             <span className="text-xs text-slate-500 ml-2">+{project.users.length - 3} more</span>
                                         )}
                                     </div>
-                                    <button onClick={() => handleSelectProject(project.id)} className="self-start text-sm text-blue-600 hover:underline">
+                                    <button onClick={() => handleSelectProject(project.id)} className="self-start text-sm text-[var(--theme-color)] hover:underline">
                                         View Details
                                     </button>
                                 </div>
