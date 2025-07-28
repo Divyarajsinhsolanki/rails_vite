@@ -5,10 +5,10 @@ import { fetchProjects } from "./api";
 import logo from "../images/logo.webp";
 
 // Icons
-import { 
-  FiChevronDown, FiMenu, FiX, FiLogOut, FiUser, 
+import {
+  FiChevronDown, FiMenu, FiX, FiLogOut, FiUser,
   FiUsers, FiBriefcase, FiHome, FiLayers, FiBook,
-  FiMessageSquare, FiSettings, FiZap, FiAward
+  FiMessageSquare, FiSettings, FiZap, FiAward, FiFileText
 } from "react-icons/fi";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 
@@ -207,7 +207,7 @@ const Navbar = () => {
   // Navigation configuration
   const navLinks = [
     { to: "/", label: "Home", icon: FiHome, visible: !!user },
-    { to: "/posts", label: "Community", icon: FiMessageSquare, visible: !!user },
+    { to: "/pdf", label: "PDF Modifier", icon: FiFileText, visible: !!user },
     { to: "/knowledge", label: "Knowledge", icon: FiBook, visible: !!user },
     { to: "/vault", label: "Vault", visible: !!user },
     { 

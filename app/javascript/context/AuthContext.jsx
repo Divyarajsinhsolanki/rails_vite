@@ -73,7 +73,7 @@ export function AuthProvider({ children }) {
       );
       setUser(data.user);
       scheduleRefresh(data.exp);
-      navigate("/posts");
+      navigate("/");
       toast.success("Logged in successfully");
     } catch (error) {
       console.error("Google login failed:", error);
