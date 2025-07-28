@@ -3,7 +3,7 @@ class Api::TasksController < Api::BaseController
 
   # GET /tasks.json
   def index
-    @tasks = Task.includes(:assigned_user)
+    @tasks = Task.includes(:assigned_user, :sprint)
                  .order(end_date: :asc)
 
     @tasks = @tasks.where(assigned_to_user: params[:assigned_to_user]) if params[:assigned_to_user].present?
@@ -13,14 +13,21 @@ class Api::TasksController < Api::BaseController
       @tasks = @tasks.joins(:sprint).where(sprints: { project_id: params[:project_id] })
     end
 
-    render json: @tasks.as_json(include: { assigned_user: { only: [:id, :first_name, :email] } })
+    render json: @tasks.as_json(include: {
+      assigned_user: { only: [:id, :first_name, :email] },
+      sprint: { only: [:id, :project_id] }
+    })
   end
 
   # POST /tasks.json
   def create
     @task = Task.new(task_params)
     if @task.save
-      render json: @task.as_json(include: { developer: {}, assigned_user: { only: [:id, :first_name, :email] } }), status: :created
+      render json: @task.as_json(include: {
+        developer: {},
+        assigned_user: { only: [:id, :first_name, :email] },
+        sprint: { only: [:id, :project_id] }
+      }), status: :created
     else
       render json: { errors: @task.errors.full_messages }, status: :unprocessable_entity
     end
@@ -37,7 +44,11 @@ class Api::TasksController < Api::BaseController
         (old_sprint_id != @task.sprint_id || old_dev_id != @task.developer_id || old_order != @task.order)
       reorder_group(@task.sprint_id, @task.developer_id)
 
-      render json: @task.as_json(include: { developer: {}, assigned_user: { only: [:id, :first_name, :email] } })
+      render json: @task.as_json(include: {
+        developer: {},
+        assigned_user: { only: [:id, :first_name, :email] },
+        sprint: { only: [:id, :project_id] }
+      })
     else
       render json: { errors: @task.errors.full_messages }, status: :unprocessable_entity
     end
