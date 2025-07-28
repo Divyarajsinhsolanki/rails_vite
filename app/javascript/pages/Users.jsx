@@ -23,6 +23,7 @@ const Users = () => {
     email: "",
     date_of_birth: "",
     profile_picture: null,
+    cover_photo: null,
     roles: [],
   });
   const [userToDelete, setUserToDelete] = useState(null);
@@ -85,6 +86,7 @@ const Users = () => {
       email: user.email || "",
       date_of_birth: user.date_of_birth || "",
       profile_picture: null,
+      cover_photo: null,
       roles: user.roles || [],
     });
   };
@@ -121,6 +123,9 @@ const Users = () => {
       data.append("user[date_of_birth]", formData.date_of_birth);
       if (formData.profile_picture) {
         data.append("user[profile_picture]", formData.profile_picture);
+      }
+      if (formData.cover_photo) {
+        data.append("user[cover_photo]", formData.cover_photo);
       }
       formData.roles.forEach((r) => data.append("user[role_names][]", r));
       await updateUser(editingId, data);
@@ -180,6 +185,7 @@ const Users = () => {
                   <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" className={inputBaseStyle} required />
                   <input type="date" name="date_of_birth" value={formData.date_of_birth || ''} onChange={handleChange} className={`${inputBaseStyle} text-gray-500`} />
                   <input type="file" name="profile_picture" onChange={handleChange} className="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-200 file:text-blue-700 hover:file:bg-blue-300" accept="image/*" />
+                  <input type="file" name="cover_photo" onChange={handleChange} className="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-200 file:text-blue-700 hover:file:bg-blue-300" accept="image/*" />
                   <div className="flex flex-wrap justify-center gap-2">
                     {roles.map((role) => (
                       <label key={role} className="flex items-center space-x-1">
