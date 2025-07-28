@@ -150,7 +150,7 @@ function DynamicAdminTable({ table }) {
             <td className="border px-4 py-2">
               <button
                 onClick={handleCreate}
-                className="bg-blue-500 hover:bg-blue-700 text-white px-2 py-1 rounded"
+                className="bg-theme text-white px-2 py-1 rounded hover:brightness-110"
               >
                 Create
               </button>
@@ -193,7 +193,7 @@ function DynamicAdminTable({ table }) {
                   <>
                     <button
                       onClick={() => handleSave(rec.id)}
-                      className="bg-green-500 hover:bg-green-700 text-white px-2 py-1 rounded mr-2"
+                      className="bg-theme text-white px-2 py-1 rounded mr-2 hover:brightness-110"
                     >
                       Save
                     </button>
@@ -208,7 +208,7 @@ function DynamicAdminTable({ table }) {
                   <>
                     <button
                       onClick={() => handleEdit(rec)}
-                      className="bg-yellow-500 hover:bg-yellow-700 text-white px-2 py-1 rounded mr-2"
+                      className="bg-theme text-white px-2 py-1 rounded mr-2 hover:brightness-110"
                     >
                       Edit
                     </button>
