@@ -14,7 +14,6 @@ import IndianStockNewsCard from "../components/Knowledge/IndianStockNewsCard";
 import CommonEnglishWordCard from "../components/Knowledge/CommonEnglishWordCard";
 import EnglishTenseCard from "../components/Knowledge/EnglishTenseCard";
 import EnglishPhraseCard from "../components/Knowledge/EnglishPhraseCard";
-import Weather from "./Weather";
 
 export default function KnowledgeDashboard() {
   // Example states for toggles & dark mode omitted for brevity
@@ -26,29 +25,22 @@ export default function KnowledgeDashboard() {
         <p className="text-md text-gray-600 dark:text-gray-400">Curated daily intelligence at a glance</p>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-8xl mx-auto">
-        <div className="lg:col-span-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <AnimatedCard><TodayInHistoryCard /></AnimatedCard>
-            <AnimatedCard><QuoteOfTheDayCard /></AnimatedCard>
-            <AnimatedCard><TopNewsCard /></AnimatedCard>
-            <AnimatedCard><DailyFactCard /></AnimatedCard>
-            <AnimatedCard><WordOfTheDayCard /></AnimatedCard>
-            <AnimatedCard><CommonEnglishWordCard /></AnimatedCard>
-            <AnimatedCard><EnglishTenseCard /></AnimatedCard>
-            <AnimatedCard><EnglishPhraseCard /></AnimatedCard>
-            <AnimatedCard><RandomCodingTipCard /></AnimatedCard>
-            <AnimatedCard><ScienceNewsCard /></AnimatedCard>
-            <AnimatedCard><TechNewsCard /></AnimatedCard>
-            <AnimatedCard><TopGainersCard /></AnimatedCard>
-            <AnimatedCard><TopVolumeStocksCard /></AnimatedCard>
-            <AnimatedCard><TopBuyingStocksCard /></AnimatedCard>
-            <AnimatedCard><IndianStockNewsCard /></AnimatedCard>
-          </div>
-        </div>
-        <div className="lg:col-span-1">
-          <Weather />
-        </div>
+      <div className="grid max-w-7xl mx-auto grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <AnimatedCard><TodayInHistoryCard /></AnimatedCard>
+        <AnimatedCard><QuoteOfTheDayCard /></AnimatedCard>
+        <AnimatedCard><TopNewsCard /></AnimatedCard>
+        <AnimatedCard><DailyFactCard /></AnimatedCard>
+        <AnimatedCard><WordOfTheDayCard /></AnimatedCard>
+        <AnimatedCard><CommonEnglishWordCard /></AnimatedCard>
+        <AnimatedCard><EnglishTenseCard /></AnimatedCard>
+        <AnimatedCard><EnglishPhraseCard /></AnimatedCard>
+        <AnimatedCard><RandomCodingTipCard /></AnimatedCard>
+        <AnimatedCard><ScienceNewsCard /></AnimatedCard>
+        <AnimatedCard><TechNewsCard /></AnimatedCard>
+        <AnimatedCard><TopGainersCard /></AnimatedCard>
+        <AnimatedCard><TopVolumeStocksCard /></AnimatedCard>
+        <AnimatedCard><TopBuyingStocksCard /></AnimatedCard>
+        <AnimatedCard><IndianStockNewsCard /></AnimatedCard>
       </div>
 
       {/* Optional: My Library saved items panel */}

@@ -130,6 +130,5 @@ export const deleteRecord = (table, id) => api.delete(`/admin/${table}/${id}`);
 
 export const sendContact = (data) => api.post('/contacts', { contact: data });
 
-export const getWeather = (params) => api.get('/weather', { params });
 export const fetchSheetData = (params) => api.get('/sheet', { params });
 export default api;
