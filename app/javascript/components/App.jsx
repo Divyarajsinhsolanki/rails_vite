@@ -16,7 +16,6 @@ import Users from "../pages/Users";
 import Teams from "../pages/Teams";
 import Projects from "../pages/Projects";
 import Contact from "../pages/Contact";
-import Weather from "../pages/Weather";
 import Vault from "../pages/Vault";
 import Legal from "../pages/Legal";
 import SprintDashboard from "../pages/SprintDashboard";
@@ -33,7 +32,6 @@ const App = () => {
           {/* ✅ Page Content */}
             <Routes>
               <Route path="/contact" element={<Contact />} />
-              <Route path="/weather" element={<Weather />} />
               <Route path="/legal" element={<Legal />} />
 
               {/* 🔐 Protected */}
