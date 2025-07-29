@@ -61,7 +61,8 @@ class Api::TasksController < Api::BaseController
   end
 
   def import_backlog
-    service = TaskSheetService.new('Backlog')
+    project = Project.find(params[:project_id]) if params[:project_id].present?
+    service = TaskSheetService.new('Backlog', project&.sheet_id)
     service.import_tasks(sprint_id: nil, created_by_id: current_user.id)
     head :no_content
   rescue StandardError => e

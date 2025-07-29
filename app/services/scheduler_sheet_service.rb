@@ -2,10 +2,9 @@ require 'google/apis/sheets_v4'
 require 'googleauth'
 
 class SchedulerSheetService
-  SPREADSHEET_ID = GoogleSheetsReader::SPREADSHEET_ID
-
-  def initialize(sheet_name)
+  def initialize(sheet_name, spreadsheet_id)
     @sheet_name = sheet_name
+    @spreadsheet_id = spreadsheet_id
     @service = Google::Apis::SheetsV4::SheetsService.new
     @service.client_options.application_name = 'Rails Scheduler Sheet'
     @service.authorization = authorize
@@ -50,7 +49,7 @@ class SchedulerSheetService
     clear_sheet
     value_range = Google::Apis::SheetsV4::ValueRange.new(values: values)
     @service.update_spreadsheet_value(
-      SPREADSHEET_ID,
+      @spreadsheet_id,
       "#{@sheet_name}!A1",
       value_range,
       value_input_option: 'RAW'
@@ -58,7 +57,7 @@ class SchedulerSheetService
   end
 
   def clear_sheet
-    @service.clear_values(SPREADSHEET_ID, "#{@sheet_name}!A1:Z")
+    @service.clear_values(@spreadsheet_id, "#{@sheet_name}!A1:Z")
   end
 
   def strike_completed_cells(matrix, developers, dates)
@@ -92,12 +91,12 @@ class SchedulerSheetService
     return if requests.empty?
 
     batch = Google::Apis::SheetsV4::BatchUpdateSpreadsheetRequest.new(requests: requests)
-    @service.batch_update_spreadsheet(SPREADSHEET_ID, batch)
+    @service.batch_update_spreadsheet(@spreadsheet_id, batch)
   end
 
   def sheet_id
     @sheet_id ||= begin
-      spreadsheet = @service.get_spreadsheet(SPREADSHEET_ID)
+      spreadsheet = @service.get_spreadsheet(@spreadsheet_id)
       sheet = spreadsheet.sheets.find { |s| s.properties.title == @sheet_name }
       sheet.properties.sheet_id
     end

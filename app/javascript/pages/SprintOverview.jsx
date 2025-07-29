@@ -792,7 +792,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId }) => {
     const handleBacklogImport = async () => {
         try {
             setProcessing(true);
-            await SchedulerAPI.importBacklogTasks();
+            await SchedulerAPI.importBacklogTasks(projectId);
             toast.success('Imported backlog from sheet');
             const res = await SchedulerAPI.getTasks();
             const mapped = res.data.filter(t => !t.sprint_id).map(mapTask);

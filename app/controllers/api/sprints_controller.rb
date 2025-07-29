@@ -50,7 +50,7 @@ class Api::SprintsController < Api::BaseController
 
   def import_tasks
     sprint = Sprint.find(params[:id])
-    service = TaskSheetService.new(sprint.name)
+    service = TaskSheetService.new(sprint.name, sprint.project.sheet_id)
     service.import_tasks(sprint_id: sprint.id, created_by_id: current_user.id)
     head :no_content
   rescue StandardError => e
@@ -60,7 +60,7 @@ class Api::SprintsController < Api::BaseController
   def export_tasks
     sprint = Sprint.find(params[:id])
     tasks = Task.where(sprint_id: sprint.id).order(:developer_id, :start_date)
-    service = TaskSheetService.new(sprint.name)
+    service = TaskSheetService.new(sprint.name, sprint.project.sheet_id)
     service.export_tasks(tasks)
     head :no_content
   rescue StandardError => e
@@ -71,7 +71,7 @@ class Api::SprintsController < Api::BaseController
     sprint = Sprint.find(params[:id])
     logs = TaskLog.joins(:task).where(tasks: { sprint_id: sprint.id }).includes(:task, :developer)
     sheet_name = "#{sprint.name} Scheduler"
-    service = SchedulerSheetService.new(sheet_name)
+    service = SchedulerSheetService.new(sheet_name, sprint.project.sheet_id)
     service.export_logs(logs)
     head :no_content
   rescue StandardError => e
