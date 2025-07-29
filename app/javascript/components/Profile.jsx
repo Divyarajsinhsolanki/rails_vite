@@ -359,7 +359,7 @@ const Profile = () => {
                             {dueTodayTasks.length} urgent
                           </span>
                         </div>
-                        <div className="space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {dueTodayTasks.map((task) => (
                             <div key={task.id} className="p-4 bg-white border border-gray-100 rounded-lg shadow-sm hover:shadow-md transition">
                               <div className="flex items-start justify-between">
@@ -400,7 +400,7 @@ const Profile = () => {
                     <div>
                       <h3 className="text-xl font-semibold text-gray-700 mb-4">All Tasks</h3>
                       {otherTasks.length > 0 ? (
-                        <div className="space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {otherTasks.map((task) => (
                             <div key={task.id} className="p-4 bg-white border border-gray-100 rounded-lg shadow-sm hover:shadow-md transition">
                               <div className="flex items-start justify-between">
