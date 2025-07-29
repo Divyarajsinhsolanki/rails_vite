@@ -14,6 +14,7 @@ import {
   PencilIcon,
   TrashIcon,
   LinkIcon,
+  DocumentDuplicateIcon,
   CheckCircleIcon,
   XCircleIcon,
   Bars3Icon, // Drag Handle
@@ -66,7 +67,7 @@ function Modal({ isOpen, onClose, title, children }) {
 
 // --- Main Scheduler Components ---
 
-function TaskCard({ task, onEdit, onTaskUpdate }) {
+function TaskCard({ task, onEdit, onTaskUpdate, onDuplicate }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id });
   const [copied, setCopied] = useState(false);
 
@@ -110,6 +111,19 @@ function TaskCard({ task, onEdit, onTaskUpdate }) {
       onTaskUpdate({ ...task, deleted: false });
       toast.error("Error: Could not delete task.");
     }
+  };
+
+  const duplicateTask = async () => {
+    if (!onDuplicate) return;
+    const formData = {
+      task_id: task.task_id || task.task?.id,
+      developer_id: task.developer_id,
+      log_date: task.log_date,
+      type: task.type,
+      hours_logged: task.hours_logged,
+      status: task.status
+    };
+    await onDuplicate(formData, task);
   };
 
   const copyLink = (e) => {
@@ -174,6 +188,9 @@ function TaskCard({ task, onEdit, onTaskUpdate }) {
               {copied && <CheckCircleSolidIcon className="h-3 w-3 text-green-500 absolute -top-1 -right-1" />}
             </button>
           )}
+          <button onClick={duplicateTask} title="Copy log" className="p-1 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-gray-100 transition-colors">
+            <DocumentDuplicateIcon className="h-5 w-5" />
+          </button>
           <button onClick={deleteTask} title="Delete task" className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100 transition-colors">
             <TrashIcon className="h-5 w-5" />
           </button>
@@ -184,7 +201,7 @@ function TaskCard({ task, onEdit, onTaskUpdate }) {
 }
 
 
-function TaskCell({ date, devId, tasksInCell, setEditingTask, handleTaskUpdate, totalHoursInCell }) {
+function TaskCell({ date, devId, tasksInCell, setEditingTask, handleTaskUpdate, totalHoursInCell, onDuplicate }) {
   const droppableId = `${date}:${devId}`;
   const { setNodeRef, isOver } = useDroppable({ id: droppableId });
 
@@ -208,6 +225,7 @@ function TaskCell({ date, devId, tasksInCell, setEditingTask, handleTaskUpdate, 
             task={task}
             onEdit={() => setEditingTask(task)}
             onTaskUpdate={handleTaskUpdate}
+            onDuplicate={onDuplicate}
         />
       ))}
       {tasksInCell.filter(t => !t.deleted).length === 0 && (
@@ -329,6 +347,22 @@ function Scheduler({ sprintId, projectId }) {
     toast.error(`Error: Could not add task. ${error.message}`);
   }
 };
+
+  const duplicateLog = async (formData, originalTask) => {
+    const tempId = `temp-${Date.now()}`;
+    const newTask = { ...originalTask, ...formData, id: tempId };
+    setTasks(prev => [...prev, newTask]);
+
+    try {
+      const { data: created } = await SchedulerAPI.createTaskLog(formData);
+      setTasks(prev => prev.map(t => t.id === tempId ? created : t));
+      toast.success('Log copied');
+    } catch (error) {
+      console.error('Error copying task:', error);
+      setTasks(prev => prev.filter(t => t.id !== tempId));
+      toast.error(`Error: Could not copy task. ${error.message}`);
+    }
+  };
 
   const saveUpdatedTask = async (formData) => {
     const taskId = formData.id;
@@ -556,6 +590,7 @@ function Scheduler({ sprintId, projectId }) {
                               tasksInCell={tasksByDateDev[date]?.[dev.id] || []}
                               setEditingTask={setEditingTask}
                               handleTaskUpdate={handleTaskUpdate}
+                              onDuplicate={duplicateLog}
                               totalHoursInCell={dailyTotalsPerDev[dev.id]?.[date] || 0}
                           />
                           ))}
