@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchUserInfo, updateUserInfo, fetchPosts, SchedulerAPI, fetchTeams } from "../components/api";
 import { getStatusClasses } from '/utils/taskUtils';
-import { Squares2X2Icon } from '@heroicons/react/24/outline';
+import { Squares2X2Icon, FolderIcon } from '@heroicons/react/24/outline';
 
 const COLOR_MAP = {
   blue: '#3b82f6',
@@ -169,6 +169,11 @@ const Profile = () => {
     () => tasks.filter((t) => (t.end_date || t.due_date) !== todayStr),
     [tasks, todayStr]
   );
+
+  const getProjectName = (projectId) => {
+    const project = projects.find((p) => p.id === projectId);
+    return project ? project.name : `Project ${projectId}`;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4 md:p-8">
@@ -384,12 +389,18 @@ const Profile = () => {
                                 </button>
                               </div>
                               {task.sprint?.project_id && (
-                                <button
-                                  onClick={() => navigate(`/projects/${task.sprint.project_id}/dashboard`)}
-                                  className="mt-2 flex items-center text-sm text-[var(--theme-color)] hover:underline"
-                                >
-                                  <Squares2X2Icon className="h-4 w-4 mr-1" />Board
-                                </button>
+                                <div className="mt-2 flex items-center justify-between text-sm">
+                                  <span className="flex items-center text-gray-500">
+                                    <FolderIcon className="h-4 w-4 mr-1" />
+                                    {getProjectName(task.sprint.project_id)}
+                                  </span>
+                                  <button
+                                    onClick={() => navigate(`/projects/${task.sprint.project_id}/dashboard`)}
+                                    className="flex items-center text-[var(--theme-color)] hover:underline"
+                                  >
+                                    <Squares2X2Icon className="h-4 w-4 mr-1" />Board
+                                  </button>
+                                </div>
                               )}
                             </div>
                           ))}
@@ -425,12 +436,18 @@ const Profile = () => {
                                 </button>
                               </div>
                               {task.sprint?.project_id && (
-                                <button
-                                  onClick={() => navigate(`/projects/${task.sprint.project_id}/dashboard`)}
-                                  className="mt-2 flex items-center text-sm text-[var(--theme-color)] hover:underline"
-                                >
-                                  <Squares2X2Icon className="h-4 w-4 mr-1" />Board
-                                </button>
+                                <div className="mt-2 flex items-center justify-between text-sm">
+                                  <span className="flex items-center text-gray-500">
+                                    <FolderIcon className="h-4 w-4 mr-1" />
+                                    {getProjectName(task.sprint.project_id)}
+                                  </span>
+                                  <button
+                                    onClick={() => navigate(`/projects/${task.sprint.project_id}/dashboard`)}
+                                    className="flex items-center text-[var(--theme-color)] hover:underline"
+                                  >
+                                    <Squares2X2Icon className="h-4 w-4 mr-1" />Board
+                                  </button>
+                                </div>
                               )}
                             </div>
                           ))}
