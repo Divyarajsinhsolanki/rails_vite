@@ -2,10 +2,9 @@ require 'google/apis/sheets_v4'
 require 'googleauth'
 
 class GoogleSheetsReader
-  SPREADSHEET_ID = ENV['GOOGLE_SPREADSHEET_ID']
-
-  def initialize(sheet_name)
+  def initialize(sheet_name, spreadsheet_id)
     @sheet_name = sheet_name
+    @spreadsheet_id = spreadsheet_id
     @service = Google::Apis::SheetsV4::SheetsService.new
     @service.client_options.application_name = 'Rails Sheet Reader'
     @service.authorization = authorize
@@ -13,7 +12,7 @@ class GoogleSheetsReader
 
   def read_data
     range = "#{@sheet_name}!A1:Z"
-    response = @service.get_spreadsheet_values(SPREADSHEET_ID, range)
+    response = @service.get_spreadsheet_values(@spreadsheet_id, range)
     response.values
   end
 

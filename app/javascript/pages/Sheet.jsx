@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { fetchSheetData } from '../components/api';
 
-const Sheet = ({ sheetName }) => {
+const Sheet = ({ sheetName, projectId }) => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -9,7 +9,7 @@ const Sheet = ({ sheetName }) => {
   useEffect(() => {
     const load = async () => {
       try {
-        const params = sheetName ? { sheet: sheetName } : undefined;
+        const params = sheetName ? { sheet: sheetName, project_id: projectId } : { project_id: projectId };
         const { data } = await fetchSheetData(params);
         setRows(data.rows || []);
       } catch (err) {
@@ -19,7 +19,7 @@ const Sheet = ({ sheetName }) => {
       }
     };
     load();
-  }, [sheetName]);
+  }, [sheetName, projectId]);
 
   if (loading) return <p className="text-center">Loading...</p>;
   if (error) return <p className="text-center text-red-600">{error}</p>;

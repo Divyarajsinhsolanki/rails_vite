@@ -71,7 +71,7 @@ export const SchedulerAPI = {
   updateTaskLog: (id, data) => api.patch(`/task_logs/${id}.json`, { task_log: data }),
   deleteTaskLog: (id) => api.delete(`/task_logs/${id}.json`),
   importSprintTasks: (id) => api.post(`/sprints/${id}/import_tasks`),
-  importBacklogTasks: () => api.post('/tasks/import_backlog'),
+  importBacklogTasks: (projectId) => api.post('/tasks/import_backlog', { project_id: projectId }),
   exportSprintTasks: (id) => api.post(`/sprints/${id}/export_tasks`),
   exportSprintLogs: (id) => api.post(`/sprints/${id}/export_logs`)
 };

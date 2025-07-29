@@ -199,7 +199,7 @@ export default function SprintDashboard() {
         sprintId ? <TodoBoard sprintId={sprintId} projectId={projectId} onSprintChange={handleSprintChange} /> : <p className="p-4">No sprint selected</p>
       )}
       {activeTab === 'sheet' && (
-        <Sheet sheetName={sprint?.name} />
+        <Sheet sheetName={sprint?.name} projectId={projectId} />
       )}
     </div>
   );

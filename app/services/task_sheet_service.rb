@@ -3,10 +3,9 @@ require 'googleauth'
 require 'date'
 
 class TaskSheetService
-  SPREADSHEET_ID = GoogleSheetsReader::SPREADSHEET_ID
-
-  def initialize(sheet_name)
+  def initialize(sheet_name, spreadsheet_id)
     @sheet_name = sheet_name
+    @spreadsheet_id = spreadsheet_id
     @service = Google::Apis::SheetsV4::SheetsService.new
     @service.client_options.application_name = 'Rails Task Sheet'
     @service.authorization = authorize
@@ -33,7 +32,7 @@ class TaskSheetService
 
   def read_sheet
     range = "#{@sheet_name}!A1:Z"
-    response = @service.get_spreadsheet_values(SPREADSHEET_ID, range)
+    response = @service.get_spreadsheet_values(@spreadsheet_id, range)
     response.values || []
   end
 
@@ -114,7 +113,7 @@ class TaskSheetService
     value_range = Google::Apis::SheetsV4::ValueRange.new(values: values)
 
     @service.update_spreadsheet_value(
-      SPREADSHEET_ID,
+      @spreadsheet_id,
       "#{@sheet_name}!A1",
       value_range,
       value_input_option: 'RAW'
@@ -125,7 +124,7 @@ class TaskSheetService
   end
 
   def clear_sheet
-    @service.clear_values(SPREADSHEET_ID, "#{@sheet_name}!A1:Z")
+    @service.clear_values(@spreadsheet_id, "#{@sheet_name}!A1:Z")
   end
 
   def highlight_completed_rows(tasks)
@@ -159,7 +158,7 @@ class TaskSheetService
     return if requests.empty?
 
     batch_request = Google::Apis::SheetsV4::BatchUpdateSpreadsheetRequest.new(requests: requests)
-    @service.batch_update_spreadsheet(SPREADSHEET_ID, batch_request)
+    @service.batch_update_spreadsheet(@spreadsheet_id, batch_request)
   end
 
   def highlight_in_progress_rows(tasks)
@@ -194,12 +193,12 @@ class TaskSheetService
     return if requests.empty?
 
     batch_request = Google::Apis::SheetsV4::BatchUpdateSpreadsheetRequest.new(requests: requests)
-    @service.batch_update_spreadsheet(SPREADSHEET_ID, batch_request)
+    @service.batch_update_spreadsheet(@spreadsheet_id, batch_request)
   end
 
   def sheet_id
     @sheet_id ||= begin
-      spreadsheet = @service.get_spreadsheet(SPREADSHEET_ID)
+      spreadsheet = @service.get_spreadsheet(@spreadsheet_id)
       sheet = spreadsheet.sheets.find { |s| s.properties.title == @sheet_name }
       sheet.properties.sheet_id
     end
