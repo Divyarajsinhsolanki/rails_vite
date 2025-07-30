@@ -210,17 +210,17 @@ const Navbar = () => {
     { to: "/pdf", label: "PDF Modifier", icon: FiFileText, visible: !!user },
     { to: "/knowledge", label: "Knowledge", icon: FiBook, visible: !!user },
     { to: "/vault", label: "Vault", icon: FiMenu, visible: !!user },
-    { 
-      to: "/teams", 
-      label: "Teams", 
-      icon: FiUsers, 
-      visible: user?.roles?.some(r => ["owner", "team_leader"].includes(r.name)) 
+    {
+      to: "/teams",
+      label: "Teams",
+      icon: FiUsers,
+      visible: !!user
     },
-    { 
-      to: "/projects", 
-      label: "Projects", 
-      icon: FiLayers, 
-      visible: user?.roles?.some(r => ["owner", "project_manager"].includes(r.name)) 
+    {
+      to: "/projects",
+      label: "Projects",
+      icon: FiLayers,
+      visible: !!user
     },
   ];
 
