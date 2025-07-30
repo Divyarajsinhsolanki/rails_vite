@@ -11,6 +11,27 @@ const PostList = ({ posts, refreshPosts }) => {
   const [expandedComments, setExpandedComments] = React.useState(new Set());
   const { user } = useContext(AuthContext);
 
+  const handleShare = async (post) => {
+    const url = `${window.location.origin}${window.location.pathname}#post-${post.id}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Post', text: post.message, url });
+      } catch (error) {
+        console.error('Error sharing', error);
+      }
+    } else if (navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(url);
+        toast.success('Link copied to clipboard');
+      } catch (error) {
+        toast.error('Failed to copy link');
+        console.error(error);
+      }
+    } else {
+      window.prompt('Copy this link', url);
+    }
+  };
+
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this post? This action cannot be undone.")) {
       try {
@@ -47,7 +68,7 @@ const PostList = ({ posts, refreshPosts }) => {
   return (
     <div className="space-y-5">
       {posts.map((post) => (
-        <article key={post.id} className="bg-white rounded-lg shadow-xs border border-slate-200 hover:shadow-md transition-shadow">
+        <article id={`post-${post.id}`} key={post.id} className="bg-white rounded-lg shadow-xs border border-slate-200 hover:shadow-md transition-shadow">
           <div className="p-5">
             {/* Post Header */}
             <div className="flex items-start justify-between mb-4">
@@ -113,7 +134,10 @@ const PostList = ({ posts, refreshPosts }) => {
                 <span>Comment</span>
               </button>
               
-              <button className="flex items-center space-x-1 px-3 py-1 rounded-md hover:bg-slate-100 transition-colors">
+              <button
+                onClick={() => handleShare(post)}
+                className="flex items-center space-x-1 px-3 py-1 rounded-md hover:bg-slate-100 transition-colors"
+              >
                 <FiShare2 size={18} />
                 <span>Share</span>
               </button>
