@@ -1,14 +1,18 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { fetchPosts } from "../components/api";
+import React, { useEffect, useState, useCallback, useContext } from "react";
+import { fetchPosts, SchedulerAPI, fetchProjects } from "../components/api";
+import { AuthContext } from "../context/AuthContext";
 import PostForm from "../components/PostForm";
 import PostList from "../components/PostList";
 import { Toaster } from "react-hot-toast";
 import { FiActivity, FiUsers, FiMessageSquare } from "react-icons/fi";
 
 const PostPage = () => {
+  const { user } = useContext(AuthContext);
   const [posts, setPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({ totalPosts: 0, activeUsers: 0 });
+  const [tasks, setTasks] = useState([]);
+  const [projects, setProjects] = useState([]);
 
   const refreshPosts = useCallback(async () => {
     setIsLoading(true);
@@ -36,6 +40,27 @@ const PostPage = () => {
     refreshPosts();
   }, [refreshPosts]);
 
+  useEffect(() => {
+    if (!user) return;
+    const today = new Date().toISOString().split('T')[0];
+
+    SchedulerAPI.getTasks({ assigned_to_user: user.id })
+      .then((res) => {
+        const overdue = (Array.isArray(res.data) ? res.data : []).filter(
+          (t) => t.end_date && t.status !== 'completed' && t.end_date < today
+        );
+        setTasks(overdue);
+      })
+      .catch(() => setTasks([]));
+
+    fetchProjects().then(({ data }) => {
+      const userProjects = Array.isArray(data)
+        ? data.filter((p) => p.users.some((u) => u.id === user.id))
+        : [];
+      setProjects(userProjects);
+    });
+  }, [user]);
+
   return (
     <div className="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen font-sans">
       <Toaster position="top-right" toastOptions={{
@@ -47,8 +72,27 @@ const PostPage = () => {
         }
       }} />
       
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Page Header */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <aside className="lg:col-span-3">
+          <h2 className="text-xl font-semibold mb-4">Today's Overdue Tasks</h2>
+          {tasks.length ? (
+            <ul className="space-y-3">
+              {tasks.map((task) => (
+                <li key={task.id} className="bg-white p-4 rounded-lg shadow border">
+                  <p className="font-medium">
+                    {task.title || task.task_id}
+                  </p>
+                  <p className="text-sm text-gray-500">Due {task.end_date}</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No overdue tasks for today.</p>
+          )}
+        </aside>
+
+        <div className="lg:col-span-6">
+          {/* Page Header */}
         <header className="mb-10 text-center">
           <div className="inline-flex items-center justify-center bg-white p-3 rounded-full shadow-sm border border-slate-200 mb-6">
             <div className="bg-[rgb(var(--theme-color-rgb)/0.1)] p-3 rounded-full">
@@ -139,6 +183,22 @@ const PostPage = () => {
             </div>
           </div>
         </main>
+        </div>
+
+        <aside className="lg:col-span-3">
+          <h2 className="text-xl font-semibold mb-4">My Projects</h2>
+          {projects.length ? (
+            <ul className="space-y-3">
+              {projects.map((p) => (
+                <li key={p.id} className="bg-white p-4 rounded-lg shadow border">
+                  {p.name}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No associated projects.</p>
+          )}
+        </aside>
       </div>
     </div>
   );
