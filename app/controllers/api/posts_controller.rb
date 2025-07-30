@@ -35,7 +35,9 @@ class Api::PostsController < Api::BaseController
   end
 
   def destroy
-    post = current_user.posts.find(params[:id])
+    post = current_user.posts.find_by(id: params[:id])
+    return head :forbidden unless post
+
     post.destroy
     render json: { message: "Post deleted successfully" }
   end
