@@ -41,8 +41,8 @@ const App = () => {
               <Route path="/vault" element={<PrivateRoute><Vault /></PrivateRoute>} />
               <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
               <Route path="/knowledge" element={<PrivateRoute><KnowledgeDashboard /></PrivateRoute>} />
-              <Route path="/projects" element={<PrivateRoute allowedRoles={["owner","project_manager"]}><Projects /></PrivateRoute>} />
-              <Route path="/teams" element={<PrivateRoute allowedRoles={["owner","team_leader"]}><Teams /></PrivateRoute>} />
+              <Route path="/projects" element={<PrivateRoute><Projects /></PrivateRoute>} />
+              <Route path="/teams" element={<PrivateRoute><Teams /></PrivateRoute>} />
               <Route path="/projects/:projectId/dashboard" element={<ProjectMemberRoute><SprintDashboard /></ProjectMemberRoute>} />
               <Route path="/users" element={<PrivateRoute ownerOnly><Users /></PrivateRoute>} />
               <Route path="/admin" element={<PrivateRoute ownerOnly><Admin /></PrivateRoute>} />
