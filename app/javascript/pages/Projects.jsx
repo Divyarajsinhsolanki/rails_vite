@@ -320,7 +320,7 @@ const Projects = () => {
                     {canEdit && (
                         <button
                             onClick={handleNewClick}
-                            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-[var(--theme-color)] hover:brightness-110 transition-colors rounded-full shadow-md active:scale-95 transform"
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-white text-theme border border-theme hover:bg-theme hover:text-white transition-colors rounded-full shadow-md active:scale-95 transform"
                             title="Create New Project"
                         >
                             <FiPlus className="w-4 h-4" /> New Project
