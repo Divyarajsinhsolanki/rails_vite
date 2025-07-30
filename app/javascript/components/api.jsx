@@ -91,8 +91,10 @@ export const updateUser = (id, data) =>
 
 // POST ENDPOINTS (existing)
 export const fetchPosts = (id) => api.get(id ? `/posts?user_id=${id}` : "/posts");
-export const createPost = (d) => api.post("/posts", d);
-export const updatePost = (i, d) => api.put(`/posts/${i}`, d);
+export const createPost = (d) =>
+  api.post("/posts", d, { headers: { "Content-Type": "multipart/form-data" } });
+export const updatePost = (i, d) =>
+  api.put(`/posts/${i}`, d, { headers: { "Content-Type": "multipart/form-data" } });
 export const deletePost = (i) => api.delete(`/posts/${i}`);
 
 
