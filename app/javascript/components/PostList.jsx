@@ -1,13 +1,15 @@
-import React from "react";
+import React, { useContext } from "react";
 import toast from "react-hot-toast";
 import { formatDistanceToNow } from 'date-fns';
 import { FiTrash2, FiHeart, FiMessageCircle, FiShare2 } from 'react-icons/fi';
 import { deletePost } from "../components/api";
 import Avatar from "./ui/Avatar";
+import { AuthContext } from "../context/AuthContext";
 
 const PostList = ({ posts, refreshPosts }) => {
   const [likedPosts, setLikedPosts] = React.useState(new Set());
   const [expandedComments, setExpandedComments] = React.useState(new Set());
+  const { user } = useContext(AuthContext);
 
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this post? This action cannot be undone.")) {
@@ -62,13 +64,15 @@ const PostList = ({ posts, refreshPosts }) => {
                   </p>
                 </div>
               </div>
-              <button
-                onClick={() => handleDelete(post.id)}
-                className="text-slate-400 hover:text-red-500 p-1 rounded-full transition-colors"
-                aria-label="Delete post"
-              >
-                <FiTrash2 size={16} />
-              </button>
+              {user?.id === post.user.id && (
+                <button
+                  onClick={() => handleDelete(post.id)}
+                  className="text-slate-400 hover:text-red-500 p-1 rounded-full transition-colors"
+                  aria-label="Delete post"
+                >
+                  <FiTrash2 size={16} />
+                </button>
+              )}
             </div>
 
             {/* Message Content */}
