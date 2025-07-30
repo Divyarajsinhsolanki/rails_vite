@@ -44,7 +44,6 @@ const Login = ({ switchToSignup }) => {
     getRedirectResult(auth)
       .then((result) => {
         if (result?.user) {
-          console.log("Redirect Login Success:", result.user);
         }
       })
       .catch(console.error);

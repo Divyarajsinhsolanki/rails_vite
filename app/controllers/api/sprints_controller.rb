@@ -5,7 +5,7 @@ class Api::SprintsController < Api::BaseController
       sprint = Sprint.order(created_at: :desc).first
       render json: sprint
     else
-      sprints = Sprint.order(created_at: :desc)
+      sprints = Sprint.order(start_date: :asc)
       sprints = sprints.where(project_id: params[:project_id]) if params[:project_id].present?
       render json: sprints
     end
