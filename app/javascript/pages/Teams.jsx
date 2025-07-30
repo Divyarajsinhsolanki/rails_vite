@@ -465,7 +465,11 @@ const Teams = () => {
                                     <form onSubmit={handleAddMember} className="mt-8 pt-6 border-t border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                                         <div className="md:col-span-2">
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Select Users to Add</label>
-                                            <UserMultiSelect selectedUsers={selectedUsersToAdd} setSelectedUsers={setSelectedUsersToAdd} />
+                                            <UserMultiSelect
+                                                selectedUsers={selectedUsersToAdd}
+                                                setSelectedUsers={setSelectedUsersToAdd}
+                                                excludedIds={selectedTeam.users.map((u) => u.id)}
+                                            />
                                         </div>
                                         <div>
                                             <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">Role</label>

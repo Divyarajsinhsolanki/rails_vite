@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { getUsers } from "./api";
 
-const UserMultiSelect = ({ selectedUsers, setSelectedUsers, placeholder = "Search users..." }) => {
+const UserMultiSelect = ({
+  selectedUsers,
+  setSelectedUsers,
+  excludedIds = [],
+  placeholder = "Search users...",
+}) => {
   const [allUsers, setAllUsers] = useState([]);
   const [query, setQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -43,7 +48,9 @@ const UserMultiSelect = ({ selectedUsers, setSelectedUsers, placeholder = "Searc
 
   const filtered = allUsers.filter((u) => {
     const text = `${u.first_name || ""} ${u.last_name || ""} ${u.email || ""}`.toLowerCase();
-    return text.includes(query.toLowerCase()) && !selectedUsers.some((s) => s.id === u.id);
+    const isSelected = selectedUsers.some((s) => s.id === u.id);
+    const isExcluded = excludedIds.includes(u.id);
+    return text.includes(query.toLowerCase()) && !isSelected && !isExcluded;
   });
 
   return (
