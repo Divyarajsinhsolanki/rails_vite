@@ -71,9 +71,11 @@ Rails.application.routes.draw do
     end
     resources :teams, only: [:index, :create, :update, :destroy]
     resources :team_users, only: [:create, :update, :destroy]
+    delete 'team_users/leave/:team_id', to: 'team_users#leave'
 
     resources :projects, only: [:index, :create, :update, :destroy]
     resources :project_users, only: [:create, :update, :destroy]
+    delete 'project_users/leave/:project_id', to: 'project_users#leave'
     resources :task_logs, only: [:index, :create, :update, :destroy]
 
     resources :items, only: [:index, :create, :update, :destroy]
