@@ -253,10 +253,10 @@ const Profile = () => {
             )}
           </div>
           
-          <div className="px-6 md:px-8 pb-8 -mt-16 relative z-10">
+          <div className="px-6 md:px-8 pb-8 relative z-10">
             <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
               {/* Profile Picture */}
-              <div className="relative group">
+              <div className="relative group -mt-16">
                 <div className="absolute inset-0 rounded-full bg-[var(--theme-color)]/20 blur-md -z-10"></div>
                 {user?.profile_picture && user.profile_picture !== 'null' ? (
                   <img
