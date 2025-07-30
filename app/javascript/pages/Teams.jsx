@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext, useCallback } from "react";
 import { useLocation } from "react-router-dom";
-import { fetchTeams, createTeam, updateTeam, deleteTeam, addTeamUser, deleteTeamUser } from "../components/api";
+import { fetchTeams, createTeam, updateTeam, deleteTeam, addTeamUser, deleteTeamUser, leaveTeam } from "../components/api";
 import UserMultiSelect from "../components/UserMultiSelect";
 import { AuthContext } from "../context/AuthContext";
 // Import icons (e.g., from Feather Icons)
@@ -269,6 +269,24 @@ const Teams = () => {
         }
     };
 
+    const handleLeaveTeam = async () => {
+        if (!window.confirm('Are you sure you want to leave this team?')) return;
+        setIsSaving(true);
+        setNotification(null);
+
+        try {
+            await leaveTeam(selectedTeamId);
+            await loadTeams();
+            setNotification({ message: 'You have left the team.', type: 'success' });
+        } catch (err) {
+            console.error('Failed to leave team:', err);
+            setNotification({ message: `Failed to leave team: ${err.message || 'An error occurred.'}`, type: 'error' });
+        } finally {
+            setIsSaving(false);
+            setSelectedTeamId(null);
+        }
+    };
+
     // Derived State for rendering
     const filteredTeams = teams.filter((t) =>
         `${t.name} ${t.users.map((u) => u.name).join(" ")}`
@@ -451,6 +469,14 @@ const Teams = () => {
                                                         className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-colors font-medium"
                                                     >
                                                         Remove
+                                                    </button>
+                                                )}
+                                                {member.id === user.id && user.roles?.some((r) => r.name === "team_leader") && (
+                                                    <button
+                                                        onClick={handleLeaveTeam}
+                                                        className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-colors font-medium ml-2"
+                                                    >
+                                                        Leave
                                                     </button>
                                                 )}
                                             </li>

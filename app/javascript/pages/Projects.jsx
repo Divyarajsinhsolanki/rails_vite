@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext, useCallback } from "react";
-import { fetchProjects, createProject, updateProject, deleteProject, addProjectUser, deleteProjectUser } from "../components/api";
+import { fetchProjects, createProject, updateProject, deleteProject, addProjectUser, deleteProjectUser, leaveProject } from "../components/api";
 import UserMultiSelect from "../components/UserMultiSelect";
 import { AuthContext } from "../context/AuthContext";
 // Import icons (e.g., from Feather Icons)
@@ -291,6 +291,24 @@ const Projects = () => {
         }
     };
 
+    const handleLeaveProject = async () => {
+        if (!window.confirm('Are you sure you want to leave this project?')) return;
+        setIsSaving(true);
+        setNotification(null);
+
+        try {
+            await leaveProject(selectedProjectId);
+            await loadProjects();
+            setNotification({ message: 'You have left the project.', type: 'success' });
+        } catch (err) {
+            console.error('Failed to leave project:', err);
+            setNotification({ message: `Failed to leave project: ${err.message || 'An error occurred.'}`, type: 'error' });
+        } finally {
+            setIsSaving(false);
+            setSelectedProjectId(null);
+        }
+    };
+
     // Derived State for rendering
     const filteredProjects = projects.filter((p) =>
         `${p.name} ${p.description || ''} ${p.users.map((u) => u.name).join(" ")}`
@@ -567,6 +585,14 @@ const Projects = () => {
                                                         className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-colors font-medium"
                                                     >
                                                         Remove
+                                                    </button>
+                                                )}
+                                                {member.id === user.id && user.roles?.some((r) => r.name === "project_manager") && (
+                                                    <button
+                                                        onClick={handleLeaveProject}
+                                                        className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-colors font-medium ml-2"
+                                                    >
+                                                        Leave
                                                     </button>
                                                 )}
                                             </li>
