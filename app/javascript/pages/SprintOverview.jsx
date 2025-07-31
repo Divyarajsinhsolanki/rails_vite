@@ -491,7 +491,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate }) => {
 };
 
 // Main Component
-const SprintOverview = ({ sprintId, onSprintChange, projectId }) => {
+const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationEnabled }) => {
     const [sprints, setSprints] = useState([]);
     const [developers, setDevelopers] = useState([]);
     const [users, setUsers] = useState([]);
@@ -852,18 +852,22 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId }) => {
                             <PlusCircleIcon className="h-5 w-5 mr-2" />
                             Add Task
                         </button>
-                        <button
-                            onClick={handleImport}
-                            className="flex items-center bg-green-500 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
-                        >
-                            Import from Sheet
-                        </button>
-                        <button
-                            onClick={handleExport}
-                            className="flex items-center bg-[var(--theme-color)] hover:brightness-110 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
-                        >
-                            Export to Sheet
-                        </button>
+                        {sheetIntegrationEnabled && (
+                            <>
+                                <button
+                                    onClick={handleImport}
+                                    className="flex items-center bg-green-500 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
+                                >
+                                    Import from Sheet
+                                </button>
+                                <button
+                                    onClick={handleExport}
+                                    className="flex items-center bg-[var(--theme-color)] hover:brightness-110 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
+                                >
+                                    Export to Sheet
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -988,12 +992,14 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId }) => {
                             <PlusCircleIcon className="h-5 w-5 mr-2" />
                             Add Task
                         </button>
-                        <button
-                            onClick={handleBacklogImport}
-                            className="flex items-center bg-green-500 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
-                        >
-                            Import Backlog
-                        </button>
+                        {sheetIntegrationEnabled && (
+                            <button
+                                onClick={handleBacklogImport}
+                                className="flex items-center bg-green-500 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
+                            >
+                                Import Backlog
+                            </button>
+                        )}
                     </div>
                 </div>
                 <div className="overflow-x-auto bg-white rounded-xl shadow-md">

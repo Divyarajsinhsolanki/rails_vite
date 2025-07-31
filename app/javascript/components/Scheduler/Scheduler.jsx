@@ -235,7 +235,7 @@ function TaskCell({ date, devId, tasksInCell, setEditingTask, handleTaskUpdate, 
   );
 }
 
-function Scheduler({ sprintId, projectId }) {
+function Scheduler({ sprintId, projectId, sheetIntegrationEnabled }) {
   const [sprint, setSprint] = useState(null);
   const [developers, setDevelopers] = useState([]);
   const [tasks, setTasks] = useState([]); // will hold task logs
@@ -540,13 +540,15 @@ function Scheduler({ sprintId, projectId }) {
                       <PlusCircleIcon className="h-5 w-5 mr-2" />
                       Add Log
                     </button>
-                    <button
-                      onClick={handleExportScheduler}
-                      className="flex items-center bg-green-500 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105"
-                    >
-                      <TableCellsIcon className="h-5 w-5 mr-2" />
-                      Export to Scheduler Sheet
-                    </button>
+                    {sheetIntegrationEnabled && (
+                      <button
+                        onClick={handleExportScheduler}
+                        className="flex items-center bg-green-500 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105"
+                      >
+                        <TableCellsIcon className="h-5 w-5 mr-2" />
+                        Export to Scheduler Sheet
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
