@@ -67,19 +67,21 @@ const PostList = ({ posts, refreshPosts }) => {
 
   return (
     <div className="space-y-5">
-      {posts.map((post) => (
-        <article id={`post-${post.id}`} key={post.id} className="bg-white rounded-lg shadow-xs border border-slate-200 hover:shadow-md transition-shadow">
-          <div className="p-5">
+      {posts.map((post) => {
+        const fullName = [post.user.first_name, post.user.last_name].filter(Boolean).join(' ') || post.user.email;
+        return (
+          <article id={`post-${post.id}`} key={post.id} className="bg-white rounded-lg shadow-xs border border-slate-200 hover:shadow-md transition-shadow">
+            <div className="p-5">
             {/* Post Header */}
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-start space-x-3">
                 <Avatar
-                  name={post.user.email}
+                  name={fullName}
                   src={post.user.profile_picture}
                   className="w-10 h-10"
                 />
                 <div>
-                  <p className="text-slate-800 font-semibold">{post.user.email}</p>
+                  <p className="text-slate-800 font-semibold">{fullName}</p>
                   <p className="text-slate-500 text-xs">
                     {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
                   </p>
@@ -116,7 +118,7 @@ const PostList = ({ posts, refreshPosts }) => {
           )}
 
           {/* Post Actions */}
-          <div className="px-5 py-3 border-t border-slate-100">
+            <div className="px-5 py-3 border-t border-slate-100">
             <div className="flex items-center justify-between text-slate-500">
               <button 
                 onClick={() => toggleLike(post.id)}
@@ -169,9 +171,10 @@ const PostList = ({ posts, refreshPosts }) => {
                 </div>
               </div>
             )}
-          </div>
-        </article>
-      ))}
+            </div>
+          </article>
+        );
+      })}
     </div>
   );
 };

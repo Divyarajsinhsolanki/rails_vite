@@ -57,6 +57,8 @@ class Api::PostsController < Api::BaseController
       user: {
         id: post.user.id,
         email: post.user.email,
+        first_name: post.user.first_name,
+        last_name: post.user.last_name,
         profile_picture: post.user.profile_picture.attached? ?
           rails_blob_url(post.user.profile_picture, only_path: true) : nil
       }
