@@ -192,10 +192,23 @@ export default function SprintDashboard() {
         </div>
       </header>
       {activeTab === 'overview' && (
-        <SprintOverview projectId={projectId} sprintId={sprintId} onSprintChange={handleSprintChange} />
+        <SprintOverview
+          projectId={projectId}
+          sprintId={sprintId}
+          onSprintChange={handleSprintChange}
+          sheetIntegrationEnabled={project?.sheet_integration_enabled}
+        />
       )}
       {activeTab === 'scheduler' && (
-        sprintId ? <Scheduler sprintId={sprintId} projectId={projectId} /> : <p className="p-4">No sprint selected</p>
+        sprintId ? (
+          <Scheduler
+            sprintId={sprintId}
+            projectId={projectId}
+            sheetIntegrationEnabled={project?.sheet_integration_enabled}
+          />
+        ) : (
+          <p className="p-4">No sprint selected</p>
+        )
       )}
       {activeTab === 'todo' && (
         sprintId ? <TodoBoard sprintId={sprintId} projectId={projectId} onSprintChange={handleSprintChange} /> : <p className="p-4">No sprint selected</p>
