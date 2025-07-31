@@ -162,37 +162,39 @@ const PostPage = () => {
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         {/* Left Sidebar: At a Glance */}
-        <aside className="lg:col-span-3 space-y-8">
-            <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm">
-                <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                    <FiAlertTriangle className="text-red-500"/>
-                    At a Glance
-                </h2>
-                {tasks.length > 0 ? (
-                    <div className="space-y-3">
-                        <p className="text-sm text-slate-600 mb-2">You have <span className="font-bold text-red-600">{tasks.length} task(s) due today</span>.</p>
-                        {tasks.slice(0, 4).map((task) => <DueTaskItem key={task.id} task={task} />)}
-                    </div>
-                ) : (
-                    <div className="text-center py-4 bg-green-50 rounded-lg border border-green-200">
-                        <FiCheckCircle className="mx-auto text-green-500 text-3xl mb-2"/>
-                        <p className="text-sm font-medium text-green-700">All caught up!</p>
-                        <p className="text-xs text-green-600">No tasks due today.</p>
-                    </div>
-                )}
-            </div>
-            <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm">
-                <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                    <FiBriefcase className="text-slate-600"/>
-                    My Projects
-                </h2>
-                 {projects.length > 0 ? (
-                    <div className="space-y-3">
-                        {projects.map((p) => <ProjectItem key={p.id} project={p} />)}
-                    </div>
-                 ) : (
-                    <p className="text-sm text-slate-500 text-center py-4">No projects found.</p>
-                 )}
+        <aside className="lg:col-span-3">
+            <div className="space-y-8 sticky top-24">
+                <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                    <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <FiAlertTriangle className="text-red-500"/>
+                        At a Glance
+                    </h2>
+                    {tasks.length > 0 ? (
+                        <div className="space-y-3">
+                            <p className="text-sm text-slate-600 mb-2">You have <span className="font-bold text-red-600">{tasks.length} task(s) due today</span>.</p>
+                            {tasks.slice(0, 4).map((task) => <DueTaskItem key={task.id} task={task} />)}
+                        </div>
+                    ) : (
+                        <div className="text-center py-4 bg-green-50 rounded-lg border border-green-200">
+                            <FiCheckCircle className="mx-auto text-green-500 text-3xl mb-2"/>
+                            <p className="text-sm font-medium text-green-700">All caught up!</p>
+                            <p className="text-xs text-green-600">No tasks due today.</p>
+                        </div>
+                    )}
+                </div>
+                <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                    <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <FiBriefcase className="text-slate-600"/>
+                        My Projects
+                    </h2>
+                     {projects.length > 0 ? (
+                        <div className="space-y-3">
+                            {projects.map((p) => <ProjectItem key={p.id} project={p} />)}
+                        </div>
+                     ) : (
+                        <p className="text-sm text-slate-500 text-center py-4">No projects found.</p>
+                     )}
+                </div>
             </div>
         </aside>
 
@@ -235,7 +237,7 @@ const PostPage = () => {
 
         {/* Right Sidebar: Community Stats and Birthdays */}
         <aside className="lg:col-span-3">
-            <div className="space-y-8 sticky top-8">
+            <div className="space-y-8 sticky top-24">
                 <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm">
                     <h2 className="text-lg font-bold text-slate-800 mb-4">Community Stats</h2>
                     <div className="space-y-4">
