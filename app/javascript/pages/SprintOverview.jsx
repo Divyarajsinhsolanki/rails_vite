@@ -570,13 +570,13 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                     if(onSprintChange) onSprintChange(null);
                 }
             });
-    }, [projectId]);
+    }, [projectId, sprintId]);
 
     useEffect(() => {
-        if (onSprintChange && selectedSprintId !== null) {
+        if (!sprintId && onSprintChange && selectedSprintId !== null) {
             onSprintChange(selectedSprintId);
         }
-    }, [selectedSprintId]);
+    }, [selectedSprintId, sprintId, onSprintChange]);
 
     useEffect(() => {
         if (selectedSprintId === null) {
