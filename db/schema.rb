@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_01_007000) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_01_008000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -148,7 +148,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_01_007000) do
     t.decimal "estimated_hours", precision: 5, scale: 2
     t.bigint "sprint_id"
     t.bigint "developer_id", null: false
-    t.bigint "project_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "status", default: "todo"
@@ -160,9 +159,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_01_007000) do
     t.text "description"
     t.date "start_date"
     t.date "end_date"
+    t.bigint "project_id"
     t.index ["developer_id"], name: "index_tasks_on_developer_id"
-    t.index ["sprint_id"], name: "index_tasks_on_sprint_id"
     t.index ["project_id"], name: "index_tasks_on_project_id"
+    t.index ["sprint_id"], name: "index_tasks_on_sprint_id"
     t.index ["type"], name: "index_tasks_on_type"
   end
 
@@ -231,8 +231,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_01_007000) do
   add_foreign_key "task_logs", "developers"
   add_foreign_key "task_logs", "tasks"
   add_foreign_key "tasks", "developers"
-  add_foreign_key "tasks", "sprints"
   add_foreign_key "tasks", "projects"
+  add_foreign_key "tasks", "sprints"
   add_foreign_key "team_users", "teams"
   add_foreign_key "team_users", "users"
   add_foreign_key "teams", "users", column: "owner_id"
