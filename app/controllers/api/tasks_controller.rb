@@ -8,10 +8,7 @@ class Api::TasksController < Api::BaseController
 
     @tasks = @tasks.where(assigned_to_user: params[:assigned_to_user]) if params[:assigned_to_user].present?
     @tasks = @tasks.where(sprint_id: params[:sprint_id]) if params[:sprint_id].present?
-
-    if params[:project_id].present?
-      @tasks = @tasks.joins(:sprint).where(sprints: { project_id: params[:project_id] })
-    end
+    @tasks = @tasks.where(project_id: params[:project_id]) if params[:project_id].present?
 
     render json: @tasks.as_json(include: {
       assigned_user: { only: [:id, :first_name, :email] },
@@ -63,7 +60,7 @@ class Api::TasksController < Api::BaseController
   def import_backlog
     project = Project.find(params[:project_id]) if params[:project_id].present?
     service = TaskSheetService.new('Backlog', project&.sheet_id)
-    service.import_tasks(sprint_id: nil, created_by_id: current_user.id)
+    service.import_tasks(sprint_id: nil, project_id: project&.id, created_by_id: current_user.id)
     head :no_content
   rescue StandardError => e
     render json: { error: e.message }, status: :unprocessable_entity
@@ -83,7 +80,7 @@ class Api::TasksController < Api::BaseController
       :status, :order, :assigned_to_user,
       :created_by, :created_at, :updated_by, :updated_at,
       :start_date, :end_date,
-      :estimated_hours, :sprint_id, :developer_id, :is_struck
+      :estimated_hours, :sprint_id, :developer_id, :project_id, :is_struck
     )
   end
 

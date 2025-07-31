@@ -3,6 +3,7 @@ class Task < ApplicationRecord
 
   belongs_to :sprint, optional: true
   belongs_to :developer
+  belongs_to :project, optional: true
   belongs_to :assigned_user, class_name: 'User', foreign_key: :assigned_to_user, optional: true
 
   has_many :task_logs, dependent: :destroy

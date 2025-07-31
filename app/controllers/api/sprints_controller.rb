@@ -51,7 +51,7 @@ class Api::SprintsController < Api::BaseController
   def import_tasks
     sprint = Sprint.find(params[:id])
     service = TaskSheetService.new(sprint.name, sprint.project.sheet_id)
-    service.import_tasks(sprint_id: sprint.id, created_by_id: current_user.id)
+    service.import_tasks(sprint_id: sprint.id, project_id: sprint.project_id, created_by_id: current_user.id)
     head :no_content
   rescue StandardError => e
     render json: { error: e.message }, status: :unprocessable_entity
