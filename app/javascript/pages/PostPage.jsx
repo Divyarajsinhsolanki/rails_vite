@@ -29,11 +29,25 @@ const StatCard = ({ icon, label, value, color }) => (
 
 const DueTaskItem = ({ task }) => (
     <div className="bg-white p-3 rounded-lg border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all">
-        <p className="font-semibold text-slate-800 truncate">{task.title || task.task_id}</p>
+        <p className="font-semibold text-slate-800 truncate">
+            <Link
+                to={`/projects/${task.project.id}/dashboard?tab=todo`}
+                className="text-blue-600 hover:underline"
+            >
+                {task.task_id}
+            </Link>
+            {task.title && ` - ${task.title}`}
+        </p>
         {task.project && (
             <p className="text-xs text-slate-500 truncate">Project: {task.project.name}</p>
         )}
         <p className="text-xs text-red-600 font-medium">Due: {new Date(task.end_date).toLocaleDateString()}</p>
+        <Link
+            to={`/projects/${task.project.id}/dashboard?tab=todo`}
+            className="mt-2 inline-block text-xs font-medium text-white bg-[var(--theme-color)] px-2 py-1 rounded hover:bg-[rgb(var(--theme-color-rgb)/0.9)]"
+        >
+            View Todo Board
+        </Link>
     </div>
 );
 

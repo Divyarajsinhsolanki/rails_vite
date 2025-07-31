@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { fetchProjects } from '../components/api';
 import { CalendarDaysIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import SprintOverview from './SprintOverview';
@@ -27,7 +27,9 @@ const formatDateRange = (start, end) => {
 
 export default function SprintDashboard() {
   const { projectId } = useParams();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'overview';
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [sprintId, setSprintId] = useState(null);
   const [sprint, setSprint] = useState(null);
   const [sprints, setSprints] = useState([]);
