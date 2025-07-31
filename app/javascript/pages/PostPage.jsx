@@ -27,9 +27,12 @@ const StatCard = ({ icon, label, value, color }) => (
   </div>
 );
 
-const OverdueTaskItem = ({ task }) => (
+const DueTaskItem = ({ task }) => (
     <div className="bg-white p-3 rounded-lg border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all">
         <p className="font-semibold text-slate-800 truncate">{task.title || task.task_id}</p>
+        {task.project && (
+            <p className="text-xs text-slate-500 truncate">Project: {task.project.name}</p>
+        )}
         <p className="text-xs text-red-600 font-medium">Due: {new Date(task.end_date).toLocaleDateString()}</p>
     </div>
 );
@@ -95,20 +98,28 @@ const PostPage = () => {
     if (!user) return;
     const today = new Date().toISOString().split('T')[0];
 
-    SchedulerAPI.getTasks({ assigned_to_user: user.id })
-      .then(({ data }) => {
-        const overdue = (Array.isArray(data) ? data : []).filter(
-          (t) => t.end_date && t.status !== 'completed' && t.end_date < today
-        );
-        setTasks(overdue);
-      })
-      .catch(() => setTasks([]));
-
     fetchProjects().then(({ data }) => {
       const userProjects = Array.isArray(data)
         ? data.filter((p) => p.users.some((u) => u.id === user.id))
         : [];
       setProjects(userProjects);
+
+      const taskPromises = userProjects.map(project =>
+        SchedulerAPI.getTasks({ project_id: project.id })
+          .then(res => ({ project, tasks: res.data }))
+          .catch(() => ({ project, tasks: [] }))
+      );
+
+      Promise.all(taskPromises)
+        .then(results => {
+          const due = results.flatMap(({ project, tasks }) =>
+            (Array.isArray(tasks) ? tasks : [])
+              .filter(t => t.end_date === today && t.status !== 'completed')
+              .map(t => ({ ...t, project }))
+          );
+          setTasks(due);
+        })
+        .catch(() => setTasks([]));
     });
 
     getUsers()
@@ -145,14 +156,14 @@ const PostPage = () => {
                 </h2>
                 {tasks.length > 0 ? (
                     <div className="space-y-3">
-                        <p className="text-sm text-slate-600 mb-2">You have <span className="font-bold text-red-600">{tasks.length} overdue task(s)</span>.</p>
-                        {tasks.slice(0, 4).map((task) => <OverdueTaskItem key={task.id} task={task} />)}
+                        <p className="text-sm text-slate-600 mb-2">You have <span className="font-bold text-red-600">{tasks.length} task(s) due today</span>.</p>
+                        {tasks.slice(0, 4).map((task) => <DueTaskItem key={task.id} task={task} />)}
                     </div>
                 ) : (
                     <div className="text-center py-4 bg-green-50 rounded-lg border border-green-200">
                         <FiCheckCircle className="mx-auto text-green-500 text-3xl mb-2"/>
                         <p className="text-sm font-medium text-green-700">All caught up!</p>
-                        <p className="text-xs text-green-600">No overdue tasks.</p>
+                        <p className="text-xs text-green-600">No tasks due today.</p>
                     </div>
                 )}
             </div>
