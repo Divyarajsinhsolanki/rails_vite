@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useContext } from "react";
+import { Link } from "react-router-dom";
 import { fetchPosts, SchedulerAPI, fetchProjects } from "../components/api";
 import { AuthContext } from "../context/AuthContext";
 import PostForm from "../components/PostForm";
@@ -34,12 +35,22 @@ const OverdueTaskItem = ({ task }) => (
 );
 
 const ProjectItem = ({ project }) => (
-    <div className="bg-white p-4 rounded-lg border border-slate-200 flex items-center gap-3 hover:bg-slate-50 transition-colors">
+    <Link
+        to={`/projects/${project.id}/dashboard`}
+        className="bg-white p-4 rounded-lg border border-slate-200 flex items-center gap-3 hover:bg-slate-50 transition-colors"
+    >
         <div className="p-2 bg-slate-100 rounded-md">
-            <FiBriefcase className="text-slate-500"/>
+            <FiBriefcase className="text-slate-500" />
         </div>
-        <p className="font-semibold text-slate-700 truncate">{project.name}</p>
-    </div>
+        <div className="min-w-0">
+            <p className="font-semibold text-slate-700 truncate">{project.name}</p>
+            <p className="text-xs text-slate-500 truncate">
+                {project.start_date}
+                {project.end_date && ` - ${project.end_date}`}
+                {project.status && ` • ${project.status}`}
+            </p>
+        </div>
+    </Link>
 );
 
 
