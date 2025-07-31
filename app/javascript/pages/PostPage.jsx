@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useContext } from "react";
 import { Link } from "react-router-dom";
-import { fetchPosts, SchedulerAPI, fetchProjects } from "../components/api";
+import { fetchPosts, SchedulerAPI, fetchProjects, getUsers } from "../components/api";
 import { AuthContext } from "../context/AuthContext";
 import PostForm from "../components/PostForm";
 import PostList from "../components/PostList";
@@ -63,6 +63,7 @@ const PostPage = () => {
   const [stats, setStats] = useState({ totalPosts: 0, activeUsers: 0, recentActivity: '--' });
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [birthdays, setBirthdays] = useState([]);
 
   const refreshPosts = useCallback(async () => {
     setIsLoading(true);
@@ -109,6 +110,24 @@ const PostPage = () => {
         : [];
       setProjects(userProjects);
     });
+
+    getUsers()
+      .then(({ data }) => {
+        const today = new Date();
+        const upcoming = (Array.isArray(data) ? data : [])
+          .filter((u) => u.date_of_birth)
+          .map((u) => {
+            const dob = new Date(u.date_of_birth);
+            const next = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());
+            if (next < today) next.setFullYear(next.getFullYear() + 1);
+            return { ...u, nextBirthday: next };
+          })
+          .filter((u) => (u.nextBirthday - today) / (1000 * 60 * 60 * 24) <= 30)
+          .sort((a, b) => a.nextBirthday - b.nextBirthday)
+          .slice(0, 5);
+        setBirthdays(upcoming);
+      })
+      .catch(() => setBirthdays([]));
   }, [user]);
 
   return (
@@ -156,7 +175,7 @@ const PostPage = () => {
         <div className="lg:col-span-6">
             <header className="mb-8">
                 <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight">
-                    Welcome back, {user?.name || 'User'}!
+                    Welcome back, {[user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'User'}!
                 </h1>
                 <p className="text-slate-500 mt-2">
                     Here's what's happening in your community today.
@@ -189,14 +208,31 @@ const PostPage = () => {
             </main>
         </div>
 
-        {/* Right Sidebar: Community Stats */}
+        {/* Right Sidebar: Community Stats and Birthdays */}
         <aside className="lg:col-span-3">
-            <div className="sticky top-8 p-5 bg-white rounded-2xl border border-slate-200 shadow-sm">
-                <h2 className="text-lg font-bold text-slate-800 mb-4">Community Stats</h2>
-                <div className="space-y-4">
-                    <StatCard icon={<FiMessageSquare className="text-blue-500"/>} label="Total Posts" value={stats.totalPosts} color="bg-blue-100" />
-                    <StatCard icon={<FiUsers className="text-purple-500"/>} label="Active Users" value={stats.activeUsers} color="bg-purple-100" />
-                    <StatCard icon={<FiClock className="text-green-500"/>} label="Last Activity" value={stats.recentActivity} color="bg-green-100" />
+            <div className="space-y-8 sticky top-8">
+                <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                    <h2 className="text-lg font-bold text-slate-800 mb-4">Community Stats</h2>
+                    <div className="space-y-4">
+                        <StatCard icon={<FiMessageSquare className="text-blue-500"/>} label="Total Posts" value={stats.totalPosts} color="bg-blue-100" />
+                        <StatCard icon={<FiUsers className="text-purple-500"/>} label="Active Users" value={stats.activeUsers} color="bg-purple-100" />
+                        <StatCard icon={<FiClock className="text-green-500"/>} label="Last Activity" value={stats.recentActivity} color="bg-green-100" />
+                    </div>
+                </div>
+                <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                    <h2 className="text-lg font-bold text-slate-800 mb-4">Upcoming Birthdays</h2>
+                    {birthdays.length > 0 ? (
+                        <ul className="space-y-3">
+                            {birthdays.map((b) => (
+                                <li key={b.id} className="flex items-center justify-between">
+                                    <span className="font-medium text-slate-700">{[b.first_name, b.last_name].filter(Boolean).join(' ')}</span>
+                                    <span className="text-sm text-slate-500">{b.nextBirthday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="text-sm text-slate-500">No upcoming birthdays.</p>
+                    )}
                 </div>
             </div>
         </aside>
