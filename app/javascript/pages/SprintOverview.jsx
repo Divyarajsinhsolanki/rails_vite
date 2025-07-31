@@ -540,37 +540,50 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
     };
 
     useEffect(() => {
-        SchedulerAPI.getDevelopers().then(res => setDevelopers(res.data));
-        if (projectId) {
-            fetchProjects().then(({ data }) => {
-                const list = Array.isArray(data) ? data : [];
-                const project = list.find(p => p.id === Number(projectId));
-                const members = (project ? project.users : []).map(u => ({
-                    id: u.id,
-                    first_name: u.name,
-                    email: u.name,
-                    profile_picture: u.profile_picture
-                }));
-                setUsers(members);
-            });
-        } else {
-            getUsers().then(res => setUsers(Array.isArray(res.data) ? res.data : []));
-        }
-        const query = projectId ? `?project_id=${projectId}` : '';
-        fetch(`/api/sprints.json${query}`)
-            .then(res => res.json())
-            .then(data => {
-                const list = Array.isArray(data) ? data : [];
+        const loadData = async () => {
+            const query = projectId ? `?project_id=${projectId}` : '';
+
+            const developersPromise = SchedulerAPI.getDevelopers();
+            const usersPromise = projectId
+                ? fetchProjects().then(({ data }) => {
+                    const list = Array.isArray(data) ? data : [];
+                    const project = list.find(p => p.id === Number(projectId));
+                    return (project ? project.users : []).map(u => ({
+                        id: u.id,
+                        first_name: u.name,
+                        email: u.name,
+                        profile_picture: u.profile_picture
+                    }));
+                })
+                : getUsers().then(res => Array.isArray(res.data) ? res.data : []);
+            const sprintsPromise = fetch(`/api/sprints.json${query}`).then(res => res.json());
+
+            try {
+                const [developersRes, usersData, sprintsData] = await Promise.all([
+                    developersPromise,
+                    usersPromise,
+                    sprintsPromise
+                ]);
+
+                setDevelopers(developersRes.data);
+                setUsers(usersData);
+
+                const list = Array.isArray(sprintsData) ? sprintsData : [];
                 setSprints(list);
                 if (list.length && !sprintId) {
                     setSelectedSprintId(list[0].id);
-                    if(onSprintChange) onSprintChange(list[0].id);
+                    if (onSprintChange) onSprintChange(list[0].id);
                 } else if (!list.length) {
                     setSelectedSprintId(null);
-                    if(onSprintChange) onSprintChange(null);
+                    if (onSprintChange) onSprintChange(null);
                 }
-            });
-    }, [projectId, sprintId]);
+            } catch (err) {
+                console.error('Failed to load overview data', err);
+            }
+        };
+
+        loadData();
+    }, [projectId, sprintId, onSprintChange]);
 
     useEffect(() => {
         if (!sprintId && onSprintChange && selectedSprintId !== null) {
