@@ -11,9 +11,9 @@ class TaskSheetService
     @service.authorization = authorize
   end
 
-  def import_tasks(sprint_id:, created_by_id:)
+  def import_tasks(sprint_id:, created_by_id:, project_id: nil)
     data = read_sheet
-    import_tasks_from_sheet(data, sprint_id: sprint_id, created_by_id: created_by_id)
+    import_tasks_from_sheet(data, sprint_id: sprint_id, created_by_id: created_by_id, project_id: project_id)
   end
 
   def export_tasks(tasks)
@@ -48,7 +48,7 @@ class TaskSheetService
     val
   end
 
-  def import_tasks_from_sheet(sheet_data, sprint_id:, created_by_id:)
+  def import_tasks_from_sheet(sheet_data, sprint_id:, created_by_id:, project_id: nil)
     sheet_data[1..].each do |row|
       next if row.compact.empty?
 
@@ -81,7 +81,8 @@ class TaskSheetService
         start_date: start_date,
         end_date: end_date,
         status: status,
-        order: order
+        order: order,
+        project_id: project_id
       )
 
       task.save!

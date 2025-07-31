@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-const TaskForm = ({ onAddTask, onCancel }) => {
+const TaskForm = ({ onAddTask, onCancel, projectId }) => {
   const [formData, setFormData] = useState({
     title: '',
     type: '',
     status: 'todo',
     assigned_to_user: '',
-    end_date: ''
+    end_date: '',
+    project_id: projectId || ''
   });
 
   const handleChange = (e) => {
@@ -19,7 +20,7 @@ const TaskForm = ({ onAddTask, onCancel }) => {
     e.preventDefault();
     if (!formData.title) return toast.error('Title is required.');
     onAddTask(formData);
-    setFormData({ title: '', type: '', status: 'todo', assigned_to_user: '', end_date: '' });
+    setFormData({ title: '', type: '', status: 'todo', assigned_to_user: '', end_date: '', project_id: '' });
   };
 
   return (
@@ -62,6 +63,15 @@ const TaskForm = ({ onAddTask, onCancel }) => {
           <input
             name="assigned_to_user"
             value={formData.assigned_to_user}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-[var(--theme-color)]"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Project ID</label>
+          <input
+            name="project_id"
+            value={formData.project_id}
             onChange={handleChange}
             className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-[var(--theme-color)]"
           />

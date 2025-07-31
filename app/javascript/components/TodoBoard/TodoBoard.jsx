@@ -92,7 +92,7 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
   // --- HANDLERS ---
   const handleAddTask = async (newTaskData) => {
     try {
-      const payload = { ...newTaskData, sprint_id: selectedSprintId };
+      const payload = { ...newTaskData, sprint_id: selectedSprintId, project_id: projectId || Number(newTaskData.project_id) || null };
       const { data } = await SchedulerAPI.createTask(payload);
       setColumns(prev => ({
         ...prev,
@@ -249,7 +249,7 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
       </header>
 
       <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Add a New Task">
-        <TaskForm onAddTask={handleAddTask} onCancel={() => setShowForm(false)} />
+        <TaskForm onAddTask={handleAddTask} onCancel={() => setShowForm(false)} projectId={projectId} />
       </Modal>
 
       <div className="grid md:grid-cols-2 gap-6 mb-8">

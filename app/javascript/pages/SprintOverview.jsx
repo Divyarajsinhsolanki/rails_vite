@@ -269,7 +269,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
 };
 
 // Add Task Modal Component
-const AddTaskModal = ({ developers, users, onClose, onCreate }) => {
+const AddTaskModal = ({ developers, users, onClose, onCreate, projectId }) => {
     const [newTask, setNewTask] = useState({
         task_id: '',
         task_url: '',
@@ -281,12 +281,17 @@ const AddTaskModal = ({ developers, users, onClose, onCreate }) => {
         assigned_to_user: '',
         start_date: '',
         end_date: '',
-        order: ''
+        order: '',
+        project_id: projectId || ''
     });
 
     useEffect(() => {
         setNewTask(t => ({ ...t, developer_id: developers[0]?.id || '' }));
     }, [developers]);
+
+    useEffect(() => {
+        setNewTask(t => ({ ...t, project_id: projectId || '' }));
+    }, [projectId]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -422,17 +427,30 @@ const AddTaskModal = ({ developers, users, onClose, onCreate }) => {
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             >
                                 <option value="">Select user</option>
-                                {users.map(u => (
-                                    <option key={u.id} value={u.id}>
-                                        {u.first_name ? `${u.first_name}` : u.email}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label htmlFor="start_date" className="block text-sm font-medium text-gray-700 mb-1">
-                                Start Date
-                            </label>
+                        {users.map(u => (
+                            <option key={u.id} value={u.id}>
+                                {u.first_name ? `${u.first_name}` : u.email}
+                            </option>
+                        ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label htmlFor="project_id" className="block text-sm font-medium text-gray-700 mb-1">
+                            Project ID
+                        </label>
+                        <input
+                            type="number"
+                            id="project_id"
+                            name="project_id"
+                            value={newTask.project_id}
+                            onChange={handleChange}
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="start_date" className="block text-sm font-medium text-gray-700 mb-1">
+                            Start Date
+                        </label>
                             <input
                                 type="date"
                                 id="start_date"
@@ -565,18 +583,18 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
             setTasks([]);
             return;
         }
-        SchedulerAPI.getTasks({ sprint_id: selectedSprintId }).then(res => {
+        SchedulerAPI.getTasks({ sprint_id: selectedSprintId, project_id: projectId }).then(res => {
             const mapped = res.data.map(mapTask);
             setTasks(mapped);
         });
-    }, [selectedSprintId]);
+    }, [selectedSprintId, projectId]);
 
     useEffect(() => {
-        SchedulerAPI.getTasks().then(res => {
+        SchedulerAPI.getTasks(projectId ? { project_id: projectId } : {}).then(res => {
             const mapped = res.data.filter(t => !t.sprint_id).map(mapTask);
             setBacklogTasks(mapped);
         });
-    }, []);
+    }, [projectId]);
 
     const filteredTasks = tasks.filter(task => {
         if (task.sprintId !== selectedSprintId) return false;
@@ -762,7 +780,8 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                 developer_id: Number(newTask.developer_id) || null,
                 assigned_to_user: newTask.assigned_to_user || null,
                 status: newTask.status,
-                date: newTask.start_date || new Date().toISOString().slice(0,10)
+                date: newTask.start_date || new Date().toISOString().slice(0,10),
+                project_id: Number(newTask.project_id || projectId) || null
             };
             const { data } = await SchedulerAPI.createTask(payload);
             const mapped = mapTask(data);
@@ -794,7 +813,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
             setProcessing(true);
             await SchedulerAPI.importBacklogTasks(projectId);
             toast.success('Imported backlog from sheet');
-            const res = await SchedulerAPI.getTasks();
+            const res = await SchedulerAPI.getTasks(projectId ? { project_id: projectId } : {});
             const mapped = res.data.filter(t => !t.sprint_id).map(mapTask);
             setBacklogTasks(mapped);
         } catch (e) {
@@ -1065,6 +1084,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                     users={users}
                     onClose={() => setShowAddModal(false)}
                     onCreate={handleAddTask}
+                    projectId={projectId}
                 />
             )}
 
