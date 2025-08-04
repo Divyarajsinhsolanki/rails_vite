@@ -23,21 +23,33 @@ const Heatmap = ({ columns, view, onViewChange, sprint }) => {
     return Array.from({ length: totalWeeks }, (_, i) => addDays(start, i * 7));
   }, [sprint]);
 
-  const [weekIndex, setWeekIndex] = useState(0);
+  const today = useMemo(() => new Date(), []);
+
+  const defaultWeekIndex = useMemo(() => {
+    const idx = weekStarts.findIndex(ws => today >= ws && today < addDays(ws, 7));
+    return idx === -1 ? 0 : idx;
+  }, [weekStarts, today]);
+
+  const [weekIndex, setWeekIndex] = useState(defaultWeekIndex);
 
   useEffect(() => {
-    setWeekIndex(0);
-  }, [sprint]);
+    setWeekIndex(defaultWeekIndex);
+  }, [defaultWeekIndex]);
 
-  const currentWeekStart = weekStarts[weekIndex] || new Date();
+  const currentWeekStart = weekStarts[weekIndex] || today;
   const data = getHeatmapData(filteredColumns, currentWeekStart);
 
-  const [selectedDate, setSelectedDate] = useState(format(currentWeekStart, 'yyyy-MM-dd'));
+  const [selectedDate, setSelectedDate] = useState(format(today, 'yyyy-MM-dd'));
   useEffect(() => {
-    setSelectedDate(format(currentWeekStart, 'yyyy-MM-dd'));
-  }, [currentWeekStart]);
+    const weekEnd = addDays(currentWeekStart, 6);
+    if (today >= currentWeekStart && today <= weekEnd) {
+      setSelectedDate(format(today, 'yyyy-MM-dd'));
+    } else {
+      setSelectedDate(format(currentWeekStart, 'yyyy-MM-dd'));
+    }
+  }, [currentWeekStart, today]);
 
-  const todayISO = format(new Date(), 'yyyy-MM-dd');
+  const todayISO = format(today, 'yyyy-MM-dd');
   const tasksDue = Object.values(filteredColumns)
     .flatMap(col => col.items)
     .filter(t => (t.end_date || t.due) === selectedDate);
