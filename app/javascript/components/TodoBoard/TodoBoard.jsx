@@ -231,45 +231,45 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
   }, {});
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 p-8 font-sans text-gray-800">
-      <div className="max-w-8xl mx-auto bg-white rounded-xl shadow-lg p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 p-4 font-sans text-gray-800">
+      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-2">
         <Toaster position="top-right" />
-      <header className="mb-4">
+      <header className="mb-2">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-          <div className="mb-4 sm:mb-0">
-            <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] flex items-center">
-              <Squares2X2Icon className="h-7 w-7 mr-2" />Taskboard
+          <div className="mb-2 sm:mb-0">
+            <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] flex items-center">
+              <Squares2X2Icon className="h-5 w-5 mr-1" />Taskboard
             </h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 bg-[var(--theme-color)] hover:brightness-110 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all transform hover:scale-105"
+              className="flex items-center gap-1 bg-[var(--theme-color)] hover:brightness-110 text-white font-semibold py-1 px-2 rounded-md shadow transition-all transform hover:scale-105"
             >
-              <PlusIcon className="h-5 w-5" />
+              <PlusIcon className="h-4 w-4" />
               <span>Add Task</span>
             </button>
-            <div className="flex bg-white rounded-full p-1 shadow-md border border-gray-200">
+            <div className="flex bg-white rounded-full p-0.5 shadow border border-gray-200">
               <button
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ${
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ease-in-out ${
                   taskView === 'all'
                     ? 'bg-[var(--theme-color)] text-white shadow'
                     : 'text-gray-600 hover:bg-[rgb(var(--theme-color-rgb)/0.1)]'
                 }`}
                 onClick={() => setTaskView('all')}
               >
-                <Squares2X2Icon className="h-5 w-5"/>
+                <Squares2X2Icon className="h-4 w-4"/>
                 All Tasks
               </button>
               <button
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ml-1 ${
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ease-in-out ml-1 ${
                   taskView === 'my'
                     ? 'bg-[var(--theme-color)] text-white shadow'
                     : 'text-gray-600 hover:bg-[rgb(var(--theme-color-rgb)/0.1)]'
                 }`}
                 onClick={() => setTaskView('my')}
               >
-                <UserIcon className="h-5 w-5"/>
+                <UserIcon className="h-4 w-4"/>
                 My Tasks
               </button>
             </div>
@@ -281,7 +281,7 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
         <TaskForm onAddTask={handleAddTask} onCancel={() => setShowForm(false)} />
       </Modal>
 
-      <div className="grid md:grid-cols-2 gap-6 mb-8">
+      <div className="grid md:grid-cols-2 gap-4 mb-4">
         <Heatmap columns={columns} view={taskView} onViewChange={setTaskView} sprint={currentSprint} />
         <ProgressPieChart columns={applyView(columns)} />
       </div>
@@ -296,7 +296,7 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
       </div> */}
       
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {Object.entries(filteredColumns).map(([columnId, column]) => (
                 <KanbanColumn
                     key={columnId}

@@ -84,9 +84,9 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
   );
 
   const renderTaskDetails = () => (
-    <div className="space-y-3">
+    <div className="space-y-2">
         <div className="flex justify-between items-start">
-            <span className="font-semibold text-lg text-[var(--theme-color)] transition-colors">
+            <span className="font-semibold text-base text-[var(--theme-color)] transition-colors">
               {item.task_url ? (
                 <a href={item.task_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
                   {item.task_id || item.title}
@@ -95,19 +95,19 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
                 item.task_id || item.title
               )}
             </span>
-            <div className="flex items-center gap-2">
-                <button onClick={() => setIsEditing(true)} className="text-gray-400 hover:text-[var(--theme-color)] transition-colors" title="Edit"><FiEdit2 size={18} /></button>
-                <button onClick={() => onDelete(columnId, item.id)} className="text-gray-400 hover:text-red-600 transition-colors" title="Delete"><FiTrash2 size={18} /></button>
+            <div className="flex items-center gap-1">
+                <button onClick={() => setIsEditing(true)} className="text-gray-400 hover:text-[var(--theme-color)] transition-colors" title="Edit"><FiEdit2 size={16} /></button>
+                <button onClick={() => onDelete(columnId, item.id)} className="text-gray-400 hover:text-red-600 transition-colors" title="Delete"><FiTrash2 size={16} /></button>
             </div>
         </div>
-        <p className="text-gray-600 text-sm">{item.description || item.title || 'No Description'}</p>
+        <p className="text-gray-600 text-xs">{item.description || item.title || 'No Description'}</p>
         
         {item.tags && item.tags.length > 0 && (
-            <div className="flex items-center text-sm text-gray-500 mt-2">
-                <FiTag className="mr-2" />
+            <div className="flex items-center text-xs text-gray-500 mt-1">
+                <FiTag className="mr-1" />
                 <div className="flex flex-wrap gap-1">
                     {item.tags.map((tag, tagIndex) => (
-                        <span key={tagIndex} className="bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)] text-xs font-medium px-2.5 py-0.5 rounded-full">
+                        <span key={tagIndex} className="bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)] text-[10px] font-medium px-1.5 py-0.5 rounded-full">
                             {tag}
                         </span>
                     ))}
@@ -115,14 +115,14 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
             </div>
         )}
         
-        <div className="border-t border-gray-200 mt-3 pt-3">
-            <div className="flex justify-between items-center text-sm text-gray-500">
+        <div className="border-t border-gray-200 mt-2 pt-2">
+            <div className="flex justify-between items-center text-xs text-gray-500">
                 <div className="flex items-center">
-                    <FiCalendar className="mr-2" />
+                    <FiCalendar className="mr-1" />
                     <span>End Date: {item.end_date || "Not set"}</span>
                 </div>
                 <div className="flex items-center">
-                    <FiUser className="mr-2" />
+                    <FiUser className="mr-1" />
                     <span>{item.assigned_user ? item.assigned_user.first_name || item.assigned_user.email : 'Unassigned'}</span>
                 </div>
             </div>
@@ -134,13 +134,13 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
     <Draggable key={String(item.id)} draggableId={String(item.id)} index={index}>
       {(provided, snapshot) => (
         <div
-          className={`bg-white p-4 mb-4 rounded-lg shadow-md border-l-4 ${
+          className={`bg-white p-2 mb-2 rounded shadow border-l-2 ${
             {
               todo: 'border-[var(--theme-color)]',
               inprogress: 'border-yellow-500',
               completed: 'border-green-500'
             }[columnId]
-          } hover:shadow-xl transition-shadow transform hover:-translate-y-1 ${snapshot.isDragging ? 'ring-2 ring-[var(--theme-color)]' : ''}`}
+          } hover:shadow-lg transition-shadow transform hover:-translate-y-1 ${snapshot.isDragging ? 'ring-2 ring-[var(--theme-color)]' : ''}`}
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
