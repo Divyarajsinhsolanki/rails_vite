@@ -8,8 +8,8 @@ class Api::TasksController < Api::BaseController
                  .order(end_date: :asc)
 
     @tasks = @tasks.where(assigned_to_user: params[:assigned_to_user]) if params[:assigned_to_user].present?
-    @tasks = @tasks.where(sprint_id: params[:sprint_id]) if params[:sprint_id].present?
-    @tasks = @tasks.where(project_id: params[:project_id]) if params[:project_id].present?
+    @tasks = @tasks.where('sprint_id = ? OR type = ?', params[:sprint_id], 'general') if params[:sprint_id].present?
+    @tasks = @tasks.where('project_id = ? OR type = ?', params[:project_id], 'general') if params[:project_id].present?
     @tasks = @tasks.where(type: params[:type]) if params[:type].present?
 
     render json: @tasks.as_json(include: {
