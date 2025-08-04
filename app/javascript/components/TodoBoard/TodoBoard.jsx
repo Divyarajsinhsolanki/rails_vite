@@ -49,6 +49,7 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
 
   // --- DATA FETCHING & INITIALIZATION ---
   useEffect(() => {
+    if (!projectId) return;
     SchedulerAPI.getSprints(projectId)
       .then(res => {
         setSprints(res.data);
@@ -63,8 +64,8 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
   }, [projectId]);
 
   useEffect(() => {
-    if (!selectedSprintId) return;
-    SchedulerAPI.getTasks({ sprint_id: selectedSprintId, project_id: projectId })
+    const params = selectedSprintId ? { sprint_id: selectedSprintId, project_id: projectId } : { type: 'general' };
+    SchedulerAPI.getTasks(params)
       .then(res => {
         const grouped = groupBy(res.data);
         setColumns(grouped);
@@ -94,7 +95,9 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
   // --- HANDLERS ---
   const handleAddTask = async (newTaskData) => {
     try {
-      const payload = { ...newTaskData, sprint_id: selectedSprintId, project_id: projectId || Number(newTaskData.project_id) || null };
+      const payload = { ...newTaskData };
+      if (selectedSprintId) payload.sprint_id = selectedSprintId;
+      if (projectId) payload.project_id = projectId;
       const { data } = await SchedulerAPI.createTask(payload);
       setColumns(prev => ({
         ...prev,
@@ -185,7 +188,7 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
   const applyView = cols =>
     taskView === 'my' && user
       ? Object.fromEntries(
-          Object.entries(cols).map(([k, col]) => [k, { ...col, items: col.items.filter(t => t.assigned_to_user === user.id) }])
+          Object.entries(cols).map(([k, col]) => [k, { ...col, items: col.items.filter(t => t.assigned_to_user === user.id || t.type === 'general') }])
         )
       : cols;
 
@@ -194,7 +197,7 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
       acc[colId] = {
         ...colData,
         items: colData.items.filter(item => {
-            const content = (item.task_id || "").toLowerCase();
+            const content = (item.task_id || item.title || "").toLowerCase();
             const tagMatch = Array.isArray(item.tags) ? item.tags.some(tag => (tag || "").toLowerCase().includes(term)) : false;
             return content.includes(term) || tagMatch;
         })
@@ -215,7 +218,6 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
           </div>
           <div className="flex items-center gap-3">
             <button
-              disabled
               onClick={() => setShowForm(true)}
               className="flex items-center gap-2 bg-[var(--theme-color)] hover:brightness-110 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all transform hover:scale-105"
             >
@@ -251,7 +253,7 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
       </header>
 
       <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Add a New Task">
-        <TaskForm onAddTask={handleAddTask} onCancel={() => setShowForm(false)} projectId={projectId} />
+        <TaskForm onAddTask={handleAddTask} onCancel={() => setShowForm(false)} />
       </Modal>
 
       <div className="grid md:grid-cols-2 gap-6 mb-8">
