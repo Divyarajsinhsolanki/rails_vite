@@ -1,7 +1,7 @@
 class Api::UsersController < Api::BaseController
   include Rails.application.routes.url_helpers
-  before_action :authorize_owner!
-  before_action :set_user, only: [:update, :destroy, :update_profile]
+  before_action :authorize_owner!, only: [:update, :destroy]
+  before_action :set_user, only: [:update, :destroy]
 
   # GET /api/users.json
   def index
@@ -29,6 +29,7 @@ class Api::UsersController < Api::BaseController
 
   # POST /api/update_profile
   def update_profile
+    @user = current_user
     if @user.update(user_params)
       render json: @user
     else
