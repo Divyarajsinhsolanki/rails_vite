@@ -25,7 +25,8 @@ const FormComponent = ({ setActiveForm, setPdfUpdated, formFields = [], endpoint
 
       if (!response.ok) throw new Error("Request failed");
 
-      setPdfUpdated((prev) => !prev);
+      // Increment the counter so the viewer reloads the updated PDF
+      setPdfUpdated((prev) => prev + 1);
       setActiveForm(null);
     } catch (error) {
       console.error(error);

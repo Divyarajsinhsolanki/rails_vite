@@ -32,7 +32,7 @@ const DueTaskItem = ({ task }) => (
         <p className="font-semibold text-slate-800 truncate">
             <Link
                 to={`/projects/${task.project.id}/dashboard?tab=todo`}
-                className="text-blue-600 hover:underline"
+                className="text-[var(--theme-color)] hover:underline"
             >
                 {task.task_id}
             </Link>
@@ -215,7 +215,7 @@ const PostPage = () => {
                 <AnimatePresence>
                     {isLoading ? (
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center py-20 text-center">
-                            <FiLoader className="animate-spin text-blue-500 text-4xl mb-4" />
+                            <FiLoader className="animate-spin text-[var(--theme-color)] text-4xl mb-4" />
                             <p className="text-slate-600 font-medium">Loading Community Feed...</p>
                         </motion.div>
                     ) : posts.length > 0 ? (
@@ -241,7 +241,7 @@ const PostPage = () => {
                 <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm">
                     <h2 className="text-lg font-bold text-slate-800 mb-4">Community Stats</h2>
                     <div className="space-y-4">
-                        <StatCard icon={<FiMessageSquare className="text-blue-500"/>} label="Total Posts" value={stats.totalPosts} color="bg-blue-100" />
+                        <StatCard icon={<FiMessageSquare className="text-[var(--theme-color)]"/>} label="Total Posts" value={stats.totalPosts} color="bg-[rgb(var(--theme-color-rgb)/0.1)]" />
                         <StatCard icon={<FiUsers className="text-purple-500"/>} label="Active Users" value={stats.activeUsers} color="bg-purple-100" />
                         <StatCard icon={<FiClock className="text-green-500"/>} label="Last Activity" value={stats.recentActivity} color="bg-green-100" />
                     </div>
