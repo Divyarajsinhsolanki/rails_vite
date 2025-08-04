@@ -7,6 +7,7 @@ const TaskForm = ({ onAddTask, onCancel }) => {
     description: '',
     type: 'general',
     status: 'todo',
+    start_date: '',
     end_date: ''
   });
 
@@ -19,7 +20,7 @@ const TaskForm = ({ onAddTask, onCancel }) => {
     e.preventDefault();
     if (!formData.title) return toast.error('Title is required.');
     onAddTask(formData);
-    setFormData({ title: '', description: '', type: 'general', status: 'todo', end_date: '' });
+    setFormData({ title: '', description: '', type: 'general', status: 'todo', start_date: '', end_date: '' });
   };
 
   return (
@@ -62,6 +63,16 @@ const TaskForm = ({ onAddTask, onCancel }) => {
           <textarea
             name="description"
             value={formData.description}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-[var(--theme-color)]"
+          />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+          <input
+            type="date"
+            name="start_date"
+            value={formData.start_date}
             onChange={handleChange}
             className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-[var(--theme-color)]"
           />
