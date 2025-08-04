@@ -4,13 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { auth, googleProvider } from "../firebaseConfig";
 import { signInWithPopup } from "firebase/auth";
 import { toast } from "react-hot-toast";
-
-const COLOR_MAP = {
-  blue: '#3b82f6',
-  purple: '#8b5cf6',
-  green: '#10b981',
-  red: '#ef4444',
-};
+import { COLOR_MAP, toRgb, lightenColor } from '/utils/theme';
 
 export const AuthContext = createContext();
 
@@ -20,20 +14,12 @@ export function AuthProvider({ children }) {
   const navigate = useNavigate();
   const refreshTimer = useRef();
 
-  const toRgb = (color) => {
-    const temp = document.createElement('div');
-    temp.style.color = color;
-    document.body.appendChild(temp);
-    const match = getComputedStyle(temp).color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-    document.body.removeChild(temp);
-    return match ? `${match[1]} ${match[2]} ${match[3]}` : '59 130 246';
-  };
-
   useEffect(() => {
     const raw = user?.color_theme;
     const color = COLOR_MAP[raw] || raw || '#3b82f6';
     document.documentElement.style.setProperty('--theme-color', color);
     document.documentElement.style.setProperty('--theme-color-rgb', toRgb(color));
+    document.documentElement.style.setProperty('--theme-color-light', lightenColor(color));
   }, [user]);
 
   // Clear timer on unmount
@@ -112,6 +98,7 @@ export function AuthProvider({ children }) {
 
   const value = {
     user,
+    setUser,
     initializing,
     isAuthenticated: !!user,
     handleLogin,
