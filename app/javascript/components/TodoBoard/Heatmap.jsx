@@ -1,11 +1,11 @@
 // src/components/Heatmap.js
-import React, { useContext } from 'react';
-import { format, parseISO } from 'date-fns';
+import React, { useContext, useState, useMemo, useEffect } from 'react';
+import { format, parseISO, addDays, differenceInCalendarDays } from 'date-fns';
 import { getHeatmapData } from '/utils/taskUtils';
 import { AuthContext } from '../../context/AuthContext';
-import { FiCalendar, FiAlertTriangle, FiInfo } from 'react-icons/fi';
+import { FiCalendar, FiAlertTriangle, FiInfo, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
-const Heatmap = ({ columns, view, onViewChange }) => {
+const Heatmap = ({ columns, view, onViewChange, sprint }) => {
   const { user } = useContext(AuthContext);
 
   const filteredColumns =
@@ -15,12 +15,32 @@ const Heatmap = ({ columns, view, onViewChange }) => {
         )
       : columns;
 
-  const data = getHeatmapData(filteredColumns);
+  const weekStarts = useMemo(() => {
+    if (!sprint) return [];
+    const start = parseISO(sprint.start_date);
+    const end = parseISO(sprint.end_date);
+    const totalWeeks = Math.ceil((differenceInCalendarDays(end, start) + 1) / 7);
+    return Array.from({ length: totalWeeks }, (_, i) => addDays(start, i * 7));
+  }, [sprint]);
 
-  const todayISO = new Date().toISOString().split('T')[0];
-  const tasksDueToday = Object.values(filteredColumns)
+  const [weekIndex, setWeekIndex] = useState(0);
+
+  useEffect(() => {
+    setWeekIndex(0);
+  }, [sprint]);
+
+  const currentWeekStart = weekStarts[weekIndex] || new Date();
+  const data = getHeatmapData(filteredColumns, currentWeekStart);
+
+  const [selectedDate, setSelectedDate] = useState(format(currentWeekStart, 'yyyy-MM-dd'));
+  useEffect(() => {
+    setSelectedDate(format(currentWeekStart, 'yyyy-MM-dd'));
+  }, [currentWeekStart]);
+
+  const todayISO = format(new Date(), 'yyyy-MM-dd');
+  const tasksDue = Object.values(filteredColumns)
     .flatMap(col => col.items)
-    .filter(t => (t.end_date || t.due) === todayISO);
+    .filter(t => (t.end_date || t.due) === selectedDate);
 
   const getTooltipText = (count) => {
     if (count === 0) return "No tasks due.";
@@ -28,22 +48,46 @@ const Heatmap = ({ columns, view, onViewChange }) => {
     return `${count} tasks due.`;
   };
 
+  const handlePrev = () => setWeekIndex(i => Math.max(0, i - 1));
+  const handleNext = () => setWeekIndex(i => Math.min(weekStarts.length - 1, i + 1));
+
   return (
     <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-100">
       <div className="flex items-center mb-4">
         <FiCalendar className="text-[var(--theme-color)] mr-3" size={24} />
         <h3 className="text-xl font-bold text-gray-800">Due Date Heatmap</h3>
+        {weekStarts.length > 1 && (
+          <div className="ml-auto flex gap-2">
+            <button
+              onClick={handlePrev}
+              disabled={weekIndex === 0}
+              className="p-1 rounded border disabled:opacity-50"
+            >
+              <FiChevronLeft />
+            </button>
+            <button
+              onClick={handleNext}
+              disabled={weekIndex === weekStarts.length - 1}
+              className="p-1 rounded border disabled:opacity-50"
+            >
+              <FiChevronRight />
+            </button>
+          </div>
+        )}
       </div>
-      
+
       <div className="flex justify-center gap-2 mb-6">
         {data.map((d, i) => {
-          const intensity = d.count === 0 ? 'bg-gray-100 text-gray-500' 
+          const intensity = d.count === 0 ? 'bg-gray-100 text-gray-500'
                           : d.count < 3 ? 'bg-yellow-200 text-yellow-800'
                           : d.count < 6 ? 'bg-orange-300 text-orange-800'
                           : 'bg-red-400 text-white';
           return (
             <div key={i} className="relative group flex-1">
-              <div className={`p-3 rounded-lg text-center transition-all transform group-hover:scale-110 ${intensity}`}>
+              <div
+                onClick={() => setSelectedDate(d.date)}
+                className={`p-3 rounded-lg text-center cursor-pointer transition-all transform group-hover:scale-110 ${intensity} ${selectedDate === d.date ? 'ring-2 ring-offset-2 ring-[var(--theme-color)]' : ''}`}
+              >
                 <div className="text-sm font-semibold">{format(parseISO(d.date), 'EEE')}</div>
                 <div className="text-2xl font-bold">{d.count}</div>
               </div>
@@ -59,11 +103,13 @@ const Heatmap = ({ columns, view, onViewChange }) => {
       <div className="border-t border-gray-200 pt-4">
         <h4 className="font-semibold text-gray-700 flex items-center mb-3">
           <FiAlertTriangle className="text-red-500 mr-2" />
-          <span>Tasks Due Today</span>
+          <span>
+            Tasks Due {selectedDate === todayISO ? 'Today' : format(parseISO(selectedDate), 'MMM d, yyyy')}
+          </span>
         </h4>
-        {tasksDueToday.length > 0 ? (
+        {tasksDue.length > 0 ? (
           <ul className="space-y-2 text-sm">
-            {tasksDueToday.map(t => (
+            {tasksDue.map(t => (
               <li
                 key={t.id}
                 className={`flex items-center p-2 rounded-md ${
@@ -80,7 +126,7 @@ const Heatmap = ({ columns, view, onViewChange }) => {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500 italic">No tasks due today. Kick back and relax!</p>
+          <p className="text-sm text-gray-500 italic">No tasks due on this day.</p>
         )}
       </div>
     </div>

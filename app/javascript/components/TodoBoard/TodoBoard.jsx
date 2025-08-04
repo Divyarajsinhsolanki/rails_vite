@@ -88,6 +88,8 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
     });
     return cols;
   }
+
+  const currentSprint = sprints.find(s => s.id === selectedSprintId);
   
   // --- HANDLERS ---
   const handleAddTask = async (newTaskData) => {
@@ -253,7 +255,7 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
       </Modal>
 
       <div className="grid md:grid-cols-2 gap-6 mb-8">
-        <Heatmap columns={columns} view={taskView} onViewChange={setTaskView} />
+        <Heatmap columns={columns} view={taskView} onViewChange={setTaskView} sprint={currentSprint} />
         <ProgressPieChart columns={applyView(columns)} />
       </div>
 
