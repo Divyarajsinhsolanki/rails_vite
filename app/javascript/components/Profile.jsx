@@ -1,28 +1,10 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchUserInfo, updateUserInfo, fetchPosts, SchedulerAPI, fetchTeams } from "../components/api";
+import { fetchUserInfo, fetchPosts, SchedulerAPI, fetchTeams } from "../components/api";
 import { getStatusClasses } from '/utils/taskUtils';
 import { Squares2X2Icon, FolderIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
-
-const COLOR_MAP = {
-  blue: '#3b82f6',
-  purple: '#8b5cf6',
-  green: '#10b981',
-  red: '#ef4444',
-  pink: '#ec4899',
-  indigo: '#6366f1'
-};
-
-const lightenColor = (color, amount = 0.9) => {
-  const hex = color.replace('#', '');
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-  const nr = Math.round(r + (255 - r) * amount);
-  const ng = Math.round(g + (255 - g) * amount);
-  const nb = Math.round(b + (255 - b) * amount);
-  return `#${nr.toString(16).padStart(2, '0')}${ng.toString(16).padStart(2, '0')}${nb.toString(16).padStart(2, '0')}`;
-};
+import { AuthContext } from '../context/AuthContext';
+import { COLOR_MAP } from '/utils/theme';
 
 const Avatar = ({ name, src, size = 'md' }) => {
   const sizes = {
@@ -54,6 +36,7 @@ const Avatar = ({ name, src, size = 'md' }) => {
 
 const Profile = () => {
   const navigate = useNavigate();
+  const { setUser: setAuthUser } = useContext(AuthContext);
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
   const [tasks, setTasks] = useState([]);
@@ -76,7 +59,9 @@ const Profile = () => {
     try {
       const { data } = await fetchUserInfo();
       const theme = COLOR_MAP[data.user.color_theme] || data.user.color_theme || '#3b82f6';
-      setUser({ ...data.user, color_theme: theme });
+      const updatedUser = { ...data.user, color_theme: theme };
+      setUser(updatedUser);
+      setAuthUser(updatedUser);
 
       const basicTeams = Array.isArray(data.teams) ? data.teams : [];
       try {
@@ -112,12 +97,6 @@ const Profile = () => {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    const baseColor = user ? (COLOR_MAP[user.color_theme] || user.color_theme) : '#3b82f6';
-    document.documentElement.style.setProperty('--theme-color', baseColor);
-    document.documentElement.style.setProperty('--theme-color-light', lightenColor(baseColor));
-  }, [user]);
 
   useEffect(() => {
     refreshUserInfo();

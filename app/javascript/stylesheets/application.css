@@ -5,6 +5,11 @@
 :root {
   --theme-color: #3b82f6;
   --theme-color-rgb: 59 130 246;
+  --theme-color-light: #ebf3fe;
+}
+
+body {
+  background: linear-gradient(to bottom right, var(--theme-color-light), white);
 }
 
 .bg-theme {
