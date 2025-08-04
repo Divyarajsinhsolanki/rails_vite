@@ -58,7 +58,8 @@ export default function KnowledgeDashboard() {
     : cards.filter(card => card.category === activeCategory);
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={darkMode ? 'dark' : ''}>
+      <div className="min-h-screen transition-colors duration-300 bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
       {/* Header */}
       <header className="sticky top-0 z-10 backdrop-blur-md bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center">
@@ -155,6 +156,7 @@ export default function KnowledgeDashboard() {
           <p>Knowledge Hub • Updated daily • {new Date().toLocaleDateString()}</p>
         </div>
       </footer>
+      </div>
     </div>
   );
 }
