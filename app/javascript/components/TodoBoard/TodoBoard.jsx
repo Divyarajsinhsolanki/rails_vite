@@ -96,12 +96,15 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
   const handleAddTask = async (newTaskData) => {
     try {
       const payload = { ...newTaskData };
+      // ensure the task is assigned to the current user
+      if (user) payload.assigned_to_user = user.id;
       if (selectedSprintId) payload.sprint_id = selectedSprintId;
       if (projectId) payload.project_id = projectId;
       const { data } = await SchedulerAPI.createTask(payload);
+      const statusKey = data.status || 'todo';
       setColumns(prev => ({
         ...prev,
-        todo: { ...prev.todo, items: [...prev.todo.items, data] }
+        [statusKey]: { ...prev[statusKey], items: [...prev[statusKey].items, data] }
       }));
       toast.success("Task added successfully");
       setShowForm(false); // Hide form on successful add
@@ -126,10 +129,32 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
   const handleUpdateTask = async (colId, taskId, updates) => {
      try {
         const { data } = await SchedulerAPI.updateTask(taskId, updates);
-        setColumns(prev => ({
-            ...prev,
-            [colId]: { ...prev[colId], items: prev[colId].items.map(t => t.id === data.id ? data : t) }
-        }));
+        const newStatus = data.status || colId;
+        setColumns(prev => {
+            // if status didn't change, update in place
+            if (newStatus === colId) {
+                return {
+                    ...prev,
+                    [colId]: {
+                        ...prev[colId],
+                        items: prev[colId].items.map(t => t.id === data.id ? data : t)
+                    }
+                };
+            }
+
+            const updatedPrev = { ...prev };
+            // remove task from the original column
+            updatedPrev[colId] = {
+                ...updatedPrev[colId],
+                items: updatedPrev[colId].items.filter(t => t.id !== data.id)
+            };
+            // add task to the column corresponding to its new status
+            updatedPrev[newStatus] = {
+                ...updatedPrev[newStatus],
+                items: [...updatedPrev[newStatus].items, data]
+            };
+            return updatedPrev;
+        });
         toast.success("Task updated");
     } catch (error) {
         toast.error("Failed to update task.");
