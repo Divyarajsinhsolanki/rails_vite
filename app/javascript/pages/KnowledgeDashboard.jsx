@@ -17,7 +17,6 @@ import EnglishTenseCard from "../components/Knowledge/EnglishTenseCard";
 import EnglishPhraseCard from "../components/Knowledge/EnglishPhraseCard";
 
 export default function KnowledgeDashboard() {
-  const [darkMode, setDarkMode] = useState(false);
   const [activeCategory, setActiveCategory] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -58,23 +57,16 @@ export default function KnowledgeDashboard() {
     : cards.filter(card => card.category === activeCategory);
 
   return (
-    <div className={darkMode ? 'dark' : ''}>
-      <div className="min-h-screen transition-colors duration-300 bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+    <div className="min-h-screen transition-colors duration-300 bg-gray-50 text-gray-900">
       {/* Header */}
-      <header className="sticky top-0 z-10 backdrop-blur-md bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-700">
+      <header className="sticky top-0 z-10 backdrop-blur-md bg-white/80 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center">
           <div className="flex items-center mb-4 sm:mb-0">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color-light)] bg-clip-text text-transparent">
               Knowledge Hub
             </h1>
-            <button 
-              onClick={() => setDarkMode(!darkMode)}
-              className="ml-4 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            >
-              {darkMode ? '☀️' : '🌙'}
-            </button>
           </div>
-          
+
           <div className="flex space-x-2 overflow-x-auto pb-2 sm:pb-0 w-full sm:w-auto">
             {categories.map((cat) => (
               <button
@@ -83,7 +75,7 @@ export default function KnowledgeDashboard() {
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                   activeCategory === cat.id
                     ? 'bg-[var(--theme-color)] text-white'
-                    : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600'
+                    : 'bg-gray-200 hover:bg-gray-300'
                 }`}
               >
                 {cat.icon} {cat.name}
@@ -102,14 +94,12 @@ export default function KnowledgeDashboard() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3, delay: i * 0.05 }}
-                className={`h-64 rounded-2xl ${
-                  darkMode ? 'bg-gray-800' : 'bg-gray-200'
-                } animate-pulse`}
+                className="h-64 rounded-2xl bg-gray-200 animate-pulse"
               />
             ))}
           </div>
         ) : (
-          <motion.div 
+          <motion.div
             layout
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
           >
@@ -125,11 +115,7 @@ export default function KnowledgeDashboard() {
                   whileHover={{ y: -5 }}
                   className="rounded-2xl overflow-hidden"
                 >
-                  <div className={`h-full border ${
-                    darkMode 
-                      ? 'bg-gray-800 border-gray-700 hover:border-gray-600' 
-                      : 'bg-white border-gray-200 hover:border-gray-300'
-                  } rounded-2xl shadow-sm hover:shadow-md transition-all duration-300`}>
+                  <div className="h-full border bg-white border-gray-200 hover:border-gray-300 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
                     {item.component}
                   </div>
                 </motion.div>
@@ -142,21 +128,18 @@ export default function KnowledgeDashboard() {
           <div className="text-center py-16">
             <div className="text-6xl mb-4">🧐</div>
             <h3 className="text-xl font-medium mb-2">No items in this category</h3>
-            <p className="text-gray-500 dark:text-gray-400">
+            <p className="text-gray-500">
               Try selecting a different category above
             </p>
           </div>
         )}
       </main>
 
-      <footer className={`mt-12 py-6 border-t ${
-        darkMode ? 'border-gray-800' : 'border-gray-200'
-      }`}>
-        <div className="max-w-7xl mx-auto px-6 text-center text-sm text-gray-500 dark:text-gray-400">
+      <footer className="mt-12 py-6 border-t border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 text-center text-sm text-gray-500">
           <p>Knowledge Hub • Updated daily • {new Date().toLocaleDateString()}</p>
         </div>
       </footer>
-      </div>
     </div>
   );
 }
