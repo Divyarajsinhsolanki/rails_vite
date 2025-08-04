@@ -344,13 +344,19 @@ const Vault = () => {
   return (
     <div className="max-w-1xl  p-4 space-y-6">
       <Toaster position="top-right" />
-      <div className="flex items-center">
+      <div className="flex items-center space-x-2">
         <input
-          className="border p-2 flex-grow mr-2"
+          className="border p-2 flex-grow"
           placeholder="Search..."
           value={searchQuery}
           onChange={handleSearchChange}
         />
+        <button
+          onClick={() => openModal("Command")}
+          className="bg-[var(--theme-color)] text-white px-3 py-2 rounded"
+        >
+          Add Command
+        </button>
         <button onClick={handleExportAll} className="bg-gray-200 px-3 py-2 rounded">
           Export All
         </button>
@@ -440,12 +446,20 @@ const Vault = () => {
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
               />
-              <input
-                className="w-full border rounded p-2"
-                placeholder="Category"
-                value={newCategory}
-                onChange={(e) => setNewCategory(e.target.value)}
-              />
+              {modalCategory ? (
+                <input
+                  className="w-full border rounded p-2 bg-gray-100"
+                  value={newCategory}
+                  readOnly
+                />
+              ) : (
+                <input
+                  className="w-full border rounded p-2"
+                  placeholder="Category"
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                />
+              )}
               <textarea
                 className="w-full border rounded p-2"
                 rows="3"
