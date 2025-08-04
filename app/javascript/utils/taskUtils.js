@@ -13,10 +13,9 @@ export function getCompletionData(columns) {
   }));
 }
 
-export function getHeatmapData(columns) {
-  const today = startOfWeek(new Date(), { weekStartsOn: 1 });
+export function getHeatmapData(columns, weekStart = startOfWeek(new Date(), { weekStartsOn: 1 })) {
   const week = Array.from({ length: 7 }, (_, i) =>
-    format(addDays(today, i), 'yyyy-MM-dd')
+    format(addDays(weekStart, i), 'yyyy-MM-dd')
   );
   const counts = Object.values(columns)
     .flatMap((col) => col.items.map((t) => t.end_date || t.due))
