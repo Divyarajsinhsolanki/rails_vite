@@ -21,8 +21,6 @@ class User < ApplicationRecord
   validates :first_name, presence: true
   validates :last_name, presence: true
 
-  cattr_accessor :current_user
-
   after_create :assign_default_role
 
   def has_role?(name)
