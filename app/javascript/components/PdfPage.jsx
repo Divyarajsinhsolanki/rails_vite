@@ -143,7 +143,7 @@ const PdfPage = () => {
   return (
     <div className="font-inter flex flex-col min-h-screen items-center bg-gray-50 p-4 sm:p-6 lg:p-8">
       <header className="w-full max-w-6xl text-center mb-8">
-        <h1 className="text-4xl font-bold text-gray-800 mb-2">PDF Modifier</h1>
+        <h1 className="text-4xl font-bold text-[var(--theme-color)] mb-2">PDF Modifier</h1>
         <p className="text-lg text-gray-600">Your all-in-one online PDF editor. Upload, edit, and manage your documents with ease.</p>
       </header>
 
