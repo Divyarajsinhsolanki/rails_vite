@@ -8,7 +8,7 @@ class Api::BaseController < ApplicationController
     payload = JwtService.decode(token)
 
     @current_user = User.find_by(id: payload["user_id"]) if payload
-    User.current_user = @current_user
+    Current.user = @current_user
 
     handle_unauthorized unless @current_user
   rescue
