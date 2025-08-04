@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-const TaskForm = ({ onAddTask, onCancel, projectId }) => {
+const TaskForm = ({ onAddTask, onCancel }) => {
   const [formData, setFormData] = useState({
     title: '',
-    type: '',
+    description: '',
+    type: 'general',
     status: 'todo',
-    assigned_to_user: '',
-    end_date: '',
-    project_id: projectId || ''
+    end_date: ''
   });
 
   const handleChange = (e) => {
@@ -20,7 +19,7 @@ const TaskForm = ({ onAddTask, onCancel, projectId }) => {
     e.preventDefault();
     if (!formData.title) return toast.error('Title is required.');
     onAddTask(formData);
-    setFormData({ title: '', type: '', status: 'todo', assigned_to_user: '', end_date: '', project_id: '' });
+    setFormData({ title: '', description: '', type: 'general', status: 'todo', end_date: '' });
   };
 
   return (
@@ -41,8 +40,8 @@ const TaskForm = ({ onAddTask, onCancel, projectId }) => {
           <input
             name="type"
             value={formData.type}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-[var(--theme-color)]"
+            disabled
+            className="w-full px-3 py-2 border rounded-lg bg-gray-100 text-gray-500"
           />
         </div>
         <div>
@@ -58,20 +57,11 @@ const TaskForm = ({ onAddTask, onCancel, projectId }) => {
             <option value="completed">Completed</option>
           </select>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Assigned User ID</label>
-          <input
-            name="assigned_to_user"
-            value={formData.assigned_to_user}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-[var(--theme-color)]"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Project ID</label>
-          <input
-            name="project_id"
-            value={formData.project_id}
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <textarea
+            name="description"
+            value={formData.description}
             onChange={handleChange}
             className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-[var(--theme-color)]"
           />

@@ -9,6 +9,7 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editDetails, setEditDetails] = useState({
       title: item.title || '',
+      description: item.description || '',
       type: item.type || '',
       status: item.status || 'todo',
       assigned_to_user: item.assigned_to_user || '',
@@ -37,11 +38,18 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
         placeholder="Title"
         className="border p-2 rounded"
       />
+      <textarea
+        value={editDetails.description}
+        onChange={(e) => setEditDetails(prev => ({ ...prev, description: e.target.value }))}
+        placeholder="Description"
+        className="border p-2 rounded"
+      />
       <input
         value={editDetails.type}
         onChange={(e) => setEditDetails(prev => ({ ...prev, type: e.target.value }))}
         placeholder="Type"
         className="border p-2 rounded"
+        disabled={item.type === 'general'}
       />
       <select
         value={editDetails.status}
@@ -81,10 +89,10 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
             <span className="font-semibold text-lg text-[var(--theme-color)] transition-colors">
               {item.task_url ? (
                 <a href={item.task_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                  {item.task_id}
+                  {item.task_id || item.title}
                 </a>
               ) : (
-                item.task_id
+                item.task_id || item.title
               )}
             </span>
             <div className="flex items-center gap-2">
@@ -92,7 +100,7 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
                 <button onClick={() => onDelete(columnId, item.id)} className="text-gray-400 hover:text-red-600 transition-colors" title="Delete"><FiTrash2 size={18} /></button>
             </div>
         </div>
-        <p className="text-gray-600 text-sm">{item.title || 'No Title'}</p>
+        <p className="text-gray-600 text-sm">{item.description || item.title || 'No Description'}</p>
         
         {item.tags && item.tags.length > 0 && (
             <div className="flex items-center text-sm text-gray-500 mt-2">

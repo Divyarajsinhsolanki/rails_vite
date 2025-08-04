@@ -142,12 +142,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_01_008000) do
   end
 
   create_table "tasks", force: :cascade do |t|
-    t.string "task_id", null: false
+    t.string "task_id"
     t.string "task_url"
     t.string "type", null: false
     t.decimal "estimated_hours", precision: 5, scale: 2
     t.bigint "sprint_id"
-    t.bigint "developer_id", null: false
+    t.bigint "developer_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "status", default: "todo"

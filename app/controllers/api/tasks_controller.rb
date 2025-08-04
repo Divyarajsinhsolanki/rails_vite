@@ -4,11 +4,13 @@ class Api::TasksController < Api::BaseController
   # GET /tasks.json
   def index
     @tasks = Task.includes(:assigned_user, :sprint)
+                 .where('type != ? OR created_by = ?', 'general', current_user.id)
                  .order(end_date: :asc)
 
     @tasks = @tasks.where(assigned_to_user: params[:assigned_to_user]) if params[:assigned_to_user].present?
     @tasks = @tasks.where(sprint_id: params[:sprint_id]) if params[:sprint_id].present?
     @tasks = @tasks.where(project_id: params[:project_id]) if params[:project_id].present?
+    @tasks = @tasks.where(type: params[:type]) if params[:type].present?
 
     render json: @tasks.as_json(include: {
       assigned_user: { only: [:id, :first_name, :email] },
@@ -69,7 +71,7 @@ class Api::TasksController < Api::BaseController
   private
 
   def set_task
-    @task = Task.find(params[:id])
+    @task = Task.where('type != ? OR created_by = ?', 'general', current_user.id).find(params[:id])
   end
 
   def task_params
