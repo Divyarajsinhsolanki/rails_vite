@@ -13,6 +13,17 @@ const COLOR_MAP = {
   indigo: '#6366f1'
 };
 
+const lightenColor = (color, amount = 0.9) => {
+  const hex = color.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  const nr = Math.round(r + (255 - r) * amount);
+  const ng = Math.round(g + (255 - g) * amount);
+  const nb = Math.round(b + (255 - b) * amount);
+  return `#${nr.toString(16).padStart(2, '0')}${ng.toString(16).padStart(2, '0')}${nb.toString(16).padStart(2, '0')}`;
+};
+
 const Avatar = ({ name, src, size = 'md' }) => {
   const sizes = {
     sm: 'w-8 h-8',
@@ -103,10 +114,9 @@ const Profile = () => {
   };
 
   useEffect(() => {
-    if (user) {
-      const color = COLOR_MAP[user.color_theme] || user.color_theme || '#3b82f6';
-      document.documentElement.style.setProperty('--theme-color', color);
-    }
+    const baseColor = user ? (COLOR_MAP[user.color_theme] || user.color_theme) : '#3b82f6';
+    document.documentElement.style.setProperty('--theme-color', baseColor);
+    document.documentElement.style.setProperty('--theme-color-light', lightenColor(baseColor));
   }, [user]);
 
   useEffect(() => {
@@ -198,7 +208,7 @@ const Profile = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[var(--theme-color-light)] to-white">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-[var(--theme-color)] border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading your profile...</p>
@@ -208,7 +218,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-[var(--theme-color-light)] to-white p-4 md:p-8">
       {/* Floating Particles Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         {[...Array(30)].map((_, i) => (
