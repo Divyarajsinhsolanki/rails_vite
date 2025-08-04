@@ -26,7 +26,8 @@ import {
 
 const PdfPage = () => {
   const [pdfUrl, setPdfUrl] = useState(null);
-  const [pdfUpdated, setPdfUpdated] = useState(false);
+  // Use a numeric counter to bust the cache after each modification.
+  const [pdfUpdated, setPdfUpdated] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [showUploadMessage, setShowUploadMessage] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
@@ -100,7 +101,8 @@ const PdfPage = () => {
   const handleRemovePdf = () => {
     setPdfUrl(null);
     localStorage.removeItem("pdfUrl");
-    setPdfUpdated(false);
+    // Reset the version counter when removing the PDF
+    setPdfUpdated(0);
     setShowUploadMessage(false);
   };
 
@@ -113,7 +115,8 @@ const PdfPage = () => {
         },
       });
       if (response.ok) {
-        setPdfUpdated((prev) => !prev);
+        // Increment the counter to force the viewer to reload the PDF
+        setPdfUpdated((prev) => prev + 1);
         setUploadMessage("PDF reset to original state!");
         setIsError(false);
         setShowUploadMessage(true);
