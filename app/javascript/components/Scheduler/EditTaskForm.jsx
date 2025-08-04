@@ -40,7 +40,10 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
   };
 
   const filteredTasks = tasks.filter(t =>
-    t.task_id.toLowerCase().includes(taskSearch.toLowerCase())
+    (t.task_id ?? '')
+      .toString()
+      .toLowerCase()
+      .includes(taskSearch.toLowerCase())
   );
 
   return (
