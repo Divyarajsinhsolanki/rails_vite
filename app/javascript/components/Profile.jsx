@@ -171,13 +171,21 @@ const Profile = () => {
   const initial = (user?.first_name || user?.email || "").charAt(0).toUpperCase();
 
   const todayStr = new Date().toISOString().split("T")[0];
+  const generalTasks = useMemo(
+    () => tasks.filter((t) => t.type === 'general'),
+    [tasks]
+  );
+  const nonGeneralTasks = useMemo(
+    () => tasks.filter((t) => t.type !== 'general'),
+    [tasks]
+  );
   const dueTodayTasks = useMemo(
-    () => tasks.filter((t) => (t.end_date || t.due_date) === todayStr),
-    [tasks, todayStr]
+    () => nonGeneralTasks.filter((t) => (t.end_date || t.due_date) === todayStr),
+    [nonGeneralTasks, todayStr]
   );
   const otherTasks = useMemo(
-    () => tasks.filter((t) => (t.end_date || t.due_date) !== todayStr),
-    [tasks, todayStr]
+    () => nonGeneralTasks.filter((t) => (t.end_date || t.due_date) !== todayStr),
+    [nonGeneralTasks, todayStr]
   );
 
   const getProjectName = (projectId) => {
@@ -301,7 +309,7 @@ const Profile = () => {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)] mr-2" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                     </svg>
-                    <span className="text-sm font-medium">{tasks.length} Tasks</span>
+                    <span className="text-sm font-medium">{nonGeneralTasks.length} Tasks</span>
                   </div>
                 </div>
               </div>
@@ -391,7 +399,7 @@ const Profile = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-blue-600 font-medium">Active Tasks</p>
-                        <h3 className="text-2xl font-bold text-blue-800 mt-1">{tasks.length}</h3>
+                        <h3 className="text-2xl font-bold text-blue-800 mt-1">{nonGeneralTasks.length}</h3>
                       </div>
                       <div className="bg-blue-100 p-3 rounded-lg">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -443,7 +451,37 @@ const Profile = () => {
                     </div>
                   </div>
                 </div>
-                
+
+                {generalTasks.length > 0 && (
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-800 mb-4">General Tasks</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {generalTasks.map((task) => (
+                        <div key={task.id} className="p-4 bg-white border border-gray-100 rounded-lg shadow-sm hover:shadow-md transition">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h3 className="font-medium text-gray-800">{task.title || task.task_id}</h3>
+                              <div className="flex items-center mt-1 space-x-3">
+                                <span className={`text-xs px-2 py-1 rounded-full font-medium capitalize ${getStatusClasses(task.status)}`}>
+                                  {task.status}
+                                </span>
+                                {(task.end_date || task.due_date) && (
+                                  <span className="text-xs text-gray-500 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                                    </svg>
+                                    Due {new Date(task.end_date || task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Recent Activity */}
                 <div>
                   <h3 className="text-xl font-semibold text-gray-800 mb-4">Recent Activity</h3>
@@ -563,7 +601,7 @@ const Profile = () => {
             {activeTab === 'tasks' && (
               <div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">My Tasks</h2>
-                {tasks.length > 0 ? (
+                {nonGeneralTasks.length > 0 ? (
                   <>
                     {dueTodayTasks.length > 0 && (
                       <div className="mb-8">
