@@ -19,6 +19,7 @@ import Contact from "../pages/Contact";
 import Vault from "../pages/Vault";
 import Legal from "../pages/Legal";
 import SprintDashboard from "../pages/SprintDashboard";
+import WorkLog from "../pages/WorkLog";
 
 const App = () => {
   return (
@@ -41,6 +42,7 @@ const App = () => {
               <Route path="/vault" element={<PrivateRoute><Vault /></PrivateRoute>} />
               <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
               <Route path="/knowledge" element={<PrivateRoute><KnowledgeDashboard /></PrivateRoute>} />
+              <Route path="/worklog" element={<PrivateRoute><WorkLog /></PrivateRoute>} />
               <Route path="/projects" element={<PrivateRoute><Projects /></PrivateRoute>} />
               <Route path="/teams" element={<PrivateRoute><Teams /></PrivateRoute>} />
               <Route path="/projects/:projectId/dashboard" element={<ProjectMemberRoute><SprintDashboard /></ProjectMemberRoute>} />
