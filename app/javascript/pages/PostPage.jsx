@@ -10,7 +10,8 @@ import { motion, AnimatePresence } from "framer-motion";
 // --- Icon Imports ---
 import {
   FiMessageSquare, FiUsers, FiClock, FiCheckCircle,
-  FiAlertTriangle, FiBriefcase, FiPlus, FiLoader
+  FiAlertTriangle, FiBriefcase, FiPlus, FiLoader,
+  FiCheckSquare
 } from "react-icons/fi";
 
 // --- Reusable Components ---
@@ -51,6 +52,15 @@ const DueTaskItem = ({ task }) => (
     </div>
 );
 
+const GeneralTaskItem = ({ task }) => (
+    <li className="flex items-center gap-2">
+        <span className="text-xs text-slate-500 w-20">
+            {task.end_date ? new Date(task.end_date).toLocaleDateString() : '--'}
+        </span>
+        <span className="font-medium text-slate-700 truncate">{task.title || task.task_id}</span>
+    </li>
+);
+
 const ProjectItem = ({ project }) => (
     <Link
         to={`/projects/${project.id}/dashboard`}
@@ -81,6 +91,7 @@ const PostPage = () => {
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
   const [birthdays, setBirthdays] = useState([]);
+  const [generalTasks, setGeneralTasks] = useState([]);
 
   const refreshPosts = useCallback(async () => {
     setIsLoading(true);
@@ -155,6 +166,13 @@ const PostPage = () => {
       .catch(() => setBirthdays([]));
   }, [user]);
 
+  useEffect(() => {
+    if (!user) return;
+    SchedulerAPI.getTasks({ type: 'general', assigned_to_user: user.id })
+      .then(({ data }) => setGeneralTasks(Array.isArray(data) ? data : []))
+      .catch(() => setGeneralTasks([]));
+  }, [user]);
+
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
       <Toaster position="top-right" />
@@ -180,6 +198,21 @@ const PostPage = () => {
                             <p className="text-sm font-medium text-green-700">All caught up!</p>
                             <p className="text-xs text-green-600">No tasks due today.</p>
                         </div>
+                    )}
+                </div>
+                <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                    <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <FiCheckSquare className="text-slate-600"/>
+                        My Tasks
+                    </h2>
+                    {generalTasks.length > 0 ? (
+                        <ul className="space-y-3">
+                            {generalTasks.map((t) => (
+                                <GeneralTaskItem key={t.id} task={t} />
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="text-sm text-slate-500 text-center py-4">No tasks found.</p>
                     )}
                 </div>
                 <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm">
