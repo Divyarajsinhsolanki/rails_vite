@@ -82,6 +82,11 @@ Rails.application.routes.draw do
 
     resources :roles, only: [:index]
 
+    resources :work_categories, only: [:index, :create, :update, :destroy]
+    resources :work_priorities, only: [:index, :create, :update, :destroy]
+    resources :work_tags, only: [:index, :create, :update, :destroy]
+    resources :work_logs, only: [:index, :create, :update, :destroy]
+
 
     resources :contacts, only: [:create]
 

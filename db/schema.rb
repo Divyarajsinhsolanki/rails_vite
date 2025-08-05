@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_01_009000) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_01_010400) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -220,6 +220,64 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_01_009000) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  create_table "work_categories", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "color"
+    t.string "hex"
+    t.integer "created_by"
+    t.integer "updated_by"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "work_log_tags", force: :cascade do |t|
+    t.bigint "work_log_id", null: false
+    t.bigint "work_tag_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["work_log_id", "work_tag_id"], name: "index_work_log_tags_on_work_log_id_and_work_tag_id", unique: true
+    t.index ["work_log_id"], name: "index_work_log_tags_on_work_log_id"
+    t.index ["work_tag_id"], name: "index_work_log_tags_on_work_tag_id"
+  end
+
+  create_table "work_logs", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.date "log_date", null: false
+    t.time "start_time", null: false
+    t.time "end_time", null: false
+    t.string "title", null: false
+    t.text "description"
+    t.bigint "category_id"
+    t.bigint "priority_id"
+    t.integer "actual_minutes", default: 0
+    t.integer "created_by"
+    t.integer "updated_by"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["category_id"], name: "index_work_logs_on_category_id"
+    t.index ["priority_id"], name: "index_work_logs_on_priority_id"
+    t.index ["user_id"], name: "index_work_logs_on_user_id"
+  end
+
+  create_table "work_priorities", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "color"
+    t.string "hex"
+    t.integer "created_by"
+    t.integer "updated_by"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "work_tags", force: :cascade do |t|
+    t.string "name", null: false
+    t.integer "created_by"
+    t.integer "updated_by"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_work_tags_on_name", unique: true
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "items", "users"
@@ -238,4 +296,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_01_009000) do
   add_foreign_key "teams", "users", column: "owner_id"
   add_foreign_key "user_roles", "roles"
   add_foreign_key "user_roles", "users"
+  add_foreign_key "work_log_tags", "work_logs"
+  add_foreign_key "work_log_tags", "work_tags"
+  add_foreign_key "work_logs", "users"
+  add_foreign_key "work_logs", "work_categories", column: "category_id"
+  add_foreign_key "work_logs", "work_priorities", column: "priority_id"
 end
