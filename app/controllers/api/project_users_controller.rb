@@ -1,7 +1,8 @@
 class Api::ProjectUsersController < Api::BaseController
-  before_action :authorize_admin!, except: [:leave]
-  before_action :authorize_manager!, only: [:leave]
   before_action :set_project_user, only: [:update, :destroy]
+  before_action :authorize_admin_or_self!, only: [:update]
+  before_action :authorize_admin!, only: [:create, :destroy]
+  before_action :authorize_manager!, only: [:leave]
 
   def create
     project_user = ProjectUser.new(project_user_params)
@@ -39,6 +40,10 @@ class Api::ProjectUsersController < Api::BaseController
     head :forbidden unless current_user&.admin?
   end
 
+  def authorize_admin_or_self!
+    head :forbidden unless current_user&.admin? || @project_user.user_id == current_user&.id
+  end
+
   def authorize_manager!
     head :forbidden unless current_user&.project_manager?
   end
@@ -48,14 +53,11 @@ class Api::ProjectUsersController < Api::BaseController
   end
 
   def project_user_params
-    params.require(:project_user).permit(
-      :project_id,
-      :user_id,
-      :role,
-      :status,
-      :allocation_percentage,
-      :workload_status
-    )
+    allowed = [:allocation_percentage, :workload_status]
+    if current_user&.admin?
+      allowed += [:project_id, :user_id, :role, :status]
+    end
+    params.require(:project_user).permit(*allowed)
   end
 
   def serialize_project_user(pu)
