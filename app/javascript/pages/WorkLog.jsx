@@ -42,6 +42,17 @@ const SHORT_BREAK_DURATION = 5; // minutes
 const LONG_BREAK_DURATION = 15; // minutes
 const POMODOROS_FOR_LONG_BREAK = 4;
 
+// --- Helpers ---
+const hexToRgba = (hex, alpha = 1) => {
+  if (!hex) return '';
+  const sanitized = hex.replace('#', '');
+  const bigint = parseInt(sanitized, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 // --- Reusable Components ---
 const Modal = ({ children, isOpen, onClose }) => (
   <AnimatePresence>
@@ -764,7 +775,7 @@ const TimeSummaryWidget = ({ timeSummary, categories, priorities, weeklySummary,
                 return (
                   <div key={cat.id} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
-                      <span className={`w-3 h-3 rounded-full ${cat.color}`}></span>
+                      <span className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.hex }}></span>
                       <span className="font-medium">{cat.name}</span>
                     </div>
                     <span className="text-gray-500">
@@ -784,7 +795,7 @@ const TimeSummaryWidget = ({ timeSummary, categories, priorities, weeklySummary,
                   return (
                     <div key={pri.id} className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
-                        <span className={`w-3 h-3 rounded-full ${pri.color}`}></span>
+                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: pri.hex }}></span>
                         <span className="font-medium">{pri.name}</span>
                       </div>
                       <span className="text-gray-500">
@@ -867,9 +878,10 @@ const FilterWidget = ({ categories, priorities, tags, filter, onToggleFilter, on
                 onClick={() => onToggleFilter('categories', cat.id)}
                 className={`px-2 py-1 text-xs rounded-full transition-all ${
                   filter.categories.includes(cat.id)
-                    ? `${cat.color} text-white`
+                    ? 'text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
+                style={filter.categories.includes(cat.id) ? { backgroundColor: cat.hex } : {}}
               >
                 {cat.name}
               </button>
@@ -886,9 +898,10 @@ const FilterWidget = ({ categories, priorities, tags, filter, onToggleFilter, on
                 onClick={() => onToggleFilter('priorities', pri.id)}
                 className={`px-2 py-1 text-xs rounded-full transition-all ${
                   filter.priorities.includes(pri.id)
-                    ? `${pri.color} text-white`
+                    ? 'text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
+                style={filter.priorities.includes(pri.id) ? { backgroundColor: pri.hex } : {}}
               >
                 {pri.name}
               </button>
@@ -988,9 +1001,13 @@ const TimelineView = ({
                     const priority = priorities.find(p => p.id === task.priority);
                     
                     return (
-                      <div 
+                      <div
                         key={task.id}
-                        className={`p-2 rounded-lg text-left text-xs border-l-4 ${priority?.color} ${category?.color} bg-opacity-10`}
+                        className="p-2 rounded-lg text-left text-xs border-l-4"
+                        style={{
+                          borderLeftColor: priority?.hex,
+                          backgroundColor: category ? hexToRgba(category.hex, 0.1) : undefined,
+                        }}
                       >
                         <div className="font-medium truncate">{task.title}</div>
                         <div className="text-gray-500 truncate">{task.startTime} - {task.endTime}</div>
@@ -1067,14 +1084,20 @@ const TimelineView = ({
                       className="absolute w-full p-2 group"
                       style={{ top: `${top}%`, height: `${height}%` }}
                     >
-                      <div className={`rounded-lg p-3 h-full flex flex-col justify-between text-white shadow-lg overflow-hidden relative ${category?.color}`}>
+                      <div
+                        className="rounded-lg p-3 h-full flex flex-col justify-between text-white shadow-lg overflow-hidden relative"
+                        style={{ backgroundColor: category?.hex }}
+                      >
                         <div className="absolute top-0 left-0 w-full h-1 bg-white/30"></div>
                         
                         <div>
                           <div className="flex justify-between items-start">
                             <h3 className="font-bold text-sm truncate">{task.title}</h3>
                             {priority && (
-                              <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${priority.color}`}>
+                              <span
+                                className="ml-2 px-2 py-0.5 text-xs rounded-full text-white"
+                                style={{ backgroundColor: priority.hex }}
+                              >
                                 {priority.name}
                               </span>
                             )}
