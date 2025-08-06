@@ -49,9 +49,9 @@ import {
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 // --- Constants ---
-const POMODORO_DURATION = 25; // minutes
-const SHORT_BREAK_DURATION = 5; // minutes
-const LONG_BREAK_DURATION = 15; // minutes
+const POMODORO_DURATION = 30; // minutes
+const SHORT_BREAK_DURATION = 15; // minutes
+const LONG_BREAK_DURATION = 30; // minutes
 const POMODOROS_FOR_LONG_BREAK = 4;
 
 // --- Helpers ---

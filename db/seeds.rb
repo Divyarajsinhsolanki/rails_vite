@@ -61,10 +61,14 @@ end
 # Default Work Tags
 [
   'Team',
-  'Sync Frontend',
-  'React UI/UX',
-  'Figma Backend',
-  'Code Review Frontend',
+  'Sync',
+  'Frontend',
+  'React',
+  'UI/UX',
+  'Figma',
+  'Backend',
+  'Code Review',
+  'Frontend',
   'Research'
 ].each do |tag_name|
   WorkTag.find_or_create_by!(name: tag_name)

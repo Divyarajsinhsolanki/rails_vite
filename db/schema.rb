@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_01_010400) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_01_010500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -81,10 +81,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_01_010400) do
     t.bigint "user_id", null: false
     t.string "role", default: "collaborator", null: false
     t.string "status", default: "active", null: false
-    t.integer "allocation_percentage", default: 0, null: false
-    t.string "workload_status", default: "partial", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "allocation_percentage", default: 0, null: false
+    t.string "workload_status", default: "partial", null: false
     t.index ["project_id", "user_id"], name: "index_project_users_on_project_id_and_user_id", unique: true
     t.index ["project_id"], name: "index_project_users_on_project_id"
     t.index ["user_id"], name: "index_project_users_on_user_id"
@@ -261,6 +261,18 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_01_010400) do
     t.index ["user_id"], name: "index_work_logs_on_user_id"
   end
 
+  create_table "work_notes", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.date "note_date", null: false
+    t.text "content"
+    t.integer "created_by"
+    t.integer "updated_by"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "note_date"], name: "index_work_notes_on_user_id_and_note_date", unique: true
+    t.index ["user_id"], name: "index_work_notes_on_user_id"
+  end
+
   create_table "work_priorities", force: :cascade do |t|
     t.string "name", null: false
     t.string "color"
@@ -303,4 +315,5 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_01_010400) do
   add_foreign_key "work_logs", "users"
   add_foreign_key "work_logs", "work_categories", column: "category_id"
   add_foreign_key "work_logs", "work_priorities", column: "priority_id"
+  add_foreign_key "work_notes", "users"
 end
