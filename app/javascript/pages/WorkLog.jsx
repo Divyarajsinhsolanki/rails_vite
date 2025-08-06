@@ -484,7 +484,7 @@ const WorkLog = () => {
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 font-sans text-gray-800 p-4 sm:p-6 lg:p-8 ${isExpandedView ? 'fixed inset-0 z-50 bg-white' : ''}`}>
+    <div className={`min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 font-sans text-gray-800 p-4 sm:p-6 lg:p-8 ${isExpandedView ? 'fixed inset-0 z-50 bg-white overflow-y-auto' : ''}`}> 
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <header className="mb-8">
