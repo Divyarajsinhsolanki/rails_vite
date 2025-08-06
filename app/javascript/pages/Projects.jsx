@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext, useCallback } from "react";
-import { fetchProjects, createProject, updateProject, deleteProject, addProjectUser, deleteProjectUser, leaveProject } from "../components/api";
+import { fetchProjects, createProject, updateProject, deleteProject, addProjectUser, updateProjectUser, deleteProjectUser, leaveProject } from "../components/api";
 import UserMultiSelect from "../components/UserMultiSelect";
 import { AuthContext } from "../context/AuthContext";
 // Import icons (e.g., from Feather Icons)
@@ -88,6 +88,8 @@ const Notification = ({ message, type, onClose }) => {
 
 // --- Main Projects Component ---
 
+const WORKLOAD_STATUSES = ["free", "partial", "full", "overloaded"];
+
 const Projects = () => {
     const { user } = useContext(AuthContext);
     const canEdit = user?.roles?.some((r) => ["owner", "project_manager"].includes(r.name));
@@ -113,8 +115,18 @@ const Projects = () => {
     const [isCreatingNewProject, setIsCreatingNewProject] = useState(false); // Flag for creating a new project
 
     // Form States (for Add/Remove Members)
-    const [memberForm, setMemberForm] = useState({ role: "collaborator" });
+    const [memberForm, setMemberForm] = useState({
+        role: "collaborator",
+        allocation_percentage: 0,
+        workload_status: "partial",
+    });
     const [selectedUsersToAdd, setSelectedUsersToAdd] = useState([]);
+
+    const [editingMemberId, setEditingMemberId] = useState(null);
+    const [editingMemberData, setEditingMemberData] = useState({
+        allocation_percentage: 0,
+        workload_status: "partial",
+    });
 
     // Modals & Notifications
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -151,11 +163,18 @@ const Projects = () => {
             ...projectForm,
             [e.target.name]: e.target.type === 'checkbox' ? e.target.checked : e.target.value,
         });
-    const handleRoleChange = (e) => setMemberForm({ ...memberForm, role: e.target.value });
+    const handleMemberFormChange = (e) => {
+        const { name, value } = e.target;
+        setMemberForm({
+            ...memberForm,
+            [name]: name === "allocation_percentage" ? parseInt(value || 0, 10) : value,
+        });
+    };
 
     const resetAndCloseForms = () => {
         setEditingId(null);
         setIsCreatingNewProject(false);
+        setEditingMemberId(null);
         setProjectForm({
             name: "",
             description: "",
@@ -259,11 +278,17 @@ const Projects = () => {
         try {
             await Promise.all(
                 selectedUsersToAdd.map((u) =>
-                    addProjectUser({ project_id: selectedProjectId, user_id: u.id, role: memberForm.role })
+                    addProjectUser({
+                        project_id: selectedProjectId,
+                        user_id: u.id,
+                        role: memberForm.role,
+                        allocation_percentage: memberForm.allocation_percentage,
+                        workload_status: memberForm.workload_status,
+                    })
                 )
             );
             setSelectedUsersToAdd([]);
-            setMemberForm({ role: "collaborator" });
+            setMemberForm({ role: "collaborator", allocation_percentage: 0, workload_status: "partial" });
             await loadProjects();
             setNotification({ message: "Member(s) added successfully!", type: "success" });
         } catch (err) {
@@ -272,6 +297,42 @@ const Projects = () => {
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const startEditingMember = (member) => {
+        setEditingMemberId(member.project_user_id);
+        setEditingMemberData({
+            allocation_percentage: member.allocation_percentage || 0,
+            workload_status: member.workload_status || "partial",
+        });
+    };
+
+    const handleEditingMemberChange = (e) => {
+        const { name, value } = e.target;
+        setEditingMemberData({
+            ...editingMemberData,
+            [name]: name === "allocation_percentage" ? parseInt(value || 0, 10) : value,
+        });
+    };
+
+    const handleSaveMemberEdit = async (projectUserId) => {
+        setIsSaving(true);
+        setNotification(null);
+        try {
+            await updateProjectUser(projectUserId, editingMemberData);
+            await loadProjects();
+            setNotification({ message: "Member updated successfully!", type: "success" });
+            setEditingMemberId(null);
+        } catch (err) {
+            console.error("Failed to update member:", err);
+            setNotification({ message: `Failed to update member: ${err.message || 'An error occurred.'}`, type: "error" });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const cancelMemberEdit = () => {
+        setEditingMemberId(null);
     };
 
     const handleRemoveMember = async (projectUserId, memberName) => {
@@ -569,31 +630,90 @@ const Projects = () => {
                                     <ul className="space-y-4">
                                         {selectedProject.users.map((member) => (
                                             <li key={member.project_user_id} className="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-100 shadow-sm transition-all duration-200 hover:shadow-md">
-                                                <div className="flex items-center flex-grow">
-                                                    <Avatar name={member.name} src={member.profile_picture} size="lg" />
-                                                    <div>
-                                                        <p className="font-medium text-lg text-gray-900">{member.name || "Invited User"}</p>
-                                                        <p className="text-sm text-gray-500 capitalize">{member.role}</p>
-                                                        {member.email && (
-                                                            <p className="text-sm text-gray-500">{member.email}</p>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                {canManageMembers && user.id !== member.id && (
-                                                    <button
-                                                        onClick={() => handleRemoveMember(member.project_user_id, member.name || "this member")}
-                                                        className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-colors font-medium"
-                                                    >
-                                                        Remove
-                                                    </button>
-                                                )}
-                                                {member.id === user.id && user.roles?.some((r) => r.name === "project_manager") && (
-                                                    <button
-                                                        onClick={handleLeaveProject}
-                                                        className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-colors font-medium ml-2"
-                                                    >
-                                                        Leave
-                                                    </button>
+                                                {editingMemberId === member.project_user_id ? (
+                                                    <>
+                                                        <div className="flex items-center flex-grow">
+                                                            <Avatar name={member.name} src={member.profile_picture} size="lg" />
+                                                            <div className="space-y-2">
+                                                                <p className="font-medium text-lg text-gray-900">{member.name || "Invited User"}</p>
+                                                                <div className="flex flex-col sm:flex-row gap-2">
+                                                                    <input
+                                                                        type="number"
+                                                                        name="allocation_percentage"
+                                                                        min="0"
+                                                                        max="100"
+                                                                        value={editingMemberData.allocation_percentage}
+                                                                        onChange={handleEditingMemberChange}
+                                                                        className="w-24 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none"
+                                                                    />
+                                                                    <select
+                                                                        name="workload_status"
+                                                                        value={editingMemberData.workload_status}
+                                                                        onChange={handleEditingMemberChange}
+                                                                        className="border border-gray-300 rounded-lg p-2 text-sm capitalize focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none"
+                                                                    >
+                                                                        {WORKLOAD_STATUSES.map((s) => (
+                                                                            <option key={s} value={s} className="capitalize">
+                                                                                {s}
+                                                                            </option>
+                                                                        ))}
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                onClick={() => handleSaveMemberEdit(member.project_user_id)}
+                                                                className="text-sm text-green-600 hover:text-green-800 hover:bg-green-50 px-3 py-1 rounded-md transition-colors font-medium"
+                                                            >
+                                                                Save
+                                                            </button>
+                                                            <button
+                                                                onClick={cancelMemberEdit}
+                                                                className="text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-50 px-3 py-1 rounded-md transition-colors font-medium"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <div className="flex items-center flex-grow">
+                                                            <Avatar name={member.name} src={member.profile_picture} size="lg" />
+                                                            <div>
+                                                                <p className="font-medium text-lg text-gray-900">{member.name || "Invited User"}</p>
+                                                                <p className="text-sm text-gray-500 capitalize">{member.role}</p>
+                                                                {member.email && <p className="text-sm text-gray-500">{member.email}</p>}
+                                                                <p className="text-sm text-gray-500">Allocation: {member.allocation_percentage}% ({member.workload_status})</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            {canManageMembers && user.id !== member.id && (
+                                                                <>
+                                                                    <button
+                                                                        onClick={() => startEditingMember(member)}
+                                                                        className="text-sm text-blue-500 hover:text-blue-700 hover:bg-blue-50 px-3 py-1 rounded-md transition-colors font-medium"
+                                                                    >
+                                                                        Edit
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleRemoveMember(member.project_user_id, member.name || "this member")}
+                                                                        className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-colors font-medium"
+                                                                    >
+                                                                        Remove
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                            {member.id === user.id && user.roles?.some((r) => r.name === "project_manager") && (
+                                                                <button
+                                                                    onClick={handleLeaveProject}
+                                                                    className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-colors font-medium ml-2"
+                                                                >
+                                                                    Leave
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </>
                                                 )}
                                             </li>
                                         ))}
@@ -604,7 +724,7 @@ const Projects = () => {
 
                                 {/* Add Member Form */}
                                 {canManageMembers && (
-                                    <form onSubmit={handleAddMember} className="mt-8 pt-6 border-t border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                                    <form onSubmit={handleAddMember} className="mt-8 pt-6 border-t border-gray-200 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                                         <div className="md:col-span-2">
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Select Users to Add</label>
                                             <UserMultiSelect
@@ -619,7 +739,7 @@ const Projects = () => {
                                                 name="role"
                                                 id="role"
                                                 value={memberForm.role}
-                                                onChange={handleRoleChange}
+                                                onChange={handleMemberFormChange}
                                                 className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none appearance-none bg-white pr-8"
                                             >
                                                 <option value="owner">Owner</option>
@@ -628,9 +748,38 @@ const Projects = () => {
                                                 <option value="viewer">Viewer</option>
                                             </select>
                                         </div>
+                                        <div>
+                                            <label htmlFor="allocation_percentage" className="block text-sm font-medium text-gray-700 mb-1">Allocation %</label>
+                                            <input
+                                                type="number"
+                                                name="allocation_percentage"
+                                                id="allocation_percentage"
+                                                min="0"
+                                                max="100"
+                                                value={memberForm.allocation_percentage}
+                                                onChange={handleMemberFormChange}
+                                                className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label htmlFor="workload_status" className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                            <select
+                                                name="workload_status"
+                                                id="workload_status"
+                                                value={memberForm.workload_status}
+                                                onChange={handleMemberFormChange}
+                                                className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none appearance-none bg-white pr-8"
+                                            >
+                                                {WORKLOAD_STATUSES.map((s) => (
+                                                    <option key={s} value={s} className="capitalize">
+                                                        {s}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
                                         <button
                                             type="submit"
-                                            className="md:col-span-3 lg:col-span-1 px-5 py-2.5 bg-[var(--theme-color)] text-white rounded-lg hover:brightness-110 transition-colors font-semibold shadow-md flex items-center justify-center gap-2 active:scale-95 transform mt-4 md:mt-0"
+                                            className="md:col-span-5 lg:col-span-1 px-5 py-2.5 bg-[var(--theme-color)] text-white rounded-lg hover:brightness-110 transition-colors font-semibold shadow-md flex items-center justify-center gap-2 active:scale-95 transform mt-4 md:mt-0"
                                             disabled={isSaving || selectedUsersToAdd.length === 0}
                                         >
                                             {isSaving ? (

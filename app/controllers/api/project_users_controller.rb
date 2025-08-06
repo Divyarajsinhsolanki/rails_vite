@@ -48,7 +48,14 @@ class Api::ProjectUsersController < Api::BaseController
   end
 
   def project_user_params
-    params.require(:project_user).permit(:project_id, :user_id, :role, :status)
+    params.require(:project_user).permit(
+      :project_id,
+      :user_id,
+      :role,
+      :status,
+      :allocation_percentage,
+      :workload_status
+    )
   end
 
   def serialize_project_user(pu)
@@ -57,7 +64,9 @@ class Api::ProjectUsersController < Api::BaseController
       project_id: pu.project_id,
       user_id: pu.user_id,
       role: pu.role,
-      status: pu.status
+      status: pu.status,
+      allocation_percentage: pu.allocation_percentage,
+      workload_status: pu.workload_status
     }
   end
 end
