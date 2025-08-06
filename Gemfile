@@ -78,7 +78,6 @@ gem "ruby-openai", "~> 5.0"
 gem 'faraday', '~> 2.7'
 gem 'jwt'
 gem 'bcrypt'
-gem 'stripe'
 gem 'rqrcode'
 gem 'dotenv-rails', groups: [:development, :test]
 
