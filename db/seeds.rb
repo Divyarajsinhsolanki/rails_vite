@@ -28,3 +28,32 @@ end
 ].each do |name|
   Project.find_or_create_by!(name: name)
 end
+
+# Default Work Priorities
+[
+  { name: 'High', color: 'bg-red-500', hex: '#ef4444' },
+  { name: 'Medium', color: 'bg-yellow-500', hex: '#f59e0b' },
+  { name: 'Low', color: 'bg-green-500', hex: '#10b981' }
+].each do |priority|
+  WorkPriority.find_or_create_by!(name: priority[:name]) do |p|
+    p.color = priority[:color]
+    p.hex = priority[:hex]
+  end
+end
+
+# Default Work Categories
+[
+  { name: 'Development', color: 'bg-blue-500', hex: '#3b82f6' },
+  { name: 'Meeting', color: 'bg-green-500', hex: '#22c55e' },
+  { name: 'Research', color: 'bg-purple-500', hex: '#a855f7' },
+  { name: 'Design', color: 'bg-pink-500', hex: '#ec4899' },
+  { name: 'Code Review', color: 'bg-indigo-500', hex: '#6366f1' },
+  { name: 'Break', color: 'bg-yellow-500', hex: '#eab308' },
+  { name: 'Learning', color: 'bg-teal-500', hex: '#14b8a6' },
+  { name: 'Planning', color: 'bg-amber-500', hex: '#f59e0b' }
+].each do |category|
+  WorkCategory.find_or_create_by!(name: category[:name]) do |c|
+    c.color = category[:color]
+    c.hex = category[:hex]
+  end
+end

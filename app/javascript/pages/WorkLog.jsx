@@ -42,23 +42,6 @@ const SHORT_BREAK_DURATION = 5; // minutes
 const LONG_BREAK_DURATION = 15; // minutes
 const POMODOROS_FOR_LONG_BREAK = 4;
 
-const PRIORITY_OPTIONS = [
-  { id: 'low', name: 'Low', color: 'bg-green-500', hex: '#10b981' },
-  { id: 'medium', name: 'Medium', color: 'bg-yellow-500', hex: '#f59e0b' },
-  { id: 'high', name: 'High', color: 'bg-red-500', hex: '#ef4444' }
-];
-
-const CATEGORIES = [
-  { id: 'development', name: 'Development', color: 'bg-blue-500', hex: '#3b82f6' },
-  { id: 'meeting', name: 'Meeting', color: 'bg-green-500', hex: '#22c55e' },
-  { id: 'research', name: 'Research', color: 'bg-purple-500', hex: '#a855f7' },
-  { id: 'design', name: 'Design', color: 'bg-pink-500', hex: '#ec4899' },
-  { id: 'review', name: 'Code Review', color: 'bg-indigo-500', hex: '#6366f1' },
-  { id: 'break', name: 'Break', color: 'bg-yellow-500', hex: '#eab308' },
-  { id: 'learning', name: 'Learning', color: 'bg-teal-500', hex: '#14b8a6' },
-  { id: 'planning', name: 'Planning', color: 'bg-amber-500', hex: '#f59e0b' },
-];
-
 // --- Reusable Components ---
 const Modal = ({ children, isOpen, onClose }) => (
   <AnimatePresence>
@@ -87,6 +70,8 @@ const Modal = ({ children, isOpen, onClose }) => (
 // --- Main WorkLog Component ---
 const WorkLog = () => {
   // --- State Management ---
+  const [priorities, setPriorities] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [tasks, setTasks] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -135,6 +120,16 @@ const WorkLog = () => {
   }, []);
 
   useEffect(() => {
+    fetch('/api/work_priorities')
+      .then(res => res.json())
+      .then(data => setPriorities(data.sort((a, b) => a.id - b.id)));
+
+    fetch('/api/work_categories')
+      .then(res => res.json())
+      .then(data => setCategories(data.sort((a, b) => a.id - b.id)));
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem('worklog-tasks', JSON.stringify(tasks));
     localStorage.setItem('worklog-notes', dailyNote);
     localStorage.setItem('worklog-tags', JSON.stringify(tags));
@@ -173,25 +168,30 @@ const WorkLog = () => {
   }, [pomodoroState.isActive]);
 
   // --- Memoized Calculations ---
+  const priorityOrder = useMemo(() => (
+    priorities.reduce((acc, p, index) => {
+      acc[p.id] = index + 1;
+      return acc;
+    }, {})
+  ), [priorities]);
+
   const currentTasks = useMemo(() => {
-    let filtered = tasks.filter(task => 
+    let filtered = tasks.filter(task =>
       isSameDay(task.date, selectedDate) &&
       (filter.categories.length === 0 || filter.categories.includes(task.category)) &&
       (filter.priorities.length === 0 || filter.priorities.includes(task.priority)) &&
       (filter.tags.length === 0 || filter.tags.some(tag => task.tags?.includes(tag)))
     );
-    
+
     return filtered.sort((a, b) => {
-      // Sort by priority: high > medium > low
-      const priorityOrder = { high: 1, medium: 2, low: 3 };
       if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
         return priorityOrder[a.priority] - priorityOrder[b.priority];
       }
-      
+
       // Then by start time
       return a.startTime.localeCompare(b.startTime);
     });
-  }, [tasks, selectedDate, filter]);
+  }, [tasks, selectedDate, filter, priorityOrder]);
 
   const timeSummary = useMemo(() => {
     const summary = {
@@ -200,9 +200,12 @@ const WorkLog = () => {
       byPriority: {},
       productiveMinutes: 0
     };
-    
-    CATEGORIES.forEach(cat => summary.byCategory[cat.id] = 0);
-    PRIORITY_OPTIONS.forEach(pri => summary.byPriority[pri.id] = 0);
+
+    const breakCategory = categories.find(c => c.name === 'Break');
+    const breakCategoryId = breakCategory ? breakCategory.id : null;
+
+    categories.forEach(cat => summary.byCategory[cat.id] = 0);
+    priorities.forEach(pri => summary.byPriority[pri.id] = 0);
     
     currentTasks.forEach(task => {
       const start = parse(task.startTime, 'HH:mm', new Date());
@@ -215,9 +218,9 @@ const WorkLog = () => {
         summary.totalMinutes += duration;
         summary.byCategory[task.category] = (summary.byCategory[task.category] || 0) + duration;
         summary.byPriority[task.priority] = (summary.byPriority[task.priority] || 0) + duration;
-        
+
         // Only count non-break tasks as productive
-        if (task.category !== 'break') {
+        if (task.category !== breakCategoryId) {
           summary.productiveMinutes += duration;
         }
       }
@@ -229,7 +232,7 @@ const WorkLog = () => {
     setProductivityScore(score);
     
     return summary;
-  }, [currentTasks]);
+  }, [currentTasks, categories, priorities]);
 
   const weeklySummary = useMemo(() => {
     const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
@@ -288,7 +291,7 @@ const WorkLog = () => {
         createdAt: now,
         updatedAt: now,
         actualMinutes: 0,
-        priority: taskData.priority || 'medium',
+        priority: taskData.priority || priorities[0]?.id,
         tags: taskData.tags || []
       }]);
     }
@@ -362,13 +365,15 @@ const WorkLog = () => {
       const startTime = format(now, 'HH:mm');
       const endTime = format(addMinutes(now, breakDuration), 'HH:mm');
       
+      const breakCat = categories.find(c => c.name === 'Break');
+      const lowPriority = priorities.find(p => p.name === 'Low');
       handleSaveTask({
         title: `${nextMode === 'shortBreak' ? 'Short' : 'Long'} Break`,
         description: `Pomodoro break after ${newCount} work sessions`,
         startTime,
         endTime,
-        category: 'break',
-        priority: 'low'
+        category: breakCat?.id,
+        priority: lowPriority?.id
       });
     } else {
       setPomodoroState({
@@ -500,10 +505,10 @@ const WorkLog = () => {
               onReset={resetPomodoro}
             />
             
-            <TimeSummaryWidget 
+            <TimeSummaryWidget
               timeSummary={timeSummary}
-              categories={CATEGORIES}
-              priorities={PRIORITY_OPTIONS}
+              categories={categories}
+              priorities={priorities}
               weeklySummary={weeklySummary}
               viewMode={viewMode}
             />
@@ -518,20 +523,20 @@ const WorkLog = () => {
           
           {/* Right Column - Timeline */}
           <section className="lg:col-span-2">
-            <FilterWidget 
-              categories={CATEGORIES}
-              priorities={PRIORITY_OPTIONS}
+            <FilterWidget
+              categories={categories}
+              priorities={priorities}
               tags={tags}
               filter={filter}
               onToggleFilter={toggleFilter}
               onClearFilters={clearFilters}
             />
             
-            <TimelineView 
+            <TimelineView
               tasks={currentTasks}
               selectedDate={selectedDate}
-              categories={CATEGORIES}
-              priorities={PRIORITY_OPTIONS}
+              categories={categories}
+              priorities={priorities}
               onAddTask={() => openForm()}
               onEditTask={openForm}
               onDeleteTask={handleDelete}
@@ -545,13 +550,13 @@ const WorkLog = () => {
           </section>
         </main>
         
-        <TaskFormModal 
-          isOpen={showForm} 
+        <TaskFormModal
+          isOpen={showForm}
           onClose={closeForm}
           onSave={handleSaveTask}
           task={editingTask}
-          categories={CATEGORIES}
-          priorities={PRIORITY_OPTIONS}
+          categories={categories}
+          priorities={priorities}
           lastTaskEnd={currentTasks[currentTasks.length - 1]?.endTime}
           tags={tags}
           setTags={setTags}
@@ -1152,8 +1157,8 @@ const TaskFormModal = ({
         description: '',
         startTime: defaultStartTime,
         endTime: defaultEndTime,
-        category: 'development',
-        priority: 'medium',
+        category: categories[0]?.id,
+        priority: priorities[0]?.id,
         tags: []
       });
     }
@@ -1238,10 +1243,10 @@ const TaskFormModal = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-              <select 
-                name="category" 
-                value={formState.category || 'development'} 
-                onChange={handleChange} 
+              <select
+                name="category"
+                value={formState.category || categories[0]?.id}
+                onChange={handleChange}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
               >
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -1249,10 +1254,10 @@ const TaskFormModal = ({
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-              <select 
-                name="priority" 
-                value={formState.priority || 'medium'} 
-                onChange={handleChange} 
+              <select
+                name="priority"
+                value={formState.priority || priorities[0]?.id}
+                onChange={handleChange}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
               >
                 {priorities.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -1355,8 +1360,8 @@ const getSampleTasks = () => {
       description: 'Daily team progress check-in.', 
       startTime: '09:00', 
       endTime: '09:30', 
-      category: 'meeting', 
-      priority: 'medium',
+      category: 2,
+      priority: 2,
       date: today,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -1369,8 +1374,8 @@ const getSampleTasks = () => {
       description: 'Build the frontend for the user profile section.', 
       startTime: '09:30', 
       endTime: '12:00', 
-      category: 'development', 
-      priority: 'high',
+      category: 1,
+      priority: 1,
       date: today,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -1383,8 +1388,8 @@ const getSampleTasks = () => {
       description: 'Time to eat!', 
       startTime: '12:00', 
       endTime: '13:00', 
-      category: 'break', 
-      priority: 'low',
+      category: 6,
+      priority: 3,
       date: today,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -1397,8 +1402,8 @@ const getSampleTasks = () => {
       description: 'Create high-fidelity mockups in Figma.', 
       startTime: '13:00', 
       endTime: '15:00', 
-      category: 'design', 
-      priority: 'medium',
+      category: 4,
+      priority: 2,
       date: today,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -1411,8 +1416,8 @@ const getSampleTasks = () => {
       description: 'Code review for the new API integration.', 
       startTime: '15:00', 
       endTime: '15:30', 
-      category: 'review', 
-      priority: 'high',
+      category: 5,
+      priority: 1,
       date: today,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -1425,8 +1430,8 @@ const getSampleTasks = () => {
       description: 'Evaluate options like Zustand and Jotai.', 
       startTime: '10:00', 
       endTime: '12:30', 
-      category: 'research', 
-      priority: 'medium',
+      category: 3,
+      priority: 2,
       date: yesterday,
       createdAt: new Date(),
       updatedAt: new Date(),
