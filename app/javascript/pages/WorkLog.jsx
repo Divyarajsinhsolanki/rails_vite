@@ -242,14 +242,18 @@ const WorkLog = () => {
       return acc;
     }, {})
   ), [priorities]);
-
-  const currentTasks = useMemo(() => {
-    let filtered = tasks.filter(task =>
-      isSameDay(task.date, selectedDate) &&
+  const filteredTasks = useMemo(() => {
+    return tasks.filter(task =>
       (filter.categories.length === 0 || filter.categories.includes(task.category)) &&
       (filter.priorities.length === 0 || filter.priorities.includes(task.priority)) &&
       (filter.tags.length === 0 || filter.tags.some(tag => task.tags?.includes(tag)))
     );
+  }, [tasks, filter]);
+
+  const currentTasks = useMemo(() => {
+    let filtered = viewMode === 'weekly'
+      ? filteredTasks
+      : filteredTasks.filter(task => isSameDay(task.date, selectedDate));
 
     return filtered.sort((a, b) => {
       if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
@@ -259,7 +263,7 @@ const WorkLog = () => {
       // Then by start time
       return a.startTime.localeCompare(b.startTime);
     });
-  }, [tasks, selectedDate, filter, priorityOrder]);
+  }, [filteredTasks, viewMode, selectedDate, priorityOrder]);
 
   const timeSummary = useMemo(() => {
     const summary = {
@@ -308,9 +312,9 @@ const WorkLog = () => {
       start: weekStart,
       end: addDays(weekStart, 6)
     });
-    
+
     return weekDays.map(day => {
-      const dayTasks = tasks.filter(task => isSameDay(task.date, day));
+      const dayTasks = filteredTasks.filter(task => isSameDay(task.date, day));
       const minutes = dayTasks.reduce((total, task) => {
         const start = parse(task.startTime, 'HH:mm', new Date());
         const end = parse(task.endTime, 'HH:mm', new Date());
@@ -318,14 +322,14 @@ const WorkLog = () => {
         if (duration < 0) duration += 24 * 60;
         return total + duration;
       }, 0);
-      
+
       return {
         date: day,
         minutes,
         dayName: format(day, 'EEE')
       };
     });
-  }, [tasks, selectedDate]);
+  }, [filteredTasks, selectedDate]);
 
   // --- Handlers ---
   const handleDateChange = useCallback((days) => {
@@ -462,7 +466,7 @@ const WorkLog = () => {
     }
   };
   
-  const getTasksForDate = (date) => tasks.filter(task => isSameDay(task.date, date));
+  const getTasksForDate = (date) => filteredTasks.filter(task => isSameDay(task.date, date));
   
   const toggleFilter = (type, value) => {
     setFilter(prev => {
