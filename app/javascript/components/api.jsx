@@ -125,6 +125,20 @@ export const updateProjectUser = (id, data) => api.patch(`/project_users/${id}.j
 export const deleteProjectUser = (id) => api.delete(`/project_users/${id}.json`);
 export const leaveProject = (projectId) => api.delete(`/project_users/leave/${projectId}.json`);
 
+// WORK LOG ENDPOINTS
+export const fetchWorkPriorities = () => api.get('/work_priorities');
+export const fetchWorkCategories = () => api.get('/work_categories');
+export const fetchWorkTags = () => api.get('/work_tags');
+
+export const getWorkLogs = (params = {}) => api.get('/work_logs', { params });
+export const createWorkLog = (data) => api.post('/work_logs', { work_log: data });
+export const updateWorkLog = (id, data) => api.put(`/work_logs/${id}`, { work_log: data });
+export const deleteWorkLog = (id) => api.delete(`/work_logs/${id}`);
+
+export const getWorkNote = (date) => api.get('/work_notes', { params: { date } });
+export const createWorkNote = (data) => api.post('/work_notes', { work_note: data });
+export const updateWorkNote = (id, data) => api.put(`/work_notes/${id}`, { work_note: data });
+
 export const getTables = () => api.get('/admin/tables');
 export const getMeta = (table) => api.get(`/admin_meta/${table}`);
 export const getRecords = (table) => api.get(`/admin/${table}`);
