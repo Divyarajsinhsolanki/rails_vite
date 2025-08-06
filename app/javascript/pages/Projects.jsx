@@ -724,7 +724,7 @@ const Projects = () => {
 
                                 {/* Add Member Form */}
                                 {canManageMembers && (
-                                    <form onSubmit={handleAddMember} className="mt-8 pt-6 border-t border-gray-200 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                                    <form onSubmit={handleAddMember} className="mt-8 pt-6 border-t border-gray-200 grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
                                         <div className="md:col-span-2">
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Select Users to Add</label>
                                             <UserMultiSelect
@@ -779,7 +779,7 @@ const Projects = () => {
                                         </div>
                                         <button
                                             type="submit"
-                                            className="md:col-span-5 lg:col-span-1 px-5 py-2.5 bg-[var(--theme-color)] text-white rounded-lg hover:brightness-110 transition-colors font-semibold shadow-md flex items-center justify-center gap-2 active:scale-95 transform mt-4 md:mt-0"
+                                            className="md:col-span-1 px-5 py-2.5 bg-[var(--theme-color)] text-white rounded-lg hover:brightness-110 transition-colors font-semibold shadow-md flex items-center justify-center gap-2 whitespace-nowrap active:scale-95 transform mt-4 md:mt-0"
                                             disabled={isSaving || selectedUsersToAdd.length === 0}
                                         >
                                             {isSaving ? (
