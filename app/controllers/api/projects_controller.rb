@@ -71,7 +71,9 @@ class Api::ProjectsController < Api::BaseController
           profile_picture: pu.user.profile_picture.attached? ?
             rails_blob_url(pu.user.profile_picture, only_path: true) : nil,
           role: pu.role,
-          status: pu.status
+          status: pu.status,
+          allocation_percentage: pu.allocation_percentage,
+          workload_status: pu.workload_status
         }
       end
     }

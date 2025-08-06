@@ -81,6 +81,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_01_010400) do
     t.bigint "user_id", null: false
     t.string "role", default: "collaborator", null: false
     t.string "status", default: "active", null: false
+    t.integer "allocation_percentage", default: 0, null: false
+    t.string "workload_status", default: "partial", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["project_id", "user_id"], name: "index_project_users_on_project_id_and_user_id", unique: true
