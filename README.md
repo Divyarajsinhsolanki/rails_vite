@@ -1,15 +1,13 @@
 # Rails + Vite Sample Application
 
-This project demonstrates how to combine **Ruby on Rails** with **React** using [vite-plugin-ruby](https://github.com/vite-ruby/vite_ruby). It includes PDF editing endpoints, JWT based authentication via Devise, and a small event booking feature powered by Stripe.
+This application showcases how to build a modern React front end on top of a Ruby on Rails API using the [vite-plugin-ruby](https://github.com/vite-ruby/vite_ruby). It includes PDF editing endpoints, JWT based authentication via Devise and a small example of reading data from Google Sheets.
 
 ## Requirements
 
-- **Ruby** `3.3.0`
-- **Node** `20.18.0`
-- **Yarn** `1.22`
-- **PostgreSQL**
-
-Ensure these versions are available on your machine or use the provided `Dockerfile`.
+- Ruby 3.3.0
+- Node 20.18.0
+- Yarn 1.22
+- PostgreSQL
 
 ## Setup
 
@@ -19,103 +17,42 @@ Ensure these versions are available on your machine or use the provided `Dockerf
    bin/setup
    ```
 
-   This script runs `bundle install`, `yarn install`, prepares the database and clears logs.
-
-2. Copy `.env.example` to `.env` and fill in your SMTP credentials:
+2. Configure environment variables:
 
    ```bash
    cp .env.example .env
-   # edit .env with your mail server details
+   # edit .env
    ```
 
-3. Create and migrate the database:
+3. Create the database, run migrations and load the seed data:
 
    ```bash
-   bin/rails db:create db:migrate
+   bin/rails db:create db:migrate db:seed
    ```
 
-4. Start the application in development:
+4. Start the application:
 
    ```bash
    bin/dev
    ```
 
-   This runs `bin/rails` and the Vite dev server together via `Procfile.dev`.
+The Rails server and Vite development server will run together.
 
-## Features
+## Purpose
 
-- **PDF manipulation** – endpoints allow uploading a PDF, adding pages or text, rotating, merging and more. See `PdfsController` and `PdfModifiersController` for details.
-- **Authentication** – JWT based login, signup and refresh handled in `Api::AuthController`.
+The project serves as a learning playground and starting point for applications that need a Rails backend and a React front end bundled through Vite. It demonstrates PDF manipulation, token based authentication and external API integrations.
 
-## Example Endpoints
+## Tests
 
-```ruby
-# Add text to a PDF
-# ...app/controllers/pdf_modifiers_controller.rb
-```
-
-The PDF controller exposes actions like `add_text`, `add_page`, `remove_page`, and others.
-
-```ruby
-# User signup/login
-# ...app/controllers/api/auth_controller.rb
-```
-
-Authentication actions provide JWT cookies for the API.
-
-## Running tests
-
-This project does not include an automated test suite.
+This repository does not include an automated test suite.
 
 ## Deployment
 
-For production builds, precompile assets with Vite and run Rails:
+For production builds:
 
 ```bash
 RAILS_ENV=production bin/vite build
 bin/rails assets:precompile
 ```
 
-You can also build the Docker image using the provided `Dockerfile`.
-
-### Running with Docker Compose
-
-To run the app and a PostgreSQL database locally, use the included
-`docker-compose.yml`:
-
-```bash
-docker compose build
-docker compose up
-```
-
-### Deploying to Render
-
-Render requires precompiling the Vite assets during the build phase. Use the
-included script as your **Build Command**. It installs dependencies and
-precompiles assets, so it's safe to reuse in container builds like Docker:
-
-```bash
-./bin/render-build
-```
-
-Then set the **Start Command** to launch Rails:
-
-```bash
-bundle exec rails server
-```
-
-The web service loads environment variables from `.env`. The database service
-stores its data in the `db-data` volume.
-
-## Google Sheets Integration
-
-The app includes a small example page that reads data from a Google Sheet using
-a service account. To configure it:
-
-1. Add the service account JSON key to `config/google_service_account.json` (the
-   file is ignored by Git).
-2. Set the `sheet_id` column on each project record to the Google Sheet ID you
-   want to use for imports and exports.
-3. Visit `/sheet` in your browser to see the raw rows rendered in a table. Pass
-   `?sheet=TabName` to view a specific tab.
-
+A `Dockerfile` and `docker-compose.yml` are provided for containerized environments.
