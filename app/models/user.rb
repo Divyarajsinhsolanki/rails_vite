@@ -12,6 +12,7 @@ class User < ApplicationRecord
   has_many :tasks, foreign_key: :assigned_to_user
   has_many :items
   has_many :work_logs, dependent: :destroy
+  has_many :work_notes, dependent: :destroy
   has_many :team_users, dependent: :destroy
   has_many :teams, through: :team_users
   has_many :user_roles, dependent: :destroy

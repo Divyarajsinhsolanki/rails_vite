@@ -86,6 +86,7 @@ Rails.application.routes.draw do
     resources :work_priorities, only: [:index, :create, :update, :destroy]
     resources :work_tags, only: [:index, :create, :update, :destroy]
     resources :work_logs, only: [:index, :create, :update, :destroy]
+    resources :work_notes, only: [:index, :create, :update, :destroy]
 
 
     resources :contacts, only: [:create]

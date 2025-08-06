@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { 
-  format, startOfDay, endOfDay, addDays, isSameDay, getDay, startOfWeek, parse, 
-  differenceInMinutes, addMinutes, isBefore, isAfter, eachDayOfInterval, startOfMonth, 
+  format, startOfDay, endOfDay, addDays, isSameDay, getDay, startOfWeek, endOfWeek, parse,
+  differenceInMinutes, addMinutes, isBefore, isAfter, eachDayOfInterval, startOfMonth,
   endOfMonth, eachWeekOfInterval, isSameMonth, isSameWeek
 } from 'date-fns';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js';
@@ -88,6 +88,7 @@ const WorkLog = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [dailyNote, setDailyNote] = useState('');
+  const [noteId, setNoteId] = useState(null);
   const [activeTimer, setActiveTimer] = useState(null);
   const [pomodoroState, setPomodoroState] = useState({
     mode: 'work',
@@ -96,7 +97,7 @@ const WorkLog = () => {
     isActive: false
   });
   const [isExpandedView, setIsExpandedView] = useState(false);
-  const [tags, setTags] = useState(['Frontend', 'Backend', 'API', 'UI/UX', 'Bug']);
+  const [tags, setTags] = useState([]);
   const [productivityScore, setProductivityScore] = useState(0);
   const [activeTaskId, setActiveTaskId] = useState(null);
   const [viewMode, setViewMode] = useState('daily'); // 'daily' or 'weekly'
@@ -109,27 +110,22 @@ const WorkLog = () => {
   const timerRef = useRef(null);
   const pomodoroRef = useRef(null);
 
-  // --- Data Persistence ---
-  useEffect(() => {
-    const storedTasks = localStorage.getItem('worklog-tasks');
-    const storedNotes = localStorage.getItem('worklog-notes');
-    const storedTags = localStorage.getItem('worklog-tags');
-    
-    if (storedTasks) {
-      setTasks(JSON.parse(storedTasks).map(task => ({
-        ...task,
-        date: new Date(task.date),
-        createdAt: task.createdAt ? new Date(task.createdAt) : new Date(),
-        updatedAt: task.updatedAt ? new Date(task.updatedAt) : new Date(),
-      })));
-    } else {
-      setTasks(getSampleTasks());
-    }
-    
-    if (storedNotes) setDailyNote(storedNotes);
-    if (storedTags) setTags(JSON.parse(storedTags));
-  }, []);
+  const formatLog = (log) => ({
+    id: log.id,
+    title: log.title,
+    description: log.description,
+    startTime: format(new Date(log.start_time), 'HH:mm'),
+    endTime: format(new Date(log.end_time), 'HH:mm'),
+    category: log.category?.id,
+    priority: log.priority?.id,
+    date: new Date(log.log_date),
+    createdAt: new Date(log.created_at),
+    updatedAt: new Date(log.updated_at),
+    actualMinutes: log.actual_minutes || 0,
+    tags: (log.tags || []).map(t => t.name)
+  });
 
+  // --- Data Fetching ---
   useEffect(() => {
     fetch('/api/work_priorities')
       .then(res => res.json())
@@ -138,23 +134,74 @@ const WorkLog = () => {
     fetch('/api/work_categories')
       .then(res => res.json())
       .then(data => setCategories(data.sort((a, b) => a.id - b.id)));
+
+    fetch('/api/work_tags')
+      .then(res => res.json())
+      .then(data => setTags(data.map(t => t.name)));
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('worklog-tasks', JSON.stringify(tasks));
-    localStorage.setItem('worklog-notes', dailyNote);
-    localStorage.setItem('worklog-tags', JSON.stringify(tags));
-  }, [tasks, dailyNote, tags]);
+    const fetchData = async () => {
+      let url = `/api/work_logs?date=${format(selectedDate, 'yyyy-MM-dd')}`;
+      if (viewMode === 'weekly') {
+        const from = format(startOfWeek(selectedDate), 'yyyy-MM-dd');
+        const to = format(endOfWeek(selectedDate), 'yyyy-MM-dd');
+        url = `/api/work_logs?from=${from}&to=${to}`;
+      }
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        setTasks(data.map(formatLog));
+      }
+
+      const noteRes = await fetch(`/api/work_notes?date=${format(selectedDate, 'yyyy-MM-dd')}`);
+      if (noteRes.ok) {
+        const noteData = await noteRes.json();
+        setDailyNote(noteData.content || '');
+        setNoteId(noteData.id || null);
+      }
+    };
+    fetchData();
+  }, [selectedDate, viewMode]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const payload = { note_date: format(selectedDate, 'yyyy-MM-dd'), content: dailyNote };
+      if (noteId) {
+        fetch(`/api/work_notes/${noteId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ work_note: payload })
+        });
+      } else if (dailyNote.trim() !== '') {
+        fetch('/api/work_notes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ work_note: payload })
+        })
+          .then(res => res.json())
+          .then(data => setNoteId(data.id));
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [dailyNote, selectedDate]);
 
   // --- Timer Effects ---
   useEffect(() => {
     if (activeTimer) {
       timerRef.current = setInterval(() => {
-        setTasks(prev => prev.map(task => 
-          task.id === activeTimer.taskId 
-            ? { ...task, actualMinutes: task.actualMinutes + 1 } 
-            : task
-        ));
+        setTasks(prev => prev.map(task => {
+          if (task.id === activeTimer.taskId) {
+            const updated = { ...task, actualMinutes: task.actualMinutes + 1 };
+            fetch(`/api/work_logs/${task.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ work_log: { actual_minutes: updated.actualMinutes } })
+            });
+            return updated;
+          }
+          return task;
+        }));
       }, 60000); // Update every minute
     }
     
@@ -285,31 +332,44 @@ const WorkLog = () => {
     setEditingTask(null);
   };
 
-  const handleSaveTask = (taskData) => {
-    const now = new Date();
-    
+  const handleSaveTask = async (taskData) => {
+    const payload = {
+      title: taskData.title,
+      description: taskData.description,
+      log_date: format(selectedDate, 'yyyy-MM-dd'),
+      start_time: taskData.startTime,
+      end_time: taskData.endTime,
+      category_id: taskData.category,
+      priority_id: taskData.priority,
+      tags: taskData.tags || []
+    };
+
     if (editingTask) {
-      setTasks(tasks.map(t => 
-        t.id === editingTask.id 
-          ? { ...t, ...taskData, updatedAt: now } 
-          : t
-      ));
+      const res = await fetch(`/api/work_logs/${editingTask.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ work_log: payload })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTasks(tasks.map(t => t.id === data.id ? formatLog(data) : t));
+      }
     } else {
-      setTasks([...tasks, { 
-        id: Date.now(), 
-        ...taskData, 
-        date: selectedDate,
-        createdAt: now,
-        updatedAt: now,
-        actualMinutes: 0,
-        priority: taskData.priority || priorities[0]?.id,
-        tags: taskData.tags || []
-      }]);
+      const res = await fetch('/api/work_logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ work_log: payload })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTasks([...tasks, formatLog(data)]);
+      }
     }
     closeForm();
   };
 
-  const handleDelete = (taskId) => {
+  const handleDelete = async (taskId) => {
+    await fetch(`/api/work_logs/${taskId}`, { method: 'DELETE' });
     setTasks(tasks.filter(task => task.id !== taskId));
     if (activeTimer?.taskId === taskId) {
       stopTimer();
@@ -322,6 +382,16 @@ const WorkLog = () => {
   };
   
   const stopTimer = () => {
+    if (activeTimer) {
+      const task = tasks.find(t => t.id === activeTimer.taskId);
+      if (task) {
+        fetch(`/api/work_logs/${task.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ work_log: { actual_minutes: task.actualMinutes } })
+        });
+      }
+    }
     setActiveTimer(null);
     setActiveTaskId(null);
   };
@@ -1372,97 +1442,5 @@ const TaskFormModal = ({
 };
 
 // --- Helper Functions ---
-const getSampleTasks = () => {
-  const today = new Date();
-  const yesterday = addDays(today, -1);
-  
-  return [
-    { 
-      id: 1, 
-      title: 'Morning Standup & Sync', 
-      description: 'Daily team progress check-in.', 
-      startTime: '09:00', 
-      endTime: '09:30', 
-      category: 2,
-      priority: 2,
-      date: today,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      actualMinutes: 30,
-      tags: ['Team', 'Sync']
-    },
-    { 
-      id: 2, 
-      title: 'Implement User Profile Page', 
-      description: 'Build the frontend for the user profile section.', 
-      startTime: '09:30', 
-      endTime: '12:00', 
-      category: 1,
-      priority: 1,
-      date: today,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      actualMinutes: 120,
-      tags: ['Frontend', 'React']
-    },
-    { 
-      id: 3, 
-      title: 'Lunch Break', 
-      description: 'Time to eat!', 
-      startTime: '12:00', 
-      endTime: '13:00', 
-      category: 6,
-      priority: 3,
-      date: today,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      actualMinutes: 60,
-      tags: []
-    },
-    { 
-      id: 4, 
-      title: 'Design Auth Flow Mockups', 
-      description: 'Create high-fidelity mockups in Figma.', 
-      startTime: '13:00', 
-      endTime: '15:00', 
-      category: 4,
-      priority: 2,
-      date: today,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      actualMinutes: 90,
-      tags: ['UI/UX', 'Figma']
-    },
-    { 
-      id: 5, 
-      title: 'Review PR #112', 
-      description: 'Code review for the new API integration.', 
-      startTime: '15:00', 
-      endTime: '15:30', 
-      category: 5,
-      priority: 1,
-      date: today,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      actualMinutes: 30,
-      tags: ['Backend', 'Code Review']
-    },
-    { 
-      id: 6, 
-      title: 'Research State Management Libraries', 
-      description: 'Evaluate options like Zustand and Jotai.', 
-      startTime: '10:00', 
-      endTime: '12:30', 
-      category: 3,
-      priority: 2,
-      date: yesterday,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      actualMinutes: 150,
-      tags: ['Frontend', 'Research']
-    },
-  ];
-};
-
 export default WorkLog;
 
