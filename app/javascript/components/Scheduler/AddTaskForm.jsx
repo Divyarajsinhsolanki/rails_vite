@@ -46,8 +46,12 @@ export default function AddTaskForm({developers, dates, types, tasks, onAddTask}
     setTaskQuery('');
   };
 
+  // Safely match tasks that may not have a task_id
   const filteredTasks = tasks.filter(t =>
-    t.task_id.toLowerCase().includes(taskQuery.toLowerCase())
+    (t.task_id ?? '')
+      .toString()
+      .toLowerCase()
+      .includes(taskQuery.toLowerCase())
   );
 
   return (
