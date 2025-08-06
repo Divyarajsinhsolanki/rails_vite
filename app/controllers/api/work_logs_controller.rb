@@ -11,7 +11,7 @@ class Api::WorkLogsController < Api::BaseController
   end
 
   def create
-    log = current_user.work_logs.new(work_log_params)
+    log = current_user.work_logs.new(work_log_params.except(:tags))
     assign_tags(log)
     if log.save
       render json: serialize_log(log), status: :created
@@ -22,7 +22,7 @@ class Api::WorkLogsController < Api::BaseController
 
   def update
     assign_tags(@work_log)
-    if @work_log.update(work_log_params)
+    if @work_log.update(work_log_params.except(:tags))
       render json: serialize_log(@work_log)
     else
       render json: { errors: @work_log.errors.full_messages }, status: :unprocessable_entity
@@ -41,11 +41,21 @@ class Api::WorkLogsController < Api::BaseController
   end
 
   def work_log_params
-    params.require(:work_log).permit(:title, :description, :log_date, :start_time, :end_time, :category_id, :priority_id, :actual_minutes)
+    params.require(:work_log).permit(
+      :title,
+      :description,
+      :log_date,
+      :start_time,
+      :end_time,
+      :category_id,
+      :priority_id,
+      :actual_minutes,
+      tags: []
+    )
   end
 
   def assign_tags(log)
-    names = params[:work_log][:tags] || []
+    names = work_log_params[:tags] || []
     log.tags = names.map { |n| WorkTag.find_or_create_by(name: n) }
   end
 
