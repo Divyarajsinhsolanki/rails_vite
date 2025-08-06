@@ -364,12 +364,12 @@ const Vault = () => {
             {renderItemMenu(item)}
           </div>
           
-          <div className="mt-2 relative">
-            <pre className="bg-gray-50 p-3 rounded-md whitespace-pre-wrap break-words font-mono text-sm">
+          <div className="mt-2 flex items-start">
+            <pre className="flex-grow bg-gray-50 p-3 rounded-md whitespace-pre-wrap break-words font-mono text-sm">
               {item.content}
             </pre>
             <button
-              className="absolute top-2 right-2 p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100 relative"
+              className="ml-2 p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100 relative self-start"
               onClick={() => copyText(`content-${item.id}`, item.content)}
               title="Copy"
             >
@@ -407,8 +407,8 @@ const Vault = () => {
             {renderItemMenu(item)}
           </div>
           
-          <div className="mt-2 relative group">
-            <div className="bg-gray-50 p-3 rounded-md whitespace-pre-wrap break-words">
+          <div className="mt-2 flex items-start group">
+            <div className="bg-gray-50 p-3 rounded-md whitespace-pre-wrap break-words flex-grow">
               {item.content.length > 150 ? (
                 <>
                   {item.content.slice(0, 150)}
@@ -419,7 +419,7 @@ const Vault = () => {
               )}
             </div>
             <button
-              className="absolute top-2 right-2 p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity relative"
+              className="ml-2 p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity relative self-start"
               onClick={() => copyText(`content-${item.id}`, item.content)}
               title="Copy"
             >
