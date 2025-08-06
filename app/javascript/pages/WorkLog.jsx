@@ -7,10 +7,10 @@ import {
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js';
 import { Doughnut, Bar } from 'react-chartjs-2';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ClockIcon, 
-  CalendarIcon, 
-  PlusIcon, 
+import {
+  ClockIcon,
+  CalendarIcon,
+  PlusIcon,
   PencilIcon, 
   TrashIcon,
   ChartPieIcon,
@@ -28,10 +28,22 @@ import {
   TagIcon,
   LightBulbIcon
 } from '@heroicons/react/24/outline';
-import { 
+import {
   CheckCircleIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/solid';
+import {
+  fetchWorkPriorities,
+  fetchWorkCategories,
+  fetchWorkTags,
+  getWorkLogs,
+  createWorkLog,
+  updateWorkLog,
+  deleteWorkLog,
+  getWorkNote,
+  createWorkNote,
+  updateWorkNote
+} from '../components/api';
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
@@ -127,60 +139,62 @@ const WorkLog = () => {
 
   // --- Data Fetching ---
   useEffect(() => {
-    fetch('/api/work_priorities')
-      .then(res => res.json())
-      .then(data => setPriorities(data.sort((a, b) => a.id - b.id)));
+    const loadInitialData = async () => {
+      try {
+        const { data: priorityData } = await fetchWorkPriorities();
+        setPriorities(priorityData.sort((a, b) => a.id - b.id));
+      } catch {}
 
-    fetch('/api/work_categories')
-      .then(res => res.json())
-      .then(data => setCategories(data.sort((a, b) => a.id - b.id)));
+      try {
+        const { data: categoryData } = await fetchWorkCategories();
+        setCategories(categoryData.sort((a, b) => a.id - b.id));
+      } catch {}
 
-    fetch('/api/work_tags')
-      .then(res => res.json())
-      .then(data => setTags(data.map(t => t.name)));
+      try {
+        const { data: tagData } = await fetchWorkTags();
+        setTags(tagData.map(t => t.name));
+      } catch {}
+    };
+    loadInitialData();
   }, []);
 
   useEffect(() => {
     const fetchData = async () => {
-      let url = `/api/work_logs?date=${format(selectedDate, 'yyyy-MM-dd')}`;
-      if (viewMode === 'weekly') {
-        const from = format(startOfWeek(selectedDate), 'yyyy-MM-dd');
-        const to = format(endOfWeek(selectedDate), 'yyyy-MM-dd');
-        url = `/api/work_logs?from=${from}&to=${to}`;
-      }
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
+      try {
+        const params = viewMode === 'weekly'
+          ? {
+              from: format(startOfWeek(selectedDate), 'yyyy-MM-dd'),
+              to: format(endOfWeek(selectedDate), 'yyyy-MM-dd')
+            }
+          : { date: format(selectedDate, 'yyyy-MM-dd') };
+        const { data } = await getWorkLogs(params);
         setTasks(data.map(formatLog));
-      }
+      } catch {}
 
-      const noteRes = await fetch(`/api/work_notes?date=${format(selectedDate, 'yyyy-MM-dd')}`);
-      if (noteRes.ok) {
-        const noteData = await noteRes.json();
+      try {
+        const { data: noteData } = await getWorkNote(format(selectedDate, 'yyyy-MM-dd'));
         setDailyNote(noteData.content || '');
         setNoteId(noteData.id || null);
+      } catch {
+        setDailyNote('');
+        setNoteId(null);
       }
     };
     fetchData();
   }, [selectedDate, viewMode]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       const payload = { note_date: format(selectedDate, 'yyyy-MM-dd'), content: dailyNote };
       if (noteId) {
-        fetch(`/api/work_notes/${noteId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ work_note: payload })
-        });
+        try {
+          await updateWorkNote(noteId, payload);
+        } catch {}
       } else if (dailyNote.trim() !== '') {
-        fetch('/api/work_notes', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ work_note: payload })
-        })
-          .then(res => res.json())
-          .then(data => setNoteId(data.id));
+        try {
+          const { data } = await createWorkNote(payload);
+          setNoteId(data.id);
+        } catch {}
       }
     }, 500);
     return () => clearTimeout(timer);
@@ -193,11 +207,7 @@ const WorkLog = () => {
         setTasks(prev => prev.map(task => {
           if (task.id === activeTimer.taskId) {
             const updated = { ...task, actualMinutes: task.actualMinutes + 1 };
-            fetch(`/api/work_logs/${task.id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ work_log: { actual_minutes: updated.actualMinutes } })
-            });
+            updateWorkLog(task.id, { actual_minutes: updated.actualMinutes });
             return updated;
           }
           return task;
@@ -345,31 +355,21 @@ const WorkLog = () => {
     };
 
     if (editingTask) {
-      const res = await fetch(`/api/work_logs/${editingTask.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ work_log: payload })
-      });
-      if (res.ok) {
-        const data = await res.json();
+      try {
+        const { data } = await updateWorkLog(editingTask.id, payload);
         setTasks(tasks.map(t => t.id === data.id ? formatLog(data) : t));
-      }
+      } catch {}
     } else {
-      const res = await fetch('/api/work_logs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ work_log: payload })
-      });
-      if (res.ok) {
-        const data = await res.json();
+      try {
+        const { data } = await createWorkLog(payload);
         setTasks([...tasks, formatLog(data)]);
-      }
+      } catch {}
     }
     closeForm();
   };
 
   const handleDelete = async (taskId) => {
-    await fetch(`/api/work_logs/${taskId}`, { method: 'DELETE' });
+    await deleteWorkLog(taskId);
     setTasks(tasks.filter(task => task.id !== taskId));
     if (activeTimer?.taskId === taskId) {
       stopTimer();
@@ -385,11 +385,7 @@ const WorkLog = () => {
     if (activeTimer) {
       const task = tasks.find(t => t.id === activeTimer.taskId);
       if (task) {
-        fetch(`/api/work_logs/${task.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ work_log: { actual_minutes: task.actualMinutes } })
-        });
+        updateWorkLog(task.id, { actual_minutes: task.actualMinutes });
       }
     }
     setActiveTimer(null);
