@@ -64,6 +64,9 @@ class Api::WorkLogsController < Api::BaseController
       category: { only: [:id, :name, :color, :hex] },
       priority: { only: [:id, :name, :color, :hex] },
       tags: { only: [:id, :name] }
-    })
+    }).merge(
+      start_time: log.start_time&.strftime("%H:%M"),
+      end_time: log.end_time&.strftime("%H:%M")
+    )
   end
 end
