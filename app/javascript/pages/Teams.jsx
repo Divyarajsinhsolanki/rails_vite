@@ -5,6 +5,7 @@ import UserMultiSelect from "../components/UserMultiSelect";
 import { AuthContext } from "../context/AuthContext";
 // Import icons (e.g., from Feather Icons)
 import { FiPlus, FiEdit, FiTrash2, FiUsers, FiSearch, FiUserPlus, FiChevronRight, FiXCircle, FiCheckCircle, FiInfo, FiLoader } from 'react-icons/fi'; // Added more icons
+import TeamSkillsDashboard from "../components/TeamSkillsDashboard";
 
 // --- Utility Components ---
 
@@ -595,6 +596,7 @@ const Teams = () => {
                             )}
                         </div>
                     )}
+                    <TeamSkillsDashboard />
                 </div>
             </main>
 
