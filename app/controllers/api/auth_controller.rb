@@ -138,7 +138,8 @@ class Api::AuthController < Api::BaseController
       :uid,
       :profile_picture,
       :cover_photo,
-      :color_theme
+      :color_theme,
+      :dark_mode
     )
     permitted.delete(:profile_picture) if permitted[:profile_picture] == "null"
     permitted.delete(:cover_photo) if permitted[:cover_photo] == "null"

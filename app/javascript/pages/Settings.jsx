@@ -7,14 +7,15 @@ const Settings = () => {
   const { user, setUser } = useContext(AuthContext);
   const initialColor = COLOR_MAP[user?.color_theme] || user?.color_theme || "#3b82f6";
   const [color, setColor] = useState(initialColor);
+  const [darkMode, setDarkMode] = useState(user?.dark_mode || false);
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await api.post("/update_profile", { auth: { color_theme: color } });
-      setUser((prev) => ({ ...prev, color_theme: color }));
+      await api.post("/update_profile", { auth: { color_theme: color, dark_mode: darkMode } });
+      setUser((prev) => ({ ...prev, color_theme: color, dark_mode: darkMode }));
     } catch (err) {
       console.error("Failed to update color theme", err);
     } finally {
@@ -50,6 +51,18 @@ const Settings = () => {
               ))}
             </div>
           </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            id="dark-mode"
+            type="checkbox"
+            checked={darkMode}
+            onChange={(e) => setDarkMode(e.target.checked)}
+            className="h-4 w-4"
+          />
+          <label htmlFor="dark-mode" className="text-sm font-medium text-gray-700">
+            Dark Mode
+          </label>
         </div>
         <button
           type="submit"
