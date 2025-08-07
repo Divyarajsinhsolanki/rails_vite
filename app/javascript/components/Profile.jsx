@@ -60,8 +60,8 @@ const Profile = () => {
       const { data } = await fetchUserInfo();
       const theme = COLOR_MAP[data.user.color_theme] || data.user.color_theme || '#3b82f6';
       const updatedUser = { ...data.user, color_theme: theme };
-      setUser(updatedUser);
-      setAuthUser(updatedUser);
+      setUser((prev) => ({ ...prev, ...updatedUser }));
+      setAuthUser((prev) => ({ ...(prev || {}), ...updatedUser }));
 
       const basicTeams = Array.isArray(data.teams) ? data.teams : [];
       try {
