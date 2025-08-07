@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import api from "../components/api";
 import { AuthContext } from "../context/AuthContext";
 import { COLOR_MAP } from "/utils/theme";
@@ -9,6 +9,10 @@ const Settings = () => {
   const [color, setColor] = useState(initialColor);
   const [darkMode, setDarkMode] = useState(user?.dark_mode || false);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setDarkMode(user?.dark_mode || false);
+  }, [user?.dark_mode]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
