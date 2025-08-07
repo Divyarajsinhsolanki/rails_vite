@@ -1,9 +1,9 @@
 // src/App.js
 import React, { useState } from 'react';
-import SkillEndorsements from './components/SkillEndorsements';
-import LearningGoals from './components/LearningGoals';
-import TeamSkillMatrix from './components/TeamSkillMatrix';
-import SkillSearch from './components/SkillSearch';
+import SkillEndorsements from '../components/SkillEndorsements';
+import LearningGoals from '../components/LearningGoals';
+import TeamSkillMatrix from '../components/TeamSkillMatrix';
+import SkillSearch from '../components/SkillSearch';
 
 function App() {
   const [activeTab, setActiveTab] = useState('endorsements');
