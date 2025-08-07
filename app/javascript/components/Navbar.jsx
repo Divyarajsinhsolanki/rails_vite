@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState, useRef } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useMatch } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { fetchProjects } from "./api";
 import logo from "../images/logo.webp";
@@ -74,13 +74,14 @@ const HolographicAvatar = ({ user }) => {
 };
 
 // Animated NavLink Component
-const AnimatedNavLink = ({ to, label, icon: Icon }) => {
-  const location = useLocation();
-  const isActive = location.pathname === to;
+const AnimatedNavLink = ({ to, label, icon: Icon, onClick }) => {
+  const match = useMatch({ path: to, end: to === '/' });
+  const isActive = !!match;
 
   return (
     <NavLink
       to={to}
+      onClick={onClick}
       className="relative flex items-center gap-2 px-3 py-2 rounded-lg group"
     >
       <div className={`relative z-10 flex items-center gap-2 ${isActive ? 'text-white' : 'text-zinc-600 dark:text-zinc-300'}`}>
