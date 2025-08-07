@@ -20,6 +20,7 @@ import Vault from "../pages/Vault";
 import Legal from "../pages/Legal";
 import SprintDashboard from "../pages/SprintDashboard";
 import WorkLog from "../pages/WorkLog";
+import Settings from "../pages/Settings";
 
 const App = () => {
   return (
@@ -48,6 +49,7 @@ const App = () => {
               <Route path="/projects/:projectId/dashboard" element={<ProjectMemberRoute><SprintDashboard /></ProjectMemberRoute>} />
               <Route path="/users" element={<PrivateRoute ownerOnly><Users /></PrivateRoute>} />
               <Route path="/admin" element={<PrivateRoute ownerOnly><Admin /></PrivateRoute>} />
+              <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
               </Routes>
 
           {/* ✅ Footer */}
