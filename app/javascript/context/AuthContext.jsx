@@ -20,7 +20,13 @@ export function AuthProvider({ children }) {
     document.documentElement.style.setProperty('--theme-color', color);
     document.documentElement.style.setProperty('--theme-color-rgb', toRgb(color));
     document.documentElement.style.setProperty('--theme-color-light', lightenColor(color));
-  }, [user?.color_theme]);
+
+    if (user?.dark_mode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [user?.color_theme, user?.dark_mode]);
 
   // Clear timer on unmount
   useEffect(() => () => clearTimeout(refreshTimer.current), []);

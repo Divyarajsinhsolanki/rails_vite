@@ -44,7 +44,16 @@ class Api::UsersController < Api::BaseController
   end
 
   def user_params
-    params.require(:user).permit(:first_name, :last_name, :email, :date_of_birth, :profile_picture, :cover_photo)
+    params.require(:user).permit(
+      :first_name,
+      :last_name,
+      :email,
+      :date_of_birth,
+      :profile_picture,
+      :cover_photo,
+      :color_theme,
+      :dark_mode
+    )
   end
 
   def serialize_user(user)
