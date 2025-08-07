@@ -20,7 +20,7 @@ export function AuthProvider({ children }) {
     document.documentElement.style.setProperty('--theme-color', color);
     document.documentElement.style.setProperty('--theme-color-rgb', toRgb(color));
     document.documentElement.style.setProperty('--theme-color-light', lightenColor(color));
-  }, [user]);
+  }, [user?.color_theme]);
 
   // Clear timer on unmount
   useEffect(() => () => clearTimeout(refreshTimer.current), []);
