@@ -57,7 +57,7 @@ export default function KnowledgeDashboard() {
     : cards.filter(card => card.category === activeCategory);
 
   return (
-    <div className="min-h-screen transition-colors duration-300 bg-gray-50 text-gray-900">
+    <div className="min-h-screen transition-colors duration-300 bg-[rgb(var(--theme-color-rgb)/0.1)] text-gray-900">
       {/* Header */}
       <header className="sticky top-0 z-10 backdrop-blur-md bg-white/80 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center">
