@@ -130,7 +130,7 @@ const PostPage = () => {
       setProjects(userProjects);
 
       const taskPromises = userProjects.map(project =>
-        SchedulerAPI.getTasks({ project_id: project.id })
+        SchedulerAPI.getTasks({ project_id: project.id, assigned_to_user: user.id })
           .then(res => ({ project, tasks: res.data }))
           .catch(() => ({ project, tasks: [] }))
       );
