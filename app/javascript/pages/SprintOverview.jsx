@@ -562,10 +562,19 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
             .then(data => {
                 const list = Array.isArray(data) ? data : [];
                 setSprints(list);
-                if (list.length && !sprintId) {
-                    setSelectedSprintId(list[0].id);
-                    if(onSprintChange) onSprintChange(list[0].id);
-                } else if (!list.length) {
+                if (list.length) {
+                    const today = new Date();
+                    const current = list.find(s => {
+                        const start = new Date(s.start_date);
+                        const end = new Date(s.end_date);
+                        return today >= start && today <= end;
+                    }) || list[0];
+                    setSelectedSprintId(prev => {
+                        if (prev !== null) return prev;
+                        if(onSprintChange) onSprintChange(current.id);
+                        return current.id;
+                    });
+                } else {
                     setSelectedSprintId(null);
                     if(onSprintChange) onSprintChange(null);
                 }
