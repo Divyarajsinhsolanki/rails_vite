@@ -181,7 +181,7 @@ const PostPage = () => {
         
         {/* Left Sidebar: At a Glance */}
         <aside className="lg:col-span-3">
-            <div className="space-y-8 sticky top-24">
+            <div className="space-y-8 sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto">
                 <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm">
                     <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                         <FiAlertTriangle className="text-red-500"/>
