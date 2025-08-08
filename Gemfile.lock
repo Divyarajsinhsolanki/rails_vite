@@ -1,3 +1,15 @@
+PATH
+  remote: /home/divyarajs/rails_project/newgems/PdfMaster
+  specs:
+    PdfMaster (0.2.0)
+      combine_pdf (= 1.0.25)
+      hexapdf (~> 0.16)
+      mini_magick (~> 4.11)
+      pdfkit (~> 0.8)
+      prawn (~> 2.4)
+      shellwords
+      wkhtmltopdf-binary (~> 0.12.6)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -425,6 +437,7 @@ PLATFORMS
   x86_64-linux-musl
 
 DEPENDENCIES
+  PdfMaster!
   bcrypt
   bootsnap
   byebug
@@ -453,7 +466,7 @@ DEPENDENCIES
   web-console
 
 RUBY VERSION
-   ruby 3.2.3p0
+   ruby 3.3.0p0
 
 BUNDLED WITH
    2.5.3
