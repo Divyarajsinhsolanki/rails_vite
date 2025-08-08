@@ -484,14 +484,14 @@ const WorkLog = () => {
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 font-sans text-gray-800 p-4 sm:p-6 lg:p-8 ${isExpandedView ? 'fixed inset-0 z-50 bg-white overflow-y-auto' : ''}`}> 
+    <div className={`min-h-screen bg-gradient-to-br from-gray-50 to-[rgb(var(--theme-color-rgb)/0.1)] font-sans text-gray-800 p-4 sm:p-6 lg:p-8 ${isExpandedView ? 'fixed inset-0 z-50 bg-white overflow-y-auto' : ''}`}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <header className="mb-8">
           <div className="flex flex-wrap justify-between items-start gap-4">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3">
-                <SparklesIcon className="h-8 w-8 text-indigo-500"/>
+                <SparklesIcon className="h-8 w-8 text-[var(--theme-color)]"/>
                 Work Log
               </h1>
               <p className="text-gray-500 mt-1">Your personal dashboard for productivity and time management.</p>
@@ -511,15 +511,15 @@ const WorkLog = () => {
               </button>
               
               <div className="flex gap-2">
-                <button 
+                <button
                   onClick={() => setViewMode('daily')}
-                  className={`px-4 py-2 rounded-lg ${viewMode === 'daily' ? 'bg-indigo-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+                  className={`px-4 py-2 rounded-lg ${viewMode === 'daily' ? 'bg-[var(--theme-color)] text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
                 >
                   Daily
                 </button>
-                <button 
+                <button
                   onClick={() => setViewMode('weekly')}
-                  className={`px-4 py-2 rounded-lg ${viewMode === 'weekly' ? 'bg-indigo-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+                  className={`px-4 py-2 rounded-lg ${viewMode === 'weekly' ? 'bg-[var(--theme-color)] text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
                 >
                   Weekly
                 </button>
@@ -528,12 +528,12 @@ const WorkLog = () => {
           </div>
           
           {/* Productivity Score */}
-          <div className="mt-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-4 text-white">
+          <div className="mt-6 bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color-light)] rounded-xl p-4 text-white">
             <div className="flex justify-between items-center">
               <div>
                 <h2 className="text-lg font-semibold">Today's Productivity</h2>
-                <p className="text-indigo-100 text-sm">
-                  {timeSummary.productiveMinutes > 0 
+                <p className="text-[var(--theme-color-light)] text-sm">
+                  {timeSummary.productiveMinutes > 0
                     ? `${Math.floor(timeSummary.productiveMinutes / 60)}h ${timeSummary.productiveMinutes % 60}m of productive work`
                     : "Start tracking your work to see insights"}
                 </p>
@@ -705,12 +705,12 @@ const CalendarWidget = ({ selectedDate, setSelectedDate, handleDateChange, getTa
                     key={`${weekStart}-${i}`}
                     onClick={() => setSelectedDate(date)}
                     className={`h-9 w-9 rounded-full flex items-center justify-center text-sm transition-colors relative
-                      ${isSelected ? 'bg-indigo-600 text-white font-bold' : 'hover:bg-gray-100'}
+                      ${isSelected ? 'bg-[var(--theme-color)] text-white font-bold' : 'hover:bg-gray-100'}
                       ${!isCurrentMonth ? 'text-gray-300' : ''}
                     `}
                   >
                     {format(date, 'd')}
-                    {hasTasks && <span className={`absolute bottom-1.5 w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-indigo-500'}`}></span>}
+                    {hasTasks && <span className={`absolute bottom-1.5 w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-[var(--theme-color)]'}`}></span>}
                   </button>
                 );
               })
@@ -728,12 +728,12 @@ const CalendarWidget = ({ selectedDate, setSelectedDate, handleDateChange, getTa
                 key={i}
                 onClick={() => setSelectedDate(date)}
                 className={`flex flex-col items-center p-2 rounded-lg transition-colors
-                  ${isSelected ? 'bg-indigo-100 border border-indigo-300' : 'hover:bg-gray-100'}
+                  ${isSelected ? 'bg-[rgb(var(--theme-color-rgb)/0.1)] border border-[var(--theme-color)]' : 'hover:bg-gray-100'}
                 `}
               >
                 <div className="text-sm text-gray-500">{format(date, 'EEE')}</div>
                 <div className="font-medium mt-1">{format(date, 'd')}</div>
-                {hasTasks && <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1"></span>}
+                {hasTasks && <span className="w-1.5 h-1.5 rounded-full bg-[var(--theme-color)] mt-1"></span>}
               </button>
             );
           })}
@@ -796,7 +796,7 @@ const PomodoroWidget = ({ pomodoroState, onStart, onPause, onReset }) => {
               Pause
             </button>
           ) : (
-            <button onClick={onStart} className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+            <button onClick={onStart} className="px-5 py-2.5 bg-[var(--theme-color)] text-white rounded-lg hover:brightness-110">
               <PlayIcon className="h-5 w-5 inline mr-2" />
               Start
             </button>
@@ -812,17 +812,18 @@ const PomodoroWidget = ({ pomodoroState, onStart, onPause, onReset }) => {
 
 const TimeSummaryWidget = ({ timeSummary, categories, priorities, weeklySummary, viewMode }) => {
   const totalHours = (timeSummary.totalMinutes / 60).toFixed(1);
-  
+  const themeColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-color').trim();
+
   // Weekly chart data
-  const weeklyChartData = {
+  const weeklyChartData = useMemo(() => ({
     labels: weeklySummary.map(day => day.dayName),
     datasets: [{
       label: 'Minutes Worked',
       data: weeklySummary.map(day => day.minutes),
-      backgroundColor: '#6366f1',
+      backgroundColor: hexToRgba(themeColor, 0.8),
       borderRadius: 4,
     }]
-  };
+  }), [weeklySummary, themeColor]);
 
   return (
     <motion.div layout className="bg-white rounded-2xl shadow-sm p-6">
@@ -831,7 +832,7 @@ const TimeSummaryWidget = ({ timeSummary, categories, priorities, weeklySummary,
           <ChartPieIcon className="h-5 w-5" />
           {viewMode === 'daily' ? 'Daily Summary' : 'Weekly Overview'}
         </h2>
-        <span className="font-bold text-indigo-600 text-lg">{totalHours} hrs</span>
+        <span className="font-bold text-[var(--theme-color)] text-lg">{totalHours} hrs</span>
       </div>
       
       {viewMode === 'daily' ? (
@@ -922,7 +923,7 @@ const DailyNotes = ({ note, onChange }) => {
         value={note}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Reflect on your day, note important insights, or plan for tomorrow..."
-        className="w-full min-h-[120px] p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+        className="w-full min-h-[120px] p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]"
       />
       
       <div className="mt-3 text-xs text-gray-500 flex items-center">
@@ -988,7 +989,7 @@ const FilterWidget = ({ categories, priorities, tags, filter, onToggleFilter, on
                 onClick={() => onToggleFilter('tags', tag)}
                 className={`px-2 py-1 text-xs rounded-full transition-all flex items-center ${
                   filter.tags.includes(tag)
-                    ? 'bg-indigo-100 text-indigo-700'
+                    ? 'bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)]'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -1102,7 +1103,7 @@ const TimelineView = ({
             {tasks.length} tasks scheduled · Total: {Math.floor(timeSummary.totalMinutes / 60)}h {timeSummary.totalMinutes % 60}m
           </p>
         </div>
-        <button onClick={onAddTask} className="flex items-center gap-2 bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-indigo-700 transition-all">
+        <button onClick={onAddTask} className="flex items-center gap-2 bg-[var(--theme-color)] text-white font-semibold py-2 px-4 rounded-lg shadow-sm hover:brightness-110 transition-all">
           <PlusIcon className="h-5 w-5" />
           <span>Add Task</span>
         </button>
@@ -1113,7 +1114,7 @@ const TimelineView = ({
           <div className="text-center py-20">
             <h3 className="text-lg font-medium text-gray-900 mb-1">It's a blank canvas!</h3>
             <p className="text-gray-500 mb-4">Add your first task to start building your day.</p>
-            <button onClick={onAddTask} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+            <button onClick={onAddTask} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[var(--theme-color)] hover:brightness-110">
               Log First Task
             </button>
           </div>
@@ -1311,7 +1312,7 @@ const TaskFormModal = ({
               value={formState.title || ''} 
               onChange={handleChange} 
               placeholder="What are you working on?" 
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" 
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]" 
               required 
             />
             <button 
@@ -1330,7 +1331,7 @@ const TaskFormModal = ({
             onChange={handleChange} 
             placeholder="Add a description..." 
             rows="3" 
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]"
           ></textarea>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1340,7 +1341,7 @@ const TaskFormModal = ({
                 name="category"
                 value={formState.category || categories[0]?.id}
                 onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]"
               >
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
@@ -1351,7 +1352,7 @@ const TaskFormModal = ({
                 name="priority"
                 value={formState.priority || priorities[0]?.id}
                 onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]"
               >
                 {priorities.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
@@ -1363,7 +1364,7 @@ const TaskFormModal = ({
                 name="startTime" 
                 value={formState.startTime || ''} 
                 onChange={handleChange} 
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" 
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]" 
                 required 
               />
             </div>
@@ -1374,7 +1375,7 @@ const TaskFormModal = ({
                 name="endTime" 
                 value={formState.endTime || ''} 
                 onChange={handleChange} 
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" 
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]" 
                 required 
               />
             </div>
@@ -1384,15 +1385,15 @@ const TaskFormModal = ({
             <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
             <div className="flex flex-wrap gap-2 mb-2">
               {(formState.tags || []).map(tag => (
-                <span 
-                  key={tag} 
-                  className="flex items-center bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-sm"
+                <span
+                  key={tag}
+                  className="flex items-center bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)] px-2 py-1 rounded-full text-sm"
                 >
                   {tag}
-                  <button 
-                    type="button" 
-                    onClick={() => handleTagChange(tag)} 
-                    className="ml-1 text-indigo-500 hover:text-indigo-700"
+                  <button
+                    type="button"
+                    onClick={() => handleTagChange(tag)}
+                    className="ml-1 text-[var(--theme-color)] hover:brightness-110"
                   >
                     <XMarkIcon className="h-4 w-4" />
                   </button>
@@ -1434,7 +1435,7 @@ const TaskFormModal = ({
 
         <div className="p-6 bg-gray-50 flex justify-end items-center gap-3 rounded-b-2xl">
           <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100">Cancel</button>
-          <button type="submit" className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-sm">{task ? 'Update Task' : 'Save Task'}</button>
+          <button type="submit" className="px-6 py-2 bg-[var(--theme-color)] text-white rounded-lg hover:brightness-110 shadow-sm">{task ? 'Update Task' : 'Save Task'}</button>
         </div>
       </form>
     </Modal>
