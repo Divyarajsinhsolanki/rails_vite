@@ -2,6 +2,15 @@
 
 This application showcases how to build a modern React front end on top of a Ruby on Rails API using the [vite-plugin-ruby](https://github.com/vite-ruby/vite_ruby). It includes PDF editing endpoints, JWT based authentication via Devise and a small example of reading data from Google Sheets.
 
+## Features
+
+- Rails 7 API application with React components compiled by Vite.
+- Hot reloading for front-end code while developing.
+- JWT-based authentication handled through Devise and `devise-jwt`.
+- Example PDF editing endpoints powered by `CombinePDF`.
+- Integration with the Google Sheets API.
+- Docker configuration for containerized development and deployment.
+
 ## Requirements
 
 - Ruby 3.3.0
@@ -11,36 +20,51 @@ This application showcases how to build a modern React front end on top of a Rub
 
 ## Setup
 
-1. Install gems and JavaScript packages:
+1. **Install dependencies**
+
+   Runs `bundle install` and `yarn install` in one step.
 
    ```bash
    bin/setup
    ```
 
-2. Configure environment variables:
+2. **Configure environment variables**
 
    ```bash
    cp .env.example .env
-   # edit .env
    ```
 
-3. Create the database, run migrations and load the seed data:
+   Edit `.env` with your database credentials, JWT secret and any Google API tokens required by the services in `app/services`.
+
+3. **Prepare the database**
 
    ```bash
    bin/rails db:create db:migrate db:seed
    ```
 
-4. Start the application:
+4. **Start the application**
 
    ```bash
    bin/dev
    ```
 
-The Rails server and Vite development server will run together.
+   This starts the Rails API and the Vite development server together.
+
+5. **Run with Docker** (optional)
+
+   ```bash
+   docker-compose up --build
+   ```
 
 ## Purpose
 
 The project serves as a learning playground and starting point for applications that need a Rails backend and a React front end bundled through Vite. It demonstrates PDF manipulation, token based authentication and external API integrations.
+
+## Project Structure
+
+- `app/javascript` – React application compiled by Vite.
+- `app/controllers` – API endpoints consumed by the front end.
+- `app/services` – integration helpers such as Google Sheets readers and JWT helpers.
 
 ## Tests
 
