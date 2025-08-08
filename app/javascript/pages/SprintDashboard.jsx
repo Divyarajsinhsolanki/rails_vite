@@ -75,6 +75,13 @@ export default function SprintDashboard() {
       });
   }, [projectId, selectedDate]);
 
+  useEffect(() => {
+    if (sprintId !== null && sprints.length) {
+      const found = sprints.find(sp => sp.id === sprintId);
+      if (found) setSprint(found);
+    }
+  }, [sprintId, sprints]);
+
   const isCurrentSprint = (s) => {
     if (!s) return false;
     const today = new Date();
