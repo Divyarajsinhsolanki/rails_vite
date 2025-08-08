@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FiEdit2, FiTrash2, FiPlus, FiX, FiCalendar, FiChevronLeft, FiChevronRight, FiAlertTriangle } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function SprintManager({ onSprintChange, projectId, projectName }) {
+export default function SprintManager({ onSprintChange, projectId, projectName, selectedDate }) {
   const [sprints, setSprints] = useState([]);
   const [currentSprint, setCurrentSprint] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -19,12 +19,12 @@ export default function SprintManager({ onSprintChange, projectId, projectName }
       .then(res => res.json())
       .then(data => {
         const sortedData = data?.sort((a, b) => new Date(a.start_date) - new Date(b.start_date)) || [];
-        const today = new Date();
+        const reference = selectedDate ? new Date(selectedDate) : new Date();
         const activeSprint = sortedData.find(sprint => {
           const startDate = new Date(sprint.start_date);
           const endDate = new Date(sprint.end_date);
           endDate.setHours(23, 59, 59, 999);
-          return today >= startDate && today <= endDate;
+          return reference >= startDate && reference <= endDate;
         });
 
         setSprints(sortedData);
@@ -34,7 +34,7 @@ export default function SprintManager({ onSprintChange, projectId, projectName }
       })
       .catch(err => console.error("Error fetching sprints:", err))
       .finally(() => setLoading(false));
-  }, [projectId]);
+  }, [projectId, selectedDate]);
 
   // Scroll to active sprint on load or change
   useEffect(() => {

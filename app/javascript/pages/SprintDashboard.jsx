@@ -29,6 +29,10 @@ export default function SprintDashboard() {
   const { projectId } = useParams();
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'overview';
+  const dateParam = searchParams.get('date');
+  const selectedDate = React.useMemo(() =>
+    dateParam ? new Date(dateParam) : new Date(),
+  [dateParam]);
   const [activeTab, setActiveTab] = useState(initialTab);
   const [sprintId, setSprintId] = useState(null);
   const [sprint, setSprint] = useState(null);
@@ -57,11 +61,11 @@ export default function SprintDashboard() {
       .then(data => {
         setSprints(data || []);
         if (data && data.length) {
-          const today = new Date();
+          const reference = selectedDate;
           const current = data.find(s => {
             const start = new Date(s.start_date);
             const end = new Date(s.end_date);
-            return today >= start && today <= end;
+            return reference >= start && reference <= end;
           });
           const selected = current || data[0];
           if (selected) {
@@ -70,7 +74,7 @@ export default function SprintDashboard() {
           }
         }
       });
-  }, [projectId]);
+  }, [projectId, selectedDate]);
 
   const isCurrentSprint = (s) => {
     if (!s) return false;
@@ -188,6 +192,7 @@ export default function SprintDashboard() {
             onSprintChange={handleSprintChange}
             projectId={projectId}
             projectName={project?.name}
+            selectedDate={selectedDate}
           />
         </div>
       </header>
