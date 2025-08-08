@@ -53,7 +53,7 @@ group :development do
   gem "web-console"
 
 
-  # gem 'PdfMaster', path: "/home/divyarajs/rails_project/newgems/PdfMaster"
+  gem 'PdfMaster', path: "/home/divyarajs/rails_project/newgems/PdfMaster"
 
 
   # Add speed badges [https://github.com/MiniProfiler/rack-mini-profiler]
