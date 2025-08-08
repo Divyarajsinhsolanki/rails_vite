@@ -16,15 +16,13 @@ import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-
 // Custom hook for dynamic navbar effects
 const useNavbarEffects = () => {
   const [scrolled, setScrolled] = useState(false);
-  const [atTop, setAtTop] = useState(true);
   const { scrollY } = useScroll();
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     setScrolled(latest > 10);
-    setAtTop(latest < 5);
   });
 
-  return { scrolled, atTop };
+  return { scrolled };
 };
 
 // Holographic Avatar Component
@@ -173,7 +171,7 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
-  const { scrolled, atTop } = useNavbarEffects();
+  const { scrolled } = useNavbarEffects();
   const location = useLocation();
 
   // Close profile dropdown when clicking outside
@@ -231,14 +229,8 @@ const Navbar = () => {
   const isOwner = user?.roles?.some(r => r.name === 'owner');
 
   // Dynamic background based on scroll and route
-  const getNavbarBackground = () => {
-    if (location.pathname === '/') {
-      return atTop 
-        ? 'bg-transparent backdrop-filter-none shadow-none border-transparent' 
-        : 'bg-white/80 dark:bg-zinc-900/80 backdrop-blur-lg shadow-sm border-zinc-200 dark:border-zinc-800';
-    }
-    return 'bg-white/80 dark:bg-zinc-900/80 backdrop-blur-lg shadow-sm border-zinc-200 dark:border-zinc-800';
-  };
+  const getNavbarBackground = () =>
+    'bg-white dark:bg-zinc-900 backdrop-blur-lg shadow-sm border-zinc-200 dark:border-zinc-800';
 
   return (
     <motion.header 
