@@ -6,6 +6,8 @@ class User < ApplicationRecord
 
   enum status: { invited: "invited", active: "active", locked: "locked" }, _default: "invited"
 
+  LANDING_PAGES = %w[posts profile vault knowledge worklog projects teams].freeze
+
   has_one_attached :profile_picture
   has_one_attached :cover_photo
   has_many :posts, dependent: :destroy
@@ -22,6 +24,7 @@ class User < ApplicationRecord
 
   validates :first_name, presence: true
   validates :last_name, presence: true
+  validates :landing_page, inclusion: { in: LANDING_PAGES }
 
   after_create :assign_default_role
 

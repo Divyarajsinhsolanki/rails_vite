@@ -3,23 +3,35 @@ import api from "../components/api";
 import { AuthContext } from "../context/AuthContext";
 import { COLOR_MAP } from "/utils/theme";
 
+const landingPageOptions = [
+  { value: "posts", label: "Posts" },
+  { value: "profile", label: "Profile" },
+  { value: "vault", label: "Vault" },
+  { value: "knowledge", label: "Knowledge" },
+  { value: "worklog", label: "Work Log" },
+  { value: "projects", label: "Projects" },
+  { value: "teams", label: "Teams" },
+];
+
 const Settings = () => {
   const { user, setUser } = useContext(AuthContext);
   const initialColor = COLOR_MAP[user?.color_theme] || user?.color_theme || "#3b82f6";
   const [color, setColor] = useState(initialColor);
   const [darkMode, setDarkMode] = useState(user?.dark_mode || false);
+  const [landingPage, setLandingPage] = useState(user?.landing_page || "posts");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setDarkMode(user?.dark_mode || false);
-  }, [user?.dark_mode]);
+    setLandingPage(user?.landing_page || "posts");
+  }, [user?.dark_mode, user?.landing_page]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await api.post("/update_profile", { auth: { color_theme: color, dark_mode: darkMode } });
-      setUser((prev) => ({ ...prev, color_theme: color, dark_mode: darkMode }));
+      await api.post("/update_profile", { auth: { color_theme: color, dark_mode: darkMode, landing_page: landingPage } });
+      setUser((prev) => ({ ...prev, color_theme: color, dark_mode: darkMode, landing_page: landingPage }));
     } catch (err) {
       console.error("Failed to update color theme", err);
     } finally {
@@ -55,6 +67,22 @@ const Settings = () => {
               ))}
             </div>
           </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Landing Page
+          </label>
+          <select
+            value={landingPage}
+            onChange={(e) => setLandingPage(e.target.value)}
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-[var(--theme-color)] focus:ring-[var(--theme-color)]"
+          >
+            {landingPageOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="flex items-center gap-2">
           <input

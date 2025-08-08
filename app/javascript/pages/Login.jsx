@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { auth, getRedirectResult } from "../firebaseConfig";
 import { Toaster, toast } from "react-hot-toast";
 import SpinnerOverlay from "../components/ui/SpinnerOverlay";
@@ -11,8 +11,6 @@ const Login = ({ switchToSignup }) => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchParams] = useSearchParams();
-
-  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -25,8 +23,6 @@ const Login = ({ switchToSignup }) => {
 
     try {
       await handleLogin({ auth: formData });
-      navigate("/");
-      toast.success("Logged in successfully");
     } catch (err) {
       const msg = "Invalid email or password. Please try again.";
       setError(msg);
