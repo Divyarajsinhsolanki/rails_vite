@@ -3,7 +3,8 @@ import api from "../components/api";
 import { AuthContext } from "../context/AuthContext";
 import { COLOR_MAP } from "/utils/theme";
 import { Switch } from "@headlessui/react";
-import { FiPalette, FiHome, FiSun, FiMoon } from "react-icons/fi";
+import { FiHome, FiSun, FiMoon } from "react-icons/fi";
+import { FaPalette } from "react-icons/fa";
 
 const landingPageOptions = [
   { value: "posts", label: "Posts" },
@@ -57,7 +58,7 @@ const Settings = () => {
       <form onSubmit={handleSubmit} className="space-y-8">
         <section className="bg-white rounded-lg shadow p-6 space-y-6">
           <h2 className="flex items-center text-lg font-medium gap-2">
-            <FiPalette className="text-[var(--theme-color)]" /> Appearance
+            <FaPalette className="text-[var(--theme-color)]" /> Appearance
           </h2>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
