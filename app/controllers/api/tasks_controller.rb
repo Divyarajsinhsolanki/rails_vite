@@ -77,13 +77,22 @@ class Api::TasksController < Api::BaseController
   def task_params
     task_data = params.require(:task)
     task_data = task_data[:task] if task_data[:task].is_a?(ActionController::Parameters)
-    task_data.permit(
+
+    permitted = task_data.permit(
       :task_id, :task_url, :type, :title, :description,
       :status, :order, :assigned_to_user,
       :created_by, :created_at, :updated_by, :updated_at,
       :start_date, :end_date,
       :estimated_hours, :sprint_id, :developer_id, :project_id, :is_struck
     )
+
+    # Tasks of type "general" should never be tied to a sprint or project.
+    if permitted[:type] == 'general'
+      permitted.delete(:sprint_id)
+      permitted.delete(:project_id)
+    end
+
+    permitted
   end
 
   def reorder_group(sprint_id, developer_id)

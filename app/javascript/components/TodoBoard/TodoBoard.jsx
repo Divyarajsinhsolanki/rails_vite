@@ -104,8 +104,8 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
       const payload = { ...newTaskData };
       // ensure the task is assigned to the current user
       if (user) payload.assigned_to_user = user.id;
-      if (selectedSprintId) payload.sprint_id = selectedSprintId;
-      if (projectId) payload.project_id = projectId;
+      // Tasks created from the todo board should remain general and
+      // therefore must not be associated with any sprint or project.
       const { data } = await SchedulerAPI.createTask(payload);
       const statusKey = data.status || 'todo';
       setColumns(prev => ({
