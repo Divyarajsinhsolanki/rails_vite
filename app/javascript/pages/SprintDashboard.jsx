@@ -52,7 +52,6 @@ export default function SprintDashboard() {
   // Load sprints when project changes and select the active one
   useEffect(() => {
     setSprint(null);
-    setSprintId(null);
     setSprints([]);
 
     const query = projectId ? `?project_id=${projectId}` : '';
@@ -66,12 +65,12 @@ export default function SprintDashboard() {
             const start = new Date(s.start_date);
             const end = new Date(s.end_date);
             return reference >= start && reference <= end;
-          });
-          const selected = current || data[0];
-          if (selected) {
-            setSprint(selected);
-            setSprintId(selected.id);
-          }
+          }) || data[0];
+
+          setSprint(current);
+          setSprintId(prev => (prev !== null ? prev : current.id));
+        } else {
+          setSprintId(null);
         }
       });
   }, [projectId, selectedDate]);
