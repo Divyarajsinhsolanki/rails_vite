@@ -123,29 +123,33 @@ const PostPage = () => {
     if (!user) return;
     const today = new Date().toISOString().split('T')[0];
 
-    fetchProjects().then(({ data }) => {
-      const userProjects = Array.isArray(data)
-        ? data.filter((p) => p.users.some((u) => u.id === user.id))
-        : [];
-      setProjects(userProjects);
+    fetchProjects()
+      .then(async ({ data }) => {
+        const userProjects = Array.isArray(data)
+          ? data.filter((p) => p.users.some((u) => u.id === user.id))
+          : [];
+        setProjects(userProjects);
 
-      const taskPromises = userProjects.map(project =>
-        SchedulerAPI.getTasks({ project_id: project.id, assigned_to_user: user.id })
-          .then(res => ({ project, tasks: res.data }))
-          .catch(() => ({ project, tasks: [] }))
-      );
-
-      Promise.all(taskPromises)
-        .then(results => {
-          const due = results.flatMap(({ project, tasks }) =>
-            (Array.isArray(tasks) ? tasks : [])
-              .filter(t => t.end_date === today && t.status !== 'completed')
-              .map(t => ({ ...t, project }))
+        try {
+          const { data: taskData } = await SchedulerAPI.getTasks({ assigned_to_user: user.id });
+          const due = (Array.isArray(taskData) ? taskData : [])
+            .filter((t) => t.end_date === today && t.status !== 'completed')
+            .map((t) => ({
+              ...t,
+              project: userProjects.find((p) => p.id === t.project_id)
+            }));
+          const uniqueDue = due.filter(
+            (t, idx, arr) => idx === arr.findIndex((u) => u.id === t.id)
           );
-          setTasks(due);
-        })
-        .catch(() => setTasks([]));
-    });
+          setTasks(uniqueDue);
+        } catch {
+          setTasks([]);
+        }
+      })
+      .catch(() => {
+        setProjects([]);
+        setTasks([]);
+      });
 
     getUsers()
       .then(({ data }) => {
