@@ -185,8 +185,8 @@ class Api::AuthController < Api::BaseController
   end
 
   def set_jwt_cookie!(user)
-    access_token = JwtService.encode({ user_id: user.id }, 15.minutes.from_now)
-    refresh_token = JwtService.encode({ user_id: user.id }, 7.days.from_now)
+    access_token = JwtService.encode({ user_id: user.id }, exp: 15.minutes.from_now)
+    refresh_token = JwtService.encode({ user_id: user.id }, exp: 7.days.from_now)
 
     cookies.signed[:access_token] = {
       value: access_token,

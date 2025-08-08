@@ -1,8 +1,7 @@
 class JwtService
   SECRET_KEY = Rails.application.credentials.secret_key_base
-  EXPIRY = 15.minutes.from_now.to_i
 
-  def self.encode(payload, exp = EXPIRY)
+  def self.encode(payload, exp: 15.minutes.from_now.to_i)
     payload[:exp] = exp.to_i
     JWT.encode(payload, SECRET_KEY)
   end
