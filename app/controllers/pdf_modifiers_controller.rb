@@ -64,6 +64,15 @@ class PdfModifiersController < ApplicationController
     end
   end
 
+  def add_stamp
+    begin
+      PdfMaster.add_stamp(@pdf_path, @stamp, @x.to_i, @y.to_i, @page_number.to_i)
+      render json: { message: "Stamp added successfully." }, status: :ok
+    rescue => e
+      render json: { error: e.message }, status: :unprocessable_entity
+    end
+  end
+
   def rotate_left
     begin
       PdfMaster.rotate_page(@pdf_path, 270, @page_number.to_i)
