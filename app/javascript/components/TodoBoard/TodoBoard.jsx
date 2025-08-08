@@ -52,18 +52,18 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
     if (!projectId) return;
     SchedulerAPI.getSprints(projectId)
       .then(res => {
-        setSprints(res.data);
-        if (!sprintId && res.data.length) {
-          SchedulerAPI.getLastSprint(projectId)
-            .then(last => {
-              const defaultSprintId = last.data?.id || res.data[0].id;
-              setSelectedSprintId(defaultSprintId);
-              onSprintChange && onSprintChange(defaultSprintId);
-            })
-            .catch(() => {
-              setSelectedSprintId(res.data[0].id);
-              onSprintChange && onSprintChange(res.data[0].id);
-            });
+        const list = Array.isArray(res.data) ? res.data : [];
+        setSprints(list);
+        if (!sprintId && list.length) {
+          const today = new Date();
+          const current =
+            list.find(s => {
+              const start = new Date(s.start_date);
+              const end = new Date(s.end_date);
+              return today >= start && today <= end;
+            }) || list[0];
+          setSelectedSprintId(current.id);
+          onSprintChange && onSprintChange(current.id);
         }
       })
       .catch(() => toast.error("Could not load sprints"));
