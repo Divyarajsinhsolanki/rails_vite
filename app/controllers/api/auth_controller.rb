@@ -117,12 +117,19 @@ class Api::AuthController < Api::BaseController
 
   def update_profile
     current_user.update(user_params)
+
+    if current_user.errors.any?
+      render json: { errors: current_user.errors.full_messages }, status: :unprocessable_entity
+      return
+    end
+
     if params.dig(:auth, :profile_picture).present? && params.dig(:auth, :profile_picture) != "null"
       current_user.profile_picture = params[:auth][:profile_picture]
     end
     if params.dig(:auth, :cover_photo).present? && params.dig(:auth, :cover_photo) != "null"
       current_user.cover_photo = params[:auth][:cover_photo]
     end
+
     render json: { message: "User details updated successfully" }
   end
 
