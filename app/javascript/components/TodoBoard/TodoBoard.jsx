@@ -53,15 +53,21 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
     SchedulerAPI.getSprints(projectId)
       .then(res => {
         setSprints(res.data);
-        if (res.data.length) {
-          if(!sprintId) {
-            setSelectedSprintId(res.data[0].id);
-            onSprintChange && onSprintChange(res.data[0].id);
-          }
+        if (!sprintId && res.data.length) {
+          SchedulerAPI.getLastSprint(projectId)
+            .then(last => {
+              const defaultSprintId = last.data?.id || res.data[0].id;
+              setSelectedSprintId(defaultSprintId);
+              onSprintChange && onSprintChange(defaultSprintId);
+            })
+            .catch(() => {
+              setSelectedSprintId(res.data[0].id);
+              onSprintChange && onSprintChange(res.data[0].id);
+            });
         }
       })
       .catch(() => toast.error("Could not load sprints"));
-  }, [projectId]);
+  }, [projectId, sprintId]);
 
   useEffect(() => {
     const params = selectedSprintId ? { sprint_id: selectedSprintId, project_id: projectId } : { type: 'general' };
