@@ -139,7 +139,8 @@ class Api::AuthController < Api::BaseController
       :profile_picture,
       :cover_photo,
       :color_theme,
-      :dark_mode
+      :dark_mode,
+      :landing_page
     )
     permitted.delete(:profile_picture) if permitted[:profile_picture] == "null"
     permitted.delete(:cover_photo) if permitted[:cover_photo] == "null"
@@ -149,7 +150,11 @@ class Api::AuthController < Api::BaseController
   def user_payload(user)
     profile_picture_url = rails_blob_url(user.profile_picture, only_path: true) if user.profile_picture.attached?
     cover_photo_url = rails_blob_url(user.cover_photo, only_path: true) if user.cover_photo.attached?
-    user.as_json(include: { roles: { only: [:name] } }).merge(profile_picture: profile_picture_url, cover_photo: cover_photo_url)
+    user.as_json(include: { roles: { only: [:name] } }).merge(
+      profile_picture: profile_picture_url,
+      cover_photo: cover_photo_url,
+      landing_page: user.landing_page
+    )
   end
 
   def verify_firebase_token(token)
