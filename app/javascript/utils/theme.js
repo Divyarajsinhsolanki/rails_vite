@@ -7,7 +7,7 @@ export const COLOR_MAP = {
   indigo: '#6366f1'
 };
 
-export const lightenColor = (color, amount = 0.9) => {
+export const lightenColor = (color, amount = 0.5) => {
   const hex = color.replace('#', '');
   const r = parseInt(hex.substring(0, 2), 16);
   const g = parseInt(hex.substring(2, 4), 16);
