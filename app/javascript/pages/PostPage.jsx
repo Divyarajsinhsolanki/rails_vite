@@ -169,7 +169,13 @@ const PostPage = () => {
   useEffect(() => {
     if (!user) return;
     SchedulerAPI.getTasks({ type: 'general', assigned_to_user: user.id })
-      .then(({ data }) => setGeneralTasks(Array.isArray(data) ? data : []))
+      .then(({ data }) => {
+        const tasks = Array.isArray(data) ? data : [];
+        const uniqueTasks = tasks.filter(
+          (t, idx, arr) => idx === arr.findIndex((u) => u.id === t.id)
+        );
+        setGeneralTasks(uniqueTasks);
+      })
       .catch(() => setGeneralTasks([]));
   }, [user]);
 
