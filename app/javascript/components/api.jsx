@@ -141,7 +141,7 @@ export const updateWorkNote = (id, data) => api.put(`/work_notes/${id}`, { work_
 
 export const getTables = () => api.get('/admin/tables');
 export const getMeta = (table) => api.get(`/admin_meta/${table}`);
-export const getRecords = (table) => api.get(`/admin/${table}`);
+export const getRecords = (table, params = {}) => api.get(`/admin/${table}`, { params });
 export const createRecord = (table, data) => api.post(`/admin/${table}`, { record: data });
 export const updateRecord = (table, id, data) => api.patch(`/admin/${table}/${id}`, { record: data });
 export const deleteRecord = (table, id) => api.delete(`/admin/${table}/${id}`);

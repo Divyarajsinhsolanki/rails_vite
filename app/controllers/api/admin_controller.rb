@@ -36,19 +36,36 @@ class Api::AdminController < Api::BaseController
   end
 
   def index
-    records = @model.order(id: :desc).limit(100)
-  
-    json = records.map do |record|
+    page = params[:page].to_i.positive? ? params[:page].to_i : 1
+    per_page = params[:per_page].to_i.positive? ? [params[:per_page].to_i, 100].min : 20
+
+    records = @model.order(id: :desc)
+
+    filters = params.permit(filters: @model.column_names.map(&:to_sym))[:filters]
+    records = records.where(filters) if filters.present?
+
+    total_count = records.count
+    records = records.offset((page - 1) * per_page).limit(per_page)
+
+    json_records = records.map do |record|
       data = record.serializable_hash(except: [:image])
-  
+
       if record.respond_to?(:image) && record.image.attached?
         data[:image_url] = url_for(record.image)
       end
-  
+
       data
     end
-  
-    render json: json
+
+    render json: {
+      records: json_records,
+      pagination: {
+        current_page: page,
+        per_page: per_page,
+        total_pages: (total_count / per_page.to_f).ceil,
+        total_count: total_count
+      }
+    }
   end
 
   def create
