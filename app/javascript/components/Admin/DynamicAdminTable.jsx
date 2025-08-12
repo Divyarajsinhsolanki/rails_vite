@@ -7,10 +7,14 @@ function DynamicAdminTable({ table }) {
   const [newRecord, setNewRecord] = useState({});
   const [editingId, setEditingId] = useState(null);
   const [editedRecord, setEditedRecord] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [filters] = useState({});
 
-  // Fetch table metadata and records when the selected table changes
+  // Fetch table metadata when the selected table changes
   useEffect(() => {
-    async function fetchData() {
+    async function fetchMeta() {
       try {
         const metaRes = await getMeta(table);
         const cols = metaRes.data;
@@ -30,17 +34,30 @@ function DynamicAdminTable({ table }) {
           }
         });
         setNewRecord(defaults);
-
-        // Load existing records
-        const recRes = await getRecords(table);
-        setRecords(recRes.data);
+        setCurrentPage(1);
       } catch (error) {
-        console.error("Failed to fetch meta or records:", error);
+        console.error("Failed to fetch meta:", error);
       }
     }
-    fetchData();
-    setEditingId(null);
+    fetchMeta();
   }, [table]);
+
+  // Fetch records when table, page, per-page, or filters change
+  useEffect(() => {
+    async function fetchRecords() {
+      try {
+        const params = { page: currentPage, per_page: perPage };
+        if (Object.keys(filters).length) params.filters = filters;
+        const recRes = await getRecords(table, params);
+        setRecords(recRes.data.records);
+        setTotalPages(recRes.data.pagination.total_pages);
+      } catch (error) {
+        console.error("Failed to fetch records:", error);
+      }
+    }
+    fetchRecords();
+    setEditingId(null);
+  }, [table, currentPage, perPage, filters]);
 
   // Handle input change for new record form
   const handleNewChange = (e, col) => {
@@ -58,8 +75,11 @@ function DynamicAdminTable({ table }) {
   const handleCreate = async () => {
     try {
       await createRecord(table, newRecord);
-      const recRes = await getRecords(table);
-      setRecords(recRes.data);
+      const params = { page: currentPage, per_page: perPage };
+      if (Object.keys(filters).length) params.filters = filters;
+      const recRes = await getRecords(table, params);
+      setRecords(recRes.data.records);
+      setTotalPages(recRes.data.pagination.total_pages);
       // Reset newRecord form
       const reset = {};
       columns.forEach(col => {
@@ -89,8 +109,11 @@ function DynamicAdminTable({ table }) {
   const handleSave = async (id) => {
     try {
       await updateRecord(table, id, editedRecord);
-      const recRes = await getRecords(table);
-      setRecords(recRes.data);
+      const params = { page: currentPage, per_page: perPage };
+      if (Object.keys(filters).length) params.filters = filters;
+      const recRes = await getRecords(table, params);
+      setRecords(recRes.data.records);
+      setTotalPages(recRes.data.pagination.total_pages);
       setEditingId(null);
     } catch (error) {
       console.error("Failed to update record:", error);
@@ -107,8 +130,11 @@ function DynamicAdminTable({ table }) {
     if (!window.confirm("Are you sure you want to delete this record?")) return;
     try {
       await deleteRecord(table, id);
-      // Optimistically update UI
-      setRecords(records.filter(rec => rec.id !== id));
+      const params = { page: currentPage, per_page: perPage };
+      if (Object.keys(filters).length) params.filters = filters;
+      const recRes = await getRecords(table, params);
+      setRecords(recRes.data.records);
+      setTotalPages(recRes.data.pagination.total_pages);
     } catch (error) {
       console.error("Failed to delete record:", error);
     }
@@ -225,6 +251,36 @@ function DynamicAdminTable({ table }) {
           ))}
         </tbody>
       </table>
+      <div className="flex items-center justify-between mt-4">
+        <div>
+          <button
+            onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-1 border rounded mr-2 disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <button
+            onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 border rounded disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+        <div className="flex items-center">
+          <span className="mr-2">Page {currentPage} of {totalPages}</span>
+          <select
+            value={perPage}
+            onChange={(e) => { setPerPage(Number(e.target.value)); setCurrentPage(1); }}
+            className="border rounded px-2 py-1"
+          >
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+          </select>
+        </div>
+      </div>
     </div>
   );
 }
