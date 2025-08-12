@@ -6,6 +6,7 @@ import PostForm from "../components/PostForm";
 import PostList from "../components/PostList";
 import { Toaster } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { Helmet } from "react-helmet";
 
 // --- Icon Imports ---
 import {
@@ -190,10 +191,18 @@ const PostPage = () => {
   }, [user]);
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
-      <Toaster position="top-right" />
+    <>
+      <Helmet>
+        <title>Posts</title>
+        <meta name="description" content="Latest posts and team updates" />
+        <meta property="og:title" content="Posts" />
+        <meta property="og:description" content="Latest posts and team updates" />
+        <meta property="og:type" content="website" />
+      </Helmet>
+      <div className="min-h-screen bg-slate-50 font-sans">
+        <Toaster position="top-right" />
       
-      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         {/* Left Sidebar: At a Glance */}
         <aside className="lg:col-span-3">
@@ -313,8 +322,9 @@ const PostPage = () => {
             </div>
         </aside>
 
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
