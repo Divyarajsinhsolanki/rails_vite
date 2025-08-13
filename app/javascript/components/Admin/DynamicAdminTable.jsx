@@ -45,7 +45,7 @@ function DynamicAdminTable({ table }) {
         console.error("Failed to fetch meta:", error);
       }
     }
-    fetchMeta();
+    fetchData();
   }, [table]);
 
   // Fetch records when table, page, per-page, or filters change
@@ -59,9 +59,9 @@ function DynamicAdminTable({ table }) {
         setTotalPages(recRes.data.pagination.total_pages);
       } catch (error) {
         toast.error('Failed to load table data');
+        console.error("Failed to fetch records:", error);
       } finally {
         setLoading(false);
-        console.error("Failed to fetch records:", error);
       }
     }
     fetchRecords();
