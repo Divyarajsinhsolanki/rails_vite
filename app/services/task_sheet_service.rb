@@ -98,9 +98,17 @@ class TaskSheetService
     ]]
 
     tasks.each_with_index do |task, index|
+      url = task.task_url.presence || "https://resmedsaas.atlassian.net/browse/#{task.task_id}"
+
+      task_id_cell = if task.task_id.present?
+        %Q{=HYPERLINK("#{url}","#{task.task_id}")}
+      else
+        ''
+      end
+
       values << [
         index + 1,
-        task.task_id,
+        task_id_cell,
         task.title,
         task.estimated_hours.to_i,
         task.developer&.name.to_s,
@@ -117,7 +125,7 @@ class TaskSheetService
       @spreadsheet_id,
       "#{@sheet_name}!A1",
       value_range,
-      value_input_option: 'RAW'
+      value_input_option: 'USER_ENTERED'
     )
 
     highlight_completed_rows(tasks)
