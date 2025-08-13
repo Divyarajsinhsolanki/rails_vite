@@ -21,11 +21,13 @@ import Legal from "../pages/Legal";
 import SprintDashboard from "../pages/SprintDashboard";
 import WorkLog from "../pages/WorkLog";
 import Settings from "../pages/Settings";
+import PageTitle from "./PageTitle";
 
 const App = () => {
   return (
     <Router>
       <AuthProvider> {/* ✅ Wrap the entire app with AuthProvider */}
+        <PageTitle />
         <div className="flex flex-col min-h-screen">
 
           {/* ✅ Navbar */}
