@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { getMeta, getRecords, createRecord, updateRecord, deleteRecord } from '../api';
 
 function DynamicAdminTable({ table }) {
@@ -7,6 +8,10 @@ function DynamicAdminTable({ table }) {
   const [newRecord, setNewRecord] = useState({});
   const [editingId, setEditingId] = useState(null);
   const [editedRecord, setEditedRecord] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [savingId, setSavingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -14,7 +19,8 @@ function DynamicAdminTable({ table }) {
 
   // Fetch table metadata when the selected table changes
   useEffect(() => {
-    async function fetchMeta() {
+    async function fetchData() {
+      setLoading(true);
       try {
         const metaRes = await getMeta(table);
         const cols = metaRes.data;
@@ -52,6 +58,9 @@ function DynamicAdminTable({ table }) {
         setRecords(recRes.data.records);
         setTotalPages(recRes.data.pagination.total_pages);
       } catch (error) {
+        toast.error('Failed to load table data');
+      } finally {
+        setLoading(false);
         console.error("Failed to fetch records:", error);
       }
     }
@@ -73,6 +82,7 @@ function DynamicAdminTable({ table }) {
 
   // Create a new record via POST
   const handleCreate = async () => {
+    setCreating(true);
     try {
       await createRecord(table, newRecord);
       const params = { page: currentPage, per_page: perPage };
@@ -94,8 +104,11 @@ function DynamicAdminTable({ table }) {
         }
       });
       setNewRecord(reset);
+      toast.success('Record created successfully');
     } catch (error) {
-      console.error("Failed to create record:", error);
+      toast.error('Failed to create record');
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -107,6 +120,7 @@ function DynamicAdminTable({ table }) {
 
   // Save changes to an existing record via PATCH
   const handleSave = async (id) => {
+    setSavingId(id);
     try {
       await updateRecord(table, id, editedRecord);
       const params = { page: currentPage, per_page: perPage };
@@ -115,8 +129,11 @@ function DynamicAdminTable({ table }) {
       setRecords(recRes.data.records);
       setTotalPages(recRes.data.pagination.total_pages);
       setEditingId(null);
+      toast.success('Record updated successfully');
     } catch (error) {
-      console.error("Failed to update record:", error);
+      toast.error('Failed to update record');
+    } finally {
+      setSavingId(null);
     }
   };
 
@@ -128,17 +145,27 @@ function DynamicAdminTable({ table }) {
   // Delete a record via DELETE
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this record?")) return;
+    setDeletingId(id);
     try {
       await deleteRecord(table, id);
+      // Optimistically update UI
+      setRecords(records.filter(rec => rec.id !== id));
+      toast.success('Record deleted successfully');
       const params = { page: currentPage, per_page: perPage };
       if (Object.keys(filters).length) params.filters = filters;
       const recRes = await getRecords(table, params);
       setRecords(recRes.data.records);
       setTotalPages(recRes.data.pagination.total_pages);
     } catch (error) {
-      console.error("Failed to delete record:", error);
+      toast.error('Failed to delete record');
+    } finally {
+      setDeletingId(null);
     }
   };
+
+  if (loading) {
+    return <div className="p-4">Loading...</div>;
+  }
 
   return (
     <div className="p-4">
@@ -176,9 +203,10 @@ function DynamicAdminTable({ table }) {
             <td className="border px-4 py-2">
               <button
                 onClick={handleCreate}
-                className="bg-theme text-white px-2 py-1 rounded hover:brightness-110"
+                disabled={creating}
+                className="bg-theme text-white px-2 py-1 rounded hover:brightness-110 disabled:opacity-50"
               >
-                Create
+                {creating ? 'Creating...' : 'Create'}
               </button>
             </td>
           </tr>
@@ -219,9 +247,10 @@ function DynamicAdminTable({ table }) {
                   <>
                     <button
                       onClick={() => handleSave(rec.id)}
-                      className="bg-theme text-white px-2 py-1 rounded mr-2 hover:brightness-110"
+                      disabled={savingId === rec.id}
+                      className="bg-theme text-white px-2 py-1 rounded mr-2 hover:brightness-110 disabled:opacity-50"
                     >
-                      Save
+                      {savingId === rec.id ? 'Saving...' : 'Save'}
                     </button>
                     <button
                       onClick={handleCancel}
@@ -240,9 +269,10 @@ function DynamicAdminTable({ table }) {
                     </button>
                     <button
                       onClick={() => handleDelete(rec.id)}
-                      className="bg-red-500 hover:bg-red-700 text-white px-2 py-1 rounded"
+                      disabled={deletingId === rec.id}
+                      className="bg-red-500 hover:bg-red-700 text-white px-2 py-1 rounded disabled:opacity-50"
                     >
-                      Delete
+                      {deletingId === rec.id ? 'Deleting...' : 'Delete'}
                     </button>
                   </>
                 )}
