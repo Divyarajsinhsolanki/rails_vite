@@ -10,9 +10,5 @@ export default defineConfig({
         application: 'app/javascript/entrypoints/application.jsx'
       }
     }
-  },
-  test: {
-    environment: 'jsdom',
-    setupFiles: './vitest.setup.js'
   }
 });
