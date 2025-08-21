@@ -26,7 +26,7 @@ class SchedulerSheetService
       row = [date.to_s]
       developers.each do |dev|
         cell_logs = matrix[date][dev.name]
-        row << cell_logs.map { |l| "#{l.task.task_id} (#{l.hours_logged}h) - #{l.type}" }.join("\n")
+        row << format_cell_logs(cell_logs)
       end
       values << row
     end
@@ -52,7 +52,7 @@ class SchedulerSheetService
       @spreadsheet_id,
       "#{@sheet_name}!A1",
       value_range,
-      value_input_option: 'RAW'
+      value_input_option: 'USER_ENTERED'
     )
   end
 
@@ -92,6 +92,18 @@ class SchedulerSheetService
 
     batch = Google::Apis::SheetsV4::BatchUpdateSpreadsheetRequest.new(requests: requests)
     @service.batch_update_spreadsheet(@spreadsheet_id, batch)
+  end
+
+  def format_cell_logs(cell_logs)
+    return '' if cell_logs.empty?
+
+    formulas = cell_logs.map do |log|
+      task = log.task
+      url = task.task_url.presence || "https://resmedsaas.atlassian.net/browse/#{task.task_id}"
+      %(HYPERLINK("#{url}","#{task.task_id}")&" (#{log.hours_logged}h) - #{log.type}")
+    end
+
+    "=" + formulas.join('&CHAR(10)&')
   end
 
   def sheet_id
