@@ -100,7 +100,8 @@ class SchedulerSheetService
     formulas = cell_logs.map do |log|
       task = log.task
       url = task.task_url.presence || "https://resmedsaas.atlassian.net/browse/#{task.task_id}"
-      %(HYPERLINK("#{url}","#{task.task_id}")&" (#{log.hours_logged}h) - #{log.type}")
+      display_text = "#{task.task_id} (#{log.hours_logged}h) - #{log.type}"
+      %(HYPERLINK("#{url}","#{display_text}"))
     end
 
     "=" + formulas.join('&CHAR(10)&')
