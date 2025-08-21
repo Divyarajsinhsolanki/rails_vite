@@ -15,6 +15,7 @@ import IndianStockNewsCard from "../components/Knowledge/IndianStockNewsCard";
 import CommonEnglishWordCard from "../components/Knowledge/CommonEnglishWordCard";
 import EnglishTenseCard from "../components/Knowledge/EnglishTenseCard";
 import EnglishPhraseCard from "../components/Knowledge/EnglishPhraseCard";
+import ImageOfTheDayCard from "../components/Knowledge/ImageOfTheDayCard";
 
 export default function KnowledgeDashboard() {
   const [activeCategory, setActiveCategory] = useState("all");
@@ -37,6 +38,7 @@ export default function KnowledgeDashboard() {
   const cards = [
     { component: <TodayInHistoryCard />, category: "learning" },
     { component: <QuoteOfTheDayCard />, category: "learning" },
+    { component: <ImageOfTheDayCard />, category: "learning" },
     { component: <TopNewsCard />, category: "news" },
     { component: <DailyFactCard />, category: "learning" },
     { component: <WordOfTheDayCard />, category: "learning" },
