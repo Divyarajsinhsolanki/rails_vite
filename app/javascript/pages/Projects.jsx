@@ -688,21 +688,21 @@ const Projects = () => {
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-2">
+                                                            {(canManageMembers || member.id === user.id) && (
+                                                                <button
+                                                                    onClick={() => startEditingMember(member)}
+                                                                    className="text-sm text-blue-500 hover:text-blue-700 hover:bg-blue-50 px-3 py-1 rounded-md transition-colors font-medium"
+                                                                >
+                                                                    Edit
+                                                                </button>
+                                                            )}
                                                             {canManageMembers && user.id !== member.id && (
-                                                                <>
-                                                                    <button
-                                                                        onClick={() => startEditingMember(member)}
-                                                                        className="text-sm text-blue-500 hover:text-blue-700 hover:bg-blue-50 px-3 py-1 rounded-md transition-colors font-medium"
-                                                                    >
-                                                                        Edit
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handleRemoveMember(member.project_user_id, member.name || "this member")}
-                                                                        className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-colors font-medium"
-                                                                    >
-                                                                        Remove
-                                                                    </button>
-                                                                </>
+                                                                <button
+                                                                    onClick={() => handleRemoveMember(member.project_user_id, member.name || "this member")}
+                                                                    className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-colors font-medium"
+                                                                >
+                                                                    Remove
+                                                                </button>
                                                             )}
                                                             {member.id === user.id && user.roles?.some((r) => r.name === "project_manager") && (
                                                                 <button
