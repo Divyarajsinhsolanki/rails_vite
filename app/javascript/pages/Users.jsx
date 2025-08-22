@@ -157,6 +157,8 @@ const Users = () => {
     "px-5 py-2 rounded-full text-sm font-semibold text-white shadow-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-[var(--theme-color)]";
   const inputBaseStyle =
     "w-full bg-[rgb(var(--theme-color-rgb)/0.05)] border border-[rgb(var(--theme-color-rgb)/0.3)] rounded-lg p-2 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]";
+  const roleButtonBase =
+    "px-3 py-1 rounded-full text-xs font-medium border transition-all duration-200 transform hover:scale-105 focus:outline-none";
 
   return (
     <div className="min-h-screen bg-[rgb(var(--theme-color-rgb)/0.1)] text-gray-800 font-sans p-4 sm:p-8">
@@ -190,14 +192,18 @@ const Users = () => {
                   <input type="file" name="cover_photo" onChange={handleChange} className="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[rgb(var(--theme-color-rgb)/0.2)] file:text-[var(--theme-color)] hover:file:bg-[rgb(var(--theme-color-rgb)/0.3)]" accept="image/*" />
                   <div className="flex flex-wrap justify-center gap-2">
                     {roles.map((role) => (
-                      <label key={role} className="flex items-center space-x-1">
-                        <input
-                          type="checkbox"
-                          checked={formData.roles.includes(role)}
-                          onChange={() => handleRoleChange(role)}
-                        />
-                        <span className="text-sm">{formatRole(role)}</span>
-                      </label>
+                      <button
+                        type="button"
+                        key={role}
+                        onClick={() => handleRoleChange(role)}
+                        className={`${roleButtonBase} ${
+                          formData.roles.includes(role)
+                            ? "bg-[var(--theme-color)] text-white border-[var(--theme-color)] shadow-md"
+                            : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100"
+                        }`}
+                      >
+                        {formatRole(role)}
+                      </button>
                     ))}
                   </div>
                   
