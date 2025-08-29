@@ -89,7 +89,7 @@ export default function KnowledgeDashboard() {
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start">
             {[...Array(8)].map((_, i) => (
               <motion.div
                 key={i}
@@ -103,7 +103,7 @@ export default function KnowledgeDashboard() {
         ) : (
           <motion.div
             layout
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start"
           >
             <AnimatePresence>
               {filteredCards.map((item, index) => (
@@ -117,7 +117,7 @@ export default function KnowledgeDashboard() {
                   whileHover={{ y: -5 }}
                   className="rounded-2xl overflow-hidden"
                 >
-                  <div className="h-full border bg-white border-gray-200 hover:border-gray-300 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
+                  <div className="border bg-white border-gray-200 hover:border-gray-300 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
                     {item.component}
                   </div>
                 </motion.div>

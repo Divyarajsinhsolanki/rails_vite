@@ -24,7 +24,7 @@ export default function DailyFactCard() {
   }, []);
 
   return (
-    <div className="bg-white shadow-md rounded-2xl p-4 h-full flex flex-col justify-between">
+    <div className="bg-white shadow-md rounded-2xl p-4 flex flex-col justify-between">
       <h2 className="text-lg font-semibold mb-2">💡 Daily Fact</h2>
       {facts.length ? (
         <ul className="text-sm text-gray-700 italic space-y-1">

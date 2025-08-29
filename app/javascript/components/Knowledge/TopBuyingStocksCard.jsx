@@ -74,7 +74,7 @@ export default function TopBuyingStocksCard() {
   }, []);
 
   return (
-    <div className="bg-white shadow-md rounded-2xl p-4 h-full flex flex-col">
+    <div className="bg-white shadow-md rounded-2xl p-4 flex flex-col">
       <h2 className="text-lg font-semibold mb-2">🇮🇳 Top Buying</h2>
       {loading ? (
         <div className="text-sm text-gray-500">Loading...</div>
