@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 // API keys for buy volume data
 const API_KEYS = {
   FMP: "e5ye9VH06cq5TTNyyA6z2gd2S8pf9sBV", // Financial Modeling Prep
-  ALPHA: "e5ye9VH06cq5TTNyyA6z2gd2S8pf9sBV", // AlphaVantage fallback
+  ALPHA: "YOUR_ALPHA_VANTAGE_KEY", // AlphaVantage fallback
 };
 
 const fetchers = [
