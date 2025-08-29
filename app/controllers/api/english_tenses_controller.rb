@@ -3,15 +3,34 @@ class Api::EnglishTensesController < Api::BaseController
   require 'faraday'
   require 'json'
 
-  API_URL = 'https://gist.githubusercontent.com/linguistics/87389a915632/raw/tenses.json'
+  API_URLS = [
+    'https://gist.githubusercontent.com/linguistics/87389a915632/raw/tenses.json',
+    'https://raw.githubusercontent.com/ghosh/english-tense-examples/master/tenses.json'
+  ]
 
   def show
-    response = Faraday.get(API_URL)
-    items = JSON.parse(response.body)
-    tense = items.sample
-    render json: tense
+    items = nil
+
+    API_URLS.each do |url|
+      items = fetch_items(url)
+      break if items
+    end
+
+    if items
+      render json: items.sample
+    else
+      render json: { error: 'Failed to fetch tense' }, status: 500
+    end
+  end
+
+  private
+
+  def fetch_items(url)
+    response = Faraday.get(url)
+    return unless response.success?
+    JSON.parse(response.body)
   rescue StandardError => e
     Rails.logger.error "EnglishTenses error: #{e.message}"
-    render json: { error: 'Failed to fetch tense' }, status: 500
+    nil
   end
 end
