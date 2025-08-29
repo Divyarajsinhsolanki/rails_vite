@@ -7,9 +7,10 @@ class Api::EnglishWordsController < Api::BaseController
     response = Faraday.get('https://random-word-api.herokuapp.com/word?number=1')
     data = JSON.parse(response.body)
     word = data.is_a?(Array) ? data.first : data
+    Rails.logger.info("EnglishWords success: #{word}")
     render json: { word: word }
   rescue StandardError => e
-    Rails.logger.error "EnglishWords error: #{e.message}"
-    render json: { error: 'Failed to fetch word' }, status: 500
+    Rails.logger.error("EnglishWords error: #{e.message}")
+    render json: { error: 'Failed to fetch word' }, status: :internal_server_error
   end
 end
