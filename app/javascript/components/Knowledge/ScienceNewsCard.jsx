@@ -15,7 +15,19 @@ const fetchers = [
         throw new Error("Invalid Spaceflight News response");
       }),
 
-  // 2) The Guardian science section
+  // 2) ScienceDaily RSS via rss2json
+  () =>
+    fetch(
+      "https://api.rss2json.com/v1/api.json?rss_url=https://www.sciencedaily.com/rss/top/science.xml"
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.items?.length)
+          return data.items.slice(0, 5).map((a) => ({ title: a.title, url: a.link }));
+        throw new Error("Invalid ScienceDaily response");
+      }),
+
+  // 3) The Guardian science section
   () =>
     fetch(
       `https://content.guardianapis.com/search?section=science&page-size=5&api-key=${API_KEYS.GUARDIAN}`
@@ -27,7 +39,7 @@ const fetchers = [
         throw new Error("Invalid Guardian response");
       }),
 
-  // 3) Inshorts science news (unofficial)
+  // 4) Inshorts science news (unofficial)
   () =>
     fetch("https://inshorts.vercel.app/api/news?category=science")
       .then((res) => res.json())
