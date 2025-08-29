@@ -43,6 +43,11 @@ class Api::CodingTipsController < Api::BaseController
   ].freeze
 
   def show
-    render json: { tip: TIPS.sample }
+    tip = TIPS.sample
+    Rails.logger.info("CodingTips success: #{tip}")
+    render json: { tip: tip }
+  rescue StandardError => e
+    Rails.logger.error("CodingTips error: #{e.message}")
+    render json: { error: 'Failed to fetch coding tip' }, status: :internal_server_error
   end
 end

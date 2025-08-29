@@ -17,9 +17,11 @@ class Api::EnglishTensesController < Api::BaseController
     end
 
     if items
+      Rails.logger.info('EnglishTenses success')
       render json: items.sample
     else
-      render json: { error: 'Failed to fetch tense' }, status: 500
+      Rails.logger.error('EnglishTenses error: failed to fetch')
+      render json: { error: 'Failed to fetch tense' }, status: :internal_server_error
     end
   end
 
@@ -28,6 +30,7 @@ class Api::EnglishTensesController < Api::BaseController
   def fetch_items(url)
     response = Faraday.get(url)
     return unless response.success?
+    Rails.logger.info("EnglishTenses fetched from #{url}")
     JSON.parse(response.body)
   rescue StandardError => e
     Rails.logger.error "EnglishTenses error: #{e.message}"
