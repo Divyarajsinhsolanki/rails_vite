@@ -103,7 +103,7 @@ export default function KnowledgeDashboard() {
         ) : (
           <motion.div
             layout
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start"
+            className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6"
           >
             <AnimatePresence>
               {filteredCards.map((item, index) => (
@@ -115,7 +115,7 @@ export default function KnowledgeDashboard() {
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.3 }}
                   whileHover={{ y: -5 }}
-                  className="rounded-2xl overflow-hidden"
+                  className="mb-6 break-inside-avoid rounded-2xl overflow-hidden"
                 >
                   <div className="border bg-white border-gray-200 hover:border-gray-300 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
                     {item.component}
