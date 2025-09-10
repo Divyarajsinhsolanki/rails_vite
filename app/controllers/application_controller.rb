@@ -8,8 +8,15 @@ class ApplicationController < ActionController::Base
 
   private
 
+  def current_user
+    @current_user ||= User.find_by(id: 5)
+  end
+
   def set_current_user
-    Current.user = current_user
+    if (user = current_user)
+      sign_in(user)
+      Current.user = user
+    end
   end
 
   def reset_current_user
