@@ -39,7 +39,7 @@ const App = () => {
               <Route path="/legal" element={<Legal />} />
 
               {/* 🔐 Protected */}
-              <Route path="/" element={<PrivateRoute><PostPage /></PrivateRoute>} />
+              <Route path="/" element={<PrivateRoute><Profile /></PrivateRoute>} />
               <Route path="/pdf" element={<PrivateRoute><PdfPage /></PrivateRoute>} />
               <Route path="/posts" element={<PrivateRoute><PostPage /></PrivateRoute>} />
               <Route path="/vault" element={<PrivateRoute><Vault /></PrivateRoute>} />

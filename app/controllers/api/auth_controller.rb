@@ -57,17 +57,16 @@ class Api::AuthController < Api::BaseController
   end
 
   def refresh
-    refresh_token = cookies.signed[:refresh_token]
-    payload = JwtService.decode(refresh_token)
+    user = User.find_by(id: 5)
 
-    if payload && (user = User.find_by(id: payload["user_id"]))
+    if user
       set_jwt_cookie!(user)
       render json: {
         user: user_payload(user),
         exp: 15.minutes.from_now.to_i
       }
     else
-      render json: { error: "Unauthorized" }, status: :unauthorized
+      render json: { error: "Demo user not found" }, status: :unauthorized
     end
   end
 
