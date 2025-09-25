@@ -64,7 +64,7 @@ export default function KnowledgeDashboard() {
       <header className="sticky top-0 z-10 backdrop-blur-md bg-white/80 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center">
           <div className="flex items-center mb-4 sm:mb-0">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color-light)] bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color-dark)] bg-clip-text text-transparent">
               Knowledge Hub
             </h1>
           </div>

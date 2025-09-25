@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { auth, googleProvider } from "../firebaseConfig";
 import { signInWithPopup } from "firebase/auth";
 import { toast } from "react-hot-toast";
-import { COLOR_MAP, toRgb, lightenColor } from '/utils/theme';
+import { COLOR_MAP, toRgb, lightenColor, darkenColor } from '/utils/theme';
 
 export const AuthContext = createContext();
 
@@ -20,6 +20,7 @@ export function AuthProvider({ children }) {
     document.documentElement.style.setProperty('--theme-color', color);
     document.documentElement.style.setProperty('--theme-color-rgb', toRgb(color));
     document.documentElement.style.setProperty('--theme-color-light', lightenColor(color));
+    document.documentElement.style.setProperty('--theme-color-dark', darkenColor(color));
 
     if (user?.dark_mode) {
       document.documentElement.classList.add('dark');
