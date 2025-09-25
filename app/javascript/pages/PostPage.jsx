@@ -12,7 +12,7 @@ import { Helmet } from "react-helmet";
 import {
   FiMessageSquare, FiUsers, FiClock, FiCheckCircle,
   FiAlertTriangle, FiBriefcase, FiPlus, FiLoader,
-  FiCheckSquare
+  FiCheckSquare, FiSun, FiCalendar, FiGift, FiTrendingUp
 } from "react-icons/fi";
 
 // --- Reusable Components ---
@@ -99,6 +99,16 @@ const PostPage = () => {
   const [projects, setProjects] = useState([]);
   const [birthdays, setBirthdays] = useState([]);
   const [generalTasks, setGeneralTasks] = useState([]);
+  const today = new Date();
+  const friendlyDate = today.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+  const friendlyTime = today.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
 
   const refreshPosts = useCallback(async () => {
     setIsLoading(true);
@@ -190,6 +200,14 @@ const PostPage = () => {
       .catch(() => setGeneralTasks([]));
   }, [user]);
 
+  const handleCreatePostClick = () => {
+    const formElement = document.getElementById("create-post");
+    if (formElement) {
+      formElement.scrollIntoView({ behavior: "smooth", block: "start" });
+      formElement.focus?.();
+    }
+  };
+
   return (
     <>
       <Helmet>
@@ -259,17 +277,95 @@ const PostPage = () => {
         {/* Main Content Feed */}
         <div className="lg:col-span-6">
             <header className="mb-8">
-                <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight">
-                    Welcome back, {[user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'User'}!
-                </h1>
-                <p className="text-slate-500 mt-2">
-                    Here's what's happening in your community today.
-                </p>
-            </header>
-            
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight flex items-center gap-3">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)]">
+                        <FiSun />
+                      </span>
+                      <span>
+                        Welcome back, {[user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'User'}!
+                      </span>
+                    </h1>
+                    <p className="text-slate-500 mt-2 flex items-center gap-2 text-sm sm:text-base">
+                      <FiClock className="text-[var(--theme-color)]" />
+                      <span>
+                        It's {friendlyDate} at {friendlyTime}. Here's what's happening today.
+                      </span>
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleCreatePostClick}
+                      className="inline-flex items-center gap-2 rounded-full bg-[var(--theme-color)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[rgb(var(--theme-color-rgb)/0.9)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)] focus:ring-offset-2"
+                    >
+                      <FiPlus />
+                      New Post
+                    </button>
+                    <Link
+                      to="/worklog"
+                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-[var(--theme-color)] hover:text-[var(--theme-color)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)] focus:ring-offset-2"
+                    >
+                      <FiCalendar />
+                      View My Tasks
+                    </Link>
+                    <Link
+                      to="/projects"
+                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-[var(--theme-color)] hover:text-[var(--theme-color)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)] focus:ring-offset-2"
+                    >
+                      <FiTrendingUp />
+                      Project Hub
+                    </Link>
+                  </div>
+                </div>
+              </header>
+
+              <section aria-labelledby="daily-highlights" className="mb-8">
+                <h2 id="daily-highlights" className="sr-only">Daily highlights</h2>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-500">
+                        <FiCalendar />
+                      </span>
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Due Today</p>
+                        <p className="text-xl font-semibold text-slate-800">{tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-500">
+                        <FiGift />
+                      </span>
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Upcoming Birthdays</p>
+                        <p className="text-xl font-semibold text-slate-800">{birthdays.length}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-[var(--theme-color)]">
+                        <FiMessageSquare />
+                      </span>
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Community Posts</p>
+                        <p className="text-xl font-semibold text-slate-800">{stats.totalPosts}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
             <main className="space-y-8">
-                <PostForm refreshPosts={refreshPosts} />
-                
+                <section id="create-post" aria-labelledby="create-post-heading" className="scroll-mt-20">
+                  <h2 id="create-post-heading" className="sr-only">Create a new post</h2>
+                  <PostForm refreshPosts={refreshPosts} />
+                </section>
+
                 <AnimatePresence>
                     {isLoading ? (
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center py-20 text-center">
