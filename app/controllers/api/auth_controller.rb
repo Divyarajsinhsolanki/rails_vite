@@ -133,6 +133,32 @@ class Api::AuthController < Api::BaseController
     render json: { message: "User details updated successfully" }
   end
 
+  def change_password
+    password_params = change_password_params
+
+    unless current_user.valid_password?(password_params[:current_password])
+      render json: { errors: ["Current password is incorrect"] }, status: :unprocessable_entity
+      return
+    end
+
+    if password_params[:new_password].blank?
+      render json: { errors: ["New password can't be blank"] }, status: :unprocessable_entity
+      return
+    end
+
+    unless password_params[:new_password] == password_params[:new_password_confirmation]
+      render json: { errors: ["Password confirmation doesn't match"] }, status: :unprocessable_entity
+      return
+    end
+
+    if current_user.update(password: password_params[:new_password],
+                           password_confirmation: password_params[:new_password_confirmation])
+      render json: { message: "Password updated successfully" }
+    else
+      render json: { errors: current_user.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
   private
 
   def user_params
@@ -152,6 +178,10 @@ class Api::AuthController < Api::BaseController
     permitted.delete(:profile_picture) if permitted[:profile_picture] == "null"
     permitted.delete(:cover_photo) if permitted[:cover_photo] == "null"
     permitted
+  end
+
+  def change_password_params
+    params.require(:auth).permit(:current_password, :new_password, :new_password_confirmation)
   end
 
   def user_payload(user)

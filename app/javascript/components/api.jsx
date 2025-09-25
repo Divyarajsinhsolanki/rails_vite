@@ -82,6 +82,7 @@ export const login = (u) => api.post("/login", u);
 export const logout = () => api.delete("/logout");
 export const fetchUserInfo = () => api.get("/view_profile");
 export const updateUserInfo = (d) => api.post("/update_profile", d);
+export const changePassword = (d) => api.post("/change_password", d);
 export const getUsers = () => api.get('/users.json');
 export const deleteUser = (id) => api.delete(`/users/${id}.json`);
 export const updateUser = (id, data) =>

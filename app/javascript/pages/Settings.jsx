@@ -3,7 +3,7 @@ import api from "../components/api";
 import { AuthContext } from "../context/AuthContext";
 import { COLOR_MAP } from "/utils/theme";
 import { Switch } from "@headlessui/react";
-import { FiHome, FiSun, FiMoon } from "react-icons/fi";
+import { FiHome, FiSun, FiMoon, FiLock } from "react-icons/fi";
 import { FaPalette } from "react-icons/fa";
 
 const landingPageOptions = [
@@ -26,6 +26,12 @@ const Settings = () => {
     user?.landing_page || "posts"
   );
   const [saving, setSaving] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordMessage, setPasswordMessage] = useState("");
 
   useEffect(() => {
     setDarkMode(user?.dark_mode || false);
@@ -49,6 +55,38 @@ const Settings = () => {
       console.error("Failed to update color theme", err);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setPasswordError("");
+    setPasswordMessage("");
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("New password and confirmation do not match.");
+      return;
+    }
+
+    setPasswordSaving(true);
+    try {
+      await api.post("/change_password", {
+        auth: {
+          current_password: currentPassword,
+          new_password: newPassword,
+          new_password_confirmation: confirmPassword,
+        },
+      });
+      setPasswordMessage("Password updated successfully.");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.errors?.[0] || "Failed to update password.";
+      setPasswordError(errorMessage);
+    } finally {
+      setPasswordSaving(false);
     }
   };
 
@@ -138,6 +176,70 @@ const Settings = () => {
             className="px-6 py-2 rounded-lg text-white bg-[var(--theme-color)] hover:opacity-90 disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save Changes"}
+          </button>
+        </div>
+      </form>
+      <form onSubmit={handlePasswordSubmit} className="space-y-6 mt-10">
+        <section className="bg-white rounded-lg shadow p-6 space-y-6">
+          <h2 className="flex items-center text-lg font-medium gap-2">
+            <FiLock className="text-[var(--theme-color)]" /> Change Password
+          </h2>
+          {passwordError && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-md p-3">
+              {passwordError}
+            </p>
+          )}
+          {passwordMessage && (
+            <p className="text-sm text-green-600 bg-green-50 border border-green-100 rounded-md p-3">
+              {passwordMessage}
+            </p>
+          )}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Current Password
+              </label>
+              <input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-[var(--theme-color)] focus:ring-[var(--theme-color)]"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                New Password
+              </label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-[var(--theme-color)] focus:ring-[var(--theme-color)]"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Confirm New Password
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-[var(--theme-color)] focus:ring-[var(--theme-color)]"
+                required
+              />
+            </div>
+          </div>
+        </section>
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={passwordSaving}
+            className="px-6 py-2 rounded-lg text-white bg-[var(--theme-color)] hover:opacity-90 disabled:opacity-50"
+          >
+            {passwordSaving ? "Updating..." : "Change Password"}
           </button>
         </div>
       </form>
