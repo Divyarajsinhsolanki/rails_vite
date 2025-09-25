@@ -18,6 +18,17 @@ export const lightenColor = (color, amount = 0.5) => {
   return `#${nr.toString(16).padStart(2, '0')}${ng.toString(16).padStart(2, '0')}${nb.toString(16).padStart(2, '0')}`;
 };
 
+export const darkenColor = (color, amount = 0.25) => {
+  const hex = color.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  const nr = Math.round(r * (1 - amount));
+  const ng = Math.round(g * (1 - amount));
+  const nb = Math.round(b * (1 - amount));
+  return `#${nr.toString(16).padStart(2, '0')}${ng.toString(16).padStart(2, '0')}${nb.toString(16).padStart(2, '0')}`;
+};
+
 export const toRgb = (color) => {
   const temp = document.createElement('div');
   temp.style.color = color;
