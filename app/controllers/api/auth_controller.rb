@@ -1,5 +1,6 @@
 require 'net/http'
 require 'uri'
+require 'open-uri'
 
 class Api::AuthController < Api::BaseController
   include Rails.application.routes.url_helpers
@@ -31,15 +32,29 @@ class Api::AuthController < Api::BaseController
       payload = verify_firebase_token(params[:id_token])  # (firebase_token)
       return render json: { error: "Invalid token" }, status: :unauthorized unless payload
 
-      user = User.find_or_create_by(email: payload["email"]) do |u|
-        u.first_name = payload["name"]
-        u.password = SecureRandom.hex(10)
-        u.profile_picture.attach(
+      user = User.find_or_initialize_by(email: payload["email"])
+
+      if user.new_record?
+        full_name = payload["name"].to_s.strip
+        first_name = payload["given_name"].presence || full_name.split.first || user.email.split("@").first
+        last_name = payload["family_name"].presence || full_name.split.drop(1).join(" ")
+
+        user.first_name = first_name
+        user.last_name = last_name.presence || first_name
+        user.password = SecureRandom.hex(10)
+        user.landing_page ||= User::LANDING_PAGES.first
+        user.skip_confirmation! if user.respond_to?(:skip_confirmation!)
+      end
+
+      if payload["picture"].present? && !user.profile_picture.attached?
+        user.profile_picture.attach(
           io: URI.open(payload["picture"]),
           filename: "#{payload["email"]}_profile_picture.jpg",
           content_type: "image/jpeg"
         )
       end
+
+      user.save! if user.changed? || user.new_record?
     else
       user = User.find_by(email: params[:auth][:email])
       return render json: { error: "Invalid credentials" }, status: :unauthorized unless user&.valid_password?(params[:auth][:password])
