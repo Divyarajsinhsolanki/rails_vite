@@ -205,7 +205,6 @@ const Users = () => {
                       className="w-full text-xs text-gray-600 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[rgb(var(--theme-color-rgb)/0.2)] file:text-[var(--theme-color)] hover:file:bg-[rgb(var(--theme-color-rgb)/0.3)]"
                       accept="image/*"
                     />
-                    <p className="mt-1 text-[10px] text-gray-500">Use a clear square image for the best look.</p>
                   </div>
                   <div className={uploadContainerStyle}>
                     <label
@@ -222,7 +221,6 @@ const Users = () => {
                       className="w-full text-xs text-gray-600 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[rgb(var(--theme-color-rgb)/0.2)] file:text-[var(--theme-color)] hover:file:bg-[rgb(var(--theme-color-rgb)/0.3)]"
                       accept="image/*"
                     />
-                    <p className="mt-1 text-[10px] text-gray-500">Wide landscape images work best for cover photos.</p>
                   </div>
                   <div className="flex flex-wrap justify-center gap-2">
                     {roles.map((role) => (
