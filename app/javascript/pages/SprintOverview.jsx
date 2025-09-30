@@ -435,19 +435,6 @@ const AddTaskModal = ({ developers, users, onClose, onCreate, projectId }) => {
                         </select>
                     </div>
                     <div>
-                        <label htmlFor="project_id" className="block text-sm font-medium text-gray-700 mb-1">
-                            Project ID
-                        </label>
-                        <input
-                            type="number"
-                            id="project_id"
-                            name="project_id"
-                            value={newTask.project_id}
-                            onChange={handleChange}
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
-                        />
-                    </div>
-                    <div>
                         <label htmlFor="start_date" className="block text-sm font-medium text-gray-700 mb-1">
                             Start Date
                         </label>
