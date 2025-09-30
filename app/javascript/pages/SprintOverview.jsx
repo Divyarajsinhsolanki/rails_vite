@@ -22,6 +22,22 @@ const mapTask = (t) => ({
     endDate: t.end_date || t.due_date || t.date,
 });
 
+const formatHours = (hours) => {
+    if (hours === null || hours === undefined || hours === '') {
+        return '';
+    }
+
+    const numericHours = Number(hours);
+
+    if (Number.isNaN(numericHours)) {
+        return `${hours}h`;
+    }
+
+    const normalizedHours = numericHours.toFixed(2).replace(/\.0+$/, '').replace(/\.(\d*?)0+$/, '.$1');
+
+    return `${normalizedHours}h`;
+};
+
 // Task Details Modal Component
 const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate, onDelete }) => {
   const [editedTask, setEditedTask] = useState({ ...task });
@@ -928,7 +944,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                                         <tbody ref={provided.innerRef} {...provided.droppableProps} className="bg-white divide-y divide-gray-200">
                                                 <tr className="bg-gray-100">
                                                     <td colSpan="9" className="px-6 py-2 font-semibold text-gray-700">
-                                                        {group.developer ? group.developer.name : 'Unassigned'} - Total Est. Hours: {group.totalHours}
+                                                        {group.developer ? group.developer.name : 'Unassigned'} - Total Est. Hours: {formatHours(group.totalHours)}
                                                     </td>
                                                 </tr>
                                                 {group.tasks.map((task, idx) => (
@@ -947,7 +963,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                                                                     {task.title}
                                                                 </td>
                                                                 <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                                                                    {task.estimatedHours}
+                                                                    {formatHours(task.estimatedHours)}
                                                                 </td>
                                                                 <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
                                                                     {getDeveloperNames(task.assignedTo)}
@@ -1037,7 +1053,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                                 <tbody key={group.devId} className="bg-white divide-y divide-gray-200">
                                     <tr className="bg-gray-100">
                                         <td colSpan="9" className="px-6 py-2 font-semibold text-gray-700">
-                                            {group.developer ? group.developer.name : 'Unassigned'} - Total Est. Hours: {group.totalHours}
+                                            {group.developer ? group.developer.name : 'Unassigned'} - Total Est. Hours: {formatHours(group.totalHours)}
                                         </td>
                                     </tr>
                                     {group.tasks.map(task => (
@@ -1047,7 +1063,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                                                 <a href={task.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>{task.id}</a>
                                             </td>
                                             <td className="px-6 py-3 whitespace-normal text-sm text-gray-900">{task.title}</td>
-                                            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{task.estimatedHours}</td>
+                                            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{formatHours(task.estimatedHours)}</td>
                                             <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{getDeveloperNames(task.assignedTo)}</td>
                                             <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{getUserName(task.assignedUser)}</td>
                                             <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{new Date(task.startDate).getDate()}</td>
