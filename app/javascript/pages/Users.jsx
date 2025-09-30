@@ -159,6 +159,8 @@ const Users = () => {
     "w-full bg-[rgb(var(--theme-color-rgb)/0.05)] border border-[rgb(var(--theme-color-rgb)/0.3)] rounded-lg p-2 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]";
   const roleButtonBase =
     "px-3 py-1 rounded-full text-xs font-medium border transition-all duration-200 transform hover:scale-105 focus:outline-none";
+  const uploadContainerStyle =
+    "w-full bg-white/70 border border-dashed border-[rgb(var(--theme-color-rgb)/0.4)] rounded-xl p-3 text-left shadow-sm hover:shadow-md transition-all duration-200";
 
   return (
     <div className="min-h-screen bg-[rgb(var(--theme-color-rgb)/0.1)] text-gray-800 font-sans p-4 sm:p-8">
@@ -188,8 +190,40 @@ const Users = () => {
                   <input type="text" name="last_name" value={formData.last_name} onChange={handleChange} placeholder="Last Name" className={inputBaseStyle} required />
                   <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" className={inputBaseStyle} required />
                   <input type="date" name="date_of_birth" value={formData.date_of_birth || ''} onChange={handleChange} className={`${inputBaseStyle} text-gray-500`} />
-                  <input type="file" name="profile_picture" onChange={handleChange} className="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[rgb(var(--theme-color-rgb)/0.2)] file:text-[var(--theme-color)] hover:file:bg-[rgb(var(--theme-color-rgb)/0.3)]" accept="image/*" />
-                  <input type="file" name="cover_photo" onChange={handleChange} className="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[rgb(var(--theme-color-rgb)/0.2)] file:text-[var(--theme-color)] hover:file:bg-[rgb(var(--theme-color-rgb)/0.3)]" accept="image/*" />
+                  <div className={uploadContainerStyle}>
+                    <label
+                      htmlFor="profile_picture"
+                      className="block text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2"
+                    >
+                      Profile Photo
+                    </label>
+                    <input
+                      id="profile_picture"
+                      type="file"
+                      name="profile_picture"
+                      onChange={handleChange}
+                      className="w-full text-xs text-gray-600 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[rgb(var(--theme-color-rgb)/0.2)] file:text-[var(--theme-color)] hover:file:bg-[rgb(var(--theme-color-rgb)/0.3)]"
+                      accept="image/*"
+                    />
+                    <p className="mt-1 text-[10px] text-gray-500">Use a clear square image for the best look.</p>
+                  </div>
+                  <div className={uploadContainerStyle}>
+                    <label
+                      htmlFor="cover_photo"
+                      className="block text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2"
+                    >
+                      Profile Background
+                    </label>
+                    <input
+                      id="cover_photo"
+                      type="file"
+                      name="cover_photo"
+                      onChange={handleChange}
+                      className="w-full text-xs text-gray-600 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[rgb(var(--theme-color-rgb)/0.2)] file:text-[var(--theme-color)] hover:file:bg-[rgb(var(--theme-color-rgb)/0.3)]"
+                      accept="image/*"
+                    />
+                    <p className="mt-1 text-[10px] text-gray-500">Wide landscape images work best for cover photos.</p>
+                  </div>
                   <div className="flex flex-wrap justify-center gap-2">
                     {roles.map((role) => (
                       <button
