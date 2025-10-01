@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext, useCallback } from "react";
-import { fetchProjects, createProject, updateProject, deleteProject, addProjectUser, updateProjectUser, deleteProjectUser, leaveProject } from "../components/api";
+import { fetchProjects, createProject, updateProject, deleteProject, addProjectUser, updateProjectUser, deleteProjectUser, leaveProject, SchedulerAPI } from "../components/api";
 import UserMultiSelect from "../components/UserMultiSelect";
 import { AuthContext } from "../context/AuthContext";
 // Import icons (e.g., from Feather Icons)
@@ -86,6 +86,90 @@ const Notification = ({ message, type, onClose }) => {
 };
 
 
+// Helper constants & components
+
+const INITIAL_TASK_STATS = {
+    todo: 0,
+    inProgress: 0,
+    completed: 0,
+    overdue: 0,
+    nextDueDate: null,
+    total: 0,
+};
+
+const ProjectHealthCard = ({ stats, loading, error }) => {
+    const formatDueDate = (dueDate) => {
+        if (!dueDate) return null;
+        const date = new Date(dueDate);
+        if (Number.isNaN(date.getTime())) return null;
+        return date.toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+        });
+    };
+
+    return (
+        <div className="bg-gray-50 p-6 rounded-xl shadow-inner border border-gray-100 mb-8">
+            <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                    <FiInfo className="w-5 h-5 text-[var(--theme-color)]" /> Project Health
+                </h3>
+            </div>
+            {loading ? (
+                <div className="flex items-center justify-center py-6 text-gray-500">
+                    <FiLoader className="animate-spin text-2xl mr-2" /> Fetching tasks...
+                </div>
+            ) : error ? (
+                <div className="py-6 text-center text-red-500">
+                    Unable to load project health right now. Please try again later.
+                </div>
+            ) : stats.total === 0 ? (
+                <div className="py-6 text-center text-gray-500">
+                    No tasks found for this project yet. Start by creating a task to see project health details.
+                </div>
+            ) : (
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="bg-white rounded-lg border border-gray-100 p-4 shadow-sm">
+                            <p className="text-sm text-gray-500">To Do</p>
+                            <p className="text-2xl font-bold text-gray-900">{stats.todo}</p>
+                        </div>
+                        <div className="bg-white rounded-lg border border-gray-100 p-4 shadow-sm">
+                            <p className="text-sm text-gray-500">In Progress</p>
+                            <p className="text-2xl font-bold text-gray-900">{stats.inProgress}</p>
+                        </div>
+                        <div className="bg-white rounded-lg border border-gray-100 p-4 shadow-sm">
+                            <p className="text-sm text-gray-500">Completed</p>
+                            <p className="text-2xl font-bold text-gray-900">{stats.completed}</p>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="bg-white rounded-lg border border-gray-100 p-4 shadow-sm flex items-center gap-3">
+                            <FiCalendar className="w-6 h-6 text-[var(--theme-color)]" />
+                            <div>
+                                <p className="text-sm text-gray-500">Next due date</p>
+                                <p className="text-lg font-semibold text-gray-900">
+                                    {formatDueDate(stats.nextDueDate) || "No upcoming deadlines"}
+                                </p>
+                            </div>
+                        </div>
+                        <div className={`bg-white rounded-lg border border-gray-100 p-4 shadow-sm flex items-center gap-3 ${stats.overdue > 0 ? 'bg-red-50 border-red-200' : ''}`}>
+                            <FiXCircle className={`w-6 h-6 ${stats.overdue > 0 ? 'text-red-500' : 'text-gray-400'}`} />
+                            <div>
+                                <p className="text-sm text-gray-500">Overdue tasks</p>
+                                <p className={`text-lg font-semibold ${stats.overdue > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                                    {stats.overdue}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 // --- Main Projects Component ---
 
 const WORKLOAD_STATUSES = ["free", "partial", "full", "overloaded"];
@@ -101,6 +185,10 @@ const Projects = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false); // For form submission loading
     const [searchQuery, setSearchQuery] = useState("");
+    const [projectTasks, setProjectTasks] = useState([]);
+    const [projectTaskStats, setProjectTaskStats] = useState(() => ({ ...INITIAL_TASK_STATS }));
+    const [isProjectTasksLoading, setIsProjectTasksLoading] = useState(false);
+    const [projectTasksError, setProjectTasksError] = useState(false);
 
     // Form States (for Create/Edit Project)
     const [projectForm, setProjectForm] = useState({
@@ -156,6 +244,96 @@ const Projects = () => {
     useEffect(() => {
         loadProjects();
     }, [loadProjects]);
+
+    useEffect(() => {
+        const resetTaskState = () => {
+            setProjectTasks([]);
+            setProjectTaskStats({ ...INITIAL_TASK_STATS });
+            setProjectTasksError(false);
+            setIsProjectTasksLoading(false);
+        };
+
+        if (!selectedProjectId) {
+            resetTaskState();
+            return;
+        }
+
+        let isMounted = true;
+        const computeTaskStats = (tasks) => {
+            const stats = { ...INITIAL_TASK_STATS };
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            let nearestUpcoming = null;
+            let fallbackNearest = null;
+
+            tasks.forEach((task) => {
+                const status = (task.status || "").toLowerCase().replace(/-/g, "_");
+                if (status === "todo" || status === "to_do") {
+                    stats.todo += 1;
+                } else if (status === "in_progress") {
+                    stats.inProgress += 1;
+                } else if (status === "completed" || status === "done") {
+                    stats.completed += 1;
+                }
+
+                if (task.due_date) {
+                    const dueDate = new Date(task.due_date);
+                    if (!Number.isNaN(dueDate.getTime())) {
+                        if (!fallbackNearest || dueDate < fallbackNearest) {
+                            fallbackNearest = dueDate;
+                        }
+
+                        if (dueDate < today && status !== "completed" && status !== "done") {
+                            stats.overdue += 1;
+                        }
+
+                        if ((status !== "completed" && status !== "done") && dueDate >= today) {
+                            if (!nearestUpcoming || dueDate < nearestUpcoming) {
+                                nearestUpcoming = dueDate;
+                            }
+                        }
+                    }
+                }
+            });
+
+            stats.total = tasks.length;
+            const selectedDueDate = nearestUpcoming || fallbackNearest;
+            stats.nextDueDate = selectedDueDate ? selectedDueDate.toISOString() : null;
+
+            return stats;
+        };
+
+        const fetchTasks = async () => {
+            setIsProjectTasksLoading(true);
+            setProjectTasksError(false);
+            setProjectTasks([]);
+            setProjectTaskStats({ ...INITIAL_TASK_STATS });
+            try {
+                const { data } = await SchedulerAPI.getTasks({ project_id: selectedProjectId });
+                if (!isMounted) return;
+                const tasks = Array.isArray(data) ? data : [];
+                setProjectTasks(tasks);
+                setProjectTaskStats(computeTaskStats(tasks));
+            } catch (error) {
+                console.error("Failed to fetch project tasks:", error);
+                if (!isMounted) return;
+                setProjectTasksError(true);
+                setProjectTasks([]);
+                setProjectTaskStats({ ...INITIAL_TASK_STATS });
+            } finally {
+                if (isMounted) {
+                    setIsProjectTasksLoading(false);
+                }
+            }
+        };
+
+        fetchTasks();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [selectedProjectId]);
 
     // Event Handlers
     const handleFormChange = (e) =>
@@ -620,6 +798,12 @@ const Projects = () => {
                                     </div>
                                 )}
                             </div>
+
+                            <ProjectHealthCard
+                                stats={projectTaskStats}
+                                loading={isProjectTasksLoading}
+                                error={projectTasksError}
+                            />
 
                             {/* Member List */}
                             <div className="bg-gray-50 p-6 rounded-xl shadow-inner border border-gray-100">
