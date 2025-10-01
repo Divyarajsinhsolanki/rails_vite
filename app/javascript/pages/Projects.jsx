@@ -110,7 +110,7 @@ const ProjectHealthCard = ({ stats, loading, error }) => {
     };
 
     return (
-        <div className="bg-gray-50 p-6 rounded-xl shadow-inner border border-gray-100 mb-8">
+        <div className="bg-gray-50 p-6 rounded-xl shadow-inner border border-gray-100 mb-8 lg:mb-0">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
                     <FiInfo className="w-5 h-5 text-[var(--theme-color)]" /> Project Health
@@ -640,7 +640,7 @@ const Projects = () => {
 
             {/* Main Content Area */}
             <main className="flex-1 p-8 overflow-y-auto custom-scrollbar bg-gradient-to-br from-gray-100 to-gray-200">
-                <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8 border border-gray-200">
+                <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-8 border border-gray-200">
                     {isFormVisible ? (
                         // Create / Edit Project Form
                         <div className="animate-fadeInUp">
@@ -747,237 +747,250 @@ const Projects = () => {
                     ) : selectedProject ? (
                         // Selected Project Details
                         <div className="animate-fadeIn">
-                            <div className="flex justify-between items-start mb-8 pb-4 border-b border-gray-200">
-                                <div>
-                                    <h1 className="text-4xl font-extrabold text-gray-900">{selectedProject.name}</h1>
-                                    <p className="text-gray-600 mt-2 text-lg">{selectedProject.description || 'No description provided for this project.'}</p>
-                                    <div className="mt-4 text-sm text-gray-600 flex items-center gap-4">
-                                        {selectedProject.start_date && (
-                                            <span className="flex items-center gap-1">
-                                                <FiCalendar className="text-gray-400" /> Start: {selectedProject.start_date}
-                                            </span>
-                                        )}
-                                        {selectedProject.end_date && (
-                                            <span className="flex items-center gap-1">
-                                                <FiCalendar className="text-gray-400" /> End: {selectedProject.end_date}
-                                            </span>
-                                        )}
-                                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${
-                                            selectedProject.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                            selectedProject.status === 'upcoming' ? 'bg-yellow-100 text-yellow-700' :
-                                            'bg-blue-100 text-blue-700' // Default for 'running' or undefined
-                                        }`}>
-                                            {selectedProject.status || 'Running'}
-                                        </span>
-                                    </div>
-                                    {selectedProject.sheet_integration_enabled && selectedProject.sheet_id && (
-                                        <div className="mt-4 flex items-center gap-2 text-[var(--theme-color)]">
-                                            <FiLink className="w-5 h-5" />
-                                            <a href={`https://docs.google.com/spreadsheets/d/${selectedProject.sheet_id}`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium hover:underline">
-                                                Integrated Google Sheet
-                                            </a>
-                                        </div>
-                                    )}
-                                </div>
-                                {canEdit && (
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => handleEditClick(selectedProject)}
-                                            className="p-3 text-gray-500 hover:bg-gray-100 rounded-full transition-colors tooltip"
-                                            data-tooltip="Edit Project"
-                                        >
-                                            <FiEdit className="w-5 h-5" />
-                                        </button>
-                                        <button
-                                            onClick={() => confirmDeleteProject(selectedProject.id)}
-                                            className="p-3 text-red-500 hover:bg-red-100 rounded-full transition-colors tooltip"
-                                            data-tooltip="Delete Project"
-                                        >
-                                            <FiTrash2 className="w-5 h-5" />
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-
-                            <ProjectHealthCard
-                                stats={projectTaskStats}
-                                loading={isProjectTasksLoading}
-                                error={projectTasksError}
-                            />
-
-                            {/* Member List */}
-                            <div className="bg-gray-50 p-6 rounded-xl shadow-inner border border-gray-100">
-                                <h3 className="text-xl font-semibold text-gray-800 mb-5 flex items-center gap-2">
-                                    <FiUsers className="w-5 h-5 text-[var(--theme-color)]" /> Members ({selectedProject.users.length})
-                                </h3>
-                                {selectedProject.users.length > 0 ? (
-                                    <ul className="space-y-4">
-                                        {selectedProject.users.map((member) => (
-                                            <li key={member.project_user_id} className="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-100 shadow-sm transition-all duration-200 hover:shadow-md">
-                                                {editingMemberId === member.project_user_id ? (
-                                                    <>
-                                                        <div className="flex items-center flex-grow">
-                                                            <Avatar name={member.name} src={member.profile_picture} size="lg" />
-                                                            <div className="space-y-2">
-                                                                <p className="font-medium text-lg text-gray-900">{member.name || "Invited User"}</p>
-                                                                <div className="flex flex-col sm:flex-row gap-2">
-                                                                    <input
-                                                                        type="number"
-                                                                        name="allocation_percentage"
-                                                                        min="0"
-                                                                        max="100"
-                                                                        value={editingMemberData.allocation_percentage}
-                                                                        onChange={handleEditingMemberChange}
-                                                                        className="w-24 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none"
-                                                                    />
-                                                                    <select
-                                                                        name="workload_status"
-                                                                        value={editingMemberData.workload_status}
-                                                                        onChange={handleEditingMemberChange}
-                                                                        className="border border-gray-300 rounded-lg p-2 text-sm capitalize focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none"
-                                                                    >
-                                                                        {WORKLOAD_STATUSES.map((s) => (
-                                                                            <option key={s} value={s} className="capitalize">
-                                                                                {s}
-                                                                            </option>
-                                                                        ))}
-                                                                    </select>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <button
-                                                                onClick={() => handleSaveMemberEdit(member.project_user_id)}
-                                                                className="text-sm text-green-600 hover:text-green-800 hover:bg-green-50 px-3 py-1 rounded-md transition-colors font-medium"
-                                                            >
-                                                                Save
-                                                            </button>
-                                                            <button
-                                                                onClick={cancelMemberEdit}
-                                                                className="text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-50 px-3 py-1 rounded-md transition-colors font-medium"
-                                                            >
-                                                                Cancel
-                                                            </button>
-                                                        </div>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <div className="flex items-center flex-grow">
-                                                            <Avatar name={member.name} src={member.profile_picture} size="lg" />
-                                                            <div>
-                                                                <p className="font-medium text-lg text-gray-900">{member.name || "Invited User"}</p>
-                                                                <p className="text-sm text-gray-500 capitalize">{member.role}</p>
-                                                                {member.email && <p className="text-sm text-gray-500">{member.email}</p>}
-                                                                <p className="text-sm text-gray-500">Allocation: {member.allocation_percentage}% ({member.workload_status})</p>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            {(canManageMembers || member.id === user.id) && (
-                                                                <button
-                                                                    onClick={() => startEditingMember(member)}
-                                                                    className="text-sm text-blue-500 hover:text-blue-700 hover:bg-blue-50 px-3 py-1 rounded-md transition-colors font-medium"
-                                                                >
-                                                                    Edit
-                                                                </button>
-                                                            )}
-                                                            {canManageMembers && user.id !== member.id && (
-                                                                <button
-                                                                    onClick={() => handleRemoveMember(member.project_user_id, member.name || "this member")}
-                                                                    className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-colors font-medium"
-                                                                >
-                                                                    Remove
-                                                                </button>
-                                                            )}
-                                                            {member.id === user.id && user.roles?.some((r) => r.name === "project_manager") && (
-                                                                <button
-                                                                    onClick={handleLeaveProject}
-                                                                    className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-colors font-medium ml-2"
-                                                                >
-                                                                    Leave
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </>
+                            <div className="flex flex-col lg:grid lg:grid-cols-[2fr_1fr] lg:gap-8">
+                                <div className="space-y-8">
+                                    <div className="flex justify-between items-start pb-4 border-b border-gray-200">
+                                        <div>
+                                            <h1 className="text-4xl font-extrabold text-gray-900">{selectedProject.name}</h1>
+                                            <p className="text-gray-600 mt-2 text-lg">{selectedProject.description || 'No description provided for this project.'}</p>
+                                            <div className="mt-4 text-sm text-gray-600 flex flex-wrap items-center gap-3">
+                                                {selectedProject.start_date && (
+                                                    <span className="flex items-center gap-1">
+                                                        <FiCalendar className="text-gray-400" /> Start: {selectedProject.start_date}
+                                                    </span>
                                                 )}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <p className="text-center text-gray-500 py-6">This project currently has no members.</p>
-                                )}
-
-                                {/* Add Member Form */}
-                                {canManageMembers && (
-                                    <form onSubmit={handleAddMember} className="mt-8 pt-6 border-t border-gray-200 grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
-                                        <div className="md:col-span-2">
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Select Users to Add</label>
-                                            <UserMultiSelect
-                                                selectedUsers={selectedUsersToAdd}
-                                                setSelectedUsers={setSelectedUsersToAdd}
-                                                excludedIds={selectedProject.users.map((u) => u.id)}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                                            <select
-                                                name="role"
-                                                id="role"
-                                                value={memberForm.role}
-                                                onChange={handleMemberFormChange}
-                                                className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none appearance-none bg-white pr-8"
-                                            >
-                                                <option value="owner">Owner</option>
-                                                <option value="manager">Manager</option>
-                                                <option value="collaborator">Collaborator</option>
-                                                <option value="viewer">Viewer</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label htmlFor="allocation_percentage" className="block text-sm font-medium text-gray-700 mb-1">Allocation %</label>
-                                            <input
-                                                type="number"
-                                                name="allocation_percentage"
-                                                id="allocation_percentage"
-                                                min="0"
-                                                max="100"
-                                                value={memberForm.allocation_percentage}
-                                                onChange={handleMemberFormChange}
-                                                className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label htmlFor="workload_status" className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                                            <select
-                                                name="workload_status"
-                                                id="workload_status"
-                                                value={memberForm.workload_status}
-                                                onChange={handleMemberFormChange}
-                                                className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none appearance-none bg-white pr-8"
-                                            >
-                                                {WORKLOAD_STATUSES.map((s) => (
-                                                    <option key={s} value={s} className="capitalize">
-                                                        {s}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <button
-                                            type="submit"
-                                            className="md:col-span-1 px-5 py-2.5 bg-[var(--theme-color)] text-white rounded-lg hover:brightness-110 transition-colors font-semibold shadow-md flex items-center justify-center gap-2 whitespace-nowrap active:scale-95 transform mt-4 md:mt-0"
-                                            disabled={isSaving || selectedUsersToAdd.length === 0}
-                                        >
-                                            {isSaving ? (
-                                                <>
-                                                    <FiLoader className="animate-spin" /> Adding...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <FiUserPlus className="w-5 h-5" /> Add Member(s)
-                                                </>
+                                                {selectedProject.end_date && (
+                                                    <span className="flex items-center gap-1">
+                                                        <FiCalendar className="text-gray-400" /> End: {selectedProject.end_date}
+                                                    </span>
+                                                )}
+                                                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${
+                                                    selectedProject.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                                    selectedProject.status === 'upcoming' ? 'bg-yellow-100 text-yellow-700' :
+                                                    'bg-blue-100 text-blue-700'
+                                                }`}>
+                                                    {selectedProject.status || 'Running'}
+                                                </span>
+                                            </div>
+                                            {selectedProject.sheet_integration_enabled && selectedProject.sheet_id && (
+                                                <div className="mt-4 flex items-center gap-2 text-[var(--theme-color)]">
+                                                    <FiLink className="w-5 h-5" />
+                                                    <a
+                                                        href={`https://docs.google.com/spreadsheets/d/${selectedProject.sheet_id}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-sm font-medium hover:underline"
+                                                    >
+                                                        Integrated Google Sheet
+                                                    </a>
+                                                </div>
                                             )}
-                                        </button>
-                                    </form>
-                                )}
+                                        </div>
+                                        {canEdit && (
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => handleEditClick(selectedProject)}
+                                                    className="p-3 text-gray-500 hover:bg-gray-100 rounded-full transition-colors tooltip"
+                                                    data-tooltip="Edit Project"
+                                                >
+                                                    <FiEdit className="w-5 h-5" />
+                                                </button>
+                                                <button
+                                                    onClick={() => confirmDeleteProject(selectedProject.id)}
+                                                    className="p-3 text-red-500 hover:bg-red-100 rounded-full transition-colors tooltip"
+                                                    data-tooltip="Delete Project"
+                                                >
+                                                    <FiTrash2 className="w-5 h-5" />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Member List */}
+                                    <div className="bg-gray-50 p-6 rounded-xl shadow-inner border border-gray-100">
+                                        <h3 className="text-xl font-semibold text-gray-800 mb-5 flex items-center gap-2">
+                                            <FiUsers className="w-5 h-5 text-[var(--theme-color)]" /> Members ({selectedProject.users.length})
+                                        </h3>
+                                        {selectedProject.users.length > 0 ? (
+                                            <ul className="space-y-4">
+                                                {selectedProject.users.map((member) => (
+                                                    <li
+                                                        key={member.project_user_id}
+                                                        className="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-100 shadow-sm transition-all duration-200 hover:shadow-md"
+                                                    >
+                                                        {editingMemberId === member.project_user_id ? (
+                                                            <>
+                                                                <div className="flex items-center flex-grow">
+                                                                    <Avatar name={member.name} src={member.profile_picture} size="lg" />
+                                                                    <div className="space-y-2">
+                                                                        <p className="font-medium text-lg text-gray-900">{member.name || 'Invited User'}</p>
+                                                                        <div className="flex flex-col sm:flex-row gap-2">
+                                                                            <input
+                                                                                type="number"
+                                                                                name="allocation_percentage"
+                                                                                min="0"
+                                                                                max="100"
+                                                                                value={editingMemberData.allocation_percentage}
+                                                                                onChange={handleEditingMemberChange}
+                                                                                className="w-24 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none"
+                                                                            />
+                                                                            <select
+                                                                                name="workload_status"
+                                                                                value={editingMemberData.workload_status}
+                                                                                onChange={handleEditingMemberChange}
+                                                                                className="border border-gray-300 rounded-lg p-2 text-sm capitalize focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none"
+                                                                            >
+                                                                                {WORKLOAD_STATUSES.map((s) => (
+                                                                                    <option key={s} value={s} className="capitalize">
+                                                                                        {s}
+                                                                                    </option>
+                                                                                ))}
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <button
+                                                                        onClick={() => handleSaveMemberEdit(member.project_user_id)}
+                                                                        className="text-sm text-green-600 hover:text-green-800 hover:bg-green-50 px-3 py-1 rounded-md transition-colors font-medium"
+                                                                    >
+                                                                        Save
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={cancelMemberEdit}
+                                                                        className="text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-50 px-3 py-1 rounded-md transition-colors font-medium"
+                                                                    >
+                                                                        Cancel
+                                                                    </button>
+                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <div className="flex items-center flex-grow">
+                                                                    <Avatar name={member.name} src={member.profile_picture} size="lg" />
+                                                                    <div>
+                                                                        <p className="font-medium text-lg text-gray-900">{member.name || 'Invited User'}</p>
+                                                                        <p className="text-sm text-gray-500 capitalize">{member.role}</p>
+                                                                        {member.email && <p className="text-sm text-gray-500">{member.email}</p>}
+                                                                        <p className="text-sm text-gray-500">Allocation: {member.allocation_percentage}% ({member.workload_status})</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    {(canManageMembers || member.id === user.id) && (
+                                                                        <button
+                                                                            onClick={() => startEditingMember(member)}
+                                                                            className="text-sm text-blue-500 hover:text-blue-700 hover:bg-blue-50 px-3 py-1 rounded-md transition-colors font-medium"
+                                                                        >
+                                                                            Edit
+                                                                        </button>
+                                                                    )}
+                                                                    {canManageMembers && user.id !== member.id && (
+                                                                        <button
+                                                                            onClick={() => handleRemoveMember(member.project_user_id, member.name || 'this member')}
+                                                                            className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-colors font-medium"
+                                                                        >
+                                                                            Remove
+                                                                        </button>
+                                                                    )}
+                                                                    {member.id === user.id && user.roles?.some((r) => r.name === 'project_manager') && (
+                                                                        <button
+                                                                            onClick={handleLeaveProject}
+                                                                            className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-colors font-medium ml-2"
+                                                                        >
+                                                                            Leave
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        ) : (
+                                            <p className="text-center text-gray-500 py-6">This project currently has no members.</p>
+                                        )}
+
+                                        {/* Add Member Form */}
+                                        {canManageMembers && (
+                                            <form onSubmit={handleAddMember} className="mt-8 pt-6 border-t border-gray-200 grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+                                                <div className="md:col-span-2">
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Select Users to Add</label>
+                                                    <UserMultiSelect
+                                                        selectedUsers={selectedUsersToAdd}
+                                                        setSelectedUsers={setSelectedUsersToAdd}
+                                                        excludedIds={selectedProject.users.map((u) => u.id)}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                                                    <select
+                                                        name="role"
+                                                        id="role"
+                                                        value={memberForm.role}
+                                                        onChange={handleMemberFormChange}
+                                                        className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none appearance-none bg-white pr-8"
+                                                    >
+                                                        <option value="owner">Owner</option>
+                                                        <option value="manager">Manager</option>
+                                                        <option value="collaborator">Collaborator</option>
+                                                        <option value="viewer">Viewer</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label htmlFor="allocation_percentage" className="block text-sm font-medium text-gray-700 mb-1">Allocation %</label>
+                                                    <input
+                                                        type="number"
+                                                        name="allocation_percentage"
+                                                        id="allocation_percentage"
+                                                        min="0"
+                                                        max="100"
+                                                        value={memberForm.allocation_percentage}
+                                                        onChange={handleMemberFormChange}
+                                                        className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label htmlFor="workload_status" className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                                    <select
+                                                        name="workload_status"
+                                                        id="workload_status"
+                                                        value={memberForm.workload_status}
+                                                        onChange={handleMemberFormChange}
+                                                        className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none appearance-none bg-white pr-8"
+                                                    >
+                                                        {WORKLOAD_STATUSES.map((s) => (
+                                                            <option key={s} value={s} className="capitalize">
+                                                                {s}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <button
+                                                    type="submit"
+                                                    className="md:col-span-1 px-5 py-2.5 bg-[var(--theme-color)] text-white rounded-lg hover:brightness-110 transition-colors font-semibold shadow-md flex items-center justify-center gap-2 whitespace-nowrap active:scale-95 transform mt-4 md:mt-0"
+                                                    disabled={isSaving || selectedUsersToAdd.length === 0}
+                                                >
+                                                    {isSaving ? (
+                                                        <>
+                                                            <FiLoader className="animate-spin" /> Adding...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <FiUserPlus className="w-5 h-5" /> Add Member(s)
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </form>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="mt-8 lg:mt-0 lg:sticky lg:top-8">
+                                    <ProjectHealthCard
+                                        stats={projectTaskStats}
+                                        loading={isProjectTasksLoading}
+                                        error={projectTasksError}
+                                    />
+                                </div>
                             </div>
                         </div>
                     ) : isLoading ? (
