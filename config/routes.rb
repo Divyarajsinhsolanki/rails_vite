@@ -55,7 +55,12 @@ Rails.application.routes.draw do
     get 'sheet', to: 'sheets#show'
 
     resources :users, only: [:index, :update, :destroy]
-    resources :posts, only: [:index, :create, :update, :destroy]
+    resources :posts, only: [:index, :create, :update, :destroy] do
+      member do
+        post :like
+        delete :unlike
+      end
+    end
     resources :sprints, only: [:index, :create, :update, :destroy] do
       member do
         post 'import_tasks'
