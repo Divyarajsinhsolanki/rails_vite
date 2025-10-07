@@ -96,6 +96,8 @@ export const createPost = (d) =>
 export const updatePost = (i, d) =>
   api.put(`/posts/${i}`, d, { headers: { "Content-Type": "multipart/form-data" } });
 export const deletePost = (i) => api.delete(`/posts/${i}`);
+export const likePost = (i) => api.post(`/posts/${i}/like`);
+export const unlikePost = (i) => api.delete(`/posts/${i}/unlike`);
 
 
 // ITEM ENDPOINTS

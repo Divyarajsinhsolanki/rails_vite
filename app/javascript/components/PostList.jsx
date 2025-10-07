@@ -2,14 +2,30 @@ import React, { useContext } from "react";
 import toast from "react-hot-toast";
 import { formatDistanceToNow } from 'date-fns';
 import { FiTrash2, FiHeart, FiMessageCircle, FiShare2 } from 'react-icons/fi';
-import { deletePost } from "../components/api";
+import { deletePost, likePost, unlikePost } from "../components/api";
 import Avatar from "./ui/Avatar";
 import { AuthContext } from "../context/AuthContext";
 
 const PostList = ({ posts, refreshPosts }) => {
   const [likedPosts, setLikedPosts] = React.useState(new Set());
+  const [likeCounts, setLikeCounts] = React.useState({});
   const [expandedComments, setExpandedComments] = React.useState(new Set());
   const { user } = useContext(AuthContext);
+
+  React.useEffect(() => {
+    const initialLikedPosts = new Set();
+    const initialLikeCounts = {};
+
+    posts.forEach((post) => {
+      if (post.liked_by_current_user) {
+        initialLikedPosts.add(post.id);
+      }
+      initialLikeCounts[post.id] = post.likes_count ?? 0;
+    });
+
+    setLikedPosts(initialLikedPosts);
+    setLikeCounts(initialLikeCounts);
+  }, [posts]);
 
   const handleShare = async (post) => {
     const url = `${window.location.origin}${window.location.pathname}#post-${post.id}`;
@@ -45,14 +61,30 @@ const PostList = ({ posts, refreshPosts }) => {
     }
   };
 
-  const toggleLike = (postId) => {
-    const newLikedPosts = new Set(likedPosts);
-    if (newLikedPosts.has(postId)) {
-      newLikedPosts.delete(postId);
-    } else {
-      newLikedPosts.add(postId);
+  const toggleLike = async (postId) => {
+    const isCurrentlyLiked = likedPosts.has(postId);
+
+    try {
+      const { data } = isCurrentlyLiked ? await unlikePost(postId) : await likePost(postId);
+
+      setLikedPosts((prev) => {
+        const updated = new Set(prev);
+        if (data.liked_by_current_user) {
+          updated.add(postId);
+        } else {
+          updated.delete(postId);
+        }
+        return updated;
+      });
+
+      setLikeCounts((prev) => ({
+        ...prev,
+        [postId]: data.likes_count ?? 0,
+      }));
+    } catch (error) {
+      toast.error(isCurrentlyLiked ? 'Failed to remove like' : 'Failed to like post');
+      console.error(error);
     }
-    setLikedPosts(newLikedPosts);
   };
 
   const toggleComments = (postId) => {
@@ -120,12 +152,18 @@ const PostList = ({ posts, refreshPosts }) => {
           {/* Post Actions */}
             <div className="px-5 py-3 border-t border-slate-100">
             <div className="flex items-center justify-between text-slate-500">
-              <button 
+              <button
                 onClick={() => toggleLike(post.id)}
                 className={`flex items-center space-x-1 px-3 py-1 rounded-md transition-colors ${likedPosts.has(post.id) ? 'text-red-500 bg-red-50' : 'hover:bg-slate-100'}`}
+                aria-pressed={likedPosts.has(post.id)}
               >
                 <FiHeart size={18} className={likedPosts.has(post.id) ? 'fill-current' : ''} />
                 <span>{likedPosts.has(post.id) ? 'Liked' : 'Like'}</span>
+                <span
+                  className={`text-xs font-medium ml-1 ${likedPosts.has(post.id) ? 'text-red-500' : 'text-slate-500'}`}
+                >
+                  {likeCounts[post.id] ?? post.likes_count ?? 0}
+                </span>
               </button>
               
               <button 
