@@ -27,6 +27,10 @@ const PostList = ({ posts, refreshPosts, onPostUpdate = () => {} }) => {
   const shareButtonRefs = React.useRef({});
   const shareMenuRefs = React.useRef({});
 
+  const closeShareMenu = React.useCallback(() => {
+    setOpenSharePostId(null);
+  }, []);
+
   React.useEffect(() => {
     const initialLikedPosts = new Set();
     const initialLikeCounts = {};
@@ -42,10 +46,6 @@ const PostList = ({ posts, refreshPosts, onPostUpdate = () => {} }) => {
     setLikeCounts(initialLikeCounts);
     closeShareMenu();
   }, [posts, closeShareMenu]);
-
-  const closeShareMenu = React.useCallback(() => {
-    setOpenSharePostId(null);
-  }, []);
 
   const toggleShareMenu = (postId) => {
     setOpenSharePostId((current) => (current === postId ? null : postId));
