@@ -1,7 +1,17 @@
 import React, { useContext } from "react";
 import toast from "react-hot-toast";
 import { formatDistanceToNow } from 'date-fns';
-import { FiTrash2, FiHeart, FiMessageCircle, FiShare2 } from 'react-icons/fi';
+import {
+  FiTrash2,
+  FiHeart,
+  FiMessageCircle,
+  FiShare2,
+  FiCopy,
+  FiSend,
+  FiTwitter,
+  FiLinkedin,
+  FiMail,
+} from 'react-icons/fi';
 import { deletePost, likePost, unlikePost, createComment, deleteComment } from "../components/api";
 import Avatar from "./ui/Avatar";
 import { AuthContext } from "../context/AuthContext";
@@ -13,6 +23,9 @@ const PostList = ({ posts, refreshPosts, onPostUpdate = () => {} }) => {
   const [commentInputs, setCommentInputs] = React.useState({});
   const [submittingComments, setSubmittingComments] = React.useState(new Set());
   const { user } = useContext(AuthContext);
+  const [openSharePostId, setOpenSharePostId] = React.useState(null);
+  const shareButtonRefs = React.useRef({});
+  const shareMenuRefs = React.useRef({});
 
   React.useEffect(() => {
     const initialLikedPosts = new Set();
@@ -27,28 +40,137 @@ const PostList = ({ posts, refreshPosts, onPostUpdate = () => {} }) => {
 
     setLikedPosts(initialLikedPosts);
     setLikeCounts(initialLikeCounts);
-  }, [posts]);
+    closeShareMenu();
+  }, [posts, closeShareMenu]);
 
-  const handleShare = async (post) => {
+  const closeShareMenu = React.useCallback(() => {
+    setOpenSharePostId(null);
+  }, []);
+
+  const toggleShareMenu = (postId) => {
+    setOpenSharePostId((current) => (current === postId ? null : postId));
+  };
+
+  const buildShareData = (post) => {
+    if (typeof window === 'undefined') {
+      return { url: '', text: '', title: 'Check out this post' };
+    }
+
+    const baseMessage = (post.message || '').trim();
+    const truncatedMessage = baseMessage.length > 120
+      ? `${baseMessage.slice(0, 117)}...`
+      : baseMessage;
+
+    const shareText = truncatedMessage || 'Check out this post from our community!';
+    const nameParts = [post.user?.first_name, post.user?.last_name].filter(Boolean);
+    const displayName = nameParts.length > 0
+      ? nameParts.join(' ')
+      : (post.user?.email || 'a community member');
+    const shareTitle = `Check out ${displayName}'s post`;
     const url = `${window.location.origin}${window.location.pathname}#post-${post.id}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: 'Post', text: post.message, url });
-      } catch (error) {
+
+    return { url, text: shareText, title: shareTitle };
+  };
+
+  const handleNativeShare = async (post) => {
+    const { url, text, title } = buildShareData(post);
+    if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') {
+      return;
+    }
+
+    try {
+      await navigator.share({ title, text, url });
+    } catch (error) {
+      if (error?.name !== 'AbortError') {
+        toast.error('Sharing failed');
         console.error('Error sharing', error);
       }
-    } else if (navigator.clipboard) {
-      try {
-        await navigator.clipboard.writeText(url);
-        toast.success('Link copied to clipboard');
-      } catch (error) {
-        toast.error('Failed to copy link');
-        console.error(error);
-      }
-    } else {
-      window.prompt('Copy this link', url);
+    } finally {
+      closeShareMenu();
     }
   };
+
+  const handleCopyLink = async (post) => {
+    const { url } = buildShareData(post);
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        toast.success('Link copied to clipboard');
+      } else if (typeof window !== 'undefined') {
+        window.prompt('Copy this link', url);
+      }
+    } catch (error) {
+      toast.error('Failed to copy link');
+      console.error(error);
+    } finally {
+      closeShareMenu();
+    }
+  };
+
+  const openInNewTab = (targetUrl) => {
+    if (typeof window !== 'undefined') {
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const handleShareToX = (post) => {
+    const { url, text } = buildShareData(post);
+    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+    openInNewTab(shareUrl);
+    closeShareMenu();
+  };
+
+  const handleShareToLinkedIn = (post) => {
+    const { url } = buildShareData(post);
+    const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+    openInNewTab(shareUrl);
+    closeShareMenu();
+  };
+
+  const handleShareToEmail = (post) => {
+    const { url, text } = buildShareData(post);
+    const subject = 'Check out this post';
+    const body = text ? `${text}\n\n${url}` : url;
+    const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    if (typeof window !== 'undefined') {
+      window.location.href = mailtoUrl;
+    }
+    closeShareMenu();
+  };
+
+  React.useEffect(() => {
+    if (!openSharePostId) {
+      return undefined;
+    }
+
+    const handleClickOutside = (event) => {
+      const menuElement = shareMenuRefs.current[openSharePostId];
+      const buttonElement = shareButtonRefs.current[openSharePostId];
+
+      if (!menuElement || !buttonElement) {
+        return;
+      }
+
+      if (!menuElement.contains(event.target) && !buttonElement.contains(event.target)) {
+        closeShareMenu();
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        closeShareMenu();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [openSharePostId, closeShareMenu]);
 
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this post? This action cannot be undone.")) {
@@ -257,14 +379,83 @@ const PostList = ({ posts, refreshPosts, onPostUpdate = () => {} }) => {
                 <span>Comment</span>
                 <span className="text-xs font-medium ml-1 text-slate-500">{commentCount}</span>
               </button>
-              
-              <button
-                onClick={() => handleShare(post)}
-                className="flex items-center space-x-1 px-3 py-1 rounded-md hover:bg-slate-100 transition-colors"
-              >
-                <FiShare2 size={18} />
-                <span>Share</span>
-              </button>
+
+              <div className="relative">
+                <button
+                  ref={(element) => {
+                    if (element) {
+                      shareButtonRefs.current[post.id] = element;
+                    } else {
+                      delete shareButtonRefs.current[post.id];
+                    }
+                  }}
+                  onClick={() => toggleShareMenu(post.id)}
+                  className={`flex items-center space-x-1 px-3 py-1 rounded-md transition-colors ${openSharePostId === post.id ? 'bg-slate-100 text-slate-700' : 'hover:bg-slate-100'}`}
+                  aria-haspopup="true"
+                  aria-expanded={openSharePostId === post.id}
+                >
+                  <FiShare2 size={18} />
+                  <span>Share</span>
+                </button>
+
+                {openSharePostId === post.id && (
+                  <div
+                    ref={(element) => {
+                      if (element) {
+                        shareMenuRefs.current[post.id] = element;
+                      } else {
+                        delete shareMenuRefs.current[post.id];
+                      }
+                    }}
+                    className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-lg shadow-lg py-2 z-20"
+                    role="menu"
+                    aria-label="Share options"
+                  >
+                    {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
+                      <button
+                        onClick={() => handleNativeShare(post)}
+                        className="flex w-full items-center space-x-2 px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-100"
+                        role="menuitem"
+                      >
+                        <FiSend size={16} className="text-slate-500" />
+                        <span>Share via device</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleCopyLink(post)}
+                      className="flex w-full items-center space-x-2 px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-100"
+                      role="menuitem"
+                    >
+                      <FiCopy size={16} className="text-slate-500" />
+                      <span>Copy link</span>
+                    </button>
+                    <button
+                      onClick={() => handleShareToX(post)}
+                      className="flex w-full items-center space-x-2 px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-100"
+                      role="menuitem"
+                    >
+                      <FiTwitter size={16} className="text-slate-500" />
+                      <span>Share on X (Twitter)</span>
+                    </button>
+                    <button
+                      onClick={() => handleShareToLinkedIn(post)}
+                      className="flex w-full items-center space-x-2 px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-100"
+                      role="menuitem"
+                    >
+                      <FiLinkedin size={16} className="text-slate-500" />
+                      <span>Share on LinkedIn</span>
+                    </button>
+                    <button
+                      onClick={() => handleShareToEmail(post)}
+                      className="flex w-full items-center space-x-2 px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-100"
+                      role="menuitem"
+                    >
+                      <FiMail size={16} className="text-slate-500" />
+                      <span>Share via email</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Comments Section */}
