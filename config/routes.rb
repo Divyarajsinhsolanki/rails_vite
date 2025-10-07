@@ -75,9 +75,19 @@ Rails.application.routes.draw do
         post 'import_backlog'
       end
     end
-    resources :teams, only: [:index, :create, :update, :destroy]
+    resources :teams, only: [:index, :create, :update, :destroy] do
+      member do
+        get :insights
+      end
+    end
     resources :team_users, only: [:create, :update, :destroy]
     delete 'team_users/leave/:team_id', to: 'team_users#leave'
+
+    resources :skills, only: [:index]
+    resources :user_skills, only: [:index, :create, :update, :destroy]
+    resources :skill_endorsements, only: [:create, :destroy]
+    resources :learning_goals, only: [:index, :create, :update, :destroy]
+    resources :learning_checkpoints, only: [:create, :update, :destroy]
 
     resources :projects, only: [:index, :create, :update, :destroy]
     resources :project_users, only: [:create, :update, :destroy]

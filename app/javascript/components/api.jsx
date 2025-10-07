@@ -119,6 +119,16 @@ export const updateTeamUser = (id, data) => api.patch(`/team_users/${id}.json`, 
 export const deleteTeamUser = (id) => api.delete(`/team_users/${id}.json`);
 export const leaveTeam = (teamId) => api.delete(`/team_users/leave/${teamId}.json`);
 export const fetchRoles = () => api.get('/roles.json');
+export const fetchTeamInsights = (teamId) => api.get(`/teams/${teamId}/insights.json`);
+export const createUserSkill = (data) => api.post('/user_skills.json', { user_skill: data });
+export const updateUserSkill = (id, data) => api.patch(`/user_skills/${id}.json`, { user_skill: data });
+export const deleteUserSkill = (id) => api.delete(`/user_skills/${id}.json`);
+export const endorseSkill = (data) => api.post('/skill_endorsements.json', { skill_endorsement: data });
+export const revokeSkillEndorsement = (id) => api.delete(`/skill_endorsements/${id}.json`);
+export const createLearningGoal = (data) => api.post('/learning_goals.json', { learning_goal: data });
+export const deleteLearningGoal = (id) => api.delete(`/learning_goals/${id}.json`);
+export const createLearningCheckpoint = (data) => api.post('/learning_checkpoints.json', { learning_checkpoint: data });
+export const updateLearningCheckpoint = (id, data) => api.patch(`/learning_checkpoints/${id}.json`, { learning_checkpoint: data });
 
 // PROJECT ENDPOINTS
 export const fetchProjects = () => api.get('/projects.json');
