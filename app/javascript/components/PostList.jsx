@@ -2,7 +2,7 @@ import React, { useContext } from "react";
 import toast from "react-hot-toast";
 import { formatDistanceToNow } from 'date-fns';
 import { FiTrash2, FiHeart, FiMessageCircle, FiShare2 } from 'react-icons/fi';
-import { deletePost, likePost, unlikePost } from "../components/api";
+import { deletePost, likePost, unlikePost, createComment, deleteComment } from "../components/api";
 import Avatar from "./ui/Avatar";
 import { AuthContext } from "../context/AuthContext";
 
@@ -10,6 +10,8 @@ const PostList = ({ posts, refreshPosts }) => {
   const [likedPosts, setLikedPosts] = React.useState(new Set());
   const [likeCounts, setLikeCounts] = React.useState({});
   const [expandedComments, setExpandedComments] = React.useState(new Set());
+  const [commentInputs, setCommentInputs] = React.useState({});
+  const [submittingComments, setSubmittingComments] = React.useState(new Set());
   const { user } = useContext(AuthContext);
 
   React.useEffect(() => {
@@ -97,10 +99,68 @@ const PostList = ({ posts, refreshPosts }) => {
     setExpandedComments(newExpandedComments);
   };
 
+  const handleCommentChange = (postId, value) => {
+    setCommentInputs((prev) => ({
+      ...prev,
+      [postId]: value,
+    }));
+  };
+
+  const handleCommentSubmit = async (event, postId) => {
+    event.preventDefault();
+    const body = (commentInputs[postId] || "").trim();
+    if (!body) return;
+
+    setSubmittingComments((prev) => {
+      const updated = new Set(prev);
+      updated.add(postId);
+      return updated;
+    });
+
+    try {
+      await createComment(postId, { comment: { body } });
+      toast.success("Comment added");
+      setCommentInputs((prev) => ({
+        ...prev,
+        [postId]: "",
+      }));
+      refreshPosts();
+    } catch (error) {
+      toast.error("Failed to add comment");
+      console.error(error);
+    } finally {
+      setSubmittingComments((prev) => {
+        const updated = new Set(prev);
+        updated.delete(postId);
+        return updated;
+      });
+    }
+  };
+
+  const handleCommentDelete = async (postId, commentId) => {
+    if (!window.confirm("Are you sure you want to delete this comment?")) {
+      return;
+    }
+
+    try {
+      await deleteComment(postId, commentId);
+      toast.success("Comment deleted");
+      refreshPosts();
+    } catch (error) {
+      toast.error("Failed to delete comment");
+      console.error(error);
+    }
+  };
+
   return (
     <div className="space-y-5">
       {posts.map((post) => {
         const fullName = [post.user.first_name, post.user.last_name].filter(Boolean).join(' ') || post.user.email;
+        const comments = Array.isArray(post.comments) ? post.comments : [];
+        const commentCount = post.comments_count ?? comments.length;
+        const currentUserName = user ? [user.first_name, user.last_name].filter(Boolean).join(' ') || user.email : 'Current User';
+        const currentUserAvatar = user?.profile_picture || user?.profile_picture_url;
+
         return (
           <article id={`post-${post.id}`} key={post.id} className="bg-white rounded-lg shadow-xs border border-slate-200 hover:shadow-md transition-shadow">
             <div className="p-5">
@@ -166,12 +226,13 @@ const PostList = ({ posts, refreshPosts }) => {
                 </span>
               </button>
               
-              <button 
+              <button
                 onClick={() => toggleComments(post.id)}
                 className="flex items-center space-x-1 px-3 py-1 rounded-md hover:bg-slate-100 transition-colors"
               >
                 <FiMessageCircle size={18} />
                 <span>Comment</span>
+                <span className="text-xs font-medium ml-1 text-slate-500">{commentCount}</span>
               </button>
               
               <button
@@ -186,26 +247,63 @@ const PostList = ({ posts, refreshPosts }) => {
             {/* Comments Section */}
             {expandedComments.has(post.id) && (
               <div className="mt-3 pt-3 border-t border-slate-100">
-                <div className="flex items-start space-x-3">
-                  <Avatar name="Current User" className="w-8 h-8 text-sm" />
-                  <div className="flex-1 bg-slate-100 rounded-xl px-3 py-2">
-                    <input 
-                      type="text" 
-                      placeholder="Write a comment..." 
+                <form onSubmit={(event) => handleCommentSubmit(event, post.id)} className="flex items-start space-x-3">
+                  <Avatar name={currentUserName} src={currentUserAvatar} className="w-8 h-8 text-sm" />
+                  <div className="flex-1 bg-slate-100 rounded-xl px-3 py-2 flex items-center space-x-2">
+                    <input
+                      type="text"
+                      value={commentInputs[post.id] ?? ""}
+                      onChange={(event) => handleCommentChange(post.id, event.target.value)}
+                      placeholder="Write a comment..."
                       className="w-full bg-transparent outline-none text-sm text-slate-700"
                     />
+                    <button
+                      type="submit"
+                      disabled={submittingComments.has(post.id)}
+                      className="text-sm font-medium text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Post
+                    </button>
                   </div>
-                </div>
-                
-                {/* Sample comments - replace with actual comments */}
+                </form>
+
                 <div className="mt-3 space-y-3">
-                  <div className="flex items-start space-x-2">
-                    <Avatar name="User 1" className="w-8 h-8 text-sm" />
-                    <div className="bg-slate-100 rounded-xl px-3 py-2 text-sm">
-                      <p className="font-medium text-slate-800">User 1</p>
-                      <p className="text-slate-700">This is a great post!</p>
-                    </div>
-                  </div>
+                  {comments.length === 0 ? (
+                    <p className="text-sm text-slate-500">Be the first to comment.</p>
+                  ) : (
+                    comments.map((comment) => {
+                      const commenterName = [comment.user.first_name, comment.user.last_name].filter(Boolean).join(' ') || comment.user.email;
+                      const commentTimestamp = comment.created_at
+                        ? formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })
+                        : '';
+                      return (
+                        <div key={comment.id} className="flex items-start space-x-2">
+                          <Avatar name={commenterName} src={comment.user.profile_picture} className="w-8 h-8 text-sm" />
+                          <div className="bg-slate-100 rounded-xl px-3 py-2 text-sm flex-1">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <p className="font-medium text-slate-800">{commenterName}</p>
+                                {commentTimestamp && (
+                                  <p className="text-xs text-slate-500">{commentTimestamp}</p>
+                                )}
+                              </div>
+                              {comment.can_delete && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleCommentDelete(post.id, comment.id)}
+                                  className="text-slate-400 hover:text-red-500 p-1 rounded-full transition-colors"
+                                  aria-label="Delete comment"
+                                >
+                                  <FiTrash2 size={14} />
+                                </button>
+                              )}
+                            </div>
+                            <p className="text-slate-700 mt-1 whitespace-pre-wrap">{comment.body}</p>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
             )}

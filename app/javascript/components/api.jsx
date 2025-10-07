@@ -98,6 +98,9 @@ export const updatePost = (i, d) =>
 export const deletePost = (i) => api.delete(`/posts/${i}`);
 export const likePost = (i) => api.post(`/posts/${i}/like`);
 export const unlikePost = (i) => api.delete(`/posts/${i}/unlike`);
+export const fetchComments = (postId) => api.get(`/posts/${postId}/comments`);
+export const createComment = (postId, data) => api.post(`/posts/${postId}/comments`, data);
+export const deleteComment = (postId, commentId) => api.delete(`/posts/${postId}/comments/${commentId}`);
 
 
 // ITEM ENDPOINTS

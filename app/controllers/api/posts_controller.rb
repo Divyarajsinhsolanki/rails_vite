@@ -6,7 +6,7 @@ class Api::PostsController < Api::BaseController
 
   def index
     if request.format.html?
-      posts = Post.includes(:user, :image_attachment, :post_likes)
+      posts = Post.includes(:user, :image_attachment, :post_likes, comments: :user)
       posts = posts.where(user_id: params[:user_id]) if params[:user_id]
       posts = posts.order(created_at: :desc)
       render json: posts.map { |post| serialize_post(post) }
@@ -67,7 +67,7 @@ class Api::PostsController < Api::BaseController
   end
 
   def find_post(id)
-    Post.includes(:user, :image_attachment, :post_likes).find(id)
+    Post.includes(:user, :image_attachment, :post_likes, comments: :user).find(id)
   end
 
   def serialize_post(post)
@@ -75,9 +75,11 @@ class Api::PostsController < Api::BaseController
       id: post.id,
       message: post.message,
       image_url: post.image.attached? ? rails_blob_url(post.image, disposition: "attachment", only_path: true) : nil,
-      created_at: post.created_at.strftime("%Y-%m-%d %H:%M"),
+      created_at: post.created_at.iso8601,
       likes_count: post.post_likes.size,
       liked_by_current_user: current_user.present? && post.post_likes.any? { |like| like.user_id == current_user.id },
+      comments_count: post.comments_count,
+      comments: serialize_comments(post),
       user: {
         id: post.user.id,
         email: post.user.email,
@@ -87,5 +89,24 @@ class Api::PostsController < Api::BaseController
           rails_blob_url(post.user.profile_picture, only_path: true) : nil
       }
     }
+  end
+
+  def serialize_comments(post)
+    (post.comments || []).sort_by(&:created_at).map do |comment|
+      {
+        id: comment.id,
+        body: comment.body,
+        created_at: comment.created_at.iso8601,
+        can_delete: current_user.present? && (comment.user_id == current_user.id || post.user_id == current_user.id),
+        user: {
+          id: comment.user.id,
+          email: comment.user.email,
+          first_name: comment.user.first_name,
+          last_name: comment.user.last_name,
+          profile_picture: comment.user.profile_picture.attached? ?
+            rails_blob_url(comment.user.profile_picture, only_path: true) : nil
+        }
+      }
+    end
   end
 end
