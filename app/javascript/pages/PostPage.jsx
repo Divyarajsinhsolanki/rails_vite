@@ -100,6 +100,16 @@ const PostPage = () => {
   const [birthdays, setBirthdays] = useState([]);
   const [generalTasks, setGeneralTasks] = useState([]);
 
+  const handlePostUpdate = useCallback((postId, updater) => {
+    setPosts((prevPosts) =>
+      prevPosts.map((post) => {
+        if (post.id !== postId) return post;
+        const updatedPost = typeof updater === 'function' ? updater(post) : updater;
+        return updatedPost ?? post;
+      })
+    );
+  }, [setPosts]);
+
   const refreshPosts = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -277,7 +287,11 @@ const PostPage = () => {
                             <p className="text-slate-600 font-medium">Loading Community Feed...</p>
                         </motion.div>
                     ) : posts.length > 0 ? (
-                        <PostList posts={posts} refreshPosts={refreshPosts} />
+                        <PostList
+                          posts={posts}
+                          refreshPosts={refreshPosts}
+                          onPostUpdate={handlePostUpdate}
+                        />
                     ) : (
                          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-center py-20 bg-white rounded-2xl border border-slate-200 shadow-sm">
                             <div className="mx-auto w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
