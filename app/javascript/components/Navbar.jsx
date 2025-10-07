@@ -236,7 +236,7 @@ const Navbar = () => {
     <motion.header 
       className={`sticky top-0 w-full z-50 border-b transition-all duration-300 ${getNavbarBackground()}`}
       animate={{
-        height: scrolled ? '70px' : '80px',
+        height: scrolled ? '60px' : '70px',
       }}
     >
       <div className="container mx-auto flex justify-between items-center h-full px-4 sm:px-6">
