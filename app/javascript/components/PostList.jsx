@@ -6,7 +6,7 @@ import { deletePost, likePost, unlikePost, createComment, deleteComment } from "
 import Avatar from "./ui/Avatar";
 import { AuthContext } from "../context/AuthContext";
 
-const PostList = ({ posts, refreshPosts }) => {
+const PostList = ({ posts, refreshPosts, onPostUpdate = () => {} }) => {
   const [likedPosts, setLikedPosts] = React.useState(new Set());
   const [likeCounts, setLikeCounts] = React.useState({});
   const [expandedComments, setExpandedComments] = React.useState(new Set());
@@ -118,13 +118,24 @@ const PostList = ({ posts, refreshPosts }) => {
     });
 
     try {
-      await createComment(postId, { comment: { body } });
+      const { data } = await createComment(postId, { comment: { body } });
       toast.success("Comment added");
       setCommentInputs((prev) => ({
         ...prev,
         [postId]: "",
       }));
-      refreshPosts();
+      onPostUpdate(postId, (prevPost) => {
+        const existingComments = Array.isArray(prevPost.comments) ? prevPost.comments : [];
+        const currentCount = typeof prevPost.comments_count === 'number'
+          ? prevPost.comments_count
+          : existingComments.length;
+
+        return {
+          ...prevPost,
+          comments: [...existingComments, data],
+          comments_count: currentCount + 1,
+        };
+      });
     } catch (error) {
       toast.error("Failed to add comment");
       console.error(error);
@@ -145,7 +156,19 @@ const PostList = ({ posts, refreshPosts }) => {
     try {
       await deleteComment(postId, commentId);
       toast.success("Comment deleted");
-      refreshPosts();
+      onPostUpdate(postId, (prevPost) => {
+        const existingComments = Array.isArray(prevPost.comments) ? prevPost.comments : [];
+        const updatedComments = existingComments.filter((comment) => comment.id !== commentId);
+        const currentCount = typeof prevPost.comments_count === 'number'
+          ? prevPost.comments_count
+          : existingComments.length;
+
+        return {
+          ...prevPost,
+          comments: updatedComments,
+          comments_count: Math.max(currentCount - 1, updatedComments.length),
+        };
+      });
     } catch (error) {
       toast.error("Failed to delete comment");
       console.error(error);

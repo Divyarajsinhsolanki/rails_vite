@@ -78,7 +78,7 @@ class Api::PostsController < Api::BaseController
       created_at: post.created_at.iso8601,
       likes_count: post.post_likes.size,
       liked_by_current_user: current_user.present? && post.post_likes.any? { |like| like.user_id == current_user.id },
-      comments_count: post.comments_count,
+      comments_count: post.try(:comments_count) || post.comments.size,
       comments: serialize_comments(post),
       user: {
         id: post.user.id,
