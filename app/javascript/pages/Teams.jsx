@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { fetchTeams, createTeam, updateTeam, deleteTeam, addTeamUser, deleteTeamUser, leaveTeam } from "../components/api";
 import UserMultiSelect from "../components/UserMultiSelect";
 import { AuthContext } from "../context/AuthContext";
+import TeamSkillInsights from "../components/Teams/TeamSkillInsights";
 // Import icons (e.g., from Feather Icons)
 import { FiPlus, FiEdit, FiTrash2, FiUsers, FiSearch, FiUserPlus, FiChevronRight, FiXCircle, FiCheckCircle, FiInfo, FiLoader } from 'react-icons/fi'; // Added more icons
 
@@ -529,6 +530,8 @@ const Teams = () => {
                                     </form>
                                 )}
                             </div>
+
+                            <TeamSkillInsights team={selectedTeam} currentUser={user} />
                         </div>
                     ) : isLoading ? (
                         // This case is handled by the initial isLoading check in the sidebar,
