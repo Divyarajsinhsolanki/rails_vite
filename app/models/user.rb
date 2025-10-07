@@ -7,6 +7,11 @@ class User < ApplicationRecord
   enum status: { invited: "invited", active: "active", locked: "locked" }, _default: "invited"
 
   LANDING_PAGES = %w[posts profile vault knowledge worklog projects teams].freeze
+  AVAILABILITY_LABELS = {
+    'available_now' => 'Available Now',
+    'available_soon' => 'Available in 2 weeks',
+    'fully_booked' => 'Fully Booked'
+  }.freeze
 
   has_one_attached :profile_picture
   has_one_attached :cover_photo
@@ -23,10 +28,23 @@ class User < ApplicationRecord
   has_many :roles, through: :user_roles
   has_many :project_users, dependent: :destroy
   has_many :projects, through: :project_users
+  has_many :user_skills, dependent: :destroy
+  has_many :skills, through: :user_skills
+  has_many :learning_goals, dependent: :destroy
+  has_many :given_skill_endorsements, class_name: 'SkillEndorsement', foreign_key: :endorser_id, dependent: :destroy
+  has_many :received_skill_endorsements, through: :user_skills, source: :skill_endorsements
+
+  enum availability_status: {
+    available_now: 'available_now',
+    available_soon: 'available_soon',
+    fully_booked: 'fully_booked'
+  }, _default: 'available_now'
 
   validates :first_name, presence: true
   validates :last_name, presence: true
   validates :landing_page, inclusion: { in: LANDING_PAGES }
+  validates :job_title, presence: true
+  validates :availability_status, inclusion: { in: availability_statuses.keys }
 
   after_create :assign_default_role
 
@@ -52,6 +70,14 @@ class User < ApplicationRecord
 
   def team_leader?
     has_role?(:team_leader)
+  end
+
+  def full_name
+    [first_name, last_name].compact_blank.join(' ')
+  end
+
+  def availability_label
+    AVAILABILITY_LABELS[availability_status] || availability_status.to_s.humanize
   end
 
   private

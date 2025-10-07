@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
-ruby "3.3.0"
+ruby "3.2.3"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 7.1.3"
@@ -52,9 +52,8 @@ group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
 
-
-  gem 'PdfMaster', path: "/home/divyarajs/rails_project/newgems/PdfMaster"
-
+  pdf_master_path = "/home/divyarajs/rails_project/newgems/PdfMaster"
+  gem "PdfMaster", path: pdf_master_path if File.directory?(pdf_master_path)
 
   # Add speed badges [https://github.com/MiniProfiler/rack-mini-profiler]
   # gem "rack-mini-profiler"

@@ -1,7 +1,30 @@
 import React, { useEffect, useState, useContext, useCallback } from "react";
 import { useLocation } from "react-router-dom";
-import { fetchTeams, createTeam, updateTeam, deleteTeam, addTeamUser, updateTeamUser, deleteTeamUser, leaveTeam } from "../components/api";
+import {
+    fetchTeams,
+    createTeam,
+    updateTeam,
+    deleteTeam,
+    addTeamUser,
+    updateTeamUser,
+    deleteTeamUser,
+    leaveTeam,
+    fetchTeamInsights,
+    createUserSkill,
+    updateUserSkill,
+    deleteUserSkill,
+    endorseSkill,
+    revokeSkillEndorsement,
+    createLearningGoal,
+    deleteLearningGoal,
+    createLearningCheckpoint,
+    updateLearningCheckpoint,
+} from "../components/api";
 import UserMultiSelect from "../components/UserMultiSelect";
+import TeamSkillMatrix from "../components/teams/TeamSkillMatrix";
+import SkillDirectory from "../components/teams/SkillDirectory";
+import SkillEndorsementsPanel from "../components/teams/SkillEndorsementsPanel";
+import LearningGoalsPanel from "../components/teams/LearningGoalsPanel";
 import { AuthContext } from "../context/AuthContext";
 // Import icons (e.g., from Feather Icons)
 import { FiPlus, FiEdit, FiTrash2, FiUsers, FiSearch, FiUserPlus, FiChevronRight, FiXCircle, FiCheckCircle, FiInfo, FiLoader } from 'react-icons/fi'; // Added more icons
@@ -99,7 +122,10 @@ const Teams = () => {
     const [selectedTeamId, setSelectedTeamId] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false); // For form submission loading
+    const [isInsightsLoading, setIsInsightsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [teamInsights, setTeamInsights] = useState(null);
+    const [insightsTeamId, setInsightsTeamId] = useState(null);
 
     // Form States (for Create/Edit Team)
     const [teamForm, setTeamForm] = useState({ name: "", description: "" });
@@ -117,6 +143,16 @@ const Teams = () => {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [teamToDeleteId, setTeamToDeleteId] = useState(null);
     const [notification, setNotification] = useState(null); // { message, type }
+
+    const extractErrorMessage = (error, fallback = "Something went wrong.") => {
+        if (error?.response?.data?.errors) {
+            return error.response.data.errors.join(', ');
+        }
+        if (error?.response?.data?.error) {
+            return error.response.data.error;
+        }
+        return fallback;
+    };
 
     // Data Fetching
     const loadTeams = useCallback(async () => {
@@ -138,9 +174,49 @@ const Teams = () => {
         }
     }, [selectedTeamId]); // Dependency on selectedTeamId to re-validate selection
 
+    const loadTeamInsights = useCallback(async (teamId) => {
+        if (!teamId) {
+            setTeamInsights(null);
+            setInsightsTeamId(null);
+            return;
+        }
+
+        if (teamId !== insightsTeamId) {
+            setTeamInsights(null);
+        }
+        setInsightsTeamId(teamId);
+        setIsInsightsLoading(true);
+        try {
+            const { data } = await fetchTeamInsights(teamId);
+            setTeamInsights(data);
+            setInsightsTeamId(teamId);
+        } catch (error) {
+            console.error("Failed to fetch team insights:", error);
+            setNotification({ message: "Failed to load team insights.", type: "error" });
+            setTeamInsights(null);
+        } finally {
+            setIsInsightsLoading(false);
+        }
+    }, [insightsTeamId, setNotification]);
+
+    const refreshInsights = useCallback(async () => {
+        if (selectedTeamId) {
+            await loadTeamInsights(selectedTeamId);
+        }
+    }, [selectedTeamId, loadTeamInsights]);
+
     useEffect(() => {
         loadTeams();
     }, [loadTeams]);
+
+    useEffect(() => {
+        if (selectedTeamId) {
+            loadTeamInsights(selectedTeamId);
+        } else {
+            setTeamInsights(null);
+            setInsightsTeamId(null);
+        }
+    }, [selectedTeamId, loadTeamInsights]);
 
     // Handle deep linking for specific team selection
     useEffect(() => {
@@ -182,6 +258,7 @@ const Teams = () => {
             await action;
             resetAndCloseForms();
             await loadTeams(); // Reload to get the latest data
+            await refreshInsights();
             setNotification({ message: `Team ${editingId ? 'updated' : 'created'} successfully!`, type: "success" });
         } catch (err) {
             console.error("Failed to save team:", err);
@@ -251,6 +328,7 @@ const Teams = () => {
             setSelectedUsersToAdd([]);
             setMemberForm({ role: "member" });
             await loadTeams();
+            await refreshInsights();
             setNotification({ message: "Member(s) added successfully!", type: "success" });
         } catch (err) {
             console.error("Failed to add member:", err);
@@ -268,6 +346,7 @@ const Teams = () => {
         try {
             await deleteTeamUser(teamUserId);
             await loadTeams();
+            await refreshInsights();
             setNotification({ message: `${memberName} removed from team.`, type: "success" });
         } catch (err) {
             console.error("Failed to remove member:", err);
@@ -297,6 +376,7 @@ const Teams = () => {
         try {
             await updateTeamUser(editingMemberId, { role: editingMemberRole });
             await loadTeams();
+            await refreshInsights();
             setNotification({ message: `${member.name || "Member"} updated successfully!`, type: "success" });
             setEditingMemberId(null);
             setEditingMemberRole("member");
@@ -324,6 +404,148 @@ const Teams = () => {
             setIsSaving(false);
             setSelectedTeamId(null);
         }
+    };
+
+    const handleToggleEndorsement = async ({ userSkillId, endorsed, endorsementId }) => {
+        if (!selectedTeamId) {
+            setNotification({ message: "Select a team to manage endorsements.", type: "info" });
+            return;
+        }
+
+        try {
+            if (endorsed && endorsementId) {
+                await revokeSkillEndorsement(endorsementId);
+                setNotification({ message: "Endorsement removed.", type: "success" });
+            } else {
+                await endorseSkill({ user_skill_id: userSkillId, team_id: selectedTeamId });
+                setNotification({ message: "Skill endorsed successfully!", type: "success" });
+            }
+            await refreshInsights();
+        } catch (error) {
+            setNotification({ message: extractErrorMessage(error, "Unable to update endorsement."), type: "error" });
+        }
+    };
+
+    const handleAddSkill = async (payload) => {
+        try {
+            await createUserSkill(payload);
+            setNotification({ message: "Skill added to your profile.", type: "success" });
+            await refreshInsights();
+        } catch (error) {
+            setNotification({ message: extractErrorMessage(error, "Unable to add skill."), type: "error" });
+        }
+    };
+
+    const handleUpdateSkill = async (skillId, data) => {
+        try {
+            await updateUserSkill(skillId, data);
+            setNotification({ message: "Skill updated.", type: "success" });
+            await refreshInsights();
+        } catch (error) {
+            setNotification({ message: extractErrorMessage(error, "Unable to update skill."), type: "error" });
+        }
+    };
+
+    const handleDeleteSkill = async (skillId) => {
+        try {
+            await deleteUserSkill(skillId);
+            setNotification({ message: "Skill removed from your profile.", type: "success" });
+            await refreshInsights();
+        } catch (error) {
+            setNotification({ message: extractErrorMessage(error, "Unable to remove skill."), type: "error" });
+        }
+    };
+
+    const handleCreateGoal = async (goal) => {
+        if (!selectedTeamId) {
+            setNotification({ message: "Select a team to add learning goals.", type: "info" });
+            return;
+        }
+
+        try {
+            await createLearningGoal({ ...goal, team_id: selectedTeamId });
+            setNotification({ message: "Learning goal created.", type: "success" });
+            await refreshInsights();
+        } catch (error) {
+            setNotification({ message: extractErrorMessage(error, "Unable to create learning goal."), type: "error" });
+        }
+    };
+
+    const handleDeleteGoal = async (goalId) => {
+        try {
+            await deleteLearningGoal(goalId);
+            setNotification({ message: "Learning goal removed.", type: "success" });
+            await refreshInsights();
+        } catch (error) {
+            setNotification({ message: extractErrorMessage(error, "Unable to delete learning goal."), type: "error" });
+        }
+    };
+
+    const handleAddCheckpoint = async (goalId, checkpoint) => {
+        try {
+            await createLearningCheckpoint({ learning_goal_id: goalId, ...checkpoint });
+            await refreshInsights();
+            setNotification({ message: "Checkpoint added.", type: "success" });
+        } catch (error) {
+            setNotification({ message: extractErrorMessage(error, "Unable to add checkpoint."), type: "error" });
+        }
+    };
+
+    const handleToggleCheckpoint = async (checkpointId, completed) => {
+        try {
+            await updateLearningCheckpoint(checkpointId, { completed });
+            await refreshInsights();
+        } catch (error) {
+            setNotification({ message: extractErrorMessage(error, "Unable to update checkpoint."), type: "error" });
+        }
+    };
+
+    const renderSkillGapAnalysis = () => {
+        if (!teamInsights?.skill_gap || insightsTeamId !== selectedTeamId) {
+            return null;
+        }
+
+        const strengths = teamInsights.skill_gap.strengths || [];
+        const opportunities = teamInsights.skill_gap.opportunities || [];
+        const memberCount = Math.max(teamInsights.members?.length || 1, 1);
+
+        const renderList = (items, accentClass) => {
+            if (items.length === 0) {
+                return <p className="text-sm text-gray-500">Not enough data yet. Encourage teammates to log their skills.</p>;
+            }
+
+            return items.map((item) => {
+                const active = item.expert_count + item.advanced_count;
+                const width = Math.min(100, Math.round((active / memberCount) * 100));
+                return (
+                    <div key={item.name}>
+                        <div className="flex justify-between text-sm mb-1">
+                            <span>{item.name}</span>
+                            <span>{item.expert_count} expert{item.expert_count === 1 ? '' : 's'}</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div className={`${accentClass} h-2 rounded-full`} style={{ width: `${width}%` }} />
+                        </div>
+                    </div>
+                );
+            });
+        };
+
+        return (
+            <div className="bg-white rounded-xl shadow-md p-6">
+                <h2 className="text-xl font-bold text-gray-800 mb-4">Skill Gap Analysis</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 className="font-semibold text-gray-700 mb-3">Most Developed Skills</h3>
+                        <div className="space-y-3">{renderList(strengths, 'bg-green-500')}</div>
+                    </div>
+                    <div>
+                        <h3 className="font-semibold text-gray-700 mb-3">Skills Needing Development</h3>
+                        <div className="space-y-3">{renderList(opportunities, 'bg-amber-500')}</div>
+                    </div>
+                </div>
+            </div>
+        );
     };
 
     // Derived State for rendering
@@ -500,7 +722,8 @@ const Teams = () => {
                                                     <Avatar name={member.name} src={member.profile_picture} size="lg" />
                                                     <div>
                                                         <p className="font-medium text-lg text-gray-900">{member.name || "Invited User"}</p>
-                                                        <p className="text-sm text-gray-500 capitalize">{member.role}</p>
+                                                        <p className="text-sm text-gray-500">{member.job_title || member.role}</p>
+                                                        <p className="text-xs text-gray-400 capitalize">Team {member.role}</p>
                                                         {member.email && (
                                                             <p className="text-sm text-gray-500">{member.email}</p>
                                                         )}
@@ -622,6 +845,55 @@ const Teams = () => {
                                             )}
                                         </button>
                                     </form>
+                                )}
+                            </div>
+                            <div className="mt-8 space-y-8">
+                                {isInsightsLoading && (teamInsights === null || insightsTeamId !== selectedTeam.id) ? (
+                                    <div className="bg-white rounded-xl shadow-md p-6 flex items-center justify-center text-gray-500">
+                                        <FiLoader className="animate-spin mr-3" />
+                                        <span>Loading team insights...</span>
+                                    </div>
+                                ) : teamInsights && insightsTeamId === selectedTeam.id ? (
+                                    <>
+                                        <TeamSkillMatrix
+                                            members={teamInsights.members}
+                                            skills={teamInsights.skills}
+                                            roles={teamInsights.roles}
+                                        />
+                                        {renderSkillGapAnalysis()}
+                                        <SkillEndorsementsPanel
+                                            skills={teamInsights.current_user_skills}
+                                            availableSkills={teamInsights.available_skills}
+                                            teamExperts={teamInsights.team_experts}
+                                            recentEndorsements={teamInsights.recent_endorsements}
+                                            onAddSkill={handleAddSkill}
+                                            onUpdateSkill={handleUpdateSkill}
+                                            onRemoveSkill={handleDeleteSkill}
+                                        />
+                                        <LearningGoalsPanel
+                                            goals={teamInsights.current_user_learning_goals}
+                                            onCreateGoal={handleCreateGoal}
+                                            onDeleteGoal={handleDeleteGoal}
+                                            onAddCheckpoint={handleAddCheckpoint}
+                                            onToggleCheckpoint={handleToggleCheckpoint}
+                                        />
+                                        <SkillDirectory
+                                            members={teamInsights.members}
+                                            skills={teamInsights.skills}
+                                            roles={teamInsights.roles}
+                                            availabilityOptions={teamInsights.availability_options}
+                                            onToggleEndorse={handleToggleEndorsement}
+                                        />
+                                    </>
+                                ) : isInsightsLoading ? (
+                                    <div className="bg-white rounded-xl shadow-md p-6 flex items-center justify-center text-gray-500">
+                                        <FiLoader className="animate-spin mr-3" />
+                                        <span>Loading team insights...</span>
+                                    </div>
+                                ) : (
+                                    <div className="bg-white rounded-xl shadow-md p-6 text-gray-500 text-sm">
+                                        Insights will appear here once team members start tracking their skills.
+                                    </div>
                                 )}
                             </div>
                         </div>

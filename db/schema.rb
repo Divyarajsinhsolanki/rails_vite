@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_02_003000) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_02_004600) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -211,6 +211,60 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_02_003000) do
     t.index ["owner_id"], name: "index_teams_on_owner_id"
   end
 
+  create_table "skills", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "category"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_skills_on_name", unique: true
+  end
+
+  create_table "user_skills", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "skill_id", null: false
+    t.string "proficiency", default: "beginner", null: false
+    t.integer "endorsements_count", default: 0, null: false
+    t.datetime "last_endorsed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "skill_id"], name: "index_user_skills_on_user_id_and_skill_id", unique: true
+  end
+
+  create_table "skill_endorsements", force: :cascade do |t|
+    t.bigint "user_skill_id", null: false
+    t.bigint "endorser_id", null: false
+    t.bigint "team_id"
+    t.text "note"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["endorser_id", "user_skill_id"], name: "index_skill_endorsements_on_endorser_and_user_skill", unique: true
+    t.index ["team_id"], name: "index_skill_endorsements_on_team_id"
+    t.index ["user_skill_id"], name: "index_skill_endorsements_on_user_skill_id"
+  end
+
+  create_table "learning_goals", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "team_id"
+    t.string "title", null: false
+    t.date "due_date"
+    t.integer "progress", default: 0, null: false
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["team_id"], name: "index_learning_goals_on_team_id"
+    t.index ["user_id"], name: "index_learning_goals_on_user_id"
+  end
+
+  create_table "learning_checkpoints", force: :cascade do |t|
+    t.bigint "learning_goal_id", null: false
+    t.string "title", null: false
+    t.boolean "completed", default: false, null: false
+    t.string "resource_url"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["learning_goal_id"], name: "index_learning_checkpoints_on_learning_goal_id"
+  end
+
   create_table "user_roles", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "role_id", null: false
@@ -241,6 +295,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_02_003000) do
     t.string "color_theme", default: "blue"
     t.boolean "dark_mode", default: false, null: false
     t.string "landing_page", default: "posts"
+    t.string "job_title", default: "Team Member", null: false
+    t.string "availability_status", default: "available_now", null: false
+    t.integer "current_projects_count", default: 0, null: false
+    t.index ["availability_status"], name: "index_users_on_availability_status"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
@@ -344,4 +402,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_02_003000) do
   add_foreign_key "work_logs", "work_categories", column: "category_id"
   add_foreign_key "work_logs", "work_priorities", column: "priority_id"
   add_foreign_key "work_notes", "users"
+  add_foreign_key "learning_checkpoints", "learning_goals"
+  add_foreign_key "learning_goals", "teams"
+  add_foreign_key "learning_goals", "users"
+  add_foreign_key "skill_endorsements", "teams"
+  add_foreign_key "skill_endorsements", "user_skills"
+  add_foreign_key "skill_endorsements", "users", column: "endorser_id"
+  add_foreign_key "user_skills", "skills"
+  add_foreign_key "user_skills", "users"
 end
