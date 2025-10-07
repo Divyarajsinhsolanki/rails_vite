@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext, useCallback } from "react";
 import { useLocation } from "react-router-dom";
-import { fetchTeams, createTeam, updateTeam, deleteTeam, addTeamUser, deleteTeamUser, leaveTeam } from "../components/api";
+import { fetchTeams, createTeam, updateTeam, deleteTeam, addTeamUser, updateTeamUser, deleteTeamUser, leaveTeam } from "../components/api";
 import UserMultiSelect from "../components/UserMultiSelect";
 import { AuthContext } from "../context/AuthContext";
 // Import icons (e.g., from Feather Icons)
@@ -109,6 +109,9 @@ const Teams = () => {
     // Form States (for Add/Remove Members)
     const [memberForm, setMemberForm] = useState({ role: "member" });
     const [selectedUsersToAdd, setSelectedUsersToAdd] = useState([]);
+    const [editingMemberId, setEditingMemberId] = useState(null);
+    const [editingMemberRole, setEditingMemberRole] = useState("member");
+    const [memberSavingId, setMemberSavingId] = useState(null);
 
     // Modals & Notifications
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -157,6 +160,11 @@ const Teams = () => {
         setIsCreatingNewTeam(false);
         setTeamForm({ name: "", description: "" });
         setNotification(null); // Clear any form-related notifications
+        setEditingMemberId(null);
+        setEditingMemberRole("member");
+        setMemberSavingId(null);
+        setSelectedUsersToAdd([]);
+        setMemberForm({ role: "member" });
     };
 
     const handleSelectTeam = (id) => {
@@ -269,6 +277,37 @@ const Teams = () => {
         }
     };
 
+    const handleEditMemberClick = (member) => {
+        setEditingMemberId(member.team_user_id);
+        setEditingMemberRole(member.role || "member");
+    };
+
+    const handleCancelMemberEdit = () => {
+        setEditingMemberId(null);
+        setEditingMemberRole("member");
+    };
+
+    const handleUpdateMember = async (event, member) => {
+        event.preventDefault();
+        if (!editingMemberId) return;
+
+        setMemberSavingId(editingMemberId);
+        setNotification(null);
+
+        try {
+            await updateTeamUser(editingMemberId, { role: editingMemberRole });
+            await loadTeams();
+            setNotification({ message: `${member.name || "Member"} updated successfully!`, type: "success" });
+            setEditingMemberId(null);
+            setEditingMemberRole("member");
+        } catch (err) {
+            console.error("Failed to update member:", err);
+            setNotification({ message: `Failed to update member: ${err.message || 'An error occurred.'}`, type: "error" });
+        } finally {
+            setMemberSavingId(null);
+        }
+    };
+
     const handleLeaveTeam = async () => {
         if (!window.confirm('Are you sure you want to leave this team?')) return;
         setIsSaving(true);
@@ -295,6 +334,10 @@ const Teams = () => {
     );
 
     const selectedTeam = teams.find((t) => t.id === selectedTeamId);
+    const isTeamLeaderOfSelectedTeam = selectedTeam?.users?.some(
+        (teamUser) => teamUser.id === user?.id && teamUser.role === "team_leader"
+    );
+    const canManageSelectedTeamMembers = canManageMembers || isTeamLeaderOfSelectedTeam;
     const isFormVisible = isCreatingNewTeam || editingId;
 
     // Render UI
@@ -463,13 +506,64 @@ const Teams = () => {
                                                         )}
                                                     </div>
                                                 </div>
-                                                {canManageMembers && user.id !== member.id && (
-                                                    <button
-                                                        onClick={() => handleRemoveMember(member.team_user_id, member.name || "this member")}
-                                                        className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-colors font-medium"
-                                                    >
-                                                        Remove
-                                                    </button>
+                                                {canManageSelectedTeamMembers && (
+                                                    editingMemberId === member.team_user_id ? (
+                                                        <form
+                                                            onSubmit={(event) => handleUpdateMember(event, member)}
+                                                            className="flex items-center gap-2"
+                                                        >
+                                                            <select
+                                                                value={editingMemberRole}
+                                                                onChange={(event) => setEditingMemberRole(event.target.value)}
+                                                                className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)]"
+                                                                disabled={memberSavingId === member.team_user_id}
+                                                            >
+                                                                <option value="admin">Admin</option>
+                                                                <option value="team_leader">Team Leader</option>
+                                                                <option value="member">Member</option>
+                                                                <option value="viewer">Viewer</option>
+                                                            </select>
+                                                            <button
+                                                                type="submit"
+                                                                className="text-sm text-[var(--theme-color)] font-medium hover:underline disabled:opacity-60 flex items-center gap-1"
+                                                                disabled={memberSavingId === member.team_user_id}
+                                                            >
+                                                                {memberSavingId === member.team_user_id ? (
+                                                                    <>
+                                                                        <FiLoader className="animate-spin" />
+                                                                        Saving
+                                                                    </>
+                                                                ) : (
+                                                                    "Save"
+                                                                )}
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={handleCancelMemberEdit}
+                                                                className="text-sm text-gray-500 hover:text-gray-700"
+                                                                disabled={memberSavingId === member.team_user_id}
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                        </form>
+                                                    ) : (
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                onClick={() => handleEditMemberClick(member)}
+                                                                className="text-sm text-[var(--theme-color)] font-medium hover:underline"
+                                                            >
+                                                                Edit
+                                                            </button>
+                                                            {user.id !== member.id && (
+                                                                <button
+                                                                    onClick={() => handleRemoveMember(member.team_user_id, member.name || "this member")}
+                                                                    className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-colors font-medium"
+                                                                >
+                                                                    Remove
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    )
                                                 )}
                                                 {member.id === user.id && user.roles?.some((r) => r.name === "team_leader") && (
                                                     <button
@@ -487,7 +581,7 @@ const Teams = () => {
                                 )}
 
                                 {/* Add Member Form */}
-                                {canManageMembers && (
+                                {canManageSelectedTeamMembers && (
                                     <form onSubmit={handleAddMember} className="mt-8 pt-6 border-t border-gray-200 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                                         <div className="md:col-span-2">
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Select Users to Add</label>
@@ -507,6 +601,7 @@ const Teams = () => {
                                                 className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none appearance-none bg-white pr-8"
                                             >
                                                 <option value="admin">Admin</option>
+                                                <option value="team_leader">Team Leader</option>
                                                 <option value="member">Member</option>
                                                 <option value="viewer">Viewer</option>
                                             </select>
