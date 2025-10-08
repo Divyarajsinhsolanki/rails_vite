@@ -3,7 +3,25 @@ import { fetchProjects, createProject, updateProject, deleteProject, addProjectU
 import UserMultiSelect from "../components/UserMultiSelect";
 import { AuthContext } from "../context/AuthContext";
 // Import icons (e.g., from Feather Icons)
-import { FiPlus, FiEdit, FiTrash2, FiUsers, FiSearch, FiUserPlus, FiChevronRight, FiXCircle, FiCheckCircle, FiInfo, FiLoader, FiCalendar, FiLink, FiFolder } from 'react-icons/fi'; // Added more icons
+import {
+    FiPlus,
+    FiEdit,
+    FiTrash2,
+    FiUsers,
+    FiSearch,
+    FiUserPlus,
+    FiChevronRight,
+    FiXCircle,
+    FiCheckCircle,
+    FiInfo,
+    FiLoader,
+    FiCalendar,
+    FiLink,
+    FiFolder,
+    FiAlertTriangle,
+    FiTrendingUp,
+    FiActivity,
+} from 'react-icons/fi'; // Added more icons
 
 // --- Utility Components (re-used from Teams UI) ---
 
@@ -109,63 +127,155 @@ const ProjectHealthCard = ({ stats, loading, error }) => {
         });
     };
 
+    const completionPercentage = stats.total ? Math.round((stats.completed / stats.total) * 100) : 0;
+    const segments = [
+        { key: "todo", label: "To do", value: stats.todo, color: "bg-slate-300" },
+        { key: "inProgress", label: "In progress", value: stats.inProgress, color: "bg-sky-400" },
+        { key: "completed", label: "Completed", value: stats.completed, color: "bg-emerald-400" },
+    ];
+
+    const healthState = (() => {
+        if (!stats.total) {
+            return {
+                label: "Awaiting activity",
+                badgeClass: "bg-slate-100 text-slate-600",
+                icon: <FiInfo className="h-4 w-4" />,
+            };
+        }
+
+        if (stats.overdue > 0) {
+            return {
+                label: "At risk",
+                badgeClass: "bg-red-100 text-red-700 border border-red-200",
+                icon: <FiAlertTriangle className="h-4 w-4" />,
+            };
+        }
+
+        if (completionPercentage >= 75) {
+            return {
+                label: "On track",
+                badgeClass: "bg-emerald-100 text-emerald-700 border border-emerald-200",
+                icon: <FiTrendingUp className="h-4 w-4" />,
+            };
+        }
+
+        return {
+            label: "Monitor",
+            badgeClass: "bg-sky-100 text-sky-700 border border-sky-200",
+            icon: <FiActivity className="h-4 w-4" />,
+        };
+    })();
+
     return (
-        <div className="bg-gray-50 p-6 rounded-xl shadow-inner border border-gray-100 mb-8 lg:mb-0">
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                    <FiInfo className="w-5 h-5 text-[var(--theme-color)]" /> Project Health
-                </h3>
-            </div>
-            {loading ? (
-                <div className="flex items-center justify-center py-6 text-gray-500">
-                    <FiLoader className="animate-spin text-2xl mr-2" /> Fetching tasks...
-                </div>
-            ) : error ? (
-                <div className="py-6 text-center text-red-500">
-                    Unable to load project health right now. Please try again later.
-                </div>
-            ) : stats.total === 0 ? (
-                <div className="py-6 text-center text-gray-500">
-                    No tasks found for this project yet. Start by creating a task to see project health details.
-                </div>
-            ) : (
-                <div className="space-y-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="bg-white rounded-lg border border-gray-100 p-4 shadow-sm">
-                            <p className="text-sm text-gray-500">To Do</p>
-                            <p className="text-2xl font-bold text-gray-900">{stats.todo}</p>
-                        </div>
-                        <div className="bg-white rounded-lg border border-gray-100 p-4 shadow-sm">
-                            <p className="text-sm text-gray-500">In Progress</p>
-                            <p className="text-2xl font-bold text-gray-900">{stats.inProgress}</p>
-                        </div>
-                        <div className="bg-white rounded-lg border border-gray-100 p-4 shadow-sm">
-                            <p className="text-sm text-gray-500">Completed</p>
-                            <p className="text-2xl font-bold text-gray-900">{stats.completed}</p>
-                        </div>
+        <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[var(--theme-color)] via-sky-400 to-blue-500" />
+            <div className="relative p-6 space-y-6">
+                <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Project Health</p>
+                        <h3 className="mt-2 flex items-center gap-2 text-2xl font-semibold text-slate-900">
+                            <FiActivity className="text-[var(--theme-color)]" />
+                            Health Overview
+                        </h3>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="bg-white rounded-lg border border-gray-100 p-4 shadow-sm flex items-center gap-3">
-                            <FiCalendar className="w-6 h-6 text-[var(--theme-color)]" />
+                    <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${healthState.badgeClass}`}>
+                        {healthState.icon}
+                        {healthState.label}
+                    </span>
+                </div>
+
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center gap-3 py-10 text-slate-500">
+                        <FiLoader className="animate-spin text-2xl text-[var(--theme-color)]" />
+                        <p className="text-sm">Fetching the latest tasks…</p>
+                    </div>
+                ) : error ? (
+                    <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-center text-sm text-red-600">
+                        Unable to load project health right now. Please try again later.
+                    </div>
+                ) : stats.total === 0 ? (
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
+                        No tasks found for this project yet. Start by creating a task to visualise the project health.
+                    </div>
+                ) : (
+                    <div className="space-y-6">
+                        <div>
+                            <div className="flex flex-wrap items-end justify-between gap-3">
+                                <div>
+                                    <p className="text-xs uppercase tracking-wide text-slate-500">Overall progress</p>
+                                    <p className="text-4xl font-semibold text-slate-900">{completionPercentage}%</p>
+                                </div>
+                                <span className="rounded-lg bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                                    {stats.total} tasks tracked
+                                </span>
+                            </div>
+                            <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
+                                <div className="flex h-full w-full">
+                                    {segments.map((segment) =>
+                                        segment.value > 0 ? (
+                                            <div
+                                                key={segment.key}
+                                                className={`${segment.color} h-full transition-all duration-500`}
+                                                style={{ width: `${(segment.value / stats.total) * 100}%` }}
+                                            />
+                                        ) : null
+                                    )}
+                                </div>
+                            </div>
+                            <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-500">
+                                {segments.map((segment) => (
+                                    <span key={segment.key} className="inline-flex items-center gap-2">
+                                        <span className={`h-2.5 w-2.5 rounded-full ${segment.color}`} />
+                                        {segment.label}: <span className="font-semibold text-slate-700">{segment.value}</span>
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="rounded-xl border border-slate-200 bg-white/60 p-4 shadow-sm">
+                                <p className="text-xs uppercase tracking-wide text-slate-500">Active tasks</p>
+                                <p className="mt-1 text-2xl font-semibold text-slate-900">{stats.todo + stats.inProgress}</p>
+                                <p className="text-xs text-slate-500">Across to-do and in-progress stages.</p>
+                            </div>
+                            <div
+                                className={`flex items-center gap-3 rounded-xl border p-4 shadow-sm ${
+                                    stats.overdue > 0
+                                        ? "border-red-200 bg-red-50"
+                                        : "border-emerald-200 bg-emerald-50"
+                                }`}
+                            >
+                                <FiXCircle
+                                    className={`h-6 w-6 ${stats.overdue > 0 ? "text-red-500" : "text-emerald-500"}`}
+                                />
+                                <div>
+                                    <p className="text-xs uppercase tracking-wide text-slate-500">Overdue tasks</p>
+                                    <p
+                                        className={`text-2xl font-semibold ${
+                                            stats.overdue > 0 ? "text-red-600" : "text-emerald-600"
+                                        }`}
+                                    >
+                                        {stats.overdue}
+                                    </p>
+                                    <p className="text-xs text-slate-500">
+                                        {stats.overdue > 0 ? "Requires attention" : "All deadlines on track"}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                            <FiCalendar className="h-6 w-6 text-[var(--theme-color)]" />
                             <div>
-                                <p className="text-sm text-gray-500">Next due date</p>
-                                <p className="text-lg font-semibold text-gray-900">
+                                <p className="text-xs uppercase tracking-wide text-slate-500">Next due date</p>
+                                <p className="text-base font-semibold text-slate-900">
                                     {formatDueDate(stats.nextDueDate) || "No upcoming deadlines"}
                                 </p>
                             </div>
                         </div>
-                        <div className={`bg-white rounded-lg border border-gray-100 p-4 shadow-sm flex items-center gap-3 ${stats.overdue > 0 ? 'bg-red-50 border-red-200' : ''}`}>
-                            <FiXCircle className={`w-6 h-6 ${stats.overdue > 0 ? 'text-red-500' : 'text-gray-400'}`} />
-                            <div>
-                                <p className="text-sm text-gray-500">Overdue tasks</p>
-                                <p className={`text-lg font-semibold ${stats.overdue > 0 ? 'text-red-600' : 'text-gray-900'}`}>
-                                    {stats.overdue}
-                                </p>
-                            </div>
-                        </div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 };
@@ -565,6 +675,16 @@ const Projects = () => {
     const projectStatuses = ['running', 'upcoming', 'completed']; // Define order for display
 
     const selectedProject = projects.find((p) => p.id === selectedProjectId);
+    const activeTaskCount = projectTaskStats.todo + projectTaskStats.inProgress;
+    const completionRate = projectTaskStats.total
+        ? Math.round((projectTaskStats.completed / projectTaskStats.total) * 100)
+        : 0;
+    const activeTaskDisplay = isProjectTasksLoading ? "—" : activeTaskCount;
+    const completionDisplay = isProjectTasksLoading
+        ? "—"
+        : projectTaskStats.total
+            ? `${completionRate}%`
+            : "0%";
     const isFormVisible = isCreatingNewProject || editingId;
 
     // Render UI
@@ -640,7 +760,7 @@ const Projects = () => {
 
             {/* Main Content Area */}
             <main className="flex-1 p-8 overflow-y-auto custom-scrollbar bg-gradient-to-br from-gray-100 to-gray-200">
-                <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-8 border border-gray-200">
+                <div className="max-w-7xl mx-auto rounded-3xl border border-gray-200 bg-white/90 p-8 shadow-xl lg:p-12">
                     {isFormVisible ? (
                         // Create / Edit Project Form
                         <div className="animate-fadeInUp">
@@ -746,85 +866,124 @@ const Projects = () => {
                         </div>
                     ) : selectedProject ? (
                         // Selected Project Details
-                        <div className="animate-fadeIn">
-                            <div className="flex flex-col lg:grid lg:grid-cols-[2fr_1fr] lg:gap-8">
-                                <div className="space-y-8">
-                                    <div className="flex justify-between items-start pb-4 border-b border-gray-200">
-                                        <div>
+                        <div className="animate-fadeIn space-y-10">
+                            <section className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-white p-8 shadow-sm">
+                                <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                                    <div className="space-y-4">
+                                        <div className="flex flex-wrap items-center gap-3">
                                             <h1 className="text-4xl font-extrabold text-gray-900">{selectedProject.name}</h1>
-                                            <p className="text-gray-600 mt-2 text-lg">{selectedProject.description || 'No description provided for this project.'}</p>
-                                            <div className="mt-4 text-sm text-gray-600 flex flex-wrap items-center gap-3">
-                                                {selectedProject.start_date && (
-                                                    <span className="flex items-center gap-1">
-                                                        <FiCalendar className="text-gray-400" /> Start: {selectedProject.start_date}
-                                                    </span>
-                                                )}
-                                                {selectedProject.end_date && (
-                                                    <span className="flex items-center gap-1">
-                                                        <FiCalendar className="text-gray-400" /> End: {selectedProject.end_date}
-                                                    </span>
-                                                )}
-                                                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${
-                                                    selectedProject.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                                    selectedProject.status === 'upcoming' ? 'bg-yellow-100 text-yellow-700' :
-                                                    'bg-blue-100 text-blue-700'
-                                                }`}>
-                                                    {selectedProject.status || 'Running'}
+                                            <span
+                                                className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${
+                                                    selectedProject.status === 'completed'
+                                                        ? 'bg-green-100 text-green-700'
+                                                        : selectedProject.status === 'upcoming'
+                                                            ? 'bg-yellow-100 text-yellow-700'
+                                                            : 'bg-blue-100 text-blue-700'
+                                                }`}
+                                            >
+                                                {selectedProject.status || 'Running'}
+                                            </span>
+                                        </div>
+                                        <p className="max-w-3xl text-lg text-gray-600">
+                                            {selectedProject.description || 'No description provided for this project.'}
+                                        </p>
+                                        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
+                                            {selectedProject.start_date && (
+                                                <span className="flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
+                                                    <FiCalendar className="text-gray-400" /> Start {selectedProject.start_date}
                                                 </span>
-                                            </div>
-                                            {selectedProject.sheet_integration_enabled && selectedProject.sheet_id && (
-                                                <div className="mt-4 flex items-center gap-2 text-[var(--theme-color)]">
-                                                    <FiLink className="w-5 h-5" />
-                                                    <a
-                                                        href={`https://docs.google.com/spreadsheets/d/${selectedProject.sheet_id}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-sm font-medium hover:underline"
-                                                    >
-                                                        Integrated Google Sheet
-                                                    </a>
-                                                </div>
+                                            )}
+                                            {selectedProject.end_date && (
+                                                <span className="flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
+                                                    <FiCalendar className="text-gray-400" /> End {selectedProject.end_date}
+                                                </span>
                                             )}
                                         </div>
-                                        {canEdit && (
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => handleEditClick(selectedProject)}
-                                                    className="p-3 text-gray-500 hover:bg-gray-100 rounded-full transition-colors tooltip"
-                                                    data-tooltip="Edit Project"
-                                                >
-                                                    <FiEdit className="w-5 h-5" />
-                                                </button>
-                                                <button
-                                                    onClick={() => confirmDeleteProject(selectedProject.id)}
-                                                    className="p-3 text-red-500 hover:bg-red-100 rounded-full transition-colors tooltip"
-                                                    data-tooltip="Delete Project"
-                                                >
-                                                    <FiTrash2 className="w-5 h-5" />
-                                                </button>
-                                            </div>
+                                        {selectedProject.sheet_integration_enabled && selectedProject.sheet_id && (
+                                            <a
+                                                href={`https://docs.google.com/spreadsheets/d/${selectedProject.sheet_id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-2 text-sm font-medium text-[var(--theme-color)] hover:underline"
+                                            >
+                                                <FiLink className="h-5 w-5" /> Integrated Google Sheet
+                                            </a>
                                         )}
                                     </div>
+                                    {canEdit && (
+                                        <div className="flex items-center gap-3 self-start rounded-full bg-white/80 px-4 py-2 shadow-sm">
+                                            <button
+                                                onClick={() => handleEditClick(selectedProject)}
+                                                className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-[var(--theme-color)]"
+                                            >
+                                                <FiEdit className="h-4 w-4" /> Edit project
+                                            </button>
+                                            <span className="h-5 w-px bg-slate-200" aria-hidden="true" />
+                                            <button
+                                                onClick={() => confirmDeleteProject(selectedProject.id)}
+                                                className="flex items-center gap-2 text-sm font-medium text-red-500 hover:text-red-600"
+                                            >
+                                                <FiTrash2 className="h-4 w-4" /> Delete
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                    <div className="rounded-xl border border-slate-200 bg-white/80 p-4 shadow-sm">
+                                        <p className="text-xs uppercase tracking-wide text-slate-500">Members</p>
+                                        <div className="mt-2 flex items-center justify-between">
+                                            <span className="text-2xl font-semibold text-slate-900">{selectedProject.users.length}</span>
+                                            <FiUsers className="h-6 w-6 text-[var(--theme-color)]" />
+                                        </div>
+                                        <p className="text-xs text-slate-500">Collaborators assigned to this project.</p>
+                                    </div>
+                                    <div className="rounded-xl border border-slate-200 bg-white/80 p-4 shadow-sm">
+                                        <p className="text-xs uppercase tracking-wide text-slate-500">Active tasks</p>
+                                        <div className="mt-2 flex items-center justify-between">
+                                            <span className="text-2xl font-semibold text-slate-900">{activeTaskDisplay}</span>
+                                            <FiActivity className="h-6 w-6 text-[var(--theme-color)]" />
+                                        </div>
+                                        <p className="text-xs text-slate-500">
+                                            {isProjectTasksLoading ? 'Refreshing task data…' : 'Across to-do and in-progress states.'}
+                                        </p>
+                                    </div>
+                                    <div className="rounded-xl border border-slate-200 bg-white/80 p-4 shadow-sm">
+                                        <p className="text-xs uppercase tracking-wide text-slate-500">Completion</p>
+                                        <div className="mt-2 flex items-center justify-between">
+                                            <span className="text-2xl font-semibold text-slate-900">{completionDisplay}</span>
+                                            <FiCheckCircle className="h-6 w-6 text-[var(--theme-color)]" />
+                                        </div>
+                                        {!isProjectTasksLoading && projectTaskStats.total > 0 ? (
+                                            <p className="text-xs text-slate-500">{projectTaskStats.completed} of {projectTaskStats.total} tasks completed.</p>
+                                        ) : (
+                                            <p className="text-xs text-slate-500">Completion rate updates as tasks change.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </section>
 
-                                    {/* Member List */}
-                                    <div className="bg-gray-50 p-6 rounded-xl shadow-inner border border-gray-100">
-                                        <h3 className="text-xl font-semibold text-gray-800 mb-5 flex items-center gap-2">
-                                            <FiUsers className="w-5 h-5 text-[var(--theme-color)]" /> Members ({selectedProject.users.length})
-                                        </h3>
+                            <section className="grid grid-cols-1 items-start gap-10 xl:grid-cols-[2fr_1fr]">
+                                <div className="space-y-8">
+                                    <div className="rounded-2xl border border-slate-200 bg-white/85 p-6 shadow-sm">
+                                        <div className="mb-5 flex items-center justify-between">
+                                            <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                                                <FiUsers className="h-5 w-5 text-[var(--theme-color)]" /> Members ({selectedProject.users.length})
+                                            </h3>
+                                        </div>
                                         {selectedProject.users.length > 0 ? (
                                             <ul className="space-y-4">
                                                 {selectedProject.users.map((member) => (
                                                     <li
                                                         key={member.project_user_id}
-                                                        className="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-100 shadow-sm transition-all duration-200 hover:shadow-md"
+                                                        className="flex items-start justify-between gap-4 rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm transition-all duration-200 hover:shadow-md"
                                                     >
                                                         {editingMemberId === member.project_user_id ? (
                                                             <>
-                                                                <div className="flex items-center flex-grow">
+                                                                <div className="flex flex-1 items-center gap-4">
                                                                     <Avatar name={member.name} src={member.profile_picture} size="lg" />
-                                                                    <div className="space-y-2">
-                                                                        <p className="font-medium text-lg text-gray-900">{member.name || 'Invited User'}</p>
-                                                                        <div className="flex flex-col sm:flex-row gap-2">
+                                                                    <div className="space-y-3">
+                                                                        <p className="text-lg font-medium text-gray-900">{member.name || 'Invited User'}</p>
+                                                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                                                                             <input
                                                                                 type="number"
                                                                                 name="allocation_percentage"
@@ -832,13 +991,13 @@ const Projects = () => {
                                                                                 max="100"
                                                                                 value={editingMemberData.allocation_percentage}
                                                                                 onChange={handleEditingMemberChange}
-                                                                                className="w-24 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none"
+                                                                                className="w-full rounded-lg border border-gray-300 p-2 text-sm focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] sm:w-28"
                                                                             />
                                                                             <select
                                                                                 name="workload_status"
                                                                                 value={editingMemberData.workload_status}
                                                                                 onChange={handleEditingMemberChange}
-                                                                                className="border border-gray-300 rounded-lg p-2 text-sm capitalize focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none"
+                                                                                className="w-full rounded-lg border border-gray-300 p-2 text-sm capitalize focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] sm:w-40"
                                                                             >
                                                                                 {WORKLOAD_STATUSES.map((s) => (
                                                                                     <option key={s} value={s} className="capitalize">
@@ -849,16 +1008,16 @@ const Projects = () => {
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                <div className="flex items-center gap-2">
+                                                                <div className="flex shrink-0 items-center gap-2">
                                                                     <button
                                                                         onClick={() => handleSaveMemberEdit(member.project_user_id)}
-                                                                        className="text-sm text-green-600 hover:text-green-800 hover:bg-green-50 px-3 py-1 rounded-md transition-colors font-medium"
+                                                                        className="rounded-md px-3 py-1 text-sm font-medium text-green-600 transition-colors hover:bg-green-50 hover:text-green-700"
                                                                     >
                                                                         Save
                                                                     </button>
                                                                     <button
                                                                         onClick={cancelMemberEdit}
-                                                                        className="text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-50 px-3 py-1 rounded-md transition-colors font-medium"
+                                                                        className="rounded-md px-3 py-1 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
                                                                     >
                                                                         Cancel
                                                                     </button>
@@ -866,20 +1025,20 @@ const Projects = () => {
                                                             </>
                                                         ) : (
                                                             <>
-                                                                <div className="flex items-center flex-grow">
+                                                                <div className="flex flex-1 items-start gap-4">
                                                                     <Avatar name={member.name} src={member.profile_picture} size="lg" />
-                                                                    <div>
-                                                                        <p className="font-medium text-lg text-gray-900">{member.name || 'Invited User'}</p>
-                                                                        <p className="text-sm text-gray-500 capitalize">{member.role}</p>
+                                                                    <div className="space-y-1">
+                                                                        <p className="text-lg font-medium text-gray-900">{member.name || 'Invited User'}</p>
+                                                                        <p className="text-sm capitalize text-gray-500">{member.role}</p>
                                                                         {member.email && <p className="text-sm text-gray-500">{member.email}</p>}
                                                                         <p className="text-sm text-gray-500">Allocation: {member.allocation_percentage}% ({member.workload_status})</p>
                                                                     </div>
                                                                 </div>
-                                                                <div className="flex items-center gap-2">
+                                                                <div className="flex shrink-0 items-center gap-2">
                                                                     {(canManageMembers || member.id === user.id) && (
                                                                         <button
                                                                             onClick={() => startEditingMember(member)}
-                                                                            className="text-sm text-blue-500 hover:text-blue-700 hover:bg-blue-50 px-3 py-1 rounded-md transition-colors font-medium"
+                                                                            className="rounded-md px-3 py-1 text-sm font-medium text-[var(--theme-color)] transition-colors hover:bg-[rgb(var(--theme-color-rgb)/0.1)]"
                                                                         >
                                                                             Edit
                                                                         </button>
@@ -887,7 +1046,7 @@ const Projects = () => {
                                                                     {canManageMembers && user.id !== member.id && (
                                                                         <button
                                                                             onClick={() => handleRemoveMember(member.project_user_id, member.name || 'this member')}
-                                                                            className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-colors font-medium"
+                                                                            className="rounded-md px-3 py-1 text-sm font-medium text-red-500 transition-colors hover:bg-red-50"
                                                                         >
                                                                             Remove
                                                                         </button>
@@ -895,7 +1054,7 @@ const Projects = () => {
                                                                     {member.id === user.id && user.roles?.some((r) => r.name === 'project_manager') && (
                                                                         <button
                                                                             onClick={handleLeaveProject}
-                                                                            className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-colors font-medium ml-2"
+                                                                            className="rounded-md px-3 py-1 text-sm font-medium text-red-500 transition-colors hover:bg-red-50"
                                                                         >
                                                                             Leave
                                                                         </button>
@@ -907,14 +1066,15 @@ const Projects = () => {
                                                 ))}
                                             </ul>
                                         ) : (
-                                            <p className="text-center text-gray-500 py-6">This project currently has no members.</p>
+                                            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/70 p-6 text-center text-sm text-slate-500">
+                                                This project currently has no members.
+                                            </div>
                                         )}
 
-                                        {/* Add Member Form */}
                                         {canManageMembers && (
-                                            <form onSubmit={handleAddMember} className="mt-8 pt-6 border-t border-gray-200 grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+                                            <form onSubmit={handleAddMember} className="mt-8 grid grid-cols-1 items-end gap-4 border-t border-slate-200 pt-6 md:grid-cols-6">
                                                 <div className="md:col-span-2">
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Select Users to Add</label>
+                                                    <label className="mb-1 block text-sm font-medium text-gray-700">Select users to add</label>
                                                     <UserMultiSelect
                                                         selectedUsers={selectedUsersToAdd}
                                                         setSelectedUsers={setSelectedUsersToAdd}
@@ -922,13 +1082,13 @@ const Projects = () => {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                                                    <label htmlFor="role" className="mb-1 block text-sm font-medium text-gray-700">Role</label>
                                                     <select
                                                         name="role"
                                                         id="role"
                                                         value={memberForm.role}
                                                         onChange={handleMemberFormChange}
-                                                        className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none appearance-none bg-white pr-8"
+                                                        className="w-full rounded-lg border border-gray-300 bg-white p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)]"
                                                     >
                                                         <option value="owner">Owner</option>
                                                         <option value="manager">Manager</option>
@@ -937,7 +1097,7 @@ const Projects = () => {
                                                     </select>
                                                 </div>
                                                 <div>
-                                                    <label htmlFor="allocation_percentage" className="block text-sm font-medium text-gray-700 mb-1">Allocation %</label>
+                                                    <label htmlFor="allocation_percentage" className="mb-1 block text-sm font-medium text-gray-700">Allocation %</label>
                                                     <input
                                                         type="number"
                                                         name="allocation_percentage"
@@ -946,17 +1106,17 @@ const Projects = () => {
                                                         max="100"
                                                         value={memberForm.allocation_percentage}
                                                         onChange={handleMemberFormChange}
-                                                        className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none"
+                                                        className="w-full rounded-lg border border-gray-300 p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)]"
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label htmlFor="workload_status" className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                                    <label htmlFor="workload_status" className="mb-1 block text-sm font-medium text-gray-700">Status</label>
                                                     <select
                                                         name="workload_status"
                                                         id="workload_status"
                                                         value={memberForm.workload_status}
                                                         onChange={handleMemberFormChange}
-                                                        className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none appearance-none bg-white pr-8"
+                                                        className="w-full rounded-lg border border-gray-300 bg-white p-3 text-base capitalize focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)]"
                                                     >
                                                         {WORKLOAD_STATUSES.map((s) => (
                                                             <option key={s} value={s} className="capitalize">
@@ -967,7 +1127,7 @@ const Projects = () => {
                                                 </div>
                                                 <button
                                                     type="submit"
-                                                    className="md:col-span-1 px-5 py-2.5 bg-[var(--theme-color)] text-white rounded-lg hover:brightness-110 transition-colors font-semibold shadow-md flex items-center justify-center gap-2 whitespace-nowrap active:scale-95 transform mt-4 md:mt-0"
+                                                    className="md:col-span-1 flex items-center justify-center gap-2 rounded-lg bg-[var(--theme-color)] px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-transform transition-colors duration-200 hover:brightness-110 active:scale-95"
                                                     disabled={isSaving || selectedUsersToAdd.length === 0}
                                                 >
                                                     {isSaving ? (
@@ -976,7 +1136,7 @@ const Projects = () => {
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <FiUserPlus className="w-5 h-5" /> Add Member(s)
+                                                            <FiUserPlus className="h-5 w-5" /> Add member(s)
                                                         </>
                                                     )}
                                                 </button>
@@ -984,14 +1144,14 @@ const Projects = () => {
                                         )}
                                     </div>
                                 </div>
-                                <div className="mt-8 lg:mt-0 lg:sticky lg:top-8">
+                                <div className="space-y-6 xl:sticky xl:top-8">
                                     <ProjectHealthCard
                                         stats={projectTaskStats}
                                         loading={isProjectTasksLoading}
                                         error={projectTasksError}
                                     />
                                 </div>
-                            </div>
+                            </section>
                         </div>
                     ) : isLoading ? (
                         <div className="text-center h-full flex flex-col items-center justify-center min-h-[50vh]">
