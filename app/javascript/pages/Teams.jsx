@@ -119,6 +119,7 @@ const Teams = () => {
 
     // State Management
     const [teams, setTeams] = useState([]);
+    const [isSidebarHovered, setIsSidebarHovered] = useState(false);
     const [selectedTeamId, setSelectedTeamId] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false); // For form submission loading
@@ -699,62 +700,79 @@ const Teams = () => {
     return (
         <div className="flex h-screen bg-gray-100 font-sans text-gray-800">
             {/* Sidebar */}
-            <aside className="w-80 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col shadow-lg">
-                <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-theme text-white">
-                    <h2 className="text-xl font-bold">Teams</h2>
-                    {/* {canEdit && (
-                        <button
-                            onClick={handleNewClick}
-                            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-theme hover:brightness-110 transition-colors rounded-full shadow-md active:scale-95 transform"
-                            title="Create New Team"
-                        >
-                            <FiPlus className="w-4 h-4" /> New Team
-                        </button>
-                    )} */}
-                </div>
-                <div className="p-4 border-b border-gray-200">
-                    <div className="relative">
-                        <FiSearch className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search teams..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none transition-all duration-200"
-                        />
+            <aside
+                onMouseEnter={() => setIsSidebarHovered(true)}
+                onMouseLeave={() => setIsSidebarHovered(false)}
+                className={`relative flex-shrink-0 bg-white border-r border-gray-200 flex flex-col shadow-lg overflow-hidden transition-all duration-300 ease-in-out ${isSidebarHovered ? 'w-80' : 'w-14'}`}
+            >
+                <div
+                    className={`flex-1 flex flex-col h-full transition-opacity duration-200 ${isSidebarHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                >
+                    <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-theme text-white">
+                        <h2 className="text-xl font-bold">Teams</h2>
+                        {/* {canEdit && (
+                            <button
+                                onClick={handleNewClick}
+                                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-theme hover:brightness-110 transition-colors rounded-full shadow-md active:scale-95 transform"
+                                title="Create New Team"
+                            >
+                                <FiPlus className="w-4 h-4" /> New Team
+                            </button>
+                        )} */}
                     </div>
+                    <div className="p-4 border-b border-gray-200">
+                        <div className="relative">
+                            <FiSearch className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search teams..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none transition-all duration-200"
+                            />
+                        </div>
+                    </div>
+                    <nav className="flex-1 overflow-y-auto custom-scrollbar">
+                        {isLoading ? (
+                            <div className="p-6 flex flex-col items-center justify-center text-gray-500">
+                                <FiLoader className="animate-spin text-3xl mb-3 text-[var(--theme-color)]" />
+                                <p>Loading teams...</p>
+                            </div>
+                        ) : filteredTeams.length > 0 ? (
+                            <ul>
+                                {filteredTeams.map((team) => (
+                                    <li key={team.id}>
+                                        <button
+                                            onClick={() => handleSelectTeam(team.id)}
+                                            className={`w-full text-left flex items-center justify-between p-4 border-b border-gray-100 transition-colors duration-200 ${selectedTeamId === team.id ? 'bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)] border-l-4 border-[var(--theme-color)] font-semibold' : 'hover:bg-gray-50'}`}
+                                        >
+                                            <div>
+                                                <p className="text-base">{team.name}</p>
+                                                <p className="text-xs text-gray-500">{team.users.length} member(s)</p>
+                                            </div>
+                                            <FiChevronRight className={`text-gray-400 transition-transform duration-200 ${selectedTeamId === team.id ? 'translate-x-1 text-[var(--theme-color)]' : ''}`} />
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <div className="p-6 text-center text-gray-500">
+                                <FiUsers className="mx-auto text-5xl text-gray-300 mb-4" />
+                                <p className="font-semibold text-lg">No teams found</p>
+                                <p className="text-sm">Try adjusting your search or create a new team.</p>
+                            </div>
+                        )}
+                    </nav>
                 </div>
-                <nav className="flex-1 overflow-y-auto custom-scrollbar">
-                    {isLoading ? (
-                        <div className="p-6 flex flex-col items-center justify-center text-gray-500">
-                            <FiLoader className="animate-spin text-3xl mb-3 text-[var(--theme-color)]" />
-                            <p>Loading teams...</p>
+                {!isSidebarHovered && (
+                    <div className="flex flex-col items-center justify-center flex-1 gap-3 text-[var(--theme-color)]">
+                        <div className="flex flex-col items-center gap-2 text-gray-600">
+                            <FiUsers className="w-5 h-5" />
+                            <span className="text-[10px] font-semibold uppercase tracking-[0.3em] transform -rotate-90 whitespace-nowrap">Teams</span>
                         </div>
-                    ) : filteredTeams.length > 0 ? (
-                        <ul>
-                            {filteredTeams.map((team) => (
-                                <li key={team.id}>
-                                    <button
-                                        onClick={() => handleSelectTeam(team.id)}
-                                        className={`w-full text-left flex items-center justify-between p-4 border-b border-gray-100 transition-colors duration-200 ${selectedTeamId === team.id ? 'bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)] border-l-4 border-[var(--theme-color)] font-semibold' : 'hover:bg-gray-50'}`}
-                                    >
-                                        <div>
-                                            <p className="text-base">{team.name}</p>
-                                            <p className="text-xs text-gray-500">{team.users.length} member(s)</p>
-                                        </div>
-                                        <FiChevronRight className={`text-gray-400 transition-transform duration-200 ${selectedTeamId === team.id ? 'translate-x-1 text-[var(--theme-color)]' : ''}`} />
-                                    </button>
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <div className="p-6 text-center text-gray-500">
-                            <FiUsers className="mx-auto text-5xl text-gray-300 mb-4" />
-                            <p className="font-semibold text-lg">No teams found</p>
-                            <p className="text-sm">Try adjusting your search or create a new team.</p>
-                        </div>
-                    )}
-                </nav>
+                        <span className="text-[9px] text-gray-400 transform -rotate-90 whitespace-nowrap">Hover to expand</span>
+                    </div>
+                )}
             </aside>
 
             {/* Main Content Area */}
