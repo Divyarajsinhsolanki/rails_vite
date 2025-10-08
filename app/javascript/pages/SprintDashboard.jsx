@@ -199,6 +199,7 @@ export default function SprintDashboard() {
             projectId={projectId}
             projectName={project?.name}
             selectedDate={selectedDate}
+            isVisible={isHeaderExpanded}
           />
         </div>
       </header>

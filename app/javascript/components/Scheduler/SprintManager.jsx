@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FiEdit2, FiTrash2, FiPlus, FiX, FiCalendar, FiChevronLeft, FiChevronRight, FiAlertTriangle } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function SprintManager({ onSprintChange, projectId, projectName, selectedDate }) {
+export default function SprintManager({ onSprintChange, projectId, projectName, selectedDate, isVisible = true }) {
   const [sprints, setSprints] = useState([]);
   const [currentSprint, setCurrentSprint] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -37,14 +37,34 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
   }, [projectId, selectedDate]);
 
   // Scroll to active sprint on load or change
+  const scrollSprintIntoView = (sprintId, behavior = 'smooth') => {
+    if (!timelineRef.current || !sprintId) return;
+
+    const sprintElement = timelineRef.current.querySelector(`#sprint-${sprintId}`);
+    if (!sprintElement) return;
+
+    const container = timelineRef.current;
+    const containerRect = container.getBoundingClientRect();
+    const sprintRect = sprintElement.getBoundingClientRect();
+    const offset = sprintRect.left - containerRect.left;
+    const centeredScrollLeft = container.scrollLeft + offset - (container.clientWidth - sprintElement.clientWidth) / 2;
+    const maxScrollLeft = container.scrollWidth - container.clientWidth;
+
+    container.scrollTo({
+      left: Math.min(Math.max(centeredScrollLeft, 0), Math.max(maxScrollLeft, 0)),
+      behavior,
+    });
+  };
+
   useEffect(() => {
-    if (currentSprint && timelineRef.current) {
-      const sprintElement = timelineRef.current.querySelector(`#sprint-${currentSprint.id}`);
-      if (sprintElement) {
-        sprintElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-      }
-    }
-  }, [currentSprint]);
+    if (!currentSprint || !isVisible) return;
+
+    const frame = requestAnimationFrame(() => {
+      scrollSprintIntoView(currentSprint.id);
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [currentSprint, isVisible]);
 
   // --- API & FORM HANDLERS ---
   const handleChange = e => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -102,6 +122,7 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
   const handleSelectSprint = (s) => {
     setCurrentSprint(s);
     if (onSprintChange) onSprintChange(s);
+    scrollSprintIntoView(s.id);
   };
 
   const openForm = (sprint = null) => {
