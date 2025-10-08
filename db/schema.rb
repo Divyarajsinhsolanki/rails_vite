@@ -78,6 +78,29 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_02_004600) do
     t.index ["user_id"], name: "index_items_on_user_id"
   end
 
+  create_table "learning_checkpoints", force: :cascade do |t|
+    t.bigint "learning_goal_id", null: false
+    t.string "title", null: false
+    t.boolean "completed", default: false, null: false
+    t.string "resource_url"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["learning_goal_id"], name: "index_learning_checkpoints_on_learning_goal_id"
+  end
+
+  create_table "learning_goals", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "team_id"
+    t.string "title", null: false
+    t.date "due_date"
+    t.integer "progress", default: 0, null: false
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["team_id"], name: "index_learning_goals_on_team_id"
+    t.index ["user_id"], name: "index_learning_goals_on_user_id"
+  end
+
   create_table "post_likes", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "post_id", null: false
@@ -131,6 +154,27 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_02_004600) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_roles_on_name", unique: true
+  end
+
+  create_table "skill_endorsements", force: :cascade do |t|
+    t.bigint "user_skill_id", null: false
+    t.bigint "endorser_id", null: false
+    t.bigint "team_id"
+    t.text "note"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["endorser_id", "user_skill_id"], name: "index_skill_endorsements_on_endorser_and_user_skill", unique: true
+    t.index ["endorser_id"], name: "index_skill_endorsements_on_endorser_id"
+    t.index ["team_id"], name: "index_skill_endorsements_on_team_id"
+    t.index ["user_skill_id"], name: "index_skill_endorsements_on_user_skill_id"
+  end
+
+  create_table "skills", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "category"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_skills_on_name", unique: true
   end
 
   create_table "sprints", force: :cascade do |t|
@@ -211,12 +255,14 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_02_004600) do
     t.index ["owner_id"], name: "index_teams_on_owner_id"
   end
 
-  create_table "skills", force: :cascade do |t|
-    t.string "name", null: false
-    t.string "category"
+  create_table "user_roles", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "role_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["name"], name: "index_skills_on_name", unique: true
+    t.index ["role_id"], name: "index_user_roles_on_role_id"
+    t.index ["user_id", "role_id"], name: "index_user_roles_on_user_id_and_role_id", unique: true
+    t.index ["user_id"], name: "index_user_roles_on_user_id"
   end
 
   create_table "user_skills", force: :cascade do |t|
@@ -227,52 +273,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_02_004600) do
     t.datetime "last_endorsed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["skill_id"], name: "index_user_skills_on_skill_id"
     t.index ["user_id", "skill_id"], name: "index_user_skills_on_user_id_and_skill_id", unique: true
-  end
-
-  create_table "skill_endorsements", force: :cascade do |t|
-    t.bigint "user_skill_id", null: false
-    t.bigint "endorser_id", null: false
-    t.bigint "team_id"
-    t.text "note"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["endorser_id", "user_skill_id"], name: "index_skill_endorsements_on_endorser_and_user_skill", unique: true
-    t.index ["team_id"], name: "index_skill_endorsements_on_team_id"
-    t.index ["user_skill_id"], name: "index_skill_endorsements_on_user_skill_id"
-  end
-
-  create_table "learning_goals", force: :cascade do |t|
-    t.bigint "user_id", null: false
-    t.bigint "team_id"
-    t.string "title", null: false
-    t.date "due_date"
-    t.integer "progress", default: 0, null: false
-    t.text "description"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["team_id"], name: "index_learning_goals_on_team_id"
-    t.index ["user_id"], name: "index_learning_goals_on_user_id"
-  end
-
-  create_table "learning_checkpoints", force: :cascade do |t|
-    t.bigint "learning_goal_id", null: false
-    t.string "title", null: false
-    t.boolean "completed", default: false, null: false
-    t.string "resource_url"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["learning_goal_id"], name: "index_learning_checkpoints_on_learning_goal_id"
-  end
-
-  create_table "user_roles", force: :cascade do |t|
-    t.bigint "user_id", null: false
-    t.bigint "role_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["role_id"], name: "index_user_roles_on_role_id"
-    t.index ["user_id", "role_id"], name: "index_user_roles_on_user_id_and_role_id", unique: true
-    t.index ["user_id"], name: "index_user_roles_on_user_id"
+    t.index ["user_id"], name: "index_user_skills_on_user_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -295,9 +298,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_02_004600) do
     t.string "color_theme", default: "blue"
     t.boolean "dark_mode", default: false, null: false
     t.string "landing_page", default: "posts"
-    t.string "job_title", default: "Team Member", null: false
     t.string "availability_status", default: "available_now", null: false
     t.integer "current_projects_count", default: 0, null: false
+    t.string "job_title", default: "Team Member", null: false
     t.index ["availability_status"], name: "index_users_on_availability_status"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
@@ -379,12 +382,18 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_02_004600) do
   add_foreign_key "comments", "posts"
   add_foreign_key "comments", "users"
   add_foreign_key "items", "users"
+  add_foreign_key "learning_checkpoints", "learning_goals"
+  add_foreign_key "learning_goals", "teams"
+  add_foreign_key "learning_goals", "users"
   add_foreign_key "post_likes", "posts"
   add_foreign_key "post_likes", "users"
   add_foreign_key "posts", "users"
   add_foreign_key "project_users", "projects"
   add_foreign_key "project_users", "users"
   add_foreign_key "projects", "users", column: "owner_id"
+  add_foreign_key "skill_endorsements", "teams"
+  add_foreign_key "skill_endorsements", "user_skills"
+  add_foreign_key "skill_endorsements", "users", column: "endorser_id"
   add_foreign_key "sprints", "projects"
   add_foreign_key "task_logs", "developers"
   add_foreign_key "task_logs", "tasks"
@@ -396,18 +405,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_02_004600) do
   add_foreign_key "teams", "users", column: "owner_id"
   add_foreign_key "user_roles", "roles"
   add_foreign_key "user_roles", "users"
+  add_foreign_key "user_skills", "skills"
+  add_foreign_key "user_skills", "users"
   add_foreign_key "work_log_tags", "work_logs"
   add_foreign_key "work_log_tags", "work_tags"
   add_foreign_key "work_logs", "users"
   add_foreign_key "work_logs", "work_categories", column: "category_id"
   add_foreign_key "work_logs", "work_priorities", column: "priority_id"
   add_foreign_key "work_notes", "users"
-  add_foreign_key "learning_checkpoints", "learning_goals"
-  add_foreign_key "learning_goals", "teams"
-  add_foreign_key "learning_goals", "users"
-  add_foreign_key "skill_endorsements", "teams"
-  add_foreign_key "skill_endorsements", "user_skills"
-  add_foreign_key "skill_endorsements", "users", column: "endorser_id"
-  add_foreign_key "user_skills", "skills"
-  add_foreign_key "user_skills", "users"
 end

@@ -702,7 +702,7 @@ const Teams = () => {
             <aside className="w-80 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col shadow-lg">
                 <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-theme text-white">
                     <h2 className="text-xl font-bold">Teams</h2>
-                    {canEdit && (
+                    {/* {canEdit && (
                         <button
                             onClick={handleNewClick}
                             className="flex items-center gap-2 px-3 py-1.5 text-sm bg-theme hover:brightness-110 transition-colors rounded-full shadow-md active:scale-95 transform"
@@ -710,7 +710,7 @@ const Teams = () => {
                         >
                             <FiPlus className="w-4 h-4" /> New Team
                         </button>
-                    )}
+                    )} */}
                 </div>
                 <div className="p-4 border-b border-gray-200">
                     <div className="relative">
