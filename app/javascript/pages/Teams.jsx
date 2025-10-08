@@ -1017,7 +1017,7 @@ const Teams = () => {
                                                             onRemoveSkill={handleDeleteSkill}
                                                         />
                                                     </section>
-                                                    <section id="learning-goals-panel">
+                                                    <section id="learning-goals-panel" className="xl:col-span-2">
                                                         <LearningGoalsPanel
                                                             goals={teamInsights.current_user_learning_goals}
                                                             onCreateGoal={handleCreateGoal}
