@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import Avatar from "../ui/Avatar";
 
 const SkillDirectory = ({
   members = [],
@@ -149,7 +150,11 @@ const SkillDirectory = ({
             <div className="flex flex-col md:flex-row md:items-center justify-between">
               <div className="flex items-center mb-4 md:mb-0">
                 <div className="bg-indigo-100 rounded-full p-1 mr-4">
-                  <div className="bg-gray-200 border-2 border-dashed rounded-xl w-12 h-12" />
+                  <Avatar
+                    name={member.name}
+                    src={member.profile_picture}
+                    className="w-12 h-12 text-lg"
+                  />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">{member.name}</h3>

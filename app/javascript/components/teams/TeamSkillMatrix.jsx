@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import Avatar from "../ui/Avatar";
 
 const LEVEL_COLORS = {
   expert: "bg-green-100 text-green-800",
@@ -147,7 +148,11 @@ const TeamSkillMatrix = ({ members = [], skills = [], roles = [] }) => {
               <tr key={member.id} className="hover:bg-gray-50">
                 <td className="border border-gray-200 px-4 py-3 text-sm sticky left-0 bg-white z-10">
                   <div className="flex items-center">
-                    <div className="bg-gray-200 border-2 border-dashed rounded-xl w-8 h-8 mr-3" />
+                    <Avatar
+                      name={member.name}
+                      src={member.profile_picture}
+                      className="w-8 h-8 mr-3 text-sm"
+                    />
                     <div>
                       <div className="font-medium">{member.name}</div>
                       <div className="text-gray-500 text-xs">{member.job_title}</div>
