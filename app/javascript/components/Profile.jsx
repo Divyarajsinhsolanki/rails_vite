@@ -550,32 +550,46 @@ const Profile = () => {
                 </div>
                 {posts.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {posts.map((post) => (
-                      <div key={post.id} className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300">
-                        {post.image_url && (
-                          <img
-                            src={post.image_url}
-                            alt="Post"
-                            className="w-full h-48 object-cover"
-                          />
-                        )}
-                        <div className="p-5">
-                          <div className="flex items-center text-sm text-gray-500 mb-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            {new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    {posts.map((post) => {
+                      const likesCount = typeof post.likes_count === 'number' ? post.likes_count : 0;
+
+                      return (
+                        <div key={post.id} className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300">
+                          {post.image_url && (
+                            <img
+                              src={post.image_url}
+                              alt="Post"
+                              className="w-full h-48 object-cover"
+                            />
+                          )}
+                          <div className="p-5">
+                            <div className="flex items-center text-sm text-gray-500 mb-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              {new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </div>
+                            <p className="text-gray-700 line-clamp-3">{post.message}</p>
+                            {likesCount > 0 && (
+                              <div className="mt-3 flex items-center text-sm text-gray-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-rose-400 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                  <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
+                                </svg>
+                                <span className="font-medium text-gray-700">
+                                  {likesCount} {likesCount === 1 ? 'Like' : 'Likes'}
+                                </span>
+                              </div>
+                            )}
+                            <button onClick={() => navigate('/posts')} className="mt-3 text-[var(--theme-color)] hover:text-[var(--theme-color)]/90 text-sm font-medium flex items-center">
+                              Read more
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                              </svg>
+                            </button>
                           </div>
-                          <p className="text-gray-700 line-clamp-3">{post.message}</p>
-                          <button onClick={() => navigate('/posts')} className="mt-3 text-[var(--theme-color)] hover:text-[var(--theme-color)]/90 text-sm font-medium flex items-center">
-                            Read more
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
-                          </button>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-12">
