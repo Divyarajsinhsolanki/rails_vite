@@ -113,79 +113,83 @@ const TeamSkillMatrix = ({ members = [], skills = [], roles = [] }) => {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-50">
-              <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700 sticky left-0 bg-gray-50 z-10">
-                Team Member
-              </th>
-              {skillNames.map((skillName) => (
-                <th
-                  key={skillName}
-                  className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort(skillName)}
-                >
-                  <div className="flex items-center justify-center">
-                    {skillName}
-                    {sortConfig.key === skillName && (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className={`h-4 w-4 ml-1 ${sortConfig.direction === "ascending" ? "" : "transform rotate-180"}`}
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                  </div>
+      <div className="relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white via-white/80 to-transparent z-10" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white via-white/80 to-transparent z-10" />
+        <div className="overflow-x-auto rounded-lg border border-gray-100 shadow-inner scrollbar-thin">
+          <table className="min-w-max w-full border-collapse">
+            <thead className="bg-gray-50 sticky top-0 z-20">
+              <tr>
+                <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700 sticky left-0 top-0 bg-gray-50 z-30">
+                  Team Member
                 </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {sortedMembers.map((member) => (
-              <tr key={member.id} className="hover:bg-gray-50">
-                <td className="border border-gray-200 px-4 py-3 text-sm sticky left-0 bg-white z-10">
-                  <div className="flex items-center">
-                    <Avatar
-                      name={member.name}
-                      src={member.profile_picture}
-                      className="w-8 h-8 mr-3 text-sm"
-                    />
-                    <div>
-                      <div className="font-medium">{member.name}</div>
-                      <div className="text-gray-500 text-xs">{member.job_title}</div>
+                {skillNames.map((skillName) => (
+                  <th
+                    key={skillName}
+                    className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 sticky top-0 bg-gray-50"
+                    onClick={() => handleSort(skillName)}
+                  >
+                    <div className="flex items-center justify-center">
+                      {skillName}
+                      {sortConfig.key === skillName && (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className={`h-4 w-4 ml-1 ${sortConfig.direction === "ascending" ? "" : "transform rotate-180"}`}
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                        </svg>
+                      )}
                     </div>
-                  </div>
-                </td>
-                {skillNames.map((skillName) => {
-                  const skill = member.skillLookup[skillName];
-                  if (!skill) {
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sortedMembers.map((member) => (
+                <tr key={member.id} className="group">
+                  <td className="border border-gray-200 px-4 py-3 text-sm sticky left-0 top-auto bg-white group-hover:bg-gray-100 transition-colors z-20 shadow-[4px_0_8px_-6px_rgba(0,0,0,0.1)]">
+                    <div className="flex items-center">
+                      <Avatar
+                        name={member.name}
+                        src={member.profile_picture}
+                        className="w-8 h-8 mr-3 text-sm"
+                      />
+                      <div>
+                        <div className="font-medium">{member.name}</div>
+                        <div className="text-gray-500 text-xs">{member.job_title}</div>
+                      </div>
+                    </div>
+                  </td>
+                  {skillNames.map((skillName) => {
+                    const skill = member.skillLookup[skillName];
+                    if (!skill) {
+                      return (
+                        <td key={`${member.id}-${skillName}`} className="border border-gray-200 px-4 py-3 text-center bg-white group-hover:bg-gray-50 transition-colors">
+                          <span className="text-gray-300">—</span>
+                        </td>
+                      );
+                    }
+
+                    const levelClass = LEVEL_COLORS[skill.proficiency] || LEVEL_COLORS.beginner;
+
                     return (
-                      <td key={`${member.id}-${skillName}`} className="border border-gray-200 px-4 py-3 text-center">
-                        <span className="text-gray-300">—</span>
+                      <td key={`${member.id}-${skillName}`} className="border border-gray-200 px-4 py-3 text-center bg-white group-hover:bg-gray-50 transition-colors">
+                        <div className="flex flex-col items-center space-y-1">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${levelClass}`}>
+                            {skill.proficiency_label}
+                          </span>
+                          <span className="text-[10px] text-gray-500">{skill.endorsements_count} endorsement{skill.endorsements_count === 1 ? "" : "s"}</span>
+                        </div>
                       </td>
                     );
-                  }
-
-                  const levelClass = LEVEL_COLORS[skill.proficiency] || LEVEL_COLORS.beginner;
-
-                  return (
-                    <td key={`${member.id}-${skillName}`} className="border border-gray-200 px-4 py-3 text-center">
-                      <div className="flex flex-col items-center space-y-1">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${levelClass}`}>
-                          {skill.proficiency_label}
-                        </span>
-                        <span className="text-[10px] text-gray-500">{skill.endorsements_count} endorsement{skill.endorsements_count === 1 ? "" : "s"}</span>
-                      </div>
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
