@@ -288,7 +288,7 @@ const Navbar = () => {
               >
                 <HolographicAvatar user={user} />
                 {hasAdminRole && (
-                  <div className="absolute -bottom-1 -right-1 bg-gradient-to-r from-blue-500 to-sky-600 text-white text-xs px-1.5 py-0.5 rounded-full border-2 border-white dark:border-zinc-900">
+                  <div className="absolute -top-1 -right-1 z-20 bg-gradient-to-r from-blue-500 to-sky-600 text-white text-xs px-1.5 py-0.5 rounded-full border-2 border-white dark:border-zinc-900 shadow-md">
                     <FiAward className="h-3 w-3" />
                   </div>
                 )}
