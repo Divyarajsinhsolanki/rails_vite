@@ -96,6 +96,12 @@ Rails.application.routes.draw do
 
     resources :items, only: [:index, :create, :update, :destroy]
 
+    resources :knowledge_bookmarks, only: [:index, :create, :update, :destroy] do
+      member do
+        post :mark_reviewed
+      end
+    end
+
     resources :roles, only: [:index]
 
     resources :work_categories, only: [:index, :create, :update, :destroy]

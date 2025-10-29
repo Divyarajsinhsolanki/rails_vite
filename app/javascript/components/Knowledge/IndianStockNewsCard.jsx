@@ -1,13 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import BookmarkToggle from "./BookmarkToggle";
 
-// API keys for optional fallbacks
 const API_KEYS = {
-  NEWSDATA: "YOUR_NEWSDATA_API_KEY", // https://newsdata.io/
+  NEWSDATA: "YOUR_NEWSDATA_API_KEY",
 };
 
-// Try multiple sources in order
 const fetchers = [
-  // 1) Inshorts unofficial API
   () =>
     fetch("https://inshorts.vercel.app/api/news?category=business")
       .then((res) => res.json())
@@ -16,12 +14,8 @@ const fetchers = [
           return data.data.slice(0, 5).map((a) => ({ title: a.title, url: a.url }));
         throw new Error("Invalid Inshorts response");
       }),
-
-  // 2) NewsData.io fallback
   () =>
-    fetch(
-      `https://newsdata.io/api/1/news?apikey=${API_KEYS.NEWSDATA}&country=in&category=business`
-    )
+    fetch(`https://newsdata.io/api/1/news?apikey=${API_KEYS.NEWSDATA}&country=in&category=business`)
       .then((res) => res.json())
       .then((data) => {
         const arr = data?.results;
@@ -31,11 +25,19 @@ const fetchers = [
       }),
 ];
 
-export default function IndianStockNewsCard() {
-  const [articles, setArticles] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function IndianStockNewsCard({
+  cardType = "indian_stock_news",
+  bookmarkHelpers,
+  initialData = null,
+  savedBookmark = null,
+}) {
+  const hasInitialData = initialData !== null && initialData !== undefined;
+  const [articles, setArticles] = useState(() => (hasInitialData ? initialData?.articles || [] : []));
+  const [loading, setLoading] = useState(!hasInitialData);
 
   useEffect(() => {
+    if (hasInitialData) return;
+
     let mounted = true;
 
     async function fetchWithFallback() {
@@ -47,8 +49,8 @@ export default function IndianStockNewsCard() {
             setLoading(false);
           }
           return;
-        } catch (e) {
-          console.warn("Indian news fetch failed:", e.message);
+        } catch (error) {
+          console.warn("Indian news fetch failed:", error.message);
         }
       }
       if (mounted) {
@@ -61,11 +63,45 @@ export default function IndianStockNewsCard() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [hasInitialData]);
+
+  const bookmarkPayload = useMemo(() => {
+    if (!articles.length) return null;
+    return {
+      cardType,
+      sourceId: articles[0]?.title || "indian-market-news",
+      payload: { articles },
+      title: "Indian Market News",
+      subtitle: articles[0]?.title,
+      collectionName: savedBookmark?.collection_name,
+      reminderIntervalDays: savedBookmark?.reminder_interval_days,
+    };
+  }, [cardType, articles, savedBookmark]);
+
+  const existingBookmark = bookmarkPayload
+    ? bookmarkHelpers?.find?.(bookmarkPayload) || savedBookmark
+    : savedBookmark;
+  const isBookmarked = Boolean(existingBookmark);
+
+  const handleToggle = () => {
+    if (!bookmarkPayload) return;
+    bookmarkHelpers?.toggle?.({
+      ...bookmarkPayload,
+      collectionName: existingBookmark?.collection_name ?? bookmarkPayload.collectionName,
+    });
+  };
 
   return (
-    <div className="bg-white shadow-md rounded-2xl p-4 flex flex-col">
-      <h2 className="text-lg font-semibold mb-2">🇮🇳 Market News</h2>
+    <div className="bg-white shadow-md rounded-2xl p-4 flex flex-col min-h-[220px]">
+      <div className="flex items-start justify-between mb-3">
+        <h2 className="text-lg font-semibold">🇮🇳 Market News</h2>
+        <BookmarkToggle
+          isBookmarked={isBookmarked}
+          onToggle={handleToggle}
+          collectionName={existingBookmark?.collection_name}
+          disabled={!bookmarkPayload}
+        />
+      </div>
       {loading ? (
         <div className="text-sm text-gray-500">Loading...</div>
       ) : articles.length ? (

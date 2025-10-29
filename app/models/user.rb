@@ -31,6 +31,7 @@ class User < ApplicationRecord
   has_many :user_skills, dependent: :destroy
   has_many :skills, through: :user_skills
   has_many :learning_goals, dependent: :destroy
+  has_many :knowledge_bookmarks, dependent: :destroy
   has_many :given_skill_endorsements, class_name: 'SkillEndorsement', foreign_key: :endorser_id, dependent: :destroy
   has_many :received_skill_endorsements, through: :user_skills, source: :skill_endorsements
 

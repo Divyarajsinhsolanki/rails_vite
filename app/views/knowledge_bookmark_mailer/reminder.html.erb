@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h1>Hi <%= @user.first_name.presence || @user.email %>,</h1>
+    <p>It's time to revisit one of your saved Knowledge Hub items.</p>
+    <p><strong>Category:</strong> <%= @bookmark.card_type.humanize %></p>
+    <% if @bookmark.collection_name.present? %>
+      <p><strong>Collection:</strong> <%= @bookmark.collection_name %></p>
+    <% end %>
+    <p><strong>Saved on:</strong> <%= @bookmark.created_at.strftime('%B %d, %Y') %></p>
+    <hr />
+    <p><strong>Details:</strong></p>
+    <pre style="background:#f4f4f4;padding:12px;border-radius:8px;white-space:pre-wrap;word-break:break-word;">
+<%= JSON.pretty_generate(@bookmark.payload) %>
+    </pre>
+    <p>Open the Knowledge Hub to review and mark it as done.</p>
+  </body>
+</html>

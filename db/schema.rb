@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_02_004600) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_02_004700) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -99,6 +99,23 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_02_004600) do
     t.datetime "updated_at", null: false
     t.index ["team_id"], name: "index_learning_goals_on_team_id"
     t.index ["user_id"], name: "index_learning_goals_on_user_id"
+  end
+
+  create_table "knowledge_bookmarks", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "card_type", null: false
+    t.string "collection_name"
+    t.string "source_id"
+    t.jsonb "payload", default: {}, null: false
+    t.datetime "last_viewed_at"
+    t.datetime "last_reminded_at"
+    t.datetime "next_reminder_at"
+    t.integer "reminder_interval_days", default: 7, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["collection_name"], name: "index_knowledge_bookmarks_on_collection_name"
+    t.index ["next_reminder_at"], name: "index_knowledge_bookmarks_on_next_reminder_at"
+    t.index ["user_id", "card_type", "source_id"], name: "index_knowledge_bookmarks_on_identity", unique: true
   end
 
   create_table "post_likes", force: :cascade do |t|
@@ -382,6 +399,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_02_004600) do
   add_foreign_key "comments", "posts"
   add_foreign_key "comments", "users"
   add_foreign_key "items", "users"
+  add_foreign_key "knowledge_bookmarks", "users"
   add_foreign_key "learning_checkpoints", "learning_goals"
   add_foreign_key "learning_goals", "teams"
   add_foreign_key "learning_goals", "users"
