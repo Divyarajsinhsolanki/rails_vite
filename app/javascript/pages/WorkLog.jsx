@@ -65,6 +65,15 @@ const hexToRgba = (hex, alpha = 1) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
+const calculateTaskDuration = (task) => {
+  if (!task?.startTime || !task?.endTime) return 0;
+  const start = parse(task.startTime, 'HH:mm', new Date());
+  const end = parse(task.endTime, 'HH:mm', new Date());
+  let duration = differenceInMinutes(end, start);
+  if (duration < 0) duration += 24 * 60;
+  return Math.max(duration, 0);
+};
+
 // --- Reusable Components ---
 const Modal = ({ children, isOpen, onClose }) => (
   <AnimatePresence>
@@ -118,6 +127,7 @@ const WorkLog = () => {
     priorities: [],
     tags: []
   });
+  const [goalMinutes, setGoalMinutes] = useState({});
   
   const timerRef = useRef(null);
   const pomodoroRef = useRef(null);
@@ -199,6 +209,53 @@ const WorkLog = () => {
     }, 500);
     return () => clearTimeout(timer);
   }, [dailyNote, selectedDate]);
+
+  useEffect(() => {
+    if (!categories.length) return;
+
+    const defaultGoalFor = (category) =>
+      category.name?.toLowerCase().includes('break') ? 60 : 120;
+
+    let storedGoals = {};
+    if (typeof window !== 'undefined') {
+      try {
+        storedGoals = JSON.parse(window.localStorage.getItem('worklog-goals') || '{}');
+      } catch {
+        storedGoals = {};
+      }
+    }
+
+    setGoalMinutes(prev => {
+      const next = {};
+      let changed = false;
+
+      const validIds = new Set(categories.map(cat => cat.id));
+      Object.keys(prev).forEach(key => {
+        if (!validIds.has(Number(key))) {
+          changed = true;
+        }
+      });
+
+      categories.forEach(cat => {
+        const storedValue = storedGoals[cat.id];
+        const currentValue = prev[cat.id];
+        const resolved = storedValue ?? currentValue ?? defaultGoalFor(cat);
+        next[cat.id] = resolved;
+        if (resolved !== currentValue) {
+          changed = true;
+        }
+      });
+
+      if (changed || Object.keys(prev).length !== Object.keys(next).length) {
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem('worklog-goals', JSON.stringify(next));
+        }
+        return next;
+      }
+
+      return prev;
+    });
+  }, [categories]);
 
   // --- Timer Effects ---
   useEffect(() => {
@@ -330,6 +387,146 @@ const WorkLog = () => {
       };
     });
   }, [filteredTasks, selectedDate]);
+
+  const insights = useMemo(() => {
+    if (!categories.length) return null;
+
+    const breakCategory = categories.find(cat => cat.name?.toLowerCase().includes('break'));
+    const breakCategoryId = breakCategory?.id;
+    const breakMinutes = breakCategoryId ? (timeSummary.byCategory[breakCategoryId] || 0) : 0;
+
+    const workSessions = currentTasks.filter(task => task.category !== breakCategoryId);
+    const sessionDurations = workSessions.map(task => calculateTaskDuration(task));
+    const totalWorkMinutes = sessionDurations.reduce((sum, minutes) => sum + minutes, 0);
+    const averageSession = sessionDurations.length ? totalWorkMinutes / sessionDurations.length : 0;
+
+    let breakMessage = 'Log a focus session to receive cadence tips.';
+    let breakDetail = 'Once you track a few tasks we will analyze your focus and break rhythm.';
+    let recommendedEvery = 0;
+
+    if (totalWorkMinutes > 0) {
+      recommendedEvery = Math.round(Math.min(Math.max(averageSession || 45, 45), 90));
+
+      if (averageSession >= 90) {
+        breakMessage = 'Long focus streaks detected';
+        breakDetail = `Average focus block is ${Math.round(averageSession)} minutes. Consider inserting a restorative break roughly every 60–75 minutes.`;
+      } else if (averageSession >= 60) {
+        breakMessage = 'Strong focus cadence';
+        breakDetail = `Average focus block is ${Math.round(averageSession)} minutes. Keeping breaks near every ${recommendedEvery} minutes will help maintain energy.`;
+      } else if (averageSession >= 35) {
+        breakMessage = 'Frequent context shifts';
+        breakDetail = `Average focus block is ${Math.round(averageSession)} minutes. Experiment with 45–60 minute sessions before pausing.`;
+      } else {
+        breakMessage = 'Micro tasking detected';
+        breakDetail = `Average focus block is ${Math.max(20, Math.round(averageSession || 0))} minutes. Try batching similar work for longer focus intervals.`;
+      }
+    }
+
+    const totalTracked = totalWorkMinutes + breakMinutes;
+    const breakShare = totalTracked ? Math.round((breakMinutes / totalTracked) * 100) : 0;
+    const workShare = totalTracked ? Math.round((totalWorkMinutes / totalTracked) * 100) : 0;
+
+    const goalProgress = categories.map(cat => {
+      const actual = timeSummary.byCategory[cat.id] || 0;
+      const goal = goalMinutes[cat.id] || 0;
+      const rawProgress = goal > 0 ? Math.round((actual / goal) * 100) : 0;
+      const progress = goal > 0 ? Math.min(rawProgress, 999) : rawProgress;
+      let status = 'neutral';
+
+      if (goal > 0) {
+        if (progress >= 120) {
+          status = 'over';
+        } else if (progress <= 80) {
+          status = 'under';
+        } else {
+          status = 'onTrack';
+        }
+      } else if (actual > 0) {
+        status = 'tracked';
+      }
+
+      return {
+        category: cat,
+        actualMinutes: actual,
+        goalMinutes: goal,
+        progress,
+        status
+      };
+    });
+
+    const overbookedCategories = goalProgress
+      .filter(item => item.actualMinutes > 0 && (
+        (item.goalMinutes > 0 && item.actualMinutes > item.goalMinutes * 1.1) ||
+        (timeSummary.totalMinutes > 0 && item.actualMinutes / timeSummary.totalMinutes > 0.4)
+      ))
+      .map(item => ({
+        ...item,
+        difference: item.actualMinutes - (item.goalMinutes || 0)
+      }))
+      .sort((a, b) => b.difference - a.difference);
+
+    const trimmedNote = dailyNote.trim();
+    const noteBullets = trimmedNote
+      ? trimmedNote.split(/\n+/).map(line => line.trim()).filter(Boolean)
+      : [];
+
+    let summaryBullets = [];
+    if (noteBullets.length) {
+      summaryBullets = noteBullets.slice(0, 3);
+    } else if (trimmedNote) {
+      const sentences = trimmedNote
+        .replace(/\n+/g, ' ')
+        .split(/(?<=[.!?])\s+/)
+        .map(sentence => sentence.trim())
+        .filter(Boolean);
+      summaryBullets = sentences.slice(0, 3);
+    }
+
+    const topCategory = goalProgress
+      .filter(item => item.actualMinutes > 0 && item.category)
+      .sort((a, b) => b.actualMinutes - a.actualMinutes)[0];
+
+    if (topCategory) {
+      const hours = Math.floor(topCategory.actualMinutes / 60);
+      const minutes = topCategory.actualMinutes % 60;
+      const label = hours ? `${hours}h ${minutes}m` : `${minutes}m`;
+      summaryBullets.push(`Most time spent on ${topCategory.category.name} (${label}).`);
+    }
+
+    if (breakCategory && totalTracked > 0) {
+      if (breakShare < 15 && totalWorkMinutes > 90) {
+        summaryBullets.push('Break time is under 15% of your schedule—schedule more pauses to recharge.');
+      } else if (breakShare > 35) {
+        summaryBullets.push('Breaks account for over a third of tracked time—ensure focus blocks stay protected.');
+      }
+    }
+
+    summaryBullets = summaryBullets.filter(Boolean).slice(0, 4);
+
+    const headline = totalTracked > 0
+      ? `${viewMode === 'weekly' ? 'This week' : 'Today'} logged ${Math.floor(timeSummary.totalMinutes / 60)}h ${timeSummary.totalMinutes % 60}m across ${currentTasks.length} entries.`
+      : 'Add tasks or notes to unlock personalized insights.';
+
+    return {
+      scopeLabel: viewMode === 'weekly' ? 'Weekly' : 'Daily',
+      breakAdvice: {
+        message: breakMessage,
+        detail: breakDetail,
+        averageSession: Math.round(averageSession || 0),
+        recommendedEvery,
+        breakMinutes,
+        totalWorkMinutes,
+        breakShare,
+        workShare
+      },
+      overbookedCategories,
+      goalProgress,
+      aiSummary: {
+        headline,
+        bullets: summaryBullets
+      }
+    };
+  }, [categories, currentTasks, timeSummary, dailyNote, goalMinutes, viewMode]);
 
   // --- Handlers ---
   const handleDateChange = useCallback((days) => {
@@ -483,6 +680,17 @@ const WorkLog = () => {
     setFilter({ categories: [], priorities: [], tags: [] });
   };
 
+  const handleGoalChange = useCallback((categoryId, minutes) => {
+    const sanitized = Math.max(0, Math.round(Number(minutes) || 0));
+    setGoalMinutes(prev => {
+      const updated = { ...prev, [categoryId]: sanitized };
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('worklog-goals', JSON.stringify(updated));
+      }
+      return updated;
+    });
+  }, []);
+
   return (
     <div className={`min-h-screen bg-gradient-to-br from-gray-50 to-[rgb(var(--theme-color-rgb)/0.1)] font-sans text-gray-800 p-4 sm:p-6 lg:p-8 ${isExpandedView ? 'fixed inset-0 z-50 bg-white overflow-y-auto' : ''}`}>
       <div className="max-w-7xl mx-auto">
@@ -595,11 +803,16 @@ const WorkLog = () => {
             />
             
             {viewMode === 'daily' && (
-              <DailyNotes 
-                note={dailyNote} 
-                onChange={setDailyNote} 
+              <DailyNotes
+                note={dailyNote}
+                onChange={setDailyNote}
               />
             )}
+
+            <InsightsSidebar
+              insights={insights}
+              onGoalChange={handleGoalChange}
+            />
           </aside>
           
           {/* Right Column - Timeline */}
@@ -934,6 +1147,166 @@ const DailyNotes = ({ note, onChange }) => {
   );
 };
 
+const InsightsSidebar = ({ insights, onGoalChange }) => {
+  if (!insights) return null;
+
+  const { breakAdvice, overbookedCategories, goalProgress, aiSummary, scopeLabel } = insights;
+
+  const formatMinutes = (minutes) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) {
+      return `${hours}h ${mins}m`;
+    }
+    return `${mins}m`;
+  };
+
+  const statusCopy = {
+    over: 'Above goal',
+    under: 'Below goal',
+    onTrack: 'On track',
+    tracked: 'Tracked',
+    neutral: 'No goal set'
+  };
+
+  const statusColor = {
+    over: 'text-red-600',
+    under: 'text-amber-600',
+    onTrack: 'text-emerald-600',
+    tracked: 'text-gray-600',
+    neutral: 'text-gray-500'
+  };
+
+  const actionableGoalProgress = goalProgress.filter(item => item.goalMinutes > 0 || item.actualMinutes > 0);
+
+  return (
+    <motion.div layout className="bg-white rounded-2xl shadow-sm p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <LightBulbIcon className="h-5 w-5" />
+          Productivity Insights
+        </h2>
+        <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-600">{scopeLabel}</span>
+      </div>
+
+      <div className="p-4 rounded-xl bg-[rgb(var(--theme-color-rgb)/0.08)] border border-[rgb(var(--theme-color-rgb)/0.2)] space-y-3">
+        <div>
+          <p className="text-sm font-semibold text-gray-800">{breakAdvice.message}</p>
+          <p className="text-sm text-gray-600 mt-1">{breakAdvice.detail}</p>
+        </div>
+        {breakAdvice.totalWorkMinutes > 0 && (
+          <div className="flex flex-wrap gap-2 text-xs text-gray-600">
+            <span className="px-2 py-1 rounded-full bg-white border border-gray-200">{breakAdvice.averageSession}m avg focus</span>
+            <span className="px-2 py-1 rounded-full bg-white border border-gray-200">{breakAdvice.workShare}% focus</span>
+            <span className="px-2 py-1 rounded-full bg-white border border-gray-200">{breakAdvice.breakShare}% breaks</span>
+            {breakAdvice.recommendedEvery > 0 && (
+              <span className="px-2 py-1 rounded-full bg-white border border-gray-200">Break every ~{breakAdvice.recommendedEvery}m</span>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-gray-700">Goals vs logged time</h3>
+          <span className="text-[10px] uppercase tracking-wide text-gray-400">Minutes</span>
+        </div>
+        {actionableGoalProgress.length === 0 ? (
+          <p className="text-sm text-gray-500">Set a goal for any category to start tracking progress.</p>
+        ) : (
+          <div className="space-y-4">
+            {actionableGoalProgress.map(item => (
+              <div key={item.category.id} className="space-y-2">
+                <div className="flex items-center justify-between text-xs font-medium text-gray-600">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.category.hex }}></span>
+                    <span>{item.category.name}</span>
+                  </div>
+                  <span>{formatMinutes(item.actualMinutes)} / {formatMinutes(item.goalMinutes)}</span>
+                </div>
+                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full"
+                    style={{
+                      width: `${Math.min(item.goalMinutes > 0 ? (item.actualMinutes / item.goalMinutes) * 100 : 0, 100)}%`,
+                      backgroundColor: item.category.hex || 'var(--theme-color)'
+                    }}
+                  ></div>
+                </div>
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span className={`flex items-center gap-1 ${statusColor[item.status]}`}>
+                    {statusCopy[item.status]}
+                    {item.goalMinutes > 0 && (
+                      <>
+                        <span>·</span>
+                        <span>{Math.min(999, Math.round((item.actualMinutes / item.goalMinutes) * 100))}% of goal</span>
+                      </>
+                    )}
+                  </span>
+                  <label className="flex items-center gap-1">
+                    <span className="text-[10px] uppercase tracking-wide text-gray-400">Goal</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={item.goalMinutes}
+                      onChange={(e) => onGoalChange(item.category.id, e.target.value)}
+                      className="w-20 rounded border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--theme-color)]"
+                    />
+                  </label>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-gray-700">Overbooked categories</h3>
+          <ArrowUpIcon className="h-4 w-4 text-gray-400" />
+        </div>
+        {overbookedCategories.length === 0 ? (
+          <p className="text-sm text-gray-500">No categories are exceeding their targets.</p>
+        ) : (
+          <div className="space-y-3">
+            {overbookedCategories.map(item => (
+              <div key={item.category.id} className="rounded-lg border border-red-100 bg-red-50/60 p-3">
+                <div className="flex items-center justify-between text-xs font-medium text-red-600">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.category.hex }}></span>
+                    <span>{item.category.name}</span>
+                  </div>
+                  <span>+{formatMinutes(Math.max(0, item.difference))}</span>
+                </div>
+                <p className="text-xs text-red-700 mt-1">
+                  Logged {formatMinutes(item.actualMinutes)}{item.goalMinutes > 0 ? ` of ${formatMinutes(item.goalMinutes)} planned` : ''}.
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-semibold text-gray-700">Daily reflection summary</h3>
+          <SparklesIcon className="h-4 w-4 text-[var(--theme-color)]" />
+        </div>
+        <p className="text-sm text-gray-600 mb-2">{aiSummary.headline}</p>
+        {aiSummary.bullets.length === 0 ? (
+          <p className="text-xs text-gray-500">Add a note or log more work to receive AI-style highlights.</p>
+        ) : (
+          <ul className="list-disc list-inside text-xs text-gray-600 space-y-1">
+            {aiSummary.bullets.map((bullet, index) => (
+              <li key={index}>{bullet}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
 const FilterWidget = ({ categories, priorities, tags, filter, onToggleFilter, onClearFilters }) => {
   const hasFilters = filter.categories.length > 0 || filter.priorities.length > 0 || filter.tags.length > 0;
   
@@ -1038,13 +1411,7 @@ const TimelineView = ({
     return (totalMinutes / (18 * 60)) * 100; // As a percentage of the total height
   };
   
-  const getDuration = (task) => {
-    const start = parse(task.startTime, 'HH:mm', new Date());
-    const end = parse(task.endTime, 'HH:mm', new Date());
-    let duration = differenceInMinutes(end, start);
-    if (duration < 0) duration += 24 * 60; // Handle overnight tasks
-    return duration;
-  };
+  const getDuration = (task) => calculateTaskDuration(task);
   
   if (viewMode === 'weekly') {
     return (
