@@ -1,46 +1,12 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import FormRenderer from "./FormRenderer"; // Assuming this component exists and handles form logic
-
-// Import Lucide React icons for a modern look
-import {
-  Plus,          // For Add Page
-  Trash2,        // For Remove Page
-  Copy,          // For Duplicate Page
-  Replace,       // For Replace Text (or use Shuffle if prefer a different visual)
-  RotateCcw,     // For Rotate Left
-  RotateCw,      // For Rotate Right
-  Type,          // For Add Text
-  Signature,     // For Sign
-  Droplet,       // For Add Watermark
-  Stamp,         // For Add Stamp
-  Combine,       // For Merge PDFs (represents combining elements)
-  Split,         // For Split PDF (represents dividing elements)
-  Lock,          // For Encrypt PDF
-  Unlock,        // For Decrypt PDF
-  ArrowLeft,     // For the back button
-} from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import FormRenderer from "./FormRenderer";
+import { getToolById, pdfToolSections } from "../utils/pdfToolsConfig";
 
 const PdfEditor = ({ setPdfUpdated, pdfPath }) => {
   const [activeForm, setActiveForm] = useState(null);
-
-  // Define actions as an object for easy lookup and cleaner mapping
-  const actionsConfig = {
-    addPage: { label: "Add Page", icon: Plus },
-    removePage: { label: "Remove Page", icon: Trash2 },
-    duplicatePage: { label: "Duplicate Page", icon: Copy },
-    replaceText: { label: "Replace Text", icon: Replace },
-    rotateLeft: { label: "Rotate Left", icon: RotateCcw },
-    rotateRight: { label: "Rotate Right", icon: RotateCw },
-    addText: { label: "Add Text", icon: Type },
-    addSignature: { label: "Sign", icon: Signature },
-    addWatermark: { label: "Add Watermark", icon: Droplet },
-    addStamp: { label: "Add Stamp", icon: Stamp },
-    mergePdf: { label: "Merge PDFs", icon: Combine },
-    splitPdf: { label: "Split PDF", icon: Split },
-    encryptPdf: { label: "Encrypt PDF", icon: Lock },
-    decryptPdf: { label: "Decrypt PDF", icon: Unlock },
-  };
+  const activeTool = activeForm ? getToolById(activeForm) : null;
 
   // Variants for Framer Motion transitions
   const containerVariants = {
@@ -50,8 +16,14 @@ const PdfEditor = ({ setPdfUpdated, pdfPath }) => {
   };
 
   return (
-    <div className="flex flex-col items-center w-full h-full bg-white rounded-2xl shadow-xl p-6 border border-gray-200">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">PDF Editor Tools</h2>
+    <div className="flex flex-col w-full h-full bg-white rounded-3xl shadow-xl p-6 border border-gray-200">
+      <div className="text-center mb-6">
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">PDF Editor Tools</h2>
+        <p className="text-gray-500 max-w-2xl mx-auto">
+          Discover focused mini-tools that handle common PDF tasks like reordering pages, adding
+          signatures, or securing files. Choose a workflow below to get started.
+        </p>
+      </div>
 
       <div className="relative w-full flex-grow">
         <AnimatePresence mode="wait">
@@ -62,19 +34,54 @@ const PdfEditor = ({ setPdfUpdated, pdfPath }) => {
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="grid grid-cols-2 sm:grid-cols-3 gap-4 w-full"
+              className="flex flex-col gap-8"
             >
-              {Object.entries(actionsConfig).map(([key, actionDetails]) => (
-                <button
-                  key={key}
-                  onClick={() => setActiveForm(key)}
-                  className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg shadow-sm
-                             transition-all duration-200 ease-in-out hover:bg-blue-50 hover:shadow-md
-                             group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+              {pdfToolSections.map((section) => (
+                <div
+                  key={section.id}
+                  className="rounded-2xl border border-gray-200 bg-gradient-to-br from-slate-50 via-white to-white p-6 shadow-sm"
                 >
-                  <actionDetails.icon className="h-6 w-6 text-blue-600 mb-2 group-hover:scale-110 transition-transform" />
-                  <span className="text-sm font-medium text-gray-700 text-center">{actionDetails.label}</span>
-                </button>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900">{section.title}</h3>
+                      <p className="text-sm text-gray-500 max-w-2xl">{section.description}</p>
+                    </div>
+                    <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-600">
+                      {section.tools.length} tools
+                    </span>
+                  </div>
+
+                  <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+                    {section.tools.map((toolId) => {
+                      const tool = getToolById(toolId);
+                      if (!tool) return null;
+                      const Icon = tool.icon;
+
+                      return (
+                        <button
+                          type="button"
+                          key={tool.id}
+                          onClick={() => setActiveForm(tool.id)}
+                          className="group flex h-full flex-col justify-between rounded-2xl border border-transparent bg-white/70 p-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                        >
+                          <div className="flex items-start gap-4">
+                            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-transform duration-200 group-hover:scale-105">
+                              <Icon className="h-6 w-6" />
+                            </span>
+                            <div>
+                              <p className="text-base font-semibold text-gray-900">{tool.label}</p>
+                              <p className="mt-1 text-sm text-gray-500">{tool.description}</p>
+                            </div>
+                          </div>
+                          <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-blue-600">
+                            Open tool
+                            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               ))}
             </motion.div>
           ) : (
@@ -86,21 +93,35 @@ const PdfEditor = ({ setPdfUpdated, pdfPath }) => {
               exit="exit"
               className="w-full h-full flex flex-col"
             >
-              <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
-                <h3 className="text-xl font-semibold text-gray-700">
-                  {actionsConfig[activeForm]?.label || "PDF Action"}
-                </h3>
+              <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-white p-5 shadow-sm md:flex-row md:items-center md:justify-between">
+                <div className="flex items-start gap-4">
+                  {activeTool?.icon ? (
+                    <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                      <activeTool.icon className="h-6 w-6" />
+                    </span>
+                  ) : null}
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      {activeTool?.label || "PDF action"}
+                    </h3>
+                    {activeTool?.description ? (
+                      <p className="mt-1 text-sm text-gray-600 max-w-2xl">{activeTool.description}</p>
+                    ) : null}
+                  </div>
+                </div>
+
                 <button
+                  type="button"
                   onClick={() => setActiveForm(null)}
-                  className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
+                  className="inline-flex items-center gap-2 self-start rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-blue-200 hover:text-blue-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   aria-label="Go back to tools"
                   title="Go back to tools"
                 >
-                  <ArrowLeft className="h-5 w-5 text-gray-600" />
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to tools
                 </button>
               </div>
-              <div className="flex-grow bg-gray-50 p-4 rounded-lg border border-gray-100 overflow-y-auto">
-                {/* FormRenderer will be mounted here for the active action */}
+              <div className="flex-grow rounded-2xl border border-gray-100 bg-gray-50/70 p-4 sm:p-6 overflow-y-auto">
                 <FormRenderer
                   activeForm={activeForm}
                   setActiveForm={setActiveForm}
