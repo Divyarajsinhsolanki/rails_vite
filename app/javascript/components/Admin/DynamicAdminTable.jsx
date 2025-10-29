@@ -168,19 +168,19 @@ function DynamicAdminTable({ table }) {
   }
 
   return (
-    <div className="p-4">
+    <div className="p-4 overflow-x-auto">
       <table className="min-w-full border border-gray-300">
         <thead className="bg-gray-100">
           <tr>
             {columns.map(col => (
-              <th key={col.name} className="px-4 py-2 text-left">{col.name}</th>
+              <th key={col.name} className="px-4 py-2 text-left whitespace-nowrap">{col.name}</th>
             ))}
-            <th className="px-4 py-2">Actions</th>
+            <th className="px-4 py-2 whitespace-nowrap">Actions</th>
           </tr>
           {/* New record input row */}
           <tr className="bg-gray-50">
             {columns.map(col => (
-              <td key={col.name} className="border px-4 py-2">
+              <td key={col.name} className="border px-4 py-2 whitespace-nowrap">
                 {col.name === 'id' ? null : (
                   col.type === 'boolean' ? (
                     <input
@@ -200,7 +200,7 @@ function DynamicAdminTable({ table }) {
                 )}
               </td>
             ))}
-            <td className="border px-4 py-2">
+            <td className="border px-4 py-2 whitespace-nowrap">
               <button
                 onClick={handleCreate}
                 disabled={creating}
@@ -215,7 +215,7 @@ function DynamicAdminTable({ table }) {
           {records.map(rec => (
             <tr key={rec.id} className="odd:bg-white even:bg-gray-100">
               {columns.map(col => (
-                <td key={col.name} className="border px-4 py-2">
+                <td key={col.name} className="border px-4 py-2 whitespace-nowrap">
                   {editingId === rec.id && col.name !== 'id' ? (
                     col.type === 'boolean' ? (
                       <input
@@ -242,7 +242,7 @@ function DynamicAdminTable({ table }) {
                   )}
                 </td>
               ))}
-              <td className="border px-4 py-2">
+              <td className="border px-4 py-2 whitespace-nowrap">
                 {editingId === rec.id ? (
                   <>
                     <button
