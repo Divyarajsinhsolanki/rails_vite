@@ -1,34 +1,26 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import BookmarkToggle from "./BookmarkToggle";
 
-// API keys for gainers data
 const API_KEYS = {
-  FMP: "e5ye9VH06cq5TTNyyA6z2gd2S8pf9sBV", // Financial Modeling Prep
-  ALPHA: "YOUR_ALPHA_VANTAGE_KEY", // AlphaVantage fallback
+  FMP: "e5ye9VH06cq5TTNyyA6z2gd2S8pf9sBV",
+  ALPHA: "YOUR_ALPHA_VANTAGE_KEY",
 };
 
-// Fetch functions in priority order
 const fetchers = [
-  // 1) Financial Modeling Prep top gainers on NSE
   () =>
-    fetch(
-      `https://financialmodelingprep.com/api/v3/stock_market/gainers?exchange=NSE&apikey=${API_KEYS.FMP}`
-    )
+    fetch(`https://financialmodelingprep.com/api/v3/stock_market/gainers?exchange=NSE&apikey=${API_KEYS.FMP}`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length)
           return data.slice(0, 5).map((d) => ({
             symbol: d.symbol || d.ticker,
-            price: d.price || d.price || "N/A",
+            price: d.price || "N/A",
             change: d.changesPercentage || d.changes || "",
           }));
         throw new Error("Invalid FMP response");
       }),
-
-  // 2) AlphaVantage market movers (top gainers) for India
   () =>
-    fetch(
-      `https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&market=IN&apikey=${API_KEYS.ALPHA}`
-    )
+    fetch(`https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&market=IN&apikey=${API_KEYS.ALPHA}`)
       .then((res) => res.json())
       .then((data) => {
         const arr = data?.top_gainers || data?.topGainers || [];
@@ -42,11 +34,19 @@ const fetchers = [
       }),
 ];
 
-export default function TopGainersCard() {
-  const [stocks, setStocks] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function TopGainersCard({
+  cardType = "top_gainers",
+  bookmarkHelpers,
+  initialData = null,
+  savedBookmark = null,
+}) {
+  const hasInitialData = initialData !== null && initialData !== undefined;
+  const [stocks, setStocks] = useState(() => (hasInitialData ? initialData?.stocks || [] : []));
+  const [loading, setLoading] = useState(!hasInitialData);
 
   useEffect(() => {
+    if (hasInitialData) return;
+
     let mounted = true;
 
     async function fetchWithFallback() {
@@ -59,8 +59,8 @@ export default function TopGainersCard() {
             setLoading(false);
           }
           return;
-        } catch (e) {
-          console.warn("Top gainers fetch failed:", e.message);
+        } catch (error) {
+          console.warn("Top gainers fetch failed:", error.message);
         }
       }
       if (mounted) {
@@ -70,22 +70,56 @@ export default function TopGainersCard() {
     }
 
     fetchWithFallback();
-
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [hasInitialData]);
+
+  const bookmarkPayload = useMemo(() => {
+    if (!stocks.length) return null;
+    return {
+      cardType,
+      sourceId: stocks[0]?.symbol || "top-gainers",
+      payload: { stocks },
+      title: "Top Gainers",
+      subtitle: `${stocks[0]?.symbol} ${stocks[0]?.change || ""}`,
+      collectionName: savedBookmark?.collection_name,
+      reminderIntervalDays: savedBookmark?.reminder_interval_days,
+    };
+  }, [cardType, stocks, savedBookmark]);
+
+  const existingBookmark = bookmarkPayload
+    ? bookmarkHelpers?.find?.(bookmarkPayload) || savedBookmark
+    : savedBookmark;
+  const isBookmarked = Boolean(existingBookmark);
+
+  const handleToggle = () => {
+    if (!bookmarkPayload) return;
+    bookmarkHelpers?.toggle?.({
+      ...bookmarkPayload,
+      collectionName: existingBookmark?.collection_name ?? bookmarkPayload.collectionName,
+    });
+  };
 
   return (
-    <div className="bg-white shadow-md rounded-2xl p-4 flex flex-col">
-      <h2 className="text-lg font-semibold mb-2">🇮🇳 Top Gainers</h2>
+    <div className="bg-white shadow-md rounded-2xl p-4 flex flex-col min-h-[200px]">
+      <div className="flex items-start justify-between mb-3">
+        <h2 className="text-lg font-semibold">🇮🇳 Top Gainers</h2>
+        <BookmarkToggle
+          isBookmarked={isBookmarked}
+          onToggle={handleToggle}
+          collectionName={existingBookmark?.collection_name}
+          disabled={!bookmarkPayload}
+        />
+      </div>
       {loading ? (
         <div className="text-sm text-gray-500">Loading...</div>
       ) : stocks.length ? (
         <ul className="text-sm space-y-1 text-gray-700 overflow-auto">
-          {stocks.map((s, idx) => (
+          {stocks.map((stock, idx) => (
             <li key={idx}>
-              • {s.symbol} - {s.price} <span className="text-green-600">{s.change}</span>
+              • {stock.symbol} - {stock.price}{" "}
+              <span className="text-green-600">{stock.change}</span>
             </li>
           ))}
         </ul>

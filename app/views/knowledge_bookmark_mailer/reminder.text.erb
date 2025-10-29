@@ -1,0 +1,13 @@
+Hi <%= @user.first_name.presence || @user.email %>,
+
+It's time to revisit one of your saved Knowledge Hub items.
+Category: <%= @bookmark.card_type.humanize %>
+<% if @bookmark.collection_name.present? %>
+Collection: <%= @bookmark.collection_name %>
+<% end %>
+Saved on: <%= @bookmark.created_at.strftime('%B %d, %Y') %>
+
+Details:
+<%= JSON.pretty_generate(@bookmark.payload) %>
+
+Open the Knowledge Hub to review and mark it as done.
