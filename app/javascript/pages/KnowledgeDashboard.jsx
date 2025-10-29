@@ -185,7 +185,7 @@ function KnowledgeDashboardContent() {
   return (
     <div className="min-h-screen transition-colors duration-300 bg-[rgb(var(--theme-color-rgb)/0.1)] text-gray-900">
       <header className="sticky top-0 z-10 backdrop-blur-md bg-white/80 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center">
+        <div className="max-w-screen-2xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center">
           <div className="flex items-center mb-4 sm:mb-0">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color-dark)] bg-clip-text text-transparent">
               Knowledge Hub
@@ -211,7 +211,7 @@ function KnowledgeDashboardContent() {
       </header>
 
       {feedback && (
-        <div className="max-w-7xl mx-auto px-6 pt-4">
+        <div className="max-w-screen-2xl mx-auto px-6 pt-4">
           <div
             className={`rounded-xl px-4 py-3 text-sm ${
               feedback.type === "error"
@@ -229,9 +229,9 @@ function KnowledgeDashboardContent() {
         </div>
       )}
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-screen-2xl mx-auto px-6 py-8">
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 items-start">
             {[...Array(8)].map((_, i) => (
               <motion.div
                 key={i}
@@ -243,7 +243,7 @@ function KnowledgeDashboardContent() {
             ))}
           </div>
         ) : (
-          <motion.div layout className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6">
+          <motion.div layout className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5 gap-6">
             <AnimatePresence>
               {filteredCards.map((item) => (
                 <motion.div
@@ -286,7 +286,7 @@ function KnowledgeDashboardContent() {
       </main>
 
       <footer className="mt-12 py-6 border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 text-center text-sm text-gray-500">
+        <div className="max-w-screen-2xl mx-auto px-6 text-center text-sm text-gray-500">
           <p>Knowledge Hub • Updated daily • {new Date().toLocaleDateString()}</p>
         </div>
       </footer>
