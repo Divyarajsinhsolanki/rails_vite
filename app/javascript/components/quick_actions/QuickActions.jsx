@@ -49,24 +49,29 @@ const QuickActions = ({ onCreatePost }) => {
           Jump straight into the work that matters most right now.
         </p>
       </div>
-      <div className="grid sm:grid-cols-2 gap-2 p-4">
+      <div className="p-4 space-y-3">
         {actions.map((action) => (
           <button
             key={action.title}
             type="button"
             onClick={action.onClick}
-            className="group flex items-start gap-3 rounded-xl border border-transparent bg-slate-50 px-4 py-3 text-left transition-all hover:border-blue-200 hover:bg-white hover:shadow-sm"
+            className="group w-full flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-left transition-all hover:border-blue-200 hover:bg-white hover:shadow-md"
           >
-            <span className="mt-1 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white">
-              {action.icon}
-            </span>
-            <span>
-              <span className="block text-sm font-semibold text-slate-800">
-                {action.title}
+            <div className="flex items-start gap-3">
+              <span className="mt-1 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white">
+                {action.icon}
               </span>
-              <span className="mt-1 block text-xs text-slate-500">
-                {action.description}
+              <span>
+                <span className="block text-sm font-semibold text-slate-800">
+                  {action.title}
+                </span>
+                <span className="mt-1 block text-xs text-slate-500">
+                  {action.description}
+                </span>
               </span>
+            </div>
+            <span className="hidden text-blue-500 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-blue-600 sm:inline text-sm font-semibold">
+              Go
             </span>
           </button>
         ))}
