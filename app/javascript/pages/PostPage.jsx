@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useContext } from "react";
+import React, { useEffect, useState, useCallback, useContext, useRef } from "react";
 import { Link } from "react-router-dom";
 import { fetchPosts, SchedulerAPI, fetchProjects, getUsers } from "../components/api";
 import { AuthContext } from "../context/AuthContext";
@@ -7,6 +7,7 @@ import PostList from "../components/PostList";
 import { Toaster } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet";
+import QuickActions from "../components/quick_actions/QuickActions";
 
 // --- Icon Imports ---
 import {
@@ -99,6 +100,17 @@ const PostPage = () => {
   const [projects, setProjects] = useState([]);
   const [birthdays, setBirthdays] = useState([]);
   const [generalTasks, setGeneralTasks] = useState([]);
+  const postFormRef = useRef(null);
+
+  const handleQuickPost = useCallback(() => {
+    if (postFormRef.current) {
+      postFormRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      const textarea = postFormRef.current.querySelector("textarea");
+      if (textarea) {
+        textarea.focus();
+      }
+    }
+  }, []);
 
   const handlePostUpdate = useCallback((postId, updater) => {
     setPosts((prevPosts) =>
@@ -278,7 +290,11 @@ const PostPage = () => {
             </header>
             
             <main className="space-y-8">
-                <PostForm refreshPosts={refreshPosts} />
+                <QuickActions onCreatePost={handleQuickPost} />
+
+                <div ref={postFormRef}>
+                  <PostForm refreshPosts={refreshPosts} />
+                </div>
                 
                 <AnimatePresence>
                     {isLoading ? (
