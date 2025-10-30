@@ -10,6 +10,9 @@ Rails.application.routes.draw do
 
   root "pages#index"
 
+  resources :posts, only: [:index]
+  resources :friendships, only: [:create, :destroy]
+
   # PDF
   post "/upload_pdf", to: "pdfs#upload_pdf"
   post "/reset_pdf", to: "pdfs#reset"

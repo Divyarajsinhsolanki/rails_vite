@@ -1,0 +1,53 @@
+<% return if users.blank? %>
+
+<section class="space-y-4" aria-labelledby="people-you-may-know-heading">
+  <% existing_friendships = current_user.active_friendships.where(followed_id: users.map(&:id)).index_by(&:followed_id) %>
+  <div class="flex items-center justify-between">
+    <h2 id="people-you-may-know-heading" class="text-lg font-semibold text-slate-900">People you may know</h2>
+  </div>
+  <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <% users.each do |person| %>
+      <% next if person == current_user %>
+      <% friendship = existing_friendships[person.id] %>
+      <% following = friendship.present? %>
+      <div
+        class="p-4 border rounded-lg shadow-sm bg-white flex flex-col gap-4"
+        data-controller="friendship"
+        data-friendship-user-id-value="<%= person.id %>"
+        data-friendship-following-value="<%= following ? 'true' : 'false' %>"
+        data-friendship-friendship-id-value="<%= friendship&.id %>"
+        data-friendship-follow-text-value="Connect"
+        data-friendship-following-text-value="Following"
+      >
+        <div class="flex items-center gap-3">
+          <% if person.profile_picture.attached? %>
+            <% avatar_source = person.profile_picture.variable? ? person.profile_picture.variant(resize_to_fill: [48, 48]) : person.profile_picture %>
+            <%= image_tag avatar_source, class: 'h-12 w-12 rounded-full object-cover', alt: "#{person.full_name}'s avatar" %>
+          <% else %>
+            <div class="h-12 w-12 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold" aria-label="<%= person.full_name.presence || 'User avatar' %>">
+              <%= initials_for(person).presence || '?' %>
+            </div>
+          <% end %>
+          <div class="flex flex-col">
+            <span class="font-semibold text-slate-900"><%= person.full_name %></span>
+            <% if person.job_title.present? %>
+              <span class="text-sm text-slate-500"><%= person.job_title %></span>
+            <% end %>
+            <% meta = people_you_may_know_meta(current_user, person) %>
+            <% if meta.present? %>
+              <span class="text-xs text-slate-400"><%= meta %></span>
+            <% end %>
+          </div>
+        </div>
+        <div class="flex items-center justify-between gap-2">
+          <%= button_tag type: 'button',
+              class: 'px-4 py-2 text-sm font-medium rounded-full border border-blue-600 text-blue-600 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed',
+              data: { action: 'click->friendship#toggle', friendship_target: 'button' } do %>
+            <span data-friendship-target="label"><%= following ? 'Following' : 'Connect' %></span>
+          <% end %>
+          <span data-friendship-target="status" class="text-xs text-rose-500"></span>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</section>

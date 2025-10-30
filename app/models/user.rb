@@ -28,6 +28,10 @@ class User < ApplicationRecord
   has_many :roles, through: :user_roles
   has_many :project_users, dependent: :destroy
   has_many :projects, through: :project_users
+  has_many :active_friendships, class_name: 'Friendship', foreign_key: :follower_id, dependent: :destroy
+  has_many :followed_users, through: :active_friendships, source: :followed
+  has_many :passive_friendships, class_name: 'Friendship', foreign_key: :followed_id, dependent: :destroy
+  has_many :followers, through: :passive_friendships, source: :follower
   has_many :user_skills, dependent: :destroy
   has_many :skills, through: :user_skills
   has_many :learning_goals, dependent: :destroy
@@ -79,6 +83,49 @@ class User < ApplicationRecord
 
   def availability_label
     AVAILABILITY_LABELS[availability_status] || availability_status.to_s.humanize
+  end
+
+  def following?(other_user)
+    return false if other_user.nil?
+
+    followed_users.exists?(other_user.id)
+  end
+
+  def friendship_with(other_user)
+    return if other_user.nil?
+
+    active_friendships.find_by(followed: other_user)
+  end
+
+  def self.recommended_for(user, limit: 6)
+    return User.active.limit(limit) if user.blank?
+
+    excluded_ids = (user.followed_user_ids + [user.id]).uniq
+
+    team_ids = user.team_ids.map(&:to_i)
+    project_ids = user.project_ids.map(&:to_i)
+    follower_ids = user.follower_ids.map(&:to_i)
+
+    team_sql = team_ids.any? ? team_ids.join(',') : 'NULL'
+    project_sql = project_ids.any? ? project_ids.join(',') : 'NULL'
+    follower_sql = follower_ids.any? ? follower_ids.join(',') : 'NULL'
+
+    select_sql = <<~SQL.squish
+      users.*,
+      COUNT(DISTINCT teams.id) FILTER (WHERE teams.id IN (#{team_sql})) AS shared_teams_count,
+      COUNT(DISTINCT projects.id) FILTER (WHERE projects.id IN (#{project_sql})) AS shared_projects_count,
+      COUNT(DISTINCT passive_friendships.follower_id) FILTER (WHERE passive_friendships.follower_id IN (#{follower_sql})) AS mutual_followers_count
+    SQL
+
+    User.active
+        .where.not(id: excluded_ids)
+        .left_joins(:teams)
+        .left_joins(:projects)
+        .left_joins(:passive_friendships)
+        .select(Arel.sql(select_sql))
+        .group('users.id')
+        .order(Arel.sql('shared_teams_count DESC, shared_projects_count DESC, mutual_followers_count DESC, users.created_at DESC'))
+        .limit(limit)
   end
 
   private
