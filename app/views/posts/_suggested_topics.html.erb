@@ -1,0 +1,32 @@
+<% if topics.present? %>
+  <div class="suggested-topics">
+    <h2 class="suggested-topics__title">Suggested Topics</h2>
+    <ul class="suggested-topics__list">
+      <% topics.each do |topic| %>
+        <% following = current_user&.following_topic?(topic) %>
+        <li class="suggested-topics__item" data-controller="topic-follow"
+            data-topic-follow-follow-url-value="<%= topic_follow_path(topic) %>"
+            data-topic-follow-following-value="<%= following ? 'true' : 'false' %>">
+          <div class="topic-chip">
+            <span class="topic-chip__label"><%= topic.name %></span>
+            <button type="button"
+                    class="topic-chip__button"
+                    data-topic-follow-target="button"
+                    data-action="click->topic-follow#toggle"
+                    aria-pressed="<%= following ? 'true' : 'false' %>">
+              <span class="topic-chip__button-text"><%= following ? "Following" : "Follow" %></span>
+            </button>
+          </div>
+          <span class="suggested-topics__followers" data-topic-follow-target="count">
+            <%= pluralize(topic.follows_count, 'follower') %>
+          </span>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+<% else %>
+  <div class="suggested-topics suggested-topics--empty">
+    <h2 class="suggested-topics__title">Suggested Topics</h2>
+    <p class="suggested-topics__empty-message">Follow a few topics to personalize your feed.</p>
+  </div>
+<% end %>

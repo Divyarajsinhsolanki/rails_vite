@@ -10,6 +10,12 @@ Rails.application.routes.draw do
 
   root "pages#index"
 
+  resources :posts, only: [:index]
+  resources :suggested_topics, only: [:index]
+  resources :topics, only: [] do
+    resource :follow, only: [:create, :destroy], controller: :topic_follows
+  end
+
   # PDF
   post "/upload_pdf", to: "pdfs#upload_pdf"
   post "/reset_pdf", to: "pdfs#reset"

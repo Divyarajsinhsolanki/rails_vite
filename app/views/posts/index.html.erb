@@ -1,0 +1,27 @@
+<div class="posts-layout">
+  <section class="posts-layout__main">
+    <h1 class="posts-layout__heading">Latest Posts</h1>
+    <% if @posts.present? %>
+      <ul class="posts-list">
+        <% @posts.each do |post| %>
+          <li class="posts-list__item">
+            <article class="post-card">
+              <header class="post-card__header">
+                <h2 class="post-card__author"><%= post.user&.full_name || post.user&.email %></h2>
+                <time class="post-card__timestamp" datetime="<%= post.created_at.iso8601 %>">
+                  <%= time_ago_in_words(post.created_at) %> ago
+                </time>
+              </header>
+              <p class="post-card__body"><%= simple_format(post.message) %></p>
+            </article>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="posts-list__empty">No posts yet.</p>
+    <% end %>
+  </section>
+  <aside class="posts-layout__sidebar">
+    <%= render partial: "posts/suggested_topics", locals: { topics: @suggested_topics } %>
+  </aside>
+</div>

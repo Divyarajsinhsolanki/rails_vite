@@ -34,6 +34,8 @@ class User < ApplicationRecord
   has_many :knowledge_bookmarks, dependent: :destroy
   has_many :given_skill_endorsements, class_name: 'SkillEndorsement', foreign_key: :endorser_id, dependent: :destroy
   has_many :received_skill_endorsements, through: :user_skills, source: :skill_endorsements
+  has_many :topic_follows, dependent: :destroy
+  has_many :followed_topics, through: :topic_follows, source: :topic
 
   enum availability_status: {
     available_now: 'available_now',
@@ -79,6 +81,12 @@ class User < ApplicationRecord
 
   def availability_label
     AVAILABILITY_LABELS[availability_status] || availability_status.to_s.humanize
+  end
+
+  def following_topic?(topic)
+    return false unless topic
+
+    followed_topics.exists?(topic.id)
   end
 
   private

@@ -251,6 +251,25 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_02_004700) do
     t.index ["type"], name: "index_tasks_on_type"
   end
 
+  create_table "topic_follows", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "topic_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["topic_id"], name: "index_topic_follows_on_topic_id"
+    t.index ["user_id", "topic_id"], name: "index_topic_follows_on_user_id_and_topic_id", unique: true
+    t.index ["user_id"], name: "index_topic_follows_on_user_id"
+  end
+
+  create_table "topics", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "description"
+    t.integer "topic_follows_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_topics_on_name", unique: true
+  end
+
   create_table "team_users", force: :cascade do |t|
     t.bigint "team_id", null: false
     t.bigint "user_id", null: false
@@ -421,6 +440,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_02_004700) do
   add_foreign_key "team_users", "teams"
   add_foreign_key "team_users", "users"
   add_foreign_key "teams", "users", column: "owner_id"
+  add_foreign_key "topic_follows", "topics"
+  add_foreign_key "topic_follows", "users"
   add_foreign_key "user_roles", "roles"
   add_foreign_key "user_roles", "users"
   add_foreign_key "user_skills", "skills"
