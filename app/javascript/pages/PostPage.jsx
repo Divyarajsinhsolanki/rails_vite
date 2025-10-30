@@ -290,8 +290,6 @@ const PostPage = () => {
             </header>
             
             <main className="space-y-8">
-                <QuickActions onCreatePost={handleQuickPost} />
-
                 <div ref={postFormRef}>
                   <PostForm refreshPosts={refreshPosts} />
                 </div>
@@ -326,6 +324,8 @@ const PostPage = () => {
         {/* Right Sidebar: Community Stats and Birthdays */}
         <aside className="lg:col-span-3">
             <div className="space-y-8 sticky top-24">
+                <QuickActions onCreatePost={handleQuickPost} />
+
                 <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm">
                     <h2 className="text-lg font-bold text-slate-800 mb-4">Community Stats</h2>
                     <div className="space-y-4">
