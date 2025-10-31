@@ -7,6 +7,7 @@ import Scheduler from '../components/Scheduler/Scheduler';
 import TodoBoard from '../components/TodoBoard/TodoBoard';
 import SprintManager from '../components/Scheduler/SprintManager';
 import Sheet from './Sheet';
+import ProjectStatistics from './ProjectStatistics';
 
 const calculateWorkingDays = (start, end) => {
   let count = 0;
@@ -160,20 +161,30 @@ export default function SprintDashboard() {
                     ? 'bg-[var(--theme-color)] text-white shadow-lg'
                     : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
                   }`}
-              onClick={() => setActiveTab('todo')}
-            >
-              Todo
-            </button>
-            <button
-              className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
-                ${activeTab === 'sheet'
-                  ? 'bg-[var(--theme-color)] text-white shadow-lg'
-                  : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
-                }`}
-              onClick={() => setActiveTab('sheet')}
-            >
-              Sheet
-            </button>
+                onClick={() => setActiveTab('todo')}
+              >
+                Todo
+              </button>
+              <button
+                className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
+                  ${activeTab === 'sheet'
+                    ? 'bg-[var(--theme-color)] text-white shadow-lg'
+                    : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
+                  }`}
+                onClick={() => setActiveTab('sheet')}
+              >
+                Sheet
+              </button>
+              <button
+                className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
+                  ${activeTab === 'statistics'
+                    ? 'bg-[var(--theme-color)] text-white shadow-lg'
+                    : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
+                  }`}
+                onClick={() => setActiveTab('statistics')}
+              >
+                Statistics
+              </button>
             </div>
           </div>
           <div
@@ -227,6 +238,9 @@ export default function SprintDashboard() {
       )}
       {activeTab === 'sheet' && (
         <Sheet sheetName={sprint?.name} projectId={projectId} />
+      )}
+      {activeTab === 'statistics' && (
+        <ProjectStatistics projectId={projectId} />
       )}
     </div>
   );
