@@ -5,6 +5,7 @@ import SpinnerOverlay from '../components/ui/SpinnerOverlay';
 import { FiX } from 'react-icons/fi';
 import { CalendarDaysIcon, PlusCircleIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { buildDefaultTaskLogPayload, resolveDefaultLogMetadata, DEFAULT_TASK_LOG_TYPE } from '../utils/taskLogDefaults';
 
 const mapTask = (t) => ({
     id: t.task_id,
@@ -784,16 +785,23 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
         setShowTaskModal(false);
     };
     const handleAddTask = async (newTask) => {
+        const { logDate, hoursLogged } = resolveDefaultLogMetadata({
+            estimatedHours: newTask.estimated_hours,
+            startDate: newTask.start_date
+        });
+
         try {
             const payload = {
                 ...newTask,
-                type: 'Code',
+                type: DEFAULT_TASK_LOG_TYPE,
                 sprint_id: addingToBacklog ? null : selectedSprintId,
                 developer_id: Number(newTask.developer_id) || null,
                 assigned_to_user: newTask.assigned_to_user || null,
                 status: newTask.status,
-                date: newTask.start_date || new Date().toISOString().slice(0,10),
-                project_id: Number(newTask.project_id || projectId) || null
+                date: logDate,
+                estimated_hours: hoursLogged,
+                project_id: Number(newTask.project_id || projectId) || null,
+                skip_default_log_backfill: true
             };
             const { data } = await SchedulerAPI.createTask(payload);
             const mapped = mapTask(data);
@@ -801,6 +809,17 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                 setBacklogTasks([...backlogTasks, mapped]);
             } else {
                 setTasks([...tasks, mapped]);
+            }
+
+            if (payload.developer_id) {
+                const logPayload = buildDefaultTaskLogPayload({
+                    taskId: data.id,
+                    developerId: payload.developer_id,
+                    estimatedHours: payload.estimated_hours,
+                    startDate: data.start_date || logDate,
+                    type: DEFAULT_TASK_LOG_TYPE
+                });
+                await SchedulerAPI.createTaskLog(logPayload);
             }
         } catch (e) {
             console.error('Failed to add task', e);

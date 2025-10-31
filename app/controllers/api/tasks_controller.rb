@@ -83,7 +83,8 @@ class Api::TasksController < Api::BaseController
       :status, :order, :assigned_to_user,
       :created_by, :created_at, :updated_by, :updated_at,
       :start_date, :end_date,
-      :estimated_hours, :sprint_id, :developer_id, :project_id, :is_struck
+      :estimated_hours, :sprint_id, :developer_id, :project_id, :is_struck,
+      :skip_default_log_backfill
     )
 
     # Tasks of type "general" should never be tied to a sprint or project.
