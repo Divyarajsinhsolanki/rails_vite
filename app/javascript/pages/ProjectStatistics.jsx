@@ -186,8 +186,8 @@ const ProjectStatistics = ({ projectId }) => {
       return acc;
     }, {});
 
-    return [
-      ...sprints.map((sprint) => {
+    const scheduledSprints = sprints
+      .map((sprint) => {
         const metrics = taskGroups[sprint.id] || { total: 0, completed: 0, inProgress: 0, todo: 0 };
         const completionRate = metrics.total ? Math.round((metrics.completed / metrics.total) * 100) : 0;
         const daysLeft = calculateDaysBetween(new Date().toISOString(), sprint.end_date);
@@ -203,7 +203,30 @@ const ProjectStatistics = ({ projectId }) => {
           daysLeft,
           isActive: new Date(sprint.start_date) <= new Date() && new Date(sprint.end_date) >= new Date(),
         };
-      }),
+      })
+      .sort((a, b) => {
+        const startA = new Date(a.startDate).getTime();
+        const startB = new Date(b.startDate).getTime();
+        const hasValidStartA = Number.isFinite(startA);
+        const hasValidStartB = Number.isFinite(startB);
+
+        if (hasValidStartA && hasValidStartB && startB !== startA) {
+          return startB - startA;
+        }
+
+        if (hasValidStartB && !hasValidStartA) return 1;
+        if (!hasValidStartB && hasValidStartA) return -1;
+
+        const endA = new Date(a.endDate).getTime();
+        const endB = new Date(b.endDate).getTime();
+        if (Number.isFinite(endA) && Number.isFinite(endB) && endB !== endA) {
+          return endB - endA;
+        }
+
+        return 0;
+      });
+
+    const unscheduledSprint =
       taskGroups.unscheduled && {
         id: 'unscheduled',
         name: 'Backlog & Unscheduled',
@@ -214,8 +237,9 @@ const ProjectStatistics = ({ projectId }) => {
           : 0,
         daysLeft: null,
         isActive: false,
-      },
-    ].filter(Boolean);
+      };
+
+    return unscheduledSprint ? [...scheduledSprints, unscheduledSprint] : scheduledSprints;
   }, [sprints, tasks]);
 
   const userBreakdown = useMemo(() => {
@@ -347,10 +371,11 @@ const ProjectStatistics = ({ projectId }) => {
     return tasks
       .map((task) => {
         if (!task.end_date) return null;
+        if (task.status === 'completed') return null;
         const dueDate = new Date(task.end_date);
         if (!Number.isFinite(dueDate.getTime())) return null;
         const daysUntil = calculateDaysBetween(new Date().toISOString(), task.end_date);
-        const isOverdue = dueDate < now && task.status !== 'completed';
+        const isOverdue = dueDate < now;
         const isDueSoon = !isOverdue && typeof daysUntil === 'number' && daysUntil <= 3;
 
         if (!isOverdue && !isDueSoon) return null;
