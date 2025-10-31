@@ -1,6 +1,6 @@
 class TeamUser < ApplicationRecord
-  belongs_to :team
-  belongs_to :user
+  belongs_to :team, inverse_of: :team_users
+  belongs_to :user, inverse_of: :team_users
 
   enum role: {
     admin: 'admin',

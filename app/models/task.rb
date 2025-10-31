@@ -1,12 +1,12 @@
 class Task < ApplicationRecord
   include UserStampable
 
-  belongs_to :sprint, optional: true
-  belongs_to :developer, optional: true
-  belongs_to :project, optional: true
-  belongs_to :assigned_user, class_name: 'User', foreign_key: :assigned_to_user, optional: true
+  belongs_to :sprint, optional: true, inverse_of: :tasks
+  belongs_to :developer, optional: true, inverse_of: :tasks
+  belongs_to :project, optional: true, inverse_of: :tasks
+  belongs_to :assigned_user, class_name: 'User', foreign_key: :assigned_to_user, optional: true, inverse_of: :tasks
 
-  has_many :task_logs, dependent: :destroy
+  has_many :task_logs, dependent: :destroy, inverse_of: :task
 
   # This tells ActiveRecord NOT to use the 'type' column for Single Table Inheritance.
   self.inheritance_column = 'non_existent_type_column'

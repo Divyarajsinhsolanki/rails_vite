@@ -1,11 +1,11 @@
 class WorkLog < ApplicationRecord
   include UserStampable
 
-  belongs_to :user
-  belongs_to :category, class_name: 'WorkCategory', optional: true
-  belongs_to :priority, class_name: 'WorkPriority', optional: true
+  belongs_to :user, inverse_of: :work_logs
+  belongs_to :category, class_name: 'WorkCategory', optional: true, inverse_of: :work_logs
+  belongs_to :priority, class_name: 'WorkPriority', optional: true, inverse_of: :work_logs
 
-  has_many :work_log_tags, dependent: :destroy
+  has_many :work_log_tags, dependent: :destroy, inverse_of: :work_log
   has_many :tags, through: :work_log_tags, source: :work_tag, class_name: 'WorkTag'
 
   validates :title, :log_date, :start_time, :end_time, presence: true

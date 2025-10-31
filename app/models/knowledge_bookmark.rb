@@ -1,5 +1,5 @@
 class KnowledgeBookmark < ApplicationRecord
-  belongs_to :user
+  belongs_to :user, inverse_of: :knowledge_bookmarks
 
   validates :card_type, presence: true
   validates :payload, presence: true
