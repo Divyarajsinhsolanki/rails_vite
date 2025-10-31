@@ -15,6 +15,45 @@ import {
 } from "@heroicons/react/24/outline";
 import { CheckCircleIcon as CheckCircleSolidIcon } from "@heroicons/react/24/solid";
 
+const DEFAULT_SORT = "recent";
+
+const SORT_OPTIONS = [
+  { value: "recent", label: "Newest first" },
+  { value: "oldest", label: "Oldest first" },
+  { value: "title_asc", label: "Title A-Z" },
+  { value: "title_desc", label: "Title Z-A" }
+];
+
+const extractCategories = (items = []) => {
+  const categories = new Set();
+  items.forEach((item) => {
+    if (item.category) {
+      categories.add(item.category);
+    }
+  });
+  return Array.from(categories).sort((a, b) => a.localeCompare(b));
+};
+
+const extractTags = (items = []) => {
+  const tags = new Set();
+  items.forEach((item) => {
+    const value = item?.tags;
+    if (!value) return;
+    if (Array.isArray(value)) {
+      value.forEach((tag) => {
+        if (tag) tags.add(tag);
+      });
+    } else if (typeof value === "string") {
+      value
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+        .forEach((tag) => tags.add(tag));
+    }
+  });
+  return Array.from(tags).sort((a, b) => a.localeCompare(b));
+};
+
 const Vault = () => {
   const [items, setItems] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,29 +69,115 @@ const Vault = () => {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [copiedKey, setCopiedKey] = useState(null);
   const [showPassword, setShowPassword] = useState({});
+  const [availableCategories, setAvailableCategories] = useState([]);
+  const [availableTags, setAvailableTags] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [sortOrder, setSortOrder] = useState(DEFAULT_SORT);
 
   useEffect(() => {
     loadItems();
   }, []);
 
-  const loadItems = async (q = "") => {
+  const loadItems = async (overrides = {}) => {
+    const params = {
+      q: overrides.q !== undefined ? overrides.q : searchQuery,
+      categories:
+        overrides.categories !== undefined ? overrides.categories : selectedCategories,
+      tags: overrides.tags !== undefined ? overrides.tags : selectedTags,
+      sort: overrides.sort !== undefined ? overrides.sort : sortOrder,
+    };
+
+    const requestParams = {};
+    if (params.q) requestParams.q = params.q;
+    if (Array.isArray(params.categories) && params.categories.length > 0) {
+      requestParams.categories = params.categories;
+    }
+    if (Array.isArray(params.tags) && params.tags.length > 0) {
+      requestParams.tags = params.tags;
+    }
+    if (params.sort) {
+      requestParams.sort = params.sort;
+    }
+
     try {
-      const { data } = await fetchItems(q);
-      setItems(Array.isArray(data) ? data : []);
+      const { data } = await fetchItems(requestParams);
+      if (Array.isArray(data)) {
+        setItems(data);
+        setAvailableCategories(extractCategories(data));
+        setAvailableTags(extractTags(data));
+      } else {
+        const nextItems = Array.isArray(data.items) ? data.items : [];
+        setItems(nextItems);
+
+        const categoriesFromResponse = Array.isArray(data.filters?.categories)
+          ? data.filters.categories.filter(Boolean)
+          : extractCategories(nextItems);
+        const tagsFromResponse = Array.isArray(data.filters?.tags)
+          ? data.filters.tags.filter(Boolean)
+          : extractTags(nextItems);
+
+        setAvailableCategories(categoriesFromResponse);
+        setAvailableTags(tagsFromResponse);
+      }
     } catch {
       setItems([]);
+      setAvailableCategories([]);
+      setAvailableTags([]);
     }
   };
 
   const handleSearchChange = (e) => {
     const q = e.target.value;
     setSearchQuery(q);
-    loadItems(q);
+    loadItems({ q });
   };
 
   const clearSearch = () => {
     setSearchQuery("");
-    loadItems("");
+    loadItems({ q: "" });
+  };
+
+  const toggleCategory = (category) => {
+    const nextCategories = selectedCategories.includes(category)
+      ? selectedCategories.filter((c) => c !== category)
+      : [...selectedCategories, category];
+
+    setSelectedCategories(nextCategories);
+    loadItems({ categories: nextCategories });
+  };
+
+  const toggleTag = (tag) => {
+    const nextTags = selectedTags.includes(tag)
+      ? selectedTags.filter((t) => t !== tag)
+      : [...selectedTags, tag];
+
+    setSelectedTags(nextTags);
+    loadItems({ tags: nextTags });
+  };
+
+  const updateSort = (value) => {
+    setSortOrder(value);
+    loadItems({ sort: value });
+  };
+
+  const handleSortChange = (e) => {
+    updateSort(e.target.value);
+  };
+
+  const clearFilters = () => {
+    if (
+      selectedCategories.length === 0 &&
+      selectedTags.length === 0 &&
+      sortOrder === DEFAULT_SORT
+    ) {
+      return;
+    }
+
+    setSelectedCategories([]);
+    setSelectedTags([]);
+    setSortOrder(DEFAULT_SORT);
+    loadItems({ categories: [], tags: [], sort: DEFAULT_SORT });
   };
 
   const openModal = (category = "") => {
@@ -75,14 +200,14 @@ const Vault = () => {
       return;
     }
     try {
-      await createItem({ 
-        title: newTitle.trim(), 
-        category: newCategory.trim(), 
-        content: newContent.trim() 
+      await createItem({
+        title: newTitle.trim(),
+        category: newCategory.trim(),
+        content: newContent.trim()
       });
       toast.success("Item added successfully");
       closeModal();
-      loadItems(searchQuery);
+      loadItems();
     } catch {
       toast.error("Failed to add item");
     }
@@ -106,14 +231,14 @@ const Vault = () => {
       return;
     }
     try {
-      await updateItem(id, { 
-        title: editTitle.trim(), 
-        category: editCategory.trim(), 
-        content: editContent.trim() 
+      await updateItem(id, {
+        title: editTitle.trim(),
+        category: editCategory.trim(),
+        content: editContent.trim()
       });
       toast.success("Item updated successfully");
       setEditingId(null);
-      loadItems(searchQuery);
+      loadItems();
     } catch {
       toast.error("Failed to update item");
     }
@@ -124,7 +249,7 @@ const Vault = () => {
     try {
       await deleteItem(id);
       toast.success("Item deleted successfully");
-      loadItems(searchQuery);
+      loadItems();
     } catch {
       toast.error("Failed to delete item");
     }
@@ -161,6 +286,14 @@ const Vault = () => {
       [id]: !prev[id]
     }));
   };
+
+  const hasActiveFilters =
+    selectedCategories.length > 0 ||
+    selectedTags.length > 0 ||
+    sortOrder !== DEFAULT_SORT;
+
+  const currentSortLabel =
+    SORT_OPTIONS.find((option) => option.value === sortOrder)?.label || SORT_OPTIONS[0].label;
 
   const handleExportAll = () => {
     if (items.length === 0) return toast.error("No items to export");
@@ -461,6 +594,7 @@ const Vault = () => {
                 <button
                   onClick={clearSearch}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  type="button"
                 >
                   <XMarkIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
                 </button>
@@ -469,11 +603,129 @@ const Vault = () => {
 
             <button
               onClick={handleExportAll}
+              type="button"
               className="flex items-center justify-center gap-1 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 whitespace-nowrap"
             >
               <ArrowDownTrayIcon className="h-4 w-4" />
               Export
             </button>
+          </div>
+        </div>
+
+        <div className="mt-4 space-y-3">
+          {availableCategories.length > 0 && (
+            <div>
+              <div className="text-sm font-medium text-gray-600 mb-2">Filter by category</div>
+              <div className="flex flex-wrap gap-2">
+                {availableCategories.map((category) => {
+                  const isActive = selectedCategories.includes(category);
+                  return (
+                    <button
+                      key={category}
+                      type="button"
+                      onClick={() => toggleCategory(category)}
+                      className={`inline-flex items-center px-3 py-1 rounded-full border text-sm transition-colors ${
+                        isActive
+                          ? "bg-blue-100 border-blue-500 text-blue-700"
+                          : "bg-white border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600"
+                      }`}
+                    >
+                      {category}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {availableTags.length > 0 && (
+            <div>
+              <div className="text-sm font-medium text-gray-600 mb-2">Filter by tag</div>
+              <div className="flex flex-wrap gap-2">
+                {availableTags.map((tag) => {
+                  const isActive = selectedTags.includes(tag);
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleTag(tag)}
+                      className={`inline-flex items-center px-3 py-1 rounded-full border text-sm transition-colors ${
+                        isActive
+                          ? "bg-purple-100 border-purple-500 text-purple-700"
+                          : "bg-white border-gray-300 text-gray-600 hover:border-purple-400 hover:text-purple-600"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-3">
+              <label htmlFor="vault-sort" className="text-sm font-medium text-gray-600">
+                Sort by
+              </label>
+              <select
+                id="vault-sort"
+                value={sortOrder}
+                onChange={handleSortChange}
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {hasActiveFilters && (
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="text-gray-600 font-medium">Active filters:</span>
+                {selectedCategories.map((category) => (
+                  <button
+                    key={`active-category-${category}`}
+                    type="button"
+                    onClick={() => toggleCategory(category)}
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-100 text-blue-700"
+                  >
+                    {category}
+                    <XMarkIcon className="h-4 w-4" />
+                  </button>
+                ))}
+                {selectedTags.map((tag) => (
+                  <button
+                    key={`active-tag-${tag}`}
+                    type="button"
+                    onClick={() => toggleTag(tag)}
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-purple-100 text-purple-700"
+                  >
+                    {tag}
+                    <XMarkIcon className="h-4 w-4" />
+                  </button>
+                ))}
+                {sortOrder !== DEFAULT_SORT && (
+                  <button
+                    type="button"
+                    onClick={() => updateSort(DEFAULT_SORT)}
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gray-200 text-gray-700"
+                  >
+                    {currentSortLabel}
+                    <XMarkIcon className="h-4 w-4" />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                >
+                  Clear all
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
