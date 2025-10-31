@@ -104,7 +104,7 @@ export const deleteComment = (postId, commentId) => api.delete(`/posts/${postId}
 
 
 // ITEM ENDPOINTS
-export const fetchItems = (q) => api.get('/items.json', { params: q ? { q } : {} });
+export const fetchItems = (params = {}) => api.get('/items.json', { params });
 export const createItem = (d) => api.post('/items.json', { item: d });
 export const updateItem = (id, d) => api.patch(`/items/${id}.json`, { item: d });
 export const deleteItem = (id) => api.delete(`/items/${id}.json`);
