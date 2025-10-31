@@ -1,7 +1,7 @@
 class UserSkill < ApplicationRecord
-  belongs_to :user
-  belongs_to :skill
-  has_many :skill_endorsements, dependent: :destroy
+  belongs_to :user, inverse_of: :user_skills
+  belongs_to :skill, inverse_of: :user_skills
+  has_many :skill_endorsements, dependent: :destroy, inverse_of: :user_skill
 
   PROFICIENCY_LEVELS = %w[beginner intermediate advanced expert].freeze
 

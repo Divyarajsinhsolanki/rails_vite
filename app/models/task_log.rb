@@ -1,8 +1,8 @@
 class TaskLog < ApplicationRecord
   include UserStampable
 
-  belongs_to :task
-  belongs_to :developer
+  belongs_to :task, inverse_of: :task_logs
+  belongs_to :developer, inverse_of: :task_logs
 
   self.inheritance_column = 'non_existent_type_column'
 

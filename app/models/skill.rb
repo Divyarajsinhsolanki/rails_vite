@@ -1,5 +1,6 @@
 class Skill < ApplicationRecord
-  has_many :user_skills, dependent: :destroy
+  has_many :user_skills, dependent: :destroy, inverse_of: :skill
+  has_many :users, through: :user_skills
 
   validates :name, presence: true, uniqueness: { case_sensitive: false }
 

@@ -1,5 +1,5 @@
 class LearningCheckpoint < ApplicationRecord
-  belongs_to :learning_goal
+  belongs_to :learning_goal, inverse_of: :learning_checkpoints
 
   validates :title, presence: true
 

@@ -1,9 +1,11 @@
 class Project < ApplicationRecord
-  belongs_to :owner, class_name: 'User', optional: true
+  belongs_to :owner, class_name: 'User', optional: true, inverse_of: :owned_projects
 
-  has_many :project_users, dependent: :destroy
+  has_many :project_users, dependent: :destroy, inverse_of: :project
   has_many :users, through: :project_users
-  has_many :sprints, dependent: :destroy
+  has_many :sprints, dependent: :destroy, inverse_of: :project
+  has_many :tasks, dependent: :nullify, inverse_of: :project
+  has_many :developers, -> { distinct }, through: :tasks, source: :developer
 
   enum status: {
     upcoming: 'upcoming',

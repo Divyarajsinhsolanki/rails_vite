@@ -15,24 +15,27 @@ class User < ApplicationRecord
 
   has_one_attached :profile_picture
   has_one_attached :cover_photo
-  has_many :posts, dependent: :destroy
-  has_many :tasks, foreign_key: :assigned_to_user
-  has_many :items
-  has_many :work_logs, dependent: :destroy
-  has_many :work_notes, dependent: :destroy
-  has_many :post_likes, dependent: :destroy
+  has_many :posts, dependent: :destroy, inverse_of: :user
+  has_many :tasks, foreign_key: :assigned_to_user, inverse_of: :assigned_user
+  has_many :items, inverse_of: :user
+  has_many :comments, dependent: :destroy, inverse_of: :user
+  has_many :work_logs, dependent: :destroy, inverse_of: :user
+  has_many :work_notes, dependent: :destroy, inverse_of: :user
+  has_many :post_likes, dependent: :destroy, inverse_of: :user
   has_many :liked_posts, through: :post_likes, source: :post
-  has_many :team_users, dependent: :destroy
+  has_many :team_users, dependent: :destroy, inverse_of: :user
   has_many :teams, through: :team_users
-  has_many :user_roles, dependent: :destroy
+  has_many :owned_teams, class_name: 'Team', foreign_key: :owner_id, inverse_of: :owner, dependent: :nullify
+  has_many :user_roles, dependent: :destroy, inverse_of: :user
   has_many :roles, through: :user_roles
-  has_many :project_users, dependent: :destroy
+  has_many :project_users, dependent: :destroy, inverse_of: :user
   has_many :projects, through: :project_users
+  has_many :owned_projects, class_name: 'Project', foreign_key: :owner_id, inverse_of: :owner, dependent: :nullify
   has_many :user_skills, dependent: :destroy
   has_many :skills, through: :user_skills
-  has_many :learning_goals, dependent: :destroy
-  has_many :knowledge_bookmarks, dependent: :destroy
-  has_many :given_skill_endorsements, class_name: 'SkillEndorsement', foreign_key: :endorser_id, dependent: :destroy
+  has_many :learning_goals, dependent: :destroy, inverse_of: :user
+  has_many :knowledge_bookmarks, dependent: :destroy, inverse_of: :user
+  has_many :given_skill_endorsements, class_name: 'SkillEndorsement', foreign_key: :endorser_id, dependent: :destroy, inverse_of: :endorser
   has_many :received_skill_endorsements, through: :user_skills, source: :skill_endorsements
 
   enum availability_status: {

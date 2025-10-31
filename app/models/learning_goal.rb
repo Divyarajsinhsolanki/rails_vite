@@ -1,7 +1,7 @@
 class LearningGoal < ApplicationRecord
-  belongs_to :user
-  belongs_to :team, optional: true
-  has_many :learning_checkpoints, dependent: :destroy
+  belongs_to :user, inverse_of: :learning_goals
+  belongs_to :team, optional: true, inverse_of: :learning_goals
+  has_many :learning_checkpoints, dependent: :destroy, inverse_of: :learning_goal
 
   validates :title, presence: true
   validates :progress, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 100 }
