@@ -21,6 +21,8 @@ import { KnowledgeBookmarksProvider, useKnowledgeBookmarks } from "../context/Kn
 function KnowledgeDashboardContent() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [uiLoading, setUiLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState({ reminderDue: false, hasNotes: false });
   const [modalOpen, setModalOpen] = useState(false);
   const [pendingBookmark, setPendingBookmark] = useState(null);
   const [collectionName, setCollectionName] = useState("");
@@ -66,22 +68,142 @@ function KnowledgeDashboardContent() {
 
   const cardDefinitions = useMemo(
     () => [
-      { key: "today-history", cardType: "today_in_history", category: "learning", Component: TodayInHistoryCard },
-      { key: "quote-of-day", cardType: "quote_of_the_day", category: "learning", Component: QuoteOfTheDayCard },
-      { key: "image-day", cardType: "image_of_the_day", category: "learning", Component: ImageOfTheDayCard },
-      { key: "top-news", cardType: "top_news", category: "news", Component: TopNewsCard },
-      { key: "daily-fact", cardType: "daily_fact", category: "learning", Component: DailyFactCard },
-      { key: "word-day", cardType: "word_of_the_day", category: "learning", Component: WordOfTheDayCard },
-      { key: "common-word", cardType: "common_english_word", category: "learning", Component: CommonEnglishWordCard },
-      { key: "english-tense", cardType: "english_tense", category: "learning", Component: EnglishTenseCard },
-      { key: "english-phrase", cardType: "english_phrase", category: "learning", Component: EnglishPhraseCard },
-      { key: "coding-tip", cardType: "coding_tip", category: "tech", Component: RandomCodingTipCard },
-      { key: "science-news", cardType: "science_news", category: "news", Component: ScienceNewsCard },
-      { key: "tech-news", cardType: "tech_news", category: "tech", Component: TechNewsCard },
-      { key: "top-gainers", cardType: "top_gainers", category: "stocks", Component: TopGainersCard },
-      { key: "top-volume", cardType: "top_volume", category: "stocks", Component: TopVolumeStocksCard },
-      { key: "top-buying", cardType: "top_buying", category: "stocks", Component: TopBuyingStocksCard },
-      { key: "indian-news", cardType: "indian_stock_news", category: "stocks", Component: IndianStockNewsCard },
+      {
+        key: "today-history",
+        cardType: "today_in_history",
+        category: "learning",
+        Component: TodayInHistoryCard,
+        title: "Today in History",
+        summary: "Historical events that happened on this day.",
+      },
+      {
+        key: "quote-of-day",
+        cardType: "quote_of_the_day",
+        category: "learning",
+        Component: QuoteOfTheDayCard,
+        title: "Quote of the Day",
+        summary: "A dose of inspiration to start your day.",
+      },
+      {
+        key: "image-day",
+        cardType: "image_of_the_day",
+        category: "learning",
+        Component: ImageOfTheDayCard,
+        title: "Image of the Day",
+        summary: "Discover a stunning astronomy image curated daily.",
+      },
+      {
+        key: "top-news",
+        cardType: "top_news",
+        category: "news",
+        Component: TopNewsCard,
+        title: "Top News",
+        summary: "Catch the top headlines from trusted sources.",
+      },
+      {
+        key: "daily-fact",
+        cardType: "daily_fact",
+        category: "learning",
+        Component: DailyFactCard,
+        title: "Daily Fact",
+        summary: "Learn an interesting fact every day.",
+      },
+      {
+        key: "word-day",
+        cardType: "word_of_the_day",
+        category: "learning",
+        Component: WordOfTheDayCard,
+        title: "Word of the Day",
+        summary: "Expand your vocabulary with a new word.",
+      },
+      {
+        key: "common-word",
+        cardType: "common_english_word",
+        category: "learning",
+        Component: CommonEnglishWordCard,
+        title: "Common English Word",
+        summary: "Master everyday words with practical usage tips.",
+      },
+      {
+        key: "english-tense",
+        cardType: "english_tense",
+        category: "learning",
+        Component: EnglishTenseCard,
+        title: "English Tense",
+        summary: "Review English tenses with quick refreshers.",
+      },
+      {
+        key: "english-phrase",
+        cardType: "english_phrase",
+        category: "learning",
+        Component: EnglishPhraseCard,
+        title: "English Phrase",
+        summary: "Understand helpful phrases and how to use them.",
+      },
+      {
+        key: "coding-tip",
+        cardType: "coding_tip",
+        category: "tech",
+        Component: RandomCodingTipCard,
+        title: "Coding Tip",
+        summary: "Sharpen your skills with a bite-sized coding tip.",
+      },
+      {
+        key: "science-news",
+        cardType: "science_news",
+        category: "news",
+        Component: ScienceNewsCard,
+        title: "Science News",
+        summary: "Stay curious with the latest science discoveries.",
+      },
+      {
+        key: "tech-news",
+        cardType: "tech_news",
+        category: "tech",
+        Component: TechNewsCard,
+        title: "Tech News",
+        summary: "Follow the newest stories in technology.",
+      },
+      {
+        key: "top-gainers",
+        cardType: "top_gainers",
+        category: "stocks",
+        Component: TopGainersCard,
+        title: "Top Gainers",
+        summary: "See which stocks are climbing fastest today.",
+      },
+      {
+        key: "top-volume",
+        cardType: "top_volume",
+        category: "stocks",
+        Component: TopVolumeStocksCard,
+        title: "Top Volume",
+        summary: "Track the stocks with the highest trading volume.",
+      },
+      {
+        key: "top-buying",
+        cardType: "top_buying",
+        category: "stocks",
+        Component: TopBuyingStocksCard,
+        title: "Top Buying",
+        summary: "Monitor the most actively bought stocks.",
+      },
+      {
+        key: "indian-news",
+        cardType: "indian_stock_news",
+        category: "stocks",
+        Component: IndianStockNewsCard,
+        title: "Indian Stock News",
+        summary: "Follow the latest stories from Indian markets.",
+      },
+    ],
+    []
+  );
+
+  const filterOptions = useMemo(
+    () => [
+      { key: "reminderDue", label: "Reminder due", icon: "🔔" },
+      { key: "hasNotes", label: "Has notes", icon: "📝" },
     ],
     []
   );
@@ -129,42 +251,84 @@ function KnowledgeDashboardContent() {
   );
 
   const filteredCards = useMemo(() => {
+    const normalizedSearch = searchQuery.trim().toLowerCase();
+    const hasSearch = normalizedSearch.length > 0;
+
+    const matchesSearch = (metadata) => {
+      if (!hasSearch) return true;
+      const title = metadata?.title?.toLowerCase() ?? "";
+      const summary = metadata?.summary?.toLowerCase() ?? "";
+      return title.includes(normalizedSearch) || summary.includes(normalizedSearch);
+    };
+
+    const isReminderDue = (bookmark) => {
+      if (!bookmark) return false;
+      const nextReminder = bookmark.next_reminder_at ? new Date(bookmark.next_reminder_at) : null;
+      if (!nextReminder) return false;
+      return nextReminder <= new Date();
+    };
+
+    const bookmarkHasNotes = (bookmark) => {
+      if (!bookmark) return false;
+      const notes = bookmark.notes ?? bookmark.payload?.notes;
+      if (Array.isArray(notes)) return notes.length > 0;
+      if (typeof notes === "string") return notes.trim().length > 0;
+      if (notes && typeof notes === "object") return Object.keys(notes).length > 0;
+      return Boolean(notes);
+    };
+
+    const matchesFilterFlags = (bookmark) => {
+      if (filters.reminderDue && !isReminderDue(bookmark)) {
+        return false;
+      }
+      if (filters.hasNotes && !bookmarkHasNotes(bookmark)) {
+        return false;
+      }
+      return true;
+    };
+
     if (activeCategory === "saved") {
-      return bookmarks.map((bookmark) => {
-        const definition = cardTypeMap.get(bookmark.card_type);
-        return {
-          key: `bookmark-${bookmark.id}`,
-          Component: definition?.Component ?? SavedBookmarkFallback,
-          cardType: bookmark.card_type,
-          props: {
-            bookmarkHelpers,
-            initialData: bookmark.payload,
-            savedBookmark: bookmark,
-            isSavedView: true,
+      return bookmarks
+        .map((bookmark) => {
+          const definition = cardTypeMap.get(bookmark.card_type);
+          return {
+            key: `bookmark-${bookmark.id}`,
+            Component: definition?.Component ?? SavedBookmarkFallback,
             cardType: bookmark.card_type,
-          },
-          bookmark,
-        };
-      });
+            props: {
+              bookmarkHelpers,
+              initialData: bookmark.payload,
+              savedBookmark: bookmark,
+              isSavedView: true,
+              cardType: bookmark.card_type,
+            },
+            bookmark,
+            metadata: definition ?? { title: "Saved item", summary: "" },
+          };
+        })
+        .filter((item) => matchesSearch(item.metadata) && matchesFilterFlags(item.bookmark));
     }
 
     if (activeCategory === "due") {
-      return dueBookmarks.map((bookmark) => {
-        const definition = cardTypeMap.get(bookmark.card_type);
-        return {
-          key: `due-${bookmark.id}`,
-          Component: definition?.Component ?? SavedBookmarkFallback,
-          cardType: bookmark.card_type,
-          props: {
-            bookmarkHelpers,
-            initialData: bookmark.payload,
-            savedBookmark: bookmark,
-            isSavedView: true,
+      return dueBookmarks
+        .map((bookmark) => {
+          const definition = cardTypeMap.get(bookmark.card_type);
+          return {
+            key: `due-${bookmark.id}`,
+            Component: definition?.Component ?? SavedBookmarkFallback,
             cardType: bookmark.card_type,
-          },
-          bookmark,
-        };
-      });
+            props: {
+              bookmarkHelpers,
+              initialData: bookmark.payload,
+              savedBookmark: bookmark,
+              isSavedView: true,
+              cardType: bookmark.card_type,
+            },
+            bookmark,
+            metadata: definition ?? { title: "Saved item", summary: "" },
+          };
+        })
+        .filter((item) => matchesSearch(item.metadata) && matchesFilterFlags(item.bookmark));
     }
 
     return cardDefinitions
@@ -177,22 +341,80 @@ function KnowledgeDashboardContent() {
           bookmarkHelpers,
           cardType: definition.cardType,
         },
-      }));
-  }, [activeCategory, bookmarks, bookmarkHelpers, cardDefinitions, cardTypeMap, dueBookmarks]);
+        bookmark: null,
+        metadata: definition,
+      }))
+      .filter((item) => matchesSearch(item.metadata) && matchesFilterFlags(item.bookmark));
+  }, [
+    activeCategory,
+    bookmarks,
+    bookmarkHelpers,
+    cardDefinitions,
+    cardTypeMap,
+    dueBookmarks,
+    filters.hasNotes,
+    filters.reminderDue,
+    searchQuery,
+  ]);
 
   const isLoading = uiLoading || (bookmarksLoading && activeCategory !== "saved" && activeCategory !== "due");
+  const hasSearch = searchQuery.trim().length > 0;
+  const filtersActive = Object.values(filters).some(Boolean);
 
   return (
     <div className="min-h-screen transition-colors duration-300 bg-[rgb(var(--theme-color-rgb)/0.1)] text-gray-900">
       <header className="sticky top-0 z-10 backdrop-blur-md bg-white/80 border-b border-gray-200">
-        <div className="max-w-screen-2xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center">
-          <div className="flex items-center mb-4 sm:mb-0">
+        <div className="max-w-screen-2xl mx-auto px-6 py-4 flex flex-col gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color-dark)] bg-clip-text text-transparent">
               Knowledge Hub
             </h1>
           </div>
 
-          <div className="flex space-x-2 overflow-x-auto pb-2 sm:pb-0 w-full sm:w-auto">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end w-full">
+              <div className="relative w-full sm:w-72">
+                <span className="absolute inset-y-0 left-3 flex items-center text-gray-400">🔍</span>
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search cards..."
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)] focus:border-transparent"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {filterOptions.map((option) => {
+                  const isActive = filters[option.key];
+                  return (
+                    <button
+                      key={option.key}
+                      type="button"
+                      onClick={() =>
+                        setFilters((prev) => ({
+                          ...prev,
+                          [option.key]: !prev[option.key],
+                        }))
+                      }
+                      className={`px-3 py-2 rounded-full text-xs font-medium transition-colors border ${
+                        isActive
+                          ? "bg-[var(--theme-color)] text-white border-[var(--theme-color)]"
+                          : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100"
+                      }`}
+                      aria-pressed={isActive}
+                    >
+                      <span className="mr-1" aria-hidden="true">
+                        {option.icon}
+                      </span>
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex space-x-2 overflow-x-auto pb-2 sm:pb-0 w-full">
             {categories.map((cat) => (
               <button
                 key={cat.id}
@@ -278,9 +500,20 @@ function KnowledgeDashboardContent() {
 
         {filteredCards.length === 0 && !isLoading && (
           <div className="text-center py-16">
-            <div className="text-6xl mb-4">🧐</div>
-            <h3 className="text-xl font-medium mb-2">No items in this category</h3>
-            <p className="text-gray-500">Try selecting a different category above</p>
+            <div className="text-6xl mb-4">{hasSearch || filtersActive ? "🔍" : "🧐"}</div>
+            {hasSearch || filtersActive ? (
+              <>
+                <h3 className="text-xl font-medium mb-2">No matches found</h3>
+                <p className="text-gray-500">
+                  Try adjusting your search or clearing the filters to see more cards.
+                </p>
+              </>
+            ) : (
+              <>
+                <h3 className="text-xl font-medium mb-2">No items in this category</h3>
+                <p className="text-gray-500">Try selecting a different category above</p>
+              </>
+            )}
           </div>
         )}
       </main>
