@@ -10,6 +10,8 @@ import RandomCodingTipCard from "../components/Knowledge/RandomCodingTipCard";
 import ScienceNewsCard from "../components/Knowledge/ScienceNewsCard";
 import TechNewsCard from "../components/Knowledge/TechNewsCard";
 import PolicyBriefCard from "../components/Knowledge/PolicyBriefCard";
+import DevToolOfTheDayCard from "../components/Knowledge/DevToolOfTheDayCard";
+import OpenIssueSpotlightCard from "../components/Knowledge/OpenIssueSpotlightCard";
 import TopGainersCard from "../components/Knowledge/TopGainersCard";
 import TopVolumeStocksCard from "../components/Knowledge/TopVolumeStocksCard";
 import TopBuyingStocksCard from "../components/Knowledge/TopBuyingStocksCard";
@@ -18,6 +20,8 @@ import CommonEnglishWordCard from "../components/Knowledge/CommonEnglishWordCard
 import EnglishTenseCard from "../components/Knowledge/EnglishTenseCard";
 import EnglishPhraseCard from "../components/Knowledge/EnglishPhraseCard";
 import ImageOfTheDayCard from "../components/Knowledge/ImageOfTheDayCard";
+import DailyQuizCard from "../components/Knowledge/DailyQuizCard";
+import StudyReminderCard from "../components/Knowledge/StudyReminderCard";
 import { KnowledgeBookmarksProvider, useKnowledgeBookmarks } from "../context/KnowledgeBookmarksContext";
 
 function KnowledgeDashboardContent() {
@@ -34,6 +38,7 @@ function KnowledgeDashboardContent() {
 
   const {
     bookmarks,
+    dueBookmarks,
     collections,
     loading: bookmarksLoading,
     createBookmark,
@@ -46,11 +51,6 @@ function KnowledgeDashboardContent() {
     const timer = setTimeout(() => setUiLoading(false), 600);
     return () => clearTimeout(timer);
   }, []);
-
-  const dueBookmarks = useMemo(() => {
-    const now = new Date();
-    return bookmarks.filter((bookmark) => bookmark.next_reminder_at && new Date(bookmark.next_reminder_at) <= now);
-  }, [bookmarks]);
 
   const savedCount = bookmarks.length;
   const dueCount = dueBookmarks.length;
@@ -93,6 +93,22 @@ function KnowledgeDashboardContent() {
         Component: ImageOfTheDayCard,
         title: "Image of the Day",
         summary: "Discover a stunning astronomy image curated daily.",
+      },
+      {
+        key: "daily-quiz",
+        cardType: "daily_quiz",
+        category: "learning",
+        Component: DailyQuizCard,
+        title: "Daily Quiz",
+        summary: "Test yourself with a quick knowledge check.",
+      },
+      {
+        key: "study-reminder",
+        cardType: "study_reminder",
+        category: "learning",
+        Component: StudyReminderCard,
+        title: "Study Reminders",
+        summary: "Review what you've saved before reminders are due.",
       },
       {
         key: "top-news",
@@ -167,6 +183,14 @@ function KnowledgeDashboardContent() {
         summary: "Sharpen your skills with a bite-sized coding tip.",
       },
       {
+        key: "dev-tool-of-day",
+        cardType: "dev_tool_of_the_day",
+        category: "tech",
+        Component: DevToolOfTheDayCard,
+        title: "Dev Tool of the Day",
+        summary: "Discover a developer tool to streamline your workflow.",
+      },
+      {
         key: "science-news",
         cardType: "science_news",
         category: "news",
@@ -181,6 +205,14 @@ function KnowledgeDashboardContent() {
         Component: TechNewsCard,
         title: "Tech News",
         summary: "Follow the newest stories in technology.",
+      },
+      {
+        key: "open-issue-spotlight",
+        cardType: "open_issue_spotlight",
+        category: "tech",
+        Component: OpenIssueSpotlightCard,
+        title: "Open Issue Spotlight",
+        summary: "Tackle a curated open source issue and give back.",
       },
       {
         key: "top-gainers",
