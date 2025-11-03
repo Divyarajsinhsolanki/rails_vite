@@ -187,6 +187,52 @@ const Profile = () => {
     () => nonGeneralTasks.filter((t) => (t.end_date || t.due_date) !== todayStr),
     [nonGeneralTasks, todayStr]
   );
+  const statusSections = useMemo(() => {
+    const statusOrder = [
+      { key: 'in-progress', label: 'In Progress', matchers: ['in progress', 'inprogress', 'in_progress'] },
+      { key: 'todo', label: 'To Do', matchers: ['todo', 'to do'] },
+      { key: 'completed', label: 'Completed', matchers: ['completed', 'done'] },
+    ];
+
+    const buckets = statusOrder.map(() => []);
+    const uncategorized = [];
+
+    otherTasks.forEach((task) => {
+      const normalizedStatus = (task.status || '').toLowerCase();
+      const matchedIndex = statusOrder.findIndex(({ matchers }) => matchers.includes(normalizedStatus));
+
+      if (matchedIndex >= 0) {
+        buckets[matchedIndex].push(task);
+      } else {
+        uncategorized.push(task);
+      }
+    });
+
+    const sections = statusOrder
+      .map((section, index) => ({
+        ...section,
+        tasks: buckets[index].slice().sort((a, b) => {
+          const dateA = a.end_date || a.due_date || '';
+          const dateB = b.end_date || b.due_date || '';
+          return dateA.localeCompare(dateB);
+        }),
+      }))
+      .filter((section) => section.tasks.length > 0);
+
+    if (uncategorized.length > 0) {
+      sections.push({
+        key: 'other',
+        label: 'Other',
+        tasks: uncategorized.slice().sort((a, b) => {
+          const dateA = a.end_date || a.due_date || '';
+          const dateB = b.end_date || b.due_date || '';
+          return dateA.localeCompare(dateB);
+        }),
+      });
+    }
+
+    return sections;
+  }, [otherTasks]);
 
   const getProjectName = (projectId) => {
     const project = projects.find((p) => p.id === projectId);
@@ -669,50 +715,59 @@ const Profile = () => {
                       </div>
                     )}
                     
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-700 mb-4">All Tasks</h3>
-                      {otherTasks.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {otherTasks.map((task) => (
-                            <div key={task.id} className="p-4 bg-white border border-gray-100 rounded-lg shadow-sm hover:shadow-md transition">
-                              <div className="flex items-start justify-between">
-                                <div>
-                                  <h3 className="font-medium text-gray-800">{task.task_id}</h3>
-                                  <div className="flex items-center mt-1 space-x-3">
-                                    <span className={`text-xs px-2 py-1 rounded-full font-medium capitalize ${getStatusClasses(task.status)}`}>
-                                      {task.status}
-                                    </span>
-                                    <span className="text-xs text-gray-500 flex items-center">
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                                      </svg>
-                                      Due {new Date(task.end_date || task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                    </span>
-                                  </div>
-                                </div>
-                                <button className="text-gray-400 hover:text-gray-600">
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                                  </svg>
-                                </button>
-                              </div>
-                              {task.sprint?.project_id && (
-                                <div className="mt-2 flex items-center justify-between text-sm">
-                                  <span className="flex items-center text-gray-500">
-                                    <FolderIcon className="h-4 w-4 mr-1" />
-                                    {getProjectName(task.sprint.project_id)}
-                                  </span>
-                                  <button
-                                    onClick={() => navigate(`/projects/${task.sprint.project_id}/dashboard`)}
-                                    className="flex items-center text-[var(--theme-color)] hover:underline"
-                                  >
-                                    <Squares2X2Icon className="h-4 w-4 mr-1" />Board
-                                  </button>
-                                </div>
-                              )}
+                    <div className="space-y-8">
+                      {statusSections.length > 0 ? (
+                        statusSections.map((section) => (
+                          <div key={section.key}>
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="text-xl font-semibold text-gray-700">{section.label}</h3>
+                              <span className="text-sm text-gray-500">{section.tasks.length} {section.tasks.length === 1 ? 'task' : 'tasks'}</span>
                             </div>
-                          ))}
-                        </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              {section.tasks.map((task) => (
+                                <div key={task.id} className="p-4 bg-white border border-gray-100 rounded-lg shadow-sm hover:shadow-md transition">
+                                  <div className="flex items-start justify-between">
+                                    <div>
+                                      <h3 className="font-medium text-gray-800">{task.task_id}</h3>
+                                      <div className="flex items-center mt-1 space-x-3">
+                                        <span className={`text-xs px-2 py-1 rounded-full font-medium capitalize ${getStatusClasses(task.status)}`}>
+                                          {task.status}
+                                        </span>
+                                        {(task.end_date || task.due_date) && (
+                                          <span className="text-xs text-gray-500 flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                                            </svg>
+                                            Due {new Date(task.end_date || task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <button className="text-gray-400 hover:text-gray-600">
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                      </svg>
+                                    </button>
+                                  </div>
+                                  {task.sprint?.project_id && (
+                                    <div className="mt-2 flex items-center justify-between text-sm">
+                                      <span className="flex items-center text-gray-500">
+                                        <FolderIcon className="h-4 w-4 mr-1" />
+                                        {getProjectName(task.sprint.project_id)}
+                                      </span>
+                                      <button
+                                        onClick={() => navigate(`/projects/${task.sprint.project_id}/dashboard`)}
+                                        className="flex items-center text-[var(--theme-color)] hover:underline"
+                                      >
+                                        <Squares2X2Icon className="h-4 w-4 mr-1" />Board
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))
                       ) : (
                         <div className="text-center py-8">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
