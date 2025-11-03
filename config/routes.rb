@@ -49,9 +49,11 @@ Rails.application.routes.draw do
     get 'view_profile', to: 'auth#view_profile'
     post 'update_profile', to: 'auth#update_profile'
     get 'coding_tip', to: 'coding_tips#show'
+    get 'dev_tool_of_the_day', to: 'dev_tools#show'
     get 'english_word', to: 'english_words#show'
     get 'english_tense', to: 'english_tenses#show'
     get 'english_phrase', to: 'english_phrases#show'
+    get 'open_issue_spotlight', to: 'open_source_issues#show'
     get 'sheet', to: 'sheets#show'
 
     resources :users, only: [:index, :update, :destroy]
