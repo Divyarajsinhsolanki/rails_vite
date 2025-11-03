@@ -8,6 +8,8 @@ import WordOfTheDayCard from "../components/Knowledge/WordOfTheDayCard";
 import RandomCodingTipCard from "../components/Knowledge/RandomCodingTipCard";
 import ScienceNewsCard from "../components/Knowledge/ScienceNewsCard";
 import TechNewsCard from "../components/Knowledge/TechNewsCard";
+import DevToolOfTheDayCard from "../components/Knowledge/DevToolOfTheDayCard";
+import OpenIssueSpotlightCard from "../components/Knowledge/OpenIssueSpotlightCard";
 import TopGainersCard from "../components/Knowledge/TopGainersCard";
 import TopVolumeStocksCard from "../components/Knowledge/TopVolumeStocksCard";
 import TopBuyingStocksCard from "../components/Knowledge/TopBuyingStocksCard";
@@ -149,6 +151,14 @@ function KnowledgeDashboardContent() {
         summary: "Sharpen your skills with a bite-sized coding tip.",
       },
       {
+        key: "dev-tool-of-day",
+        cardType: "dev_tool_of_the_day",
+        category: "tech",
+        Component: DevToolOfTheDayCard,
+        title: "Dev Tool of the Day",
+        summary: "Discover a developer tool to streamline your workflow.",
+      },
+      {
         key: "science-news",
         cardType: "science_news",
         category: "news",
@@ -163,6 +173,14 @@ function KnowledgeDashboardContent() {
         Component: TechNewsCard,
         title: "Tech News",
         summary: "Follow the newest stories in technology.",
+      },
+      {
+        key: "open-issue-spotlight",
+        cardType: "open_issue_spotlight",
+        category: "tech",
+        Component: OpenIssueSpotlightCard,
+        title: "Open Issue Spotlight",
+        summary: "Tackle a curated open source issue and give back.",
       },
       {
         key: "top-gainers",
