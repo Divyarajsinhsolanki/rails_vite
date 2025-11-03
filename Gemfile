@@ -77,6 +77,7 @@ gem 'faraday', '~> 2.7'
 gem 'jwt'
 gem 'bcrypt'
 gem 'rqrcode'
+gem 'rss'
 gem 'dotenv-rails', groups: [:development, :test]
 
 # Access Google Sheets from Rails
