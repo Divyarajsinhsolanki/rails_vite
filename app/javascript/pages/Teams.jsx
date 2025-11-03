@@ -25,6 +25,8 @@ import TeamSkillMatrix from "../components/teams/TeamSkillMatrix";
 import SkillDirectory from "../components/teams/SkillDirectory";
 import SkillEndorsementsPanel from "../components/teams/SkillEndorsementsPanel";
 import LearningGoalsPanel from "../components/teams/LearningGoalsPanel";
+import TeamListItem from "../components/teams/TeamListItem";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/ui/tabs";
 import { AuthContext } from "../context/AuthContext";
 // Import icons (e.g., from Feather Icons)
 import { FiPlus, FiEdit, FiTrash2, FiUsers, FiSearch, FiUserPlus, FiChevronRight, FiXCircle, FiCheckCircle, FiInfo, FiLoader } from 'react-icons/fi'; // Added more icons
@@ -108,6 +110,89 @@ const Notification = ({ message, type, onClose }) => {
     );
 };
 
+const countValue = (value) => {
+    if (typeof value === "number" && Number.isFinite(value)) {
+        return value;
+    }
+    if (Array.isArray(value)) {
+        return value.length;
+    }
+    if (value && typeof value === "object") {
+        if (typeof value.count === "number" && Number.isFinite(value.count)) {
+            return value.count;
+        }
+        if (typeof value.total === "number" && Number.isFinite(value.total)) {
+            return value.total;
+        }
+    }
+    return null;
+};
+
+const pickFirstNumber = (source, keys) => {
+    if (!source) return null;
+    for (const key of keys) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+            const count = countValue(source[key]);
+            if (count !== null && count !== undefined) {
+                return count;
+            }
+        }
+    }
+    return null;
+};
+
+const deriveMetricsFromTeamRecord = (team) => {
+    const metricsSource = team?.metrics || team?.stats || team?.summary || team?.kpis || {};
+    const memberCount = countValue(team?.users) ?? pickFirstNumber(metricsSource, ["members", "member_count", "total_members"]) ?? 0;
+    const skillCount =
+        countValue(team?.skills) ??
+        pickFirstNumber(metricsSource, ["skills", "skill_count", "skills_tracked", "unique_skills"]);
+    const endorsementCount = pickFirstNumber(metricsSource, ["endorsement_count", "endorsements", "recent_endorsements"]);
+    const learningGoalsCount =
+        pickFirstNumber(metricsSource, ["learning_goals_count", "learning_goals", "goals"]) ??
+        countValue(team?.learning_goals);
+    const hasMetrics = [skillCount, endorsementCount, learningGoalsCount].some(
+        (value) => value !== null && value !== undefined
+    );
+    return { memberCount, skillCount, endorsementCount, learningGoalsCount, hasMetrics };
+};
+
+const hasSectionData = (data, section) => {
+    if (!data) return false;
+    switch (section) {
+        case "skills":
+            return Array.isArray(data.skills) || Boolean(data.skill_gap) || Array.isArray(data.members);
+        case "endorsements":
+            return (
+                Array.isArray(data.recent_endorsements) ||
+                Array.isArray(data.team_experts) ||
+                Array.isArray(data.current_user_skills)
+            );
+        case "learningGoals":
+            return Array.isArray(data.learning_goals) || Array.isArray(data.current_user_learning_goals);
+        default:
+            return false;
+    }
+};
+
+const computeMetricsFromInsightsData = (insights, team) => {
+    const memberCount = countValue(team?.users) ?? countValue(insights?.members) ?? 0;
+    const skillCount =
+        countValue(insights?.skills) ??
+        pickFirstNumber(insights, ["skills_tracked", "unique_skills"]) ??
+        countValue(team?.skills);
+    const endorsementCount =
+        countValue(insights?.recent_endorsements) ??
+        countValue(insights?.team_experts) ??
+        pickFirstNumber(insights, ["endorsements", "endorsement_count"]);
+    const learningGoalsCount =
+        countValue(insights?.learning_goals) ?? countValue(insights?.current_user_learning_goals);
+    const hasMetrics = [skillCount, endorsementCount, learningGoalsCount].some(
+        (value) => value !== null && value !== undefined
+    );
+    return { memberCount, skillCount, endorsementCount, learningGoalsCount, hasMetrics };
+};
+
 // --- Main Teams Component ---
 
 const Teams = () => {
@@ -126,6 +211,10 @@ const Teams = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [teamInsights, setTeamInsights] = useState(null);
     const [insightsTeamId, setInsightsTeamId] = useState(null);
+    const [teamMetrics, setTeamMetrics] = useState({});
+    const [insightsCache, setInsightsCache] = useState({});
+    const [insightsLoadedSections, setInsightsLoadedSections] = useState({});
+    const [activeInsightsTab, setActiveInsightsTab] = useState("skills");
 
     // Form States (for Create/Edit Team)
     const [teamForm, setTeamForm] = useState({ name: "", description: "" });
@@ -161,49 +250,254 @@ const Teams = () => {
             const { data } = await fetchTeams();
             const validTeams = Array.isArray(data) ? data : [];
             setTeams(validTeams);
+            setTeamMetrics((prev) => {
+                const next = {};
+                validTeams.forEach((team) => {
+                    const derived = deriveMetricsFromTeamRecord(team);
+                    const existing = prev[team.id] || {};
+                    next[team.id] = {
+                        ...existing,
+                        memberCount:
+                            typeof derived.memberCount === "number"
+                                ? derived.memberCount
+                                : existing.memberCount ?? 0,
+                        skillCount: derived.skillCount ?? existing.skillCount ?? null,
+                        endorsementCount: derived.endorsementCount ?? existing.endorsementCount ?? null,
+                        learningGoalsCount: derived.learningGoalsCount ?? existing.learningGoalsCount ?? null,
+                        hasMetrics: existing.hasMetrics || derived.hasMetrics,
+                        isFetching: existing.isFetching || false,
+                        error: existing.error && !derived.hasMetrics ? existing.error : false,
+                    };
+                });
+                return next;
+            });
+            setInsightsCache((prev) => {
+                const next = {};
+                validTeams.forEach((team) => {
+                    if (prev[team.id]) {
+                        next[team.id] = prev[team.id];
+                    }
+                });
+                return next;
+            });
+            setInsightsLoadedSections((prev) => {
+                const next = {};
+                validTeams.forEach((team) => {
+                    if (prev[team.id]) {
+                        next[team.id] = prev[team.id];
+                    }
+                });
+                return next;
+            });
             // After loading, ensure selectedTeamId is still valid or reset it
-            if (selectedTeamId && !validTeams.some(t => t.id === selectedTeamId)) {
+            if (selectedTeamId && !validTeams.some((t) => t.id === selectedTeamId)) {
                 setSelectedTeamId(null);
             }
         } catch (error) {
             console.error("Failed to fetch teams:", error);
             setNotification({ message: "Failed to load teams.", type: "error" });
             setTeams([]);
+            setTeamMetrics({});
+            setInsightsCache({});
+            setInsightsLoadedSections({});
         } finally {
             setIsLoading(false);
         }
     }, [selectedTeamId]); // Dependency on selectedTeamId to re-validate selection
 
-    const loadTeamInsights = useCallback(async (teamId) => {
-        if (!teamId) {
-            setTeamInsights(null);
-            setInsightsTeamId(null);
-            return;
-        }
+    const loadTeamInsights = useCallback(
+        async (teamId, section = "skills", options = {}) => {
+            if (!teamId) {
+                setTeamInsights(null);
+                setInsightsTeamId(null);
+                return;
+            }
 
-        if (teamId !== insightsTeamId) {
-            setTeamInsights(null);
-        }
-        setInsightsTeamId(teamId);
-        setIsInsightsLoading(true);
-        try {
-            const { data } = await fetchTeamInsights(teamId);
-            setTeamInsights(data);
-            setInsightsTeamId(teamId);
-        } catch (error) {
-            console.error("Failed to fetch team insights:", error);
-            setNotification({ message: "Failed to load team insights.", type: "error" });
-            setTeamInsights(null);
-        } finally {
-            setIsInsightsLoading(false);
-        }
-    }, [insightsTeamId, setNotification]);
+            const { force = false } = options;
+            const cachedData = insightsCache[teamId];
 
-    const refreshInsights = useCallback(async () => {
-        if (selectedTeamId) {
-            await loadTeamInsights(selectedTeamId);
-        }
-    }, [selectedTeamId, loadTeamInsights]);
+            if (!force && cachedData && hasSectionData(cachedData, section)) {
+                setTeamInsights(cachedData);
+                setInsightsTeamId(teamId);
+                setInsightsLoadedSections((prev) => ({
+                    ...prev,
+                    [teamId]: { ...(prev[teamId] || {}), [section]: true },
+                }));
+                const team = teams.find((t) => t.id === teamId);
+                const metrics = computeMetricsFromInsightsData(cachedData, team);
+                setTeamMetrics((prev) => ({
+                    ...prev,
+                    [teamId]: {
+                        ...(prev[teamId] || {}),
+                        ...metrics,
+                        isFetching: false,
+                        hasMetrics: metrics.hasMetrics || prev[teamId]?.hasMetrics || false,
+                        error: false,
+                    },
+                }));
+                setIsInsightsLoading(false);
+                return;
+            }
+
+            setIsInsightsLoading(true);
+            try {
+                const { data } = await fetchTeamInsights(teamId);
+                const mergedData = cachedData ? { ...cachedData, ...data } : data;
+                setInsightsCache((prev) => ({
+                    ...prev,
+                    [teamId]: mergedData,
+                }));
+                setTeamInsights(mergedData);
+                setInsightsTeamId(teamId);
+                const sections = {
+                    skills: hasSectionData(mergedData, "skills"),
+                    endorsements: hasSectionData(mergedData, "endorsements"),
+                    learningGoals: hasSectionData(mergedData, "learningGoals"),
+                };
+                setInsightsLoadedSections((prev) => ({
+                    ...prev,
+                    [teamId]: {
+                        ...(prev[teamId] || {}),
+                        ...sections,
+                    },
+                }));
+                const team = teams.find((t) => t.id === teamId);
+                const metrics = computeMetricsFromInsightsData(mergedData, team);
+                setTeamMetrics((prev) => ({
+                    ...prev,
+                    [teamId]: {
+                        ...(prev[teamId] || {}),
+                        ...metrics,
+                        isFetching: false,
+                        hasMetrics: metrics.hasMetrics || prev[teamId]?.hasMetrics || false,
+                        error: false,
+                    },
+                }));
+            } catch (error) {
+                console.error("Failed to fetch team insights:", error);
+                setNotification({ message: "Failed to load team insights.", type: "error" });
+                if (cachedData) {
+                    setTeamInsights(cachedData);
+                    setInsightsTeamId(teamId);
+                } else {
+                    setTeamInsights(null);
+                }
+                setTeamMetrics((prev) => ({
+                    ...prev,
+                    [teamId]: {
+                        ...(prev[teamId] || {}),
+                        isFetching: false,
+                        error: true,
+                    },
+                }));
+            } finally {
+                setIsInsightsLoading(false);
+            }
+        },
+        [insightsCache, setNotification, teams]
+    );
+
+    const ensureTeamMetrics = useCallback(
+        async (teamId) => {
+            if (!teamId) return;
+
+            setTeamMetrics((prev) => {
+                const existing = prev[teamId] || {};
+                const metricsSatisfied =
+                    existing.hasMetrics &&
+                    existing.skillCount != null &&
+                    existing.endorsementCount != null &&
+                    existing.learningGoalsCount != null;
+                if (existing.isFetching || metricsSatisfied) {
+                    return prev;
+                }
+                const team = teams.find((t) => t.id === teamId);
+                const derived = deriveMetricsFromTeamRecord(team || {});
+                return {
+                    ...prev,
+                    [teamId]: {
+                        ...existing,
+                        memberCount:
+                            existing.memberCount ??
+                            (typeof derived.memberCount === "number" ? derived.memberCount : 0),
+                        isFetching: true,
+                        error: false,
+                    },
+                };
+            });
+
+            try {
+                const cachedData = insightsCache[teamId];
+                if (cachedData) {
+                    const team = teams.find((t) => t.id === teamId);
+                    const metrics = computeMetricsFromInsightsData(cachedData, team);
+                    setTeamMetrics((prev) => ({
+                        ...prev,
+                        [teamId]: {
+                            ...(prev[teamId] || {}),
+                            ...metrics,
+                            isFetching: false,
+                            hasMetrics: true,
+                            error: false,
+                        },
+                    }));
+                    return;
+                }
+
+                const { data } = await fetchTeamInsights(teamId);
+                setInsightsCache((prev) => ({
+                    ...prev,
+                    [teamId]: data,
+                }));
+                setInsightsLoadedSections((prev) => ({
+                    ...prev,
+                    [teamId]: {
+                        ...(prev[teamId] || {}),
+                        skills: hasSectionData(data, "skills"),
+                        endorsements: hasSectionData(data, "endorsements"),
+                        learningGoals: hasSectionData(data, "learningGoals"),
+                    },
+                }));
+                const team = teams.find((t) => t.id === teamId);
+                const metrics = computeMetricsFromInsightsData(data, team);
+                setTeamMetrics((prev) => ({
+                    ...prev,
+                    [teamId]: {
+                        ...(prev[teamId] || {}),
+                        ...metrics,
+                        isFetching: false,
+                        hasMetrics: true,
+                        error: false,
+                    },
+                }));
+            } catch (error) {
+                console.error(`Failed to preload metrics for team ${teamId}:`, error);
+                setTeamMetrics((prev) => ({
+                    ...prev,
+                    [teamId]: {
+                        ...(prev[teamId] || {}),
+                        isFetching: false,
+                        error: true,
+                    },
+                }));
+            }
+        },
+        [computeMetricsFromInsightsData, insightsCache, teams]
+    );
+
+    const handleInsightsTabChange = useCallback((nextTab) => {
+        setActiveInsightsTab(nextTab);
+    }, []);
+
+    const refreshInsights = useCallback(
+        async (sectionOverride) => {
+            if (selectedTeamId) {
+                const targetSection = sectionOverride || activeInsightsTab;
+                await loadTeamInsights(selectedTeamId, targetSection, { force: true });
+            }
+        },
+        [activeInsightsTab, loadTeamInsights, selectedTeamId]
+    );
 
     useEffect(() => {
         loadTeams();
@@ -211,12 +505,18 @@ const Teams = () => {
 
     useEffect(() => {
         if (selectedTeamId) {
-            loadTeamInsights(selectedTeamId);
+            loadTeamInsights(selectedTeamId, activeInsightsTab);
         } else {
             setTeamInsights(null);
             setInsightsTeamId(null);
         }
-    }, [selectedTeamId, loadTeamInsights]);
+    }, [selectedTeamId, activeInsightsTab, loadTeamInsights]);
+
+    useEffect(() => {
+        if (selectedTeamId) {
+            ensureTeamMetrics(selectedTeamId);
+        }
+    }, [selectedTeamId, ensureTeamMetrics]);
 
     // Handle deep linking for specific team selection
     useEffect(() => {
@@ -245,8 +545,10 @@ const Teams = () => {
 
     const handleSelectTeam = (id) => {
         setSelectedTeamId(id);
+        setActiveInsightsTab("skills");
+        ensureTeamMetrics(id);
         resetAndCloseForms(); // Close any open forms when selecting a new team
-    }
+    };
 
     const handleTeamSubmit = async (e) => {
         e.preventDefault();
@@ -687,10 +989,21 @@ const Teams = () => {
 
     const scrollToSection = useCallback((sectionId) => {
         if (!sectionId) return;
-        const element = document.getElementById(sectionId);
-        if (element) {
-            element.scrollIntoView({ behavior: "smooth", block: "start" });
+
+        if (sectionId === "learning-goals-panel") {
+            setActiveInsightsTab("learningGoals");
+        } else if (sectionId === "team-skill-matrix" || sectionId === "skill-gap-analysis") {
+            setActiveInsightsTab("skills");
+        } else if (sectionId === "endorsements-panel") {
+            setActiveInsightsTab("endorsements");
         }
+
+        requestAnimationFrame(() => {
+            const element = document.getElementById(sectionId);
+            if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+        });
     }, []);
 
     const hasInsights = Boolean(teamInsights && insightsTeamId === selectedTeam?.id);
@@ -731,20 +1044,16 @@ const Teams = () => {
                             <p>Loading teams...</p>
                         </div>
                     ) : filteredTeams.length > 0 ? (
-                        <ul>
+                        <ul className="divide-y divide-gray-100">
                             {filteredTeams.map((team) => (
-                                <li key={team.id}>
-                                    <button
-                                        onClick={() => handleSelectTeam(team.id)}
-                                        className={`w-full text-left flex items-center justify-between p-4 border-b border-gray-100 transition-colors duration-200 ${selectedTeamId === team.id ? 'bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)] border-l-4 border-[var(--theme-color)] font-semibold' : 'hover:bg-gray-50'}`}
-                                    >
-                                        <div>
-                                            <p className="text-base">{team.name}</p>
-                                            <p className="text-xs text-gray-500">{team.users.length} member(s)</p>
-                                        </div>
-                                        <FiChevronRight className={`text-gray-400 transition-transform duration-200 ${selectedTeamId === team.id ? 'translate-x-1 text-[var(--theme-color)]' : ''}`} />
-                                    </button>
-                                </li>
+                                <TeamListItem
+                                    key={team.id}
+                                    team={team}
+                                    isSelected={selectedTeamId === team.id}
+                                    onSelect={handleSelectTeam}
+                                    metrics={teamMetrics[team.id]}
+                                    onEnsureMetrics={ensureTeamMetrics}
+                                />
                             ))}
                         </ul>
                     ) : (
@@ -996,16 +1305,67 @@ const Teams = () => {
                                                 <span>Loading team insights...</span>
                                             </div>
                                         ) : teamInsights && insightsTeamId === selectedTeam.id ? (
-                                            <>
-                                                <section id="team-skill-matrix">
-                                                    <TeamSkillMatrix
-                                                        members={teamInsights.members}
-                                                        skills={teamInsights.skills}
-                                                        roles={teamInsights.roles}
-                                                    />
-                                                </section>
-                                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
-                                                    {renderSkillGapAnalysis()}
+                                            <Tabs
+                                                value={activeInsightsTab}
+                                                onValueChange={handleInsightsTabChange}
+                                                className="space-y-8"
+                                            >
+                                                <TabsList className="inline-flex gap-2 rounded-lg bg-gray-100 p-1 text-sm font-semibold">
+                                                    <TabsTrigger
+                                                        value="skills"
+                                                        className={`rounded-md px-4 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-color)] focus-visible:ring-offset-2 ${
+                                                            activeInsightsTab === "skills"
+                                                                ? "bg-white text-[var(--theme-color)] shadow"
+                                                                : "text-gray-600 hover:text-gray-800"
+                                                        }`}
+                                                    >
+                                                        Skills
+                                                    </TabsTrigger>
+                                                    <TabsTrigger
+                                                        value="endorsements"
+                                                        className={`rounded-md px-4 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-color)] focus-visible:ring-offset-2 ${
+                                                            activeInsightsTab === "endorsements"
+                                                                ? "bg-white text-[var(--theme-color)] shadow"
+                                                                : "text-gray-600 hover:text-gray-800"
+                                                        }`}
+                                                    >
+                                                        Endorsements
+                                                    </TabsTrigger>
+                                                    <TabsTrigger
+                                                        value="learningGoals"
+                                                        className={`rounded-md px-4 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-color)] focus-visible:ring-offset-2 ${
+                                                            activeInsightsTab === "learningGoals"
+                                                                ? "bg-white text-[var(--theme-color)] shadow"
+                                                                : "text-gray-600 hover:text-gray-800"
+                                                        }`}
+                                                    >
+                                                        Learning Goals
+                                                    </TabsTrigger>
+                                                </TabsList>
+
+                                                <TabsContent value="skills" lazyMount className="space-y-8">
+                                                    <section id="team-skill-matrix">
+                                                        <TeamSkillMatrix
+                                                            members={teamInsights.members}
+                                                            skills={teamInsights.skills}
+                                                            roles={teamInsights.roles}
+                                                        />
+                                                    </section>
+                                                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
+                                                        {renderSkillGapAnalysis()}
+                                                        <section id="skills-directory-panel" className="xl:col-span-2">
+                                                            <SkillDirectory
+                                                                members={teamInsights.members}
+                                                                skills={teamInsights.skills}
+                                                                roles={teamInsights.roles}
+                                                                availabilityOptions={teamInsights.availability_options}
+                                                                onToggleEndorse={handleToggleEndorsement}
+                                                            />
+                                                        </section>
+                                                    </div>
+                                                </TabsContent>
+
+                                                <TabsContent value="endorsements" lazyMount className="space-y-6">
                                                     <section id="endorsements-panel">
                                                         <SkillEndorsementsPanel
                                                             skills={teamInsights.current_user_skills}
@@ -1017,6 +1377,9 @@ const Teams = () => {
                                                             onRemoveSkill={handleDeleteSkill}
                                                         />
                                                     </section>
+                                                </TabsContent>
+
+                                                <TabsContent value="learningGoals" lazyMount className="space-y-6">
                                                     <section id="learning-goals-panel">
                                                         <LearningGoalsPanel
                                                             goals={teamInsights.current_user_learning_goals}
@@ -1026,17 +1389,8 @@ const Teams = () => {
                                                             onToggleCheckpoint={handleToggleCheckpoint}
                                                         />
                                                     </section>
-                                                    <section id="skills-directory-panel" className="xl:col-span-2">
-                                                        <SkillDirectory
-                                                            members={teamInsights.members}
-                                                            skills={teamInsights.skills}
-                                                            roles={teamInsights.roles}
-                                                            availabilityOptions={teamInsights.availability_options}
-                                                            onToggleEndorse={handleToggleEndorsement}
-                                                        />
-                                                    </section>
-                                                </div>
-                                            </>
+                                                </TabsContent>
+                                            </Tabs>
                                         ) : isInsightsLoading ? (
                                             <div className="bg-white rounded-xl shadow-md p-6 flex items-center justify-center text-gray-500">
                                                 <FiLoader className="animate-spin mr-3" />
