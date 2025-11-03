@@ -171,13 +171,20 @@ const Profile = () => {
   const initial = (user?.first_name || user?.email || "").charAt(0).toUpperCase();
 
   const todayStr = new Date().toISOString().split("T")[0];
-  const generalTasks = useMemo(
-    () => tasks.filter((t) => t.type === 'general'),
+  const incompleteTasks = useMemo(
+    () => tasks.filter((task) => {
+      const normalizedStatus = (task.status || '').toLowerCase();
+      return normalizedStatus !== 'completed' && normalizedStatus !== 'done';
+    }),
     [tasks]
   );
+  const generalTasks = useMemo(
+    () => incompleteTasks.filter((t) => t.type === 'general'),
+    [incompleteTasks]
+  );
   const nonGeneralTasks = useMemo(
-    () => tasks.filter((t) => t.type !== 'general'),
-    [tasks]
+    () => incompleteTasks.filter((t) => t.type !== 'general'),
+    [incompleteTasks]
   );
   const dueTodayTasks = useMemo(
     () => nonGeneralTasks.filter((t) => (t.end_date || t.due_date) === todayStr),
