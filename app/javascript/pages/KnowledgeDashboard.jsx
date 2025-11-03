@@ -3,11 +3,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import TodayInHistoryCard from "../components/Knowledge/TodayInHistoryCard";
 import QuoteOfTheDayCard from "../components/Knowledge/QuoteOfTheDayCard";
 import TopNewsCard from "../components/Knowledge/TopNewsCard";
+import LocalHeadlinesCard from "../components/Knowledge/LocalHeadlinesCard";
 import DailyFactCard from "../components/Knowledge/DailyFactCard";
 import WordOfTheDayCard from "../components/Knowledge/WordOfTheDayCard";
 import RandomCodingTipCard from "../components/Knowledge/RandomCodingTipCard";
 import ScienceNewsCard from "../components/Knowledge/ScienceNewsCard";
 import TechNewsCard from "../components/Knowledge/TechNewsCard";
+import PolicyBriefCard from "../components/Knowledge/PolicyBriefCard";
 import DevToolOfTheDayCard from "../components/Knowledge/DevToolOfTheDayCard";
 import OpenIssueSpotlightCard from "../components/Knowledge/OpenIssueSpotlightCard";
 import TopGainersCard from "../components/Knowledge/TopGainersCard";
@@ -115,6 +117,22 @@ function KnowledgeDashboardContent() {
         Component: TopNewsCard,
         title: "Top News",
         summary: "Catch the top headlines from trusted sources.",
+      },
+      {
+        key: "local-headlines",
+        cardType: "local_headlines",
+        category: "news",
+        Component: LocalHeadlinesCard,
+        title: "Local Headlines",
+        summary: "Get the latest headlines tailored to your selected region.",
+      },
+      {
+        key: "policy-briefs",
+        cardType: "policy_briefs",
+        category: "news",
+        Component: PolicyBriefCard,
+        title: "Policy Briefs",
+        summary: "Review concise policy updates curated from trusted institutions.",
       },
       {
         key: "daily-fact",
