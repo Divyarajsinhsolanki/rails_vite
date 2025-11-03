@@ -1,4 +1,11 @@
-import React, { useContext, useEffect, useState, useRef } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+} from "react";
 import { Link, NavLink, useLocation, useMatch } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { fetchProjects } from "./api";
@@ -9,9 +16,11 @@ import {
   FiChevronDown, FiMenu, FiX, FiLogOut, FiUser,
   FiUsers, FiBriefcase, FiHome, FiLayers, FiBook,
   FiMessageSquare, FiSettings, FiZap, FiAward, FiFileText,
-  FiClock
+  FiClock, FiSearch, FiCommand
 } from "react-icons/fi";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
+import CommandPalette from "./ui/CommandPalette";
+import { getQuickSearchResults } from "../utils/quickSearch";
 
 // Custom hook for dynamic navbar effects
 const useNavbarEffects = () => {
@@ -170,6 +179,8 @@ const Navbar = () => {
   const [projects, setProjects] = useState([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [commandPaletteQuery, setCommandPaletteQuery] = useState("");
   const profileRef = useRef(null);
   const { scrolled } = useNavbarEffects();
   const location = useLocation();
@@ -205,7 +216,7 @@ const Navbar = () => {
   }, [user]);
 
   // Navigation configuration
-  const navLinks = [
+  const navLinks = useMemo(() => ([
     { to: "/", label: "Home", icon: FiHome, visible: !!user },
     { to: "/pdf", label: "PDF Modifier", icon: FiFileText, visible: !!user },
     { to: "/knowledge", label: "Knowledge", icon: FiBook, visible: !!user },
@@ -223,10 +234,111 @@ const Navbar = () => {
       icon: FiLayers,
       visible: !!user
     },
-  ];
+  ]), [user]);
 
   const hasAdminRole = user?.roles?.some((r) => ["owner", "admin"].includes(r.name));
   const isOwner = user?.roles?.some(r => r.name === 'owner');
+
+  const commandPaletteItems = useMemo(() => {
+    const navigationItems = navLinks
+      .filter((link) => link.visible)
+      .map((link) => ({
+        id: link.to,
+        label: link.label,
+        to: link.to,
+        section: "Navigation",
+        icon: link.icon,
+        keywords: [link.label, link.to.replace('/', ' ')],
+      }));
+
+    const projectItems = projects.map((project) => ({
+      id: project.to,
+      label: project.label,
+      to: project.to,
+      section: "Projects",
+      icon: FiZap,
+      keywords: [project.label, "project"],
+    }));
+
+    const accountItems = user
+      ? [
+          {
+            id: "profile",
+            label: "My Profile",
+            to: "/profile",
+            section: "Account",
+            icon: FiUser,
+            keywords: [user.first_name, user.last_name, user.email, "profile"],
+          },
+          {
+            id: "settings",
+            label: "Settings",
+            to: "/settings",
+            section: "Account",
+            icon: FiSettings,
+            keywords: ["preferences", "settings", "account"],
+          },
+          ...(hasAdminRole
+            ? [
+                {
+                  id: "admin",
+                  label: "Admin Panel",
+                  to: "/admin",
+                  section: "Account",
+                  icon: FiBriefcase,
+                  keywords: ["admin", "panel", "management"],
+                },
+              ]
+            : []),
+        ]
+      : [];
+
+    return [...navigationItems, ...projectItems, ...accountItems];
+  }, [hasAdminRole, navLinks, projects, user]);
+
+  const commandPaletteResults = useMemo(
+    () => getQuickSearchResults(commandPaletteQuery, commandPaletteItems),
+    [commandPaletteItems, commandPaletteQuery]
+  );
+
+  const handleCommandPaletteClose = useCallback(() => {
+    setIsCommandPaletteOpen(false);
+    setCommandPaletteQuery("");
+  }, []);
+
+  const handleCommandPaletteSelect = useCallback(() => {
+    handleCommandPaletteClose();
+    setIsProfileOpen(false);
+    setIsMobileMenuOpen(false);
+  }, [handleCommandPaletteClose]);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setIsCommandPaletteOpen(true);
+      }
+
+      if (event.key === "Escape") {
+        handleCommandPaletteClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [handleCommandPaletteClose]);
+
+  useEffect(() => {
+    handleCommandPaletteClose();
+  }, [handleCommandPaletteClose, location.pathname]);
+
+  useEffect(() => {
+    if (isCommandPaletteOpen) {
+      setIsProfileOpen(false);
+    }
+  }, [isCommandPaletteOpen]);
 
   // Dynamic background based on scroll and route
   const getNavbarBackground = () =>
@@ -280,9 +392,32 @@ const Navbar = () => {
 
         {/* Right side actions */}
         <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => setIsCommandPaletteOpen(true)}
+            className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+            aria-label="Open quick search"
+          >
+            <FiSearch className="h-4 w-4" />
+            <span className="hidden xl:inline">Quick search</span>
+            <span className="flex items-center gap-1 text-xs text-zinc-400 dark:text-zinc-500 border border-zinc-200 dark:border-zinc-700 rounded px-1.5 py-0.5">
+              <FiCommand className="h-3 w-3" />
+              K
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsCommandPaletteOpen(true)}
+            className="sm:hidden p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            aria-label="Open quick search"
+          >
+            <FiSearch className="h-5 w-5 text-zinc-600 dark:text-zinc-300" />
+          </button>
+
           {user ? (
             <div className="relative" ref={profileRef}>
-              <button 
+              <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="relative"
               >
@@ -557,6 +692,15 @@ const Navbar = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <CommandPalette
+        open={isCommandPaletteOpen}
+        query={commandPaletteQuery}
+        onQueryChange={setCommandPaletteQuery}
+        onClose={handleCommandPaletteClose}
+        onSelect={handleCommandPaletteSelect}
+        results={commandPaletteResults}
+      />
     </motion.header>
   );
 };
