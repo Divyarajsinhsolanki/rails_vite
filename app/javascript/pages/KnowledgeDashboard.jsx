@@ -16,6 +16,8 @@ import CommonEnglishWordCard from "../components/Knowledge/CommonEnglishWordCard
 import EnglishTenseCard from "../components/Knowledge/EnglishTenseCard";
 import EnglishPhraseCard from "../components/Knowledge/EnglishPhraseCard";
 import ImageOfTheDayCard from "../components/Knowledge/ImageOfTheDayCard";
+import DailyQuizCard from "../components/Knowledge/DailyQuizCard";
+import StudyReminderCard from "../components/Knowledge/StudyReminderCard";
 import { KnowledgeBookmarksProvider, useKnowledgeBookmarks } from "../context/KnowledgeBookmarksContext";
 
 function KnowledgeDashboardContent() {
@@ -32,6 +34,7 @@ function KnowledgeDashboardContent() {
 
   const {
     bookmarks,
+    dueBookmarks,
     collections,
     loading: bookmarksLoading,
     createBookmark,
@@ -44,11 +47,6 @@ function KnowledgeDashboardContent() {
     const timer = setTimeout(() => setUiLoading(false), 600);
     return () => clearTimeout(timer);
   }, []);
-
-  const dueBookmarks = useMemo(() => {
-    const now = new Date();
-    return bookmarks.filter((bookmark) => bookmark.next_reminder_at && new Date(bookmark.next_reminder_at) <= now);
-  }, [bookmarks]);
 
   const savedCount = bookmarks.length;
   const dueCount = dueBookmarks.length;
@@ -91,6 +89,22 @@ function KnowledgeDashboardContent() {
         Component: ImageOfTheDayCard,
         title: "Image of the Day",
         summary: "Discover a stunning astronomy image curated daily.",
+      },
+      {
+        key: "daily-quiz",
+        cardType: "daily_quiz",
+        category: "learning",
+        Component: DailyQuizCard,
+        title: "Daily Quiz",
+        summary: "Test yourself with a quick knowledge check.",
+      },
+      {
+        key: "study-reminder",
+        cardType: "study_reminder",
+        category: "learning",
+        Component: StudyReminderCard,
+        title: "Study Reminders",
+        summary: "Review what you've saved before reminders are due.",
       },
       {
         key: "top-news",
