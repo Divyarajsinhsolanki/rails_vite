@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import TodayInHistoryCard from "../components/Knowledge/TodayInHistoryCard";
 import QuoteOfTheDayCard from "../components/Knowledge/QuoteOfTheDayCard";
@@ -23,6 +23,9 @@ import ImageOfTheDayCard from "../components/Knowledge/ImageOfTheDayCard";
 import DailyQuizCard from "../components/Knowledge/DailyQuizCard";
 import StudyReminderCard from "../components/Knowledge/StudyReminderCard";
 import { KnowledgeBookmarksProvider, useKnowledgeBookmarks } from "../context/KnowledgeBookmarksContext";
+import KnowledgeFilterControls from "../components/Knowledge/KnowledgeFilterControls";
+import KnowledgeCardQuickActions from "../components/Knowledge/KnowledgeCardQuickActions";
+import { FaList, FaThLarge } from "react-icons/fa";
 
 function KnowledgeDashboardContent() {
   const [activeCategory, setActiveCategory] = useState("all");
@@ -35,6 +38,7 @@ function KnowledgeDashboardContent() {
   const [lastCollectionName, setLastCollectionName] = useState("");
   const [reminderIntervalDays, setReminderIntervalDays] = useState(7);
   const [feedback, setFeedback] = useState(null);
+  const [layoutMode, setLayoutMode] = useState("tiles");
 
   const {
     bookmarks,
@@ -45,6 +49,7 @@ function KnowledgeDashboardContent() {
     deleteBookmark,
     findBookmark,
     markReviewed,
+    updateBookmark,
   } = useKnowledgeBookmarks();
 
   useEffect(() => {
@@ -266,28 +271,49 @@ function KnowledgeDashboardContent() {
     return map;
   }, [cardDefinitions]);
 
-  const handleBookmarkToggle = async (bookmarkData) => {
-    if (!bookmarkData) return;
-    const existing = findBookmark(bookmarkData);
-    try {
-      if (existing) {
-        await deleteBookmark(existing.id);
-        setFeedback({ type: "info", message: "Removed from saved" });
-      } else {
-        setPendingBookmark(bookmarkData);
-        setCollectionName(bookmarkData.collectionName || lastCollectionName || "");
-        setReminderIntervalDays(bookmarkData.reminderIntervalDays || 7);
-        setModalOpen(true);
+  const handleBookmarkToggle = useCallback(
+    async (bookmarkData) => {
+      if (!bookmarkData) return;
+      const existing = findBookmark(bookmarkData);
+      try {
+        if (existing) {
+          await deleteBookmark(existing.id);
+          setFeedback({ type: "info", message: "Removed from saved" });
+        } else {
+          setPendingBookmark({ ...bookmarkData, bookmarkId: null });
+          setCollectionName(bookmarkData.collectionName || lastCollectionName || "");
+          setReminderIntervalDays(bookmarkData.reminderIntervalDays || 7);
+          setModalOpen(true);
+        }
+      } catch (err) {
+        setFeedback({ type: "error", message: err.message });
       }
-    } catch (err) {
-      setFeedback({ type: "error", message: err.message });
-    }
-  };
+    },
+    [deleteBookmark, findBookmark, lastCollectionName]
+  );
+
+  const handleReminderEdit = useCallback((bookmark) => {
+    if (!bookmark) return;
+    const derivedTitle = bookmark.payload?.title || bookmark.title || "Saved item";
+    const derivedSubtitle = bookmark.payload?.subtitle || bookmark.subtitle || "";
+    setPendingBookmark({
+      cardType: bookmark.card_type,
+      sourceId: bookmark.source_id,
+      payload: bookmark.payload,
+      bookmarkId: bookmark.id,
+      title: derivedTitle,
+      subtitle: derivedSubtitle,
+    });
+    setCollectionName(bookmark.collection_name || "");
+    setReminderIntervalDays(bookmark.reminder_interval_days || 7);
+    setModalOpen(true);
+  }, []);
 
   const bookmarkHelpers = useMemo(
     () => ({
       toggle: handleBookmarkToggle,
       find: (bookmarkPayload) => findBookmark(bookmarkPayload),
+      editReminder: handleReminderEdit,
       markReviewed: async (bookmark) => {
         try {
           await markReviewed(bookmark.id);
@@ -297,7 +323,7 @@ function KnowledgeDashboardContent() {
         }
       },
     }),
-    [findBookmark, handleBookmarkToggle, markReviewed]
+    [findBookmark, handleBookmarkToggle, handleReminderEdit, markReviewed]
   );
 
   const filteredCards = useMemo(() => {
@@ -354,6 +380,18 @@ function KnowledgeDashboardContent() {
             },
             bookmark,
             metadata: definition ?? { title: "Saved item", summary: "" },
+            quickActions: {
+              isBookmarked: true,
+              onToggleBookmark: () =>
+                handleBookmarkToggle({
+                  cardType: bookmark.card_type,
+                  sourceId: bookmark.source_id,
+                  payload: bookmark.payload,
+                }),
+              onOpenReminder: () => handleReminderEdit(bookmark),
+              hasReminder: Boolean(bookmark.next_reminder_at),
+              reminderDue: isReminderDue(bookmark),
+            },
           };
         })
         .filter((item) => matchesSearch(item.metadata) && matchesFilterFlags(item.bookmark));
@@ -376,6 +414,18 @@ function KnowledgeDashboardContent() {
             },
             bookmark,
             metadata: definition ?? { title: "Saved item", summary: "" },
+            quickActions: {
+              isBookmarked: true,
+              onToggleBookmark: () =>
+                handleBookmarkToggle({
+                  cardType: bookmark.card_type,
+                  sourceId: bookmark.source_id,
+                  payload: bookmark.payload,
+                }),
+              onOpenReminder: () => handleReminderEdit(bookmark),
+              hasReminder: Boolean(bookmark.next_reminder_at),
+              reminderDue: isReminderDue(bookmark),
+            },
           };
         })
         .filter((item) => matchesSearch(item.metadata) && matchesFilterFlags(item.bookmark));
@@ -402,6 +452,8 @@ function KnowledgeDashboardContent() {
     cardDefinitions,
     cardTypeMap,
     dueBookmarks,
+    handleBookmarkToggle,
+    handleReminderEdit,
     filters.hasNotes,
     filters.reminderDue,
     searchQuery,
@@ -411,56 +463,64 @@ function KnowledgeDashboardContent() {
   const hasSearch = searchQuery.trim().length > 0;
   const filtersActive = Object.values(filters).some(Boolean);
 
+  const handleFilterToggle = useCallback((key) => {
+    setFilters((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  }, []);
+
   return (
     <div className="min-h-screen transition-colors duration-300 bg-[rgb(var(--theme-color-rgb)/0.1)] text-gray-900">
       <header className="sticky top-0 z-10 backdrop-blur-md bg-white/80 border-b border-gray-200">
         <div className="max-w-screen-2xl mx-auto px-6 py-4 flex flex-col gap-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color-dark)] bg-clip-text text-transparent">
-              Knowledge Hub
-            </h1>
-          </div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color-dark)] bg-clip-text text-transparent">
+                Knowledge Hub
+              </h1>
+            </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end w-full">
-              <div className="relative w-full sm:w-72">
-                <span className="absolute inset-y-0 left-3 flex items-center text-gray-400">🔍</span>
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search cards..."
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)] focus:border-transparent"
-                />
+            <div className="flex w-full flex-col gap-3 sm:w-auto">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+                <div className="relative w-full sm:w-72">
+                  <span className="absolute inset-y-0 left-3 flex items-center text-gray-400">🔍</span>
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="Search cards..."
+                    className="w-full rounded-full border border-gray-300 py-2 pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)] focus:border-transparent"
+                  />
+                </div>
+                <div className="inline-flex overflow-hidden rounded-full border border-gray-300 bg-white">
+                  <button
+                    type="button"
+                    onClick={() => setLayoutMode("tiles")}
+                    className={`flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors ${
+                      layoutMode === "tiles"
+                        ? "bg-[var(--theme-color)] text-white"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                    aria-pressed={layoutMode === "tiles"}
+                  >
+                    <FaThLarge aria-hidden="true" /> Tiles
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLayoutMode("list")}
+                    className={`flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors ${
+                      layoutMode === "list"
+                        ? "bg-[var(--theme-color)] text-white"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                    aria-pressed={layoutMode === "list"}
+                  >
+                    <FaList aria-hidden="true" /> List
+                  </button>
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {filterOptions.map((option) => {
-                  const isActive = filters[option.key];
-                  return (
-                    <button
-                      key={option.key}
-                      type="button"
-                      onClick={() =>
-                        setFilters((prev) => ({
-                          ...prev,
-                          [option.key]: !prev[option.key],
-                        }))
-                      }
-                      className={`px-3 py-2 rounded-full text-xs font-medium transition-colors border ${
-                        isActive
-                          ? "bg-[var(--theme-color)] text-white border-[var(--theme-color)]"
-                          : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100"
-                      }`}
-                      aria-pressed={isActive}
-                    >
-                      <span className="mr-1" aria-hidden="true">
-                        {option.icon}
-                      </span>
-                      {option.label}
-                    </button>
-                  );
-                })}
-              </div>
+              <KnowledgeFilterControls options={filterOptions} filters={filters} onToggle={handleFilterToggle} />
             </div>
           </div>
 
@@ -503,7 +563,7 @@ function KnowledgeDashboardContent() {
 
       <main className="max-w-screen-2xl mx-auto px-6 py-8">
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 items-start">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 items-start">
             {[...Array(8)].map((_, i) => (
               <motion.div
                 key={i}
@@ -515,7 +575,14 @@ function KnowledgeDashboardContent() {
             ))}
           </div>
         ) : (
-          <motion.div layout className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5 gap-6">
+          <motion.div
+            layout
+            className={
+              layoutMode === "tiles"
+                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6"
+                : "flex flex-col gap-4"
+            }
+          >
             <AnimatePresence>
               {filteredCards.map((item) => (
                 <motion.div
@@ -525,10 +592,13 @@ function KnowledgeDashboardContent() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.3 }}
-                  whileHover={{ y: -5 }}
-                  className="mb-6 break-inside-avoid rounded-2xl overflow-hidden"
+                  whileHover={layoutMode === "tiles" ? { y: -5 } : {}}
+                  className="group relative w-full rounded-2xl"
                 >
-                  <div className="border bg-white border-gray-200 hover:border-gray-300 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col">
+                  {item.quickActions && (
+                    <KnowledgeCardQuickActions {...item.quickActions} />
+                  )}
+                  <div className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white transition-all duration-300 hover:border-gray-300 hover:shadow-md">
                     <item.Component {...item.props} />
                     {item.bookmark && (
                       <SavedBookmarkFooter
@@ -586,21 +656,29 @@ function KnowledgeDashboardContent() {
           setModalOpen(false);
           setPendingBookmark(null);
         }}
+        isEditing={Boolean(pendingBookmark?.bookmarkId)}
         onSubmit={async () => {
           if (!pendingBookmark) return;
           try {
-            const created = await createBookmark({
-              cardType: pendingBookmark.cardType,
-              sourceId: pendingBookmark.sourceId,
-              payload: pendingBookmark.payload,
-              collectionName: collectionName || null,
-              reminderIntervalDays,
-            });
+            if (pendingBookmark.bookmarkId) {
+              await updateBookmark(pendingBookmark.bookmarkId, {
+                collection_name: collectionName || null,
+                reminder_interval_days: reminderIntervalDays,
+              });
+              setFeedback({ type: "success", message: "Reminder updated" });
+            } else {
+              await createBookmark({
+                cardType: pendingBookmark.cardType,
+                sourceId: pendingBookmark.sourceId,
+                payload: pendingBookmark.payload,
+                collectionName: collectionName || null,
+                reminderIntervalDays,
+              });
+              setFeedback({ type: "success", message: "Saved to your knowledge collections" });
+            }
             setModalOpen(false);
             setPendingBookmark(null);
             setLastCollectionName(collectionName || "");
-            setFeedback({ type: "success", message: "Saved to your knowledge collections" });
-            return created;
           } catch (err) {
             setFeedback({ type: "error", message: err.message });
           }
@@ -658,6 +736,7 @@ function BookmarkModal({
   onReminderChange,
   onClose,
   onSubmit,
+  isEditing = false,
 }) {
   if (!open) return null;
 
@@ -666,8 +745,14 @@ function BookmarkModal({
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
         <div className="flex justify-between items-start">
           <div>
-            <h2 className="text-xl font-semibold">Save to your collection</h2>
-            <p className="text-sm text-gray-500">Organize this card and choose how often you want reminders.</p>
+            <h2 className="text-xl font-semibold">
+              {isEditing ? "Update reminder" : "Save to your collection"}
+            </h2>
+            <p className="text-sm text-gray-500">
+              {isEditing
+                ? "Adjust the collection and reminder cadence for this saved card."
+                : "Organize this card and choose how often you want reminders."}
+            </p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
         </div>
@@ -722,7 +807,7 @@ function BookmarkModal({
             onClick={onSubmit}
             className="px-4 py-2 text-sm font-semibold text-white bg-[var(--theme-color)] rounded-lg hover:opacity-90"
           >
-            Save
+            {isEditing ? "Update" : "Save"}
           </button>
         </div>
       </div>
