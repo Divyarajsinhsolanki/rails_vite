@@ -171,6 +171,13 @@ const Profile = () => {
   const initial = (user?.first_name || user?.email || "").charAt(0).toUpperCase();
 
   const todayStr = new Date().toISOString().split("T")[0];
+  const completedTasks = useMemo(
+    () => tasks.filter((task) => {
+      const normalizedStatus = (task.status || '').toLowerCase();
+      return normalizedStatus === 'completed' || normalizedStatus === 'done';
+    }),
+    [tasks]
+  );
   const incompleteTasks = useMemo(
     () => tasks.filter((task) => {
       const normalizedStatus = (task.status || '').toLowerCase();
@@ -190,10 +197,91 @@ const Profile = () => {
     () => nonGeneralTasks.filter((t) => (t.end_date || t.due_date) === todayStr),
     [nonGeneralTasks, todayStr]
   );
+  const dueTodayAllTasks = useMemo(
+    () => tasks.filter((t) => {
+      const normalizedStatus = (t.status || '').toLowerCase();
+      if (normalizedStatus === 'completed' || normalizedStatus === 'done') return false;
+      const dueDate = t.end_date || t.due_date;
+      return dueDate === todayStr;
+    }),
+    [tasks, todayStr]
+  );
   const otherTasks = useMemo(
     () => nonGeneralTasks.filter((t) => (t.end_date || t.due_date) !== todayStr),
     [nonGeneralTasks, todayStr]
   );
+  const overdueTasks = useMemo(
+    () => tasks.filter((task) => {
+      const normalizedStatus = (task.status || '').toLowerCase();
+      if (normalizedStatus === 'completed' || normalizedStatus === 'done') return false;
+      const dueDate = task.end_date || task.due_date;
+      return dueDate && dueDate < todayStr;
+    }),
+    [tasks, todayStr]
+  );
+  const activeTasks = incompleteTasks.length;
+  const taskStats = useMemo(
+    () => [
+      {
+        label: 'Total Tasks',
+        value: tasks.length,
+        tone: 'text-gray-700',
+        accent: 'bg-gray-100 text-gray-700',
+      },
+      {
+        label: 'Active Tasks',
+        value: activeTasks,
+        tone: 'text-blue-700',
+        accent: 'bg-blue-100 text-blue-700',
+      },
+      {
+        label: 'Due Today',
+        value: dueTodayAllTasks.length,
+        tone: 'text-red-700',
+        accent: 'bg-red-100 text-red-700',
+      },
+      {
+        label: 'Completed',
+        value: completedTasks.length,
+        tone: 'text-green-700',
+        accent: 'bg-green-100 text-green-700',
+      },
+      {
+        label: 'Overdue',
+        value: overdueTasks.length,
+        tone: 'text-orange-700',
+        accent: 'bg-orange-100 text-orange-700',
+      }
+    ],
+    [activeTasks, completedTasks.length, dueTodayAllTasks.length, overdueTasks.length, tasks.length]
+  );
+
+  const sortedCompletedTasks = useMemo(() => {
+    const parseDate = (task) => task.updated_at || task.end_date || task.due_date || task.created_at;
+    return completedTasks
+      .slice()
+      .sort((a, b) => {
+        const dateA = parseDate(a) || '';
+        const dateB = parseDate(b) || '';
+        return dateB.localeCompare(dateA);
+      });
+  }, [completedTasks]);
+
+  const handleTaskNavigation = (task) => {
+    if (task.task_url) {
+      window.open(task.task_url, '_blank', 'noopener');
+      return;
+    }
+
+    if (task.sprint?.project_id) {
+      navigate(`/projects/${task.sprint.project_id}/dashboard`, {
+        state: { focusTaskId: task.id || task.task_id },
+      });
+      return;
+    }
+
+    navigate('/worklog', { state: { focusTaskId: task.id || task.task_id } });
+  };
   const statusSections = useMemo(() => {
     const statusOrder = [
       { key: 'in-progress', label: 'In Progress', matchers: ['in progress', 'inprogress', 'in_progress'] },
@@ -661,13 +749,24 @@ const Profile = () => {
                       Create your first post
                     </button>
                   </div>
-                )}
+                  )}
               </div>
             )}
 
             {activeTab === 'tasks' && (
               <div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">My Tasks</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+                  {taskStats.map((stat) => (
+                    <div key={stat.label} className="p-4 bg-white border border-gray-100 rounded-lg shadow-sm">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-gray-500">{stat.label}</p>
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${stat.accent}`}>{stat.value}</span>
+                      </div>
+                      <p className={`mt-3 text-2xl font-semibold ${stat.tone}`}>{stat.value}</p>
+                    </div>
+                  ))}
+                </div>
                 {nonGeneralTasks.length > 0 ? (
                   <>
                     {dueTodayTasks.length > 0 && (
@@ -696,9 +795,13 @@ const Profile = () => {
                                     </span>
                                   </div>
                                 </div>
-                                <button className="text-gray-400 hover:text-gray-600">
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                <button
+                                  onClick={() => handleTaskNavigation(task)}
+                                  className="inline-flex items-center text-sm font-medium text-[var(--theme-color)] hover:text-[var(--theme-color)]/80"
+                                >
+                                  View Task
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M12.293 2.293a1 1 0 011.414 0L18 6.586a1 1 0 01-1.414 1.414L14 5.414V17a1 1 0 11-2 0V5.414l-2.586 2.586A1 1 0 018 6.586l4.293-4.293z" />
                                   </svg>
                                 </button>
                               </div>
@@ -750,11 +853,15 @@ const Profile = () => {
                                         )}
                                       </div>
                                     </div>
-                                    <button className="text-gray-400 hover:text-gray-600">
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                                      </svg>
-                                    </button>
+                                <button
+                                  onClick={() => handleTaskNavigation(task)}
+                                  className="inline-flex items-center text-sm font-medium text-[var(--theme-color)] hover:text-[var(--theme-color)]/80"
+                                >
+                                  View Task
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M12.293 2.293a1 1 0 011.414 0L18 6.586a1 1 0 01-1.414 1.414L14 5.414V17a1 1 0 11-2 0V5.414l-2.586 2.586A1 1 0 018 6.586l4.293-4.293z" />
+                                  </svg>
+                                </button>
                                   </div>
                                   {task.sprint?.project_id && (
                                     <div className="mt-2 flex items-center justify-between text-sm">
@@ -792,6 +899,61 @@ const Profile = () => {
                     </svg>
                     <h3 className="mt-4 text-lg font-medium text-gray-700">No tasks assigned</h3>
                     <p className="mt-1 text-gray-500">You're all caught up!</p>
+                  </div>
+                )}
+                {sortedCompletedTasks.length > 0 && (
+                  <div className="mt-10">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xl font-semibold text-gray-700">Recently Completed</h3>
+                      <span className="text-sm text-gray-500">{sortedCompletedTasks.length} total</span>
+                    </div>
+                    <div className="bg-white border border-gray-100 rounded-lg shadow-sm divide-y divide-gray-100">
+                      {sortedCompletedTasks.slice(0, 6).map((task) => (
+                        <div key={task.id} className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                          <div>
+                            <h4 className="font-medium text-gray-800">{task.title || task.task_id}</h4>
+                            <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-gray-500">
+                              <span className="inline-flex items-center gap-1 text-green-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-7.25 7.25a1 1 0 01-1.414 0l-3-3a1 1 0 011.414-1.414L8.5 11.086l6.543-6.543a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                                Completed
+                              </span>
+                              {(task.end_date || task.due_date) && (
+                                <span className="flex items-center gap-1">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                                  </svg>
+                                  Due {new Date(task.end_date || task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </span>
+                              )}
+                              {task.sprint?.project_id && (
+                                <span className="flex items-center gap-1">
+                                  <FolderIcon className="h-4 w-4" />
+                                  {getProjectName(task.sprint.project_id)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            {task.sprint?.project_id && (
+                              <button
+                                onClick={() => navigate(`/projects/${task.sprint.project_id}/dashboard`)}
+                                className="inline-flex items-center text-sm font-medium text-[var(--theme-color)] hover:text-[var(--theme-color)]/80"
+                              >
+                                View Project
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleTaskNavigation(task)}
+                              className="inline-flex items-center text-sm font-medium text-[var(--theme-color)] hover:text-[var(--theme-color)]/80"
+                            >
+                              View Task
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
