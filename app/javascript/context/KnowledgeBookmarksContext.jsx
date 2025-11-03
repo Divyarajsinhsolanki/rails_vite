@@ -1,6 +1,18 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
+const QUIZ_MIN_OPTIONS = 3;
+const QUIZ_OPTION_LIMIT = 4;
+
 const KnowledgeBookmarksContext = createContext();
+
+function shuffleArray(items) {
+  const array = [...items];
+  for (let index = array.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [array[index], array[randomIndex]] = [array[randomIndex], array[index]];
+  }
+  return array;
+}
 
 function getCSRFToken() {
   const meta = document.querySelector("meta[name='csrf-token']");
@@ -34,6 +46,109 @@ export function KnowledgeBookmarksProvider({ children }) {
 
   const collections = useMemo(() => {
     return Array.from(new Set(bookmarks.map((b) => b.collection_name).filter(Boolean))).sort();
+  }, [bookmarks]);
+
+  const dueBookmarks = useMemo(() => {
+    const now = Date.now();
+    return bookmarks
+      .filter((bookmark) => bookmark.next_reminder_at)
+      .filter((bookmark) => {
+        const reminderTime = new Date(bookmark.next_reminder_at).getTime();
+        return !Number.isNaN(reminderTime) && reminderTime <= now;
+      })
+      .sort((a, b) => new Date(a.next_reminder_at).getTime() - new Date(b.next_reminder_at).getTime());
+  }, [bookmarks]);
+
+  const upcomingReminders = useMemo(() => {
+    const now = Date.now();
+    const horizon = now + 7 * 24 * 60 * 60 * 1000;
+    return bookmarks
+      .filter((bookmark) => bookmark.next_reminder_at)
+      .map((bookmark) => ({ bookmark, time: new Date(bookmark.next_reminder_at).getTime() }))
+      .filter(({ time }) => !Number.isNaN(time) && time > now && time <= horizon)
+      .sort((a, b) => a.time - b.time)
+      .map(({ bookmark }) => bookmark);
+  }, [bookmarks]);
+
+  const getLearningQuizQuestion = useCallback(async () => {
+    const wordCandidates = bookmarks
+      .filter((bookmark) => bookmark.card_type === "word_of_the_day")
+      .map((bookmark) => {
+        const definitionEntry = bookmark.payload?.definitions?.[0];
+        const definition =
+          typeof definitionEntry === "string"
+            ? definitionEntry
+            : definitionEntry?.text || definitionEntry?.definition || "";
+        const word = bookmark.payload?.word;
+        const note = bookmark.payload?.note;
+
+        return {
+          bookmark,
+          word: typeof word === "string" ? word : undefined,
+          definition: typeof definition === "string" ? definition : undefined,
+          note: typeof note === "string" && note.trim().length ? note : undefined,
+        };
+      })
+      .filter((entry) => entry.word && entry.definition);
+
+    if (wordCandidates.length >= QUIZ_MIN_OPTIONS) {
+      const shuffled = shuffleArray(wordCandidates);
+      const [correct, ...others] = shuffled;
+      const incorrectWords = others.map((entry) => entry.word).filter(Boolean);
+      const uniqueOptions = Array.from(new Set([correct.word, ...incorrectWords]));
+      if (uniqueOptions.length >= QUIZ_MIN_OPTIONS) {
+        const optionSlice = uniqueOptions.slice(0, Math.min(QUIZ_OPTION_LIMIT, uniqueOptions.length));
+        const options = shuffleArray(optionSlice);
+        return {
+          id: `bookmark-word-${correct.bookmark.id}`,
+          question: `Which word matches this definition?\n“${correct.definition}”`,
+          options,
+          correctAnswer: correct.word,
+          explanation: correct.note ? `Saved note: ${correct.note}` : undefined,
+          source: "bookmarks",
+          createdAt: new Date().toISOString(),
+          relatedBookmarkId: correct.bookmark.id,
+        };
+      }
+    }
+
+    const tenseCandidates = bookmarks
+      .filter((bookmark) => bookmark.card_type === "english_tense")
+      .map((bookmark) => {
+        const tense = bookmark.payload?.tense;
+        const example = bookmark.payload?.example;
+        const description = bookmark.payload?.description;
+        return {
+          bookmark,
+          tense: typeof tense === "string" ? tense : undefined,
+          example: typeof example === "string" ? example : undefined,
+          description: typeof description === "string" ? description : undefined,
+        };
+      })
+      .filter((entry) => entry.tense && entry.example);
+
+    if (tenseCandidates.length >= QUIZ_MIN_OPTIONS) {
+      const shuffled = shuffleArray(tenseCandidates);
+      const [correct, ...others] = shuffled;
+      const incorrectTenses = others.map((entry) => entry.tense).filter(Boolean);
+      const uniqueOptions = Array.from(new Set([correct.tense, ...incorrectTenses]));
+      if (uniqueOptions.length >= QUIZ_MIN_OPTIONS) {
+        const optionSlice = uniqueOptions.slice(0, Math.min(QUIZ_OPTION_LIMIT, uniqueOptions.length));
+        const options = shuffleArray(optionSlice);
+        return {
+          id: `bookmark-tense-${correct.bookmark.id}`,
+          question: `Which tense is demonstrated by this example?\n“${correct.example}”`,
+          options,
+          correctAnswer: correct.tense,
+          explanation: correct.description,
+          source: "bookmarks",
+          createdAt: new Date().toISOString(),
+          relatedBookmarkId: correct.bookmark.id,
+        };
+      }
+    }
+
+    return null;
   }, [bookmarks]);
 
   const upsertBookmarkInState = useCallback((bookmark) => {
@@ -169,6 +284,8 @@ export function KnowledgeBookmarksProvider({ children }) {
   const value = useMemo(
     () => ({
       bookmarks,
+      dueBookmarks,
+      upcomingReminders,
       collections,
       loading,
       error,
@@ -177,9 +294,24 @@ export function KnowledgeBookmarksProvider({ children }) {
       deleteBookmark,
       updateBookmark,
       markReviewed,
+      getLearningQuizQuestion,
       refresh: fetchBookmarks,
     }),
-    [bookmarks, collections, loading, error, findBookmark, createBookmark, deleteBookmark, updateBookmark, markReviewed, fetchBookmarks]
+    [
+      bookmarks,
+      dueBookmarks,
+      upcomingReminders,
+      collections,
+      loading,
+      error,
+      findBookmark,
+      createBookmark,
+      deleteBookmark,
+      updateBookmark,
+      markReviewed,
+      getLearningQuizQuestion,
+      fetchBookmarks,
+    ]
   );
 
   return (
