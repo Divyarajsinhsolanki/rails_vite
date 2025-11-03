@@ -688,7 +688,7 @@ const ProjectStatistics = ({ projectId }) => {
         </section>
       )}
 
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
+      {/* <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-1">Need more insights?</h3>
@@ -703,7 +703,7 @@ const ProjectStatistics = ({ projectId }) => {
             </button>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 
