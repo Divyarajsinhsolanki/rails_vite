@@ -52,6 +52,8 @@ Rails.application.routes.draw do
     get 'english_word', to: 'english_words#show'
     get 'english_tense', to: 'english_tenses#show'
     get 'english_phrase', to: 'english_phrases#show'
+    get 'news/local_headlines', to: 'news#local_headlines'
+    get 'news/policy_briefs', to: 'news#policy_briefs'
     get 'sheet', to: 'sheets#show'
 
     resources :users, only: [:index, :update, :destroy]
