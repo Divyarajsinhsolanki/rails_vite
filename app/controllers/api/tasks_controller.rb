@@ -38,7 +38,18 @@ class Api::TasksController < Api::BaseController
     old_dev_id    = @task.developer_id
     old_order     = @task.order
 
-    if @task.update(task_params)
+    permitted_params = task_params
+
+    updated = Task.transaction do
+      adjust_manual_order(@task, permitted_params)
+      if @task.update(permitted_params)
+        true
+      else
+        raise ActiveRecord::Rollback
+      end
+    end
+
+    if updated
       reorder_group(old_sprint_id, old_dev_id) if old_sprint_id && old_dev_id &&
         (old_sprint_id != @task.sprint_id || old_dev_id != @task.developer_id || old_order != @task.order)
       reorder_group(@task.sprint_id, @task.developer_id)
@@ -95,10 +106,42 @@ class Api::TasksController < Api::BaseController
     permitted
   end
 
+  def adjust_manual_order(task, permitted)
+    return unless permitted.key?(:order)
+
+    raw_order = permitted[:order]
+    return if raw_order.blank?
+
+    target_sprint_id = (permitted[:sprint_id].presence || task.sprint_id).to_i
+    target_dev_id    = (permitted[:developer_id].presence || task.developer_id).to_i
+
+    return unless target_sprint_id == task.sprint_id && target_dev_id == task.developer_id
+
+    desired_order = raw_order.to_i
+    return if desired_order == task.order
+
+    scope = Task.where(sprint_id: task.sprint_id, developer_id: task.developer_id)
+
+    max_order = scope.count
+    return if max_order.zero?
+
+    desired_order = [[desired_order, 1].max, max_order].min
+
+    if desired_order > task.order
+      scope.where(order: (task.order + 1)..desired_order).update_all('"order" = "order" - 1')
+    else
+      scope.where(order: desired_order...task.order).update_all('"order" = "order" + 1')
+    end
+
+    permitted[:order] = desired_order
+  end
+
   def reorder_group(sprint_id, developer_id)
     Task.transaction do
       tasks = Task.where(sprint_id: sprint_id, developer_id: developer_id)
-                   .order(:order, :id)
+                   .order(:order)
+                   .order(updated_at: :desc)
+                   .order(:id)
                    .lock
 
       tasks.each_with_index do |t, idx|
