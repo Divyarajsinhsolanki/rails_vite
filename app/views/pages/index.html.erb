@@ -1,2 +1,51 @@
-<h1>Welcome to My Rails + Vite + React App</h1>
-<p>This is a Rails page before React fully takes over.</p>
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+  <div class="mx-auto flex min-h-screen w-full max-w-5xl flex-col items-center justify-center px-6 py-16 text-center">
+    <span class="mb-6 inline-flex items-center rounded-full border border-white/20 bg-white/5 px-4 py-1 text-xs font-semibold uppercase tracking-widest text-white/70">
+      Welcome to FlowForge
+    </span>
+
+    <h1 class="text-4xl font-bold leading-tight sm:text-5xl md:text-6xl">
+      Streamline your product sprints with a modern Rails&nbsp;+&nbsp;Vite workspace
+    </h1>
+
+    <p class="mt-6 max-w-2xl text-base text-white/70 sm:text-lg">
+      Organize backlogs, collaborate with your team, and keep every retro actionable.
+      Log in to unlock the full planning suite—boards, reports, integrations, and more.
+    </p>
+
+    <div class="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
+      <%= link_to 'Log in to your workspace', new_user_session_path, class: 'inline-flex items-center justify-center rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200' %>
+      <span class="text-sm text-white/50">New here? Ask your admin for an invite to get started.</span>
+    </div>
+
+    <dl class="mt-16 grid w-full gap-6 text-left sm:grid-cols-2">
+      <div class="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <dt class="text-sm font-semibold uppercase tracking-wide text-white/60">Daily Sync</dt>
+        <dd class="mt-2 text-base text-white">
+          Get a curated snapshot of yesterday&rsquo;s progress, blockers, and today&rsquo;s plan the moment you sign in.
+        </dd>
+      </div>
+
+      <div class="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <dt class="text-sm font-semibold uppercase tracking-wide text-white/60">Insight Hub</dt>
+        <dd class="mt-2 text-base text-white">
+          Surface AI-powered retrospectives, coding tips, and dev tool recommendations tailored for your team.
+        </dd>
+      </div>
+
+      <div class="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <dt class="text-sm font-semibold uppercase tracking-wide text-white/60">Collaboration</dt>
+        <dd class="mt-2 text-base text-white">
+          Comment on tasks, endorse skills, and champion teammates directly from sprint dashboards.
+        </dd>
+      </div>
+
+      <div class="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <dt class="text-sm font-semibold uppercase tracking-wide text-white/60">Security First</dt>
+        <dd class="mt-2 text-base text-white">
+          Role-based access, protected assets, and secure document workflows keep your product work safe.
+        </dd>
+      </div>
+    </dl>
+  </div>
+</div>
