@@ -64,7 +64,7 @@ const SkillDirectory = ({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 space-y-6">
+    <div className="bg-white rounded-xl shadow-md p-6 space-y-6 overflow-hidden min-w-0">
       <div>
         <h2 className="text-xl font-bold text-gray-800">Find Team Experts</h2>
         <p className="text-gray-500 text-sm mt-1">Search by name, role, skill or availability to find the right collaborator.</p>
@@ -107,9 +107,9 @@ const SkillDirectory = ({
         </div>
       </div>
 
-      <div>
+      <div className="min-w-0">
         <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Skills</label>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto pr-1">
           {skillNames.map((skillName) => {
             const isSelected = selectedSkills.includes(skillName);
             return (
@@ -128,7 +128,7 @@ const SkillDirectory = ({
         </div>
       </div>
 
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-2">
         <p className="text-gray-600 text-sm">
           {filteredMembers.length} {filteredMembers.length === 1 ? "expert found" : "experts found"}
         </p>

@@ -85,7 +85,7 @@ const TeamSkillMatrix = ({ members = [], skills = [], roles = [] }) => {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 space-y-6">
+    <div className="bg-white rounded-xl shadow-md p-6 space-y-6 overflow-hidden min-w-0">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-gray-800">Team Skill Matrix</h2>
@@ -113,11 +113,11 @@ const TeamSkillMatrix = ({ members = [], skills = [], roles = [] }) => {
         </div>
       </div>
 
-      <div className="relative overflow-hidden">
+      <div className="relative">
         <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white via-white/80 to-transparent z-10" />
         <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white via-white/80 to-transparent z-10" />
-        <div className="overflow-x-auto rounded-lg border border-gray-100 shadow-inner scrollbar-thin">
-          <table className="min-w-max w-full border-collapse">
+        <div className="overflow-x-auto rounded-lg border border-gray-100 shadow-inner scrollbar-thin max-w-full">
+          <table className="w-full min-w-full border-collapse">
             <thead className="bg-gray-50 sticky top-0 z-20">
               <tr>
                 <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700 sticky left-0 top-0 bg-gray-50 z-30">
