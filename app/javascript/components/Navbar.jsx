@@ -7,9 +7,9 @@ import logo from "../images/logo.webp";
 // Icons
 import {
   FiChevronDown, FiMenu, FiX, FiLogOut, FiUser,
-  FiUsers, FiBriefcase, FiHome, FiLayers, FiBook,
+  FiUsers, FiBriefcase, FiLayers, FiBook,
   FiMessageSquare, FiSettings, FiZap, FiAward, FiFileText,
-  FiClock
+  FiClock, FiTarget
 } from "react-icons/fi";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 
@@ -206,7 +206,8 @@ const Navbar = () => {
 
   // Navigation configuration
   const navLinks = [
-    { to: "/", label: "Home", icon: FiHome, visible: !!user },
+    { to: "/", label: "Momentum", icon: FiTarget, visible: !!user },
+    { to: "/posts", label: "Updates", icon: FiMessageSquare, visible: !!user },
     { to: "/pdf", label: "PDF Modifier", icon: FiFileText, visible: !!user },
     { to: "/knowledge", label: "Knowledge", icon: FiBook, visible: !!user },
     { to: "/vault", label: "Vault", icon: FiMenu, visible: !!user },
