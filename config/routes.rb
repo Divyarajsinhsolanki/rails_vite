@@ -106,6 +106,8 @@ Rails.application.routes.draw do
       end
     end
 
+    get 'daily_momentum', to: 'daily_momentum#show'
+
     resources :roles, only: [:index]
 
     resources :work_categories, only: [:index, :create, :update, :destroy]

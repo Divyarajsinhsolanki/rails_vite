@@ -140,6 +140,8 @@ export const updateProjectUser = (id, data) => api.patch(`/project_users/${id}.j
 export const deleteProjectUser = (id) => api.delete(`/project_users/${id}.json`);
 export const leaveProject = (projectId) => api.delete(`/project_users/leave/${projectId}.json`);
 
+export const fetchDailyMomentum = () => api.get('/daily_momentum');
+
 // WORK LOG ENDPOINTS
 export const fetchWorkPriorities = () => api.get('/work_priorities');
 export const fetchWorkCategories = () => api.get('/work_categories');

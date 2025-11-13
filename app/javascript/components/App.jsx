@@ -22,6 +22,7 @@ import SprintDashboard from "../pages/SprintDashboard";
 import WorkLog from "../pages/WorkLog";
 import Settings from "../pages/Settings";
 import PageTitle from "./PageTitle";
+import DailyMomentumHub from "../pages/DailyMomentumHub";
 
 const App = () => {
   return (
@@ -39,7 +40,8 @@ const App = () => {
               <Route path="/legal" element={<Legal />} />
 
               {/* 🔐 Protected */}
-              <Route path="/" element={<PrivateRoute><PostPage /></PrivateRoute>} />
+              <Route path="/" element={<PrivateRoute><DailyMomentumHub /></PrivateRoute>} />
+              <Route path="/momentum" element={<PrivateRoute><DailyMomentumHub /></PrivateRoute>} />
               <Route path="/pdf" element={<PrivateRoute><PdfPage /></PrivateRoute>} />
               <Route path="/posts" element={<PrivateRoute><PostPage /></PrivateRoute>} />
               <Route path="/vault" element={<PrivateRoute><Vault /></PrivateRoute>} />
