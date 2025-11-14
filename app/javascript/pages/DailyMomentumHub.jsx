@@ -17,15 +17,15 @@ import api, { fetchDailyMomentum } from "../components/api";
 import { AuthContext } from "../context/AuthContext";
 
 const statusColors = {
-  blocked: "bg-rose-500/20 text-rose-200 border border-rose-400/40",
-  in_progress: "bg-amber-500/20 text-amber-100 border border-amber-400/40",
-  doing: "bg-amber-500/20 text-amber-100 border border-amber-400/40",
-  todo: "bg-slate-500/20 text-slate-100 border border-slate-400/40",
-  reviewing: "bg-sky-500/20 text-sky-100 border border-sky-400/40",
-  qa: "bg-sky-500/20 text-sky-100 border border-sky-400/40",
-  backlog: "bg-slate-500/20 text-slate-100 border border-slate-400/40",
-  done: "bg-emerald-500/20 text-emerald-100 border border-emerald-400/40",
-  completed: "bg-emerald-500/20 text-emerald-100 border border-emerald-400/40"
+  blocked: "bg-rose-100 text-rose-700 border border-rose-200",
+  in_progress: "bg-amber-100 text-amber-700 border border-amber-200",
+  doing: "bg-amber-100 text-amber-700 border border-amber-200",
+  todo: "bg-slate-100 text-slate-700 border border-slate-200",
+  reviewing: "bg-sky-100 text-sky-700 border border-sky-200",
+  qa: "bg-sky-100 text-sky-700 border border-sky-200",
+  backlog: "bg-slate-100 text-slate-700 border border-slate-200",
+  done: "bg-emerald-100 text-emerald-700 border border-emerald-200",
+  completed: "bg-emerald-100 text-emerald-700 border border-emerald-200"
 };
 
 const relativeDueText = (value) => {
@@ -54,18 +54,18 @@ const formatTime = (value) => {
 };
 
 const SectionCard = ({ icon: Icon, title, description, action, children }) => (
-  <div className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl shadow-xl shadow-slate-950/30">
-    <div className="flex items-center justify-between gap-6 border-b border-white/10 px-6 py-5">
-      <div className="flex items-center gap-4">
+  <div className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+    <div className="flex flex-col gap-3 border-b border-gray-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-start gap-4">
         {Icon && (
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-sky-200">
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
             <Icon className="h-5 w-5" />
           </span>
         )}
         <div>
-          <h2 className="text-lg font-semibold text-white">{title}</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
           {description && (
-            <p className="text-sm text-slate-300/80">{description}</p>
+            <p className="text-sm text-gray-500">{description}</p>
           )}
         </div>
       </div>
@@ -87,48 +87,48 @@ const TaskBadge = ({ status }) => {
 };
 
 const TaskList = ({ icon: Icon, title, subtitle, tasks = [], emptyMessage, highlight }) => (
-  <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+  <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
     <div className="flex items-center gap-3">
       {Icon && (
-        <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-white/5 text-sky-200">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
           <Icon className="h-4 w-4" />
         </span>
       )}
       <div>
-        <h3 className="text-sm font-semibold uppercase tracking-widest text-white/80">{title}</h3>
+        <h3 className="text-sm font-semibold uppercase tracking-widest text-gray-700">{title}</h3>
         {subtitle && (
-          <p className="text-sm text-slate-300/70">{subtitle}</p>
+          <p className="text-sm text-gray-500">{subtitle}</p>
         )}
       </div>
     </div>
 
     <div className="mt-4 space-y-3">
       {tasks.length === 0 && (
-        <p className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-6 text-sm text-slate-400">
+        <p className="rounded-xl border border-dashed border-gray-300 bg-white px-4 py-6 text-sm text-gray-500">
           {emptyMessage}
         </p>
       )}
       {tasks.map((task) => (
         <div
           key={task.id || task.title}
-          className="group relative overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.08] via-white/[0.04] to-transparent px-4 py-3 shadow-lg shadow-slate-950/20"
+          className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm"
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-white/95">{task.title || "Untitled task"}</p>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-300/80">
+              <p className="text-sm font-semibold text-gray-900">{task.title || "Untitled task"}</p>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
                 {task.project_name && (
-                  <span className="rounded-full bg-white/5 px-3 py-1 text-[0.7rem] text-slate-200">
+                  <span className="rounded-full bg-gray-100 px-3 py-1 text-[0.7rem] text-gray-700">
                     {task.project_name}
                   </span>
                 )}
                 {task.sprint_name && (
-                  <span className="rounded-full bg-white/5 px-3 py-1 text-[0.7rem] text-slate-200">
+                  <span className="rounded-full bg-gray-100 px-3 py-1 text-[0.7rem] text-gray-700">
                     Sprint: {task.sprint_name}
                   </span>
                 )}
                 {task.end_date && (
-                  <span className="flex items-center gap-1 rounded-full bg-white/5 px-3 py-1 text-[0.7rem] text-slate-200">
+                  <span className="flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-[0.7rem] text-gray-700">
                     <FiCalendar className="h-3 w-3" />
                     {relativeDueText(task.end_date)}
                   </span>
@@ -138,7 +138,7 @@ const TaskList = ({ icon: Icon, title, subtitle, tasks = [], emptyMessage, highl
             <TaskBadge status={task.status} />
           </div>
           {highlight && (
-            <div className="mt-3 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+            <div className="mt-3 rounded-lg bg-amber-100 px-3 py-2 text-xs text-amber-700">
               {highlight}
             </div>
           )}
@@ -149,13 +149,13 @@ const TaskList = ({ icon: Icon, title, subtitle, tasks = [], emptyMessage, highl
 );
 
 const QuickMetric = ({ label, value, caption, icon: Icon }) => (
-  <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4 shadow-lg shadow-slate-950/20">
+  <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
     <div className="flex items-center justify-between">
-      <span className="text-xs font-semibold uppercase tracking-widest text-slate-300/70">{label}</span>
-      {Icon && <Icon className="h-4 w-4 text-sky-200" />}
+      <span className="text-xs font-semibold uppercase tracking-widest text-gray-500">{label}</span>
+      {Icon && <Icon className="h-4 w-4 text-blue-600" />}
     </div>
-    <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
-    {caption && <p className="mt-1 text-xs text-slate-300/70">{caption}</p>}
+    <p className="mt-2 text-2xl font-semibold text-gray-900">{value}</p>
+    {caption && <p className="mt-1 text-xs text-gray-500">{caption}</p>}
   </div>
 );
 
@@ -212,65 +212,61 @@ const DailyMomentumHub = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 pb-16 text-white">
-      <div className="relative">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.15),_rgba(15,23,42,0.95))]" />
-        <div className="absolute inset-x-0 top-0 h-60 bg-[radial-gradient(ellipse_at_top,_rgba(14,165,233,0.3),_transparent)] blur-3xl" />
-        <div className="relative mx-auto flex max-w-6xl flex-col gap-10 px-6 pt-16">
-          <header className="rounded-3xl border border-white/10 bg-white/[0.08] p-8 shadow-2xl shadow-slate-950/30">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.35em] text-sky-200">Daily Momentum Hub</p>
-                <h1 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                  {user?.first_name ? `Good day, ${user.first_name}!` : "Welcome back!"}
-                </h1>
-                <p className="mt-2 text-sm text-slate-200/80">{headerDate}</p>
-                <p className="mt-4 max-w-2xl text-base text-slate-200/80">
-                  Review yesterday, focus today, and keep your learning streak alive.
-                  Everything you need to build momentum lives here.
-                </p>
-              </div>
-              <div className="flex w-full flex-col gap-3 rounded-2xl border border-white/10 bg-slate-950/80 p-5 text-sm text-slate-200 shadow-lg shadow-slate-950/30 sm:w-auto">
-                <div className="flex items-center justify-between text-xs uppercase tracking-widest text-slate-400">
-                  <span>Snapshot</span>
-                  <span>{data?.generated_at ? formatTime(data.generated_at) : "--"}</span>
-                </div>
-                <div className="flex items-center gap-3 text-2xl font-semibold text-white">
-                  <FiTarget className="h-6 w-6 text-sky-200" />
-                  {reflection?.blockers?.length ? `${reflection.blockers.length} blocker${reflection.blockers.length > 1 ? "s" : ""}` : "Clear runway"}
-                </div>
-                <p className="text-xs text-slate-400/90">
-                  {totalMinutes > 0
-                    ? `Yesterday logged ${hours > 0 ? `${hours}h` : ""}${hours > 0 && minutesRemainder > 0 ? " " : ""}${minutesRemainder > 0 ? `${minutesRemainder}m` : ""}.`
-                    : "No time logged yesterday yet."}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => loadMomentum({ refreshing: true })}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-500/90 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-400"
-                >
-                  <FiRefreshCcw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-                  Refresh snapshot
-                </button>
-              </div>
+    <div className="min-h-screen bg-gray-50 pb-16 text-gray-900">
+      <div className="mx-auto max-w-7xl px-4 pt-12 sm:px-6 lg:px-8">
+        <header className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.35em] text-blue-600">Daily Momentum Hub</p>
+              <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                {user?.first_name ? `Good day, ${user.first_name}!` : "Welcome back!"}
+              </h1>
+              <p className="mt-2 text-sm text-gray-500">{headerDate}</p>
+              <p className="mt-4 max-w-2xl text-base text-gray-600">
+                Review yesterday, focus today, and keep your learning streak alive. Everything you need to build momentum lives here.
+              </p>
             </div>
-            {error && (
-              <div className="mt-4 flex items-center gap-2 rounded-xl border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
-                <FiAlertTriangle className="h-4 w-4" />
-                {error}
+            <div className="flex w-full flex-col gap-3 rounded-2xl border border-blue-100 bg-blue-50 p-5 text-sm text-blue-900 shadow-sm sm:w-auto">
+              <div className="flex items-center justify-between text-xs uppercase tracking-widest text-blue-600">
+                <span>Snapshot</span>
+                <span>{data?.generated_at ? formatTime(data.generated_at) : "--"}</span>
               </div>
-            )}
-          </header>
+              <div className="flex items-center gap-3 text-2xl font-semibold text-blue-900">
+                <FiTarget className="h-6 w-6 text-blue-500" />
+                {reflection?.blockers?.length ? `${reflection.blockers.length} blocker${reflection.blockers.length > 1 ? "s" : ""}` : "Clear runway"}
+              </div>
+              <p className="text-xs text-blue-700">
+                {totalMinutes > 0
+                  ? `Yesterday logged ${hours > 0 ? `${hours}h` : ""}${hours > 0 && minutesRemainder > 0 ? " " : ""}${minutesRemainder > 0 ? `${minutesRemainder}m` : ""}.`
+                  : "No time logged yesterday yet."}
+              </p>
+              <button
+                type="button"
+                onClick={() => loadMomentum({ refreshing: true })}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500"
+              >
+                <FiRefreshCcw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+                Refresh snapshot
+              </button>
+            </div>
+          </div>
+          {error && (
+            <div className="mt-4 flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              <FiAlertTriangle className="h-4 w-4" />
+              {error}
+            </div>
+          )}
+        </header>
 
-          {loading ? (
-            <div className="grid gap-6 pb-16 lg:grid-cols-2">
-              {Array.from({ length: 4 }).map((_, idx) => (
-                <div key={idx} className="h-72 animate-pulse rounded-3xl border border-white/10 bg-white/[0.04]" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid gap-8 pb-16 xl:grid-cols-3">
-              <div className="space-y-8 xl:col-span-2">
+        {loading ? (
+          <div className="grid gap-6 py-12 lg:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <div key={idx} className="h-64 animate-pulse rounded-2xl border border-gray-200 bg-white" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid gap-8 py-12 lg:grid-cols-[minmax(0,_2fr)_minmax(0,_1fr)]">
+            <div className="space-y-8">
                 <SectionCard
                   icon={FiTarget}
                   title="Morning Briefing"
@@ -300,34 +296,34 @@ const DailyMomentumHub = () => {
                       tasks={data?.morning_briefing?.needs_triage}
                       emptyMessage="Every task is assigned and scheduled."
                     />
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <div className="rounded-xl border border-gray-200 bg-white p-4">
                       <div className="flex items-center gap-3">
-                        <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-white/5 text-sky-200">
+                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
                           <FiClock className="h-4 w-4" />
                         </span>
                         <div>
-                          <h3 className="text-sm font-semibold uppercase tracking-widest text-white/80">Today's Meetings</h3>
-                          <p className="text-sm text-slate-300/70">Auto-sourced from your work logs tagged as meetings.</p>
+                          <h3 className="text-sm font-semibold uppercase tracking-widest text-gray-700">Today's Meetings</h3>
+                          <p className="text-sm text-gray-500">Auto-sourced from your work logs tagged as meetings.</p>
                         </div>
                       </div>
                       <div className="mt-4 space-y-3">
                         {(data?.morning_briefing?.meetings || []).length === 0 ? (
-                          <p className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-6 text-sm text-slate-400">
+                          <p className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-500">
                             No meetings logged for today—enjoy the deep work window.
                           </p>
                         ) : (
                           data.morning_briefing.meetings.map((meeting) => (
                             <div
                               key={meeting.id}
-                              className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-slate-100"
+                              className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700"
                             >
                               <div>
-                                <p className="font-semibold text-white">{meeting.title}</p>
+                                <p className="font-semibold text-gray-900">{meeting.title}</p>
                                 {meeting.category && (
-                                  <p className="text-xs text-slate-300/70">{meeting.category}</p>
+                                  <p className="text-xs text-gray-500">{meeting.category}</p>
                                 )}
                               </div>
-                              <div className="text-right text-xs text-slate-300/80">
+                              <div className="text-right text-xs text-gray-500">
                                 <p>{formatTime(meeting.start_time)} – {formatTime(meeting.end_time)}</p>
                               </div>
                             </div>
@@ -343,17 +339,17 @@ const DailyMomentumHub = () => {
                   title="Rapid Work Logging"
                   description="Spin up a new entry in seconds with your most used categories and tags."
                   action={data?.rapid_logging?.quick_log_template && (
-                    <div className="flex flex-col gap-2 text-xs text-slate-300/70">
-                      <span className="font-semibold uppercase tracking-widest text-slate-200">Smart defaults</span>
-                      <div className="flex flex-wrap items-center gap-3 text-slate-200">
+                    <div className="flex flex-col gap-2 text-xs text-gray-500">
+                      <span className="font-semibold uppercase tracking-widest text-gray-700">Smart defaults</span>
+                      <div className="flex flex-wrap items-center gap-3 text-gray-600">
                         {data.rapid_logging.quick_log_template.default_start_time && (
-                          <span className="flex items-center gap-2 rounded-lg bg-white/10 px-3 py-1">
+                          <span className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1 text-blue-700">
                             <FiClock className="h-3.5 w-3.5" />
                             {formatTime(data.rapid_logging.quick_log_template.default_start_time)}
                           </span>
                         )}
                         {data.rapid_logging.quick_log_template.default_category_id && (
-                          <span className="flex items-center gap-2 rounded-lg bg-white/10 px-3 py-1">
+                          <span className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1 text-blue-700">
                             <FiTag className="h-3.5 w-3.5" />
                             Favorite category ready
                           </span>
@@ -363,47 +359,47 @@ const DailyMomentumHub = () => {
                   )}
                 >
                   <div className="grid gap-4 md:grid-cols-2">
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                      <h3 className="text-xs font-semibold uppercase tracking-widest text-white/80">Top Categories</h3>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4">
+                      <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-700">Top Categories</h3>
                       <div className="mt-4 space-y-3">
                         {(data?.rapid_logging?.top_categories || []).length === 0 ? (
-                          <p className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-6 text-sm text-slate-400">
+                          <p className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-500">
                             Start logging work to see your go-to categories.
                           </p>
                         ) : (
                           data.rapid_logging.top_categories.map((category) => (
                             <div
                               key={category.id || category.name}
-                              className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.06] px-4 py-3"
+                              className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3"
                             >
                               <div>
-                                <p className="text-sm font-semibold text-white">{category.name}</p>
-                                <p className="text-xs text-slate-300/70">{category.count} logs in the last 30 days</p>
+                                <p className="text-sm font-semibold text-gray-900">{category.name}</p>
+                                <p className="text-xs text-gray-500">{category.count} logs in the last 30 days</p>
                               </div>
-                              <span className="text-lg font-semibold text-slate-200">#{category.count}</span>
+                              <span className="text-lg font-semibold text-gray-700">#{category.count}</span>
                             </div>
                           ))
                         )}
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                      <h3 className="text-xs font-semibold uppercase tracking-widest text-white/80">Top Tags</h3>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4">
+                      <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-700">Top Tags</h3>
                       <div className="mt-4 space-y-3">
                         {(data?.rapid_logging?.top_tags || []).length === 0 ? (
-                          <p className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-6 text-sm text-slate-400">
+                          <p className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-500">
                             Tag your work to unlock quick filters.
                           </p>
                         ) : (
                           data.rapid_logging.top_tags.map((tag) => (
                             <div
                               key={tag.id || tag.name}
-                              className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.06] px-4 py-3"
+                              className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3"
                             >
-                              <div className="flex items-center gap-2 text-sm text-white">
-                                <FiTag className="h-4 w-4 text-sky-200" />
+                              <div className="flex items-center gap-2 text-sm text-gray-700">
+                                <FiTag className="h-4 w-4 text-blue-500" />
                                 {tag.name}
                               </div>
-                              <span className="text-xs uppercase tracking-widest text-slate-300/70">{tag.count} uses</span>
+                              <span className="text-xs uppercase tracking-widest text-gray-500">{tag.count} uses</span>
                             </div>
                           ))
                         )}
@@ -411,12 +407,12 @@ const DailyMomentumHub = () => {
                     </div>
                   </div>
                   {data?.rapid_logging?.suggestions?.recent_log_titles?.length > 0 && (
-                    <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-                      <span className="text-xs font-semibold uppercase tracking-widest text-slate-300/70">Recent sessions</span>
-                      <ul className="mt-3 space-y-2 text-sm text-slate-200">
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                      <span className="text-xs font-semibold uppercase tracking-widest text-gray-600">Recent sessions</span>
+                      <ul className="mt-3 space-y-2 text-sm text-gray-700">
                         {data.rapid_logging.suggestions.recent_log_titles.map((title) => (
                           <li key={title} className="flex items-center gap-2">
-                            <FiArrowRightCircle className="h-4 w-4 text-sky-200" />
+                            <FiArrowRightCircle className="h-4 w-4 text-blue-500" />
                             {title}
                           </li>
                         ))}
@@ -432,23 +428,23 @@ const DailyMomentumHub = () => {
                   title="Learning Nudge"
                   description="Keep your spaced repetition alive with a single click."
                   action={data?.learning_nudge?.total_due ? (
-                    <div className="rounded-xl bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-sky-100">
+                    <div className="rounded-xl bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-blue-700">
                       {data.learning_nudge.total_due} due today
                     </div>
                   ) : null}
                 >
                   {data?.learning_nudge?.due_card ? (
                     <div className="space-y-4">
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-5">
-                        <p className="text-xs uppercase tracking-[0.3em] text-slate-300/70">{data.learning_nudge.due_card.collection_name || data.learning_nudge.due_card.card_type}</p>
-                        <h3 className="mt-3 text-lg font-semibold text-white">
+                      <div className="rounded-xl border border-gray-200 bg-white p-5">
+                        <p className="text-xs uppercase tracking-[0.3em] text-gray-500">{data.learning_nudge.due_card.collection_name || data.learning_nudge.due_card.card_type}</p>
+                        <h3 className="mt-3 text-lg font-semibold text-gray-900">
                           {data.learning_nudge.due_card.title || "Review this card"}
                         </h3>
                         {data.learning_nudge.due_card.prompt && (
-                          <p className="mt-3 text-sm text-slate-200/80">{data.learning_nudge.due_card.prompt}</p>
+                          <p className="mt-3 text-sm text-gray-600">{data.learning_nudge.due_card.prompt}</p>
                         )}
                         {data.learning_nudge.due_card.answer && (
-                          <p className="mt-4 rounded-xl bg-slate-950/60 px-4 py-3 text-sm text-slate-200/90">
+                          <p className="mt-4 rounded-xl bg-blue-50 px-4 py-3 text-sm text-blue-900">
                             {data.learning_nudge.due_card.answer}
                           </p>
                         )}
@@ -456,14 +452,14 @@ const DailyMomentumHub = () => {
                       <button
                         type="button"
                         onClick={() => handleMarkReviewed(data.learning_nudge.due_card.id)}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-400"
                       >
                         <FiCheckCircle className="h-4 w-4" />
                         Mark reviewed and reschedule
                       </button>
                     </div>
                   ) : (
-                    <p className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-6 text-sm text-slate-400">
+                    <p className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-500">
                       You're all caught up! Add new knowledge bookmarks to keep the streak going.
                     </p>
                   )}
@@ -490,8 +486,8 @@ const DailyMomentumHub = () => {
                   </div>
 
                   {reflection?.yesterday?.note && (
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-slate-200">
-                      <span className="text-xs font-semibold uppercase tracking-widest text-slate-300/70">Yesterday's note</span>
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+                      <span className="text-xs font-semibold uppercase tracking-widest text-gray-600">Yesterday's note</span>
                       <p className="mt-2 whitespace-pre-line leading-relaxed">{reflection.yesterday.note}</p>
                     </div>
                   )}
@@ -504,32 +500,32 @@ const DailyMomentumHub = () => {
                       tasks={reflection?.blockers}
                       emptyMessage="No blockers flagged—keep pushing forward."
                     />
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <div className="rounded-xl border border-gray-200 bg-white p-4">
                       <div className="flex items-center gap-3">
-                        <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-white/5 text-sky-200">
+                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
                           <FiRefreshCcw className="h-4 w-4" />
                         </span>
                         <div>
-                          <h3 className="text-sm font-semibold uppercase tracking-widest text-white/80">Open Logs</h3>
-                          <p className="text-sm text-slate-300/70">Finish these entries by adding outcomes or time spent.</p>
+                          <h3 className="text-sm font-semibold uppercase tracking-widest text-gray-700">Open Logs</h3>
+                          <p className="text-sm text-gray-500">Finish these entries by adding outcomes or time spent.</p>
                         </div>
                       </div>
                       <div className="mt-4 space-y-3">
                         {(reflection?.unfinished_logs || []).length === 0 ? (
-                          <p className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-6 text-sm text-slate-400">
+                          <p className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-500">
                             All caught up—no unfinished logs for today.
                           </p>
                         ) : (
                           reflection.unfinished_logs.map((log) => (
                             <div
                               key={log.id || log.title}
-                              className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-slate-200"
+                              className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700"
                             >
                               <div>
-                                <p className="font-semibold text-white">{log.title}</p>
-                                <p className="text-xs text-slate-300/70">{formatTime(log.start_time)} – {formatTime(log.end_time)}</p>
+                                <p className="font-semibold text-gray-900">{log.title}</p>
+                                <p className="text-xs text-gray-500">{formatTime(log.start_time)} – {formatTime(log.end_time)}</p>
                               </div>
-                              <span className="text-xs uppercase tracking-widest text-amber-200">Needs wrap-up</span>
+                              <span className="text-xs uppercase tracking-widest text-amber-600">Needs wrap-up</span>
                             </div>
                           ))
                         )}
