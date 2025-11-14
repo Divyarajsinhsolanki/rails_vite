@@ -538,7 +538,6 @@ const DailyMomentumHub = () => {
           )}
         </div>
       </div>
-    </div>
   );
 };
 
