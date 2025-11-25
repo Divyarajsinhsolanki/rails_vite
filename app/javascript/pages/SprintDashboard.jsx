@@ -66,10 +66,16 @@ export default function SprintDashboard() {
             const start = new Date(s.start_date);
             const end = new Date(s.end_date);
             return reference >= start && reference <= end;
-          }) || data[0];
+          });
 
-          setSprint(current);
-          setSprintId(prev => (prev !== null ? prev : current.id));
+          const mostRecentPast = data
+            .filter(s => new Date(s.end_date) < reference)
+            .slice(-1)[0];
+
+          const sprintToSelect = current || mostRecentPast || data[0];
+
+          setSprint(sprintToSelect);
+          setSprintId(prev => (prev !== null ? prev : sprintToSelect.id));
         } else {
           setSprintId(null);
         }
