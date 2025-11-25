@@ -64,7 +64,7 @@ class Api::ProjectsController < Api::BaseController
       status: project.status,
       sheet_integration_enabled: project.sheet_integration_enabled,
       sheet_id: project.sheet_id,
-      qa_mode_enabled: project.qa_mode_enabled,
+      qa_mode_enabled: project.try(:qa_mode_enabled) || false,
       users: project.project_users.map do |pu|
         {
           id: pu.user_id,
