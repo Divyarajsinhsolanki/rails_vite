@@ -14,7 +14,6 @@ class Project < ApplicationRecord
   }, _default: 'running'
 
   validates :name, presence: true
-  validates :end_date, presence: true
   validate :end_date_not_before_start_date
 
   before_save :set_status_from_dates
