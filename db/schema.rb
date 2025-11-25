@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_02_004700) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_02_004800) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -163,6 +163,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_02_004700) do
     t.string "status", default: "running"
     t.boolean "sheet_integration_enabled", default: false
     t.string "sheet_id"
+    t.boolean "qa_mode_enabled", default: false, null: false
     t.index ["owner_id"], name: "index_projects_on_owner_id"
   end
 

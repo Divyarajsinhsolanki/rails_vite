@@ -299,6 +299,7 @@ const Projects = () => {
     const [projectTaskStats, setProjectTaskStats] = useState(() => ({ ...INITIAL_TASK_STATS }));
     const [isProjectTasksLoading, setIsProjectTasksLoading] = useState(false);
     const [projectTasksError, setProjectTasksError] = useState(false);
+    const [qaViewActive, setQaViewActive] = useState(false);
 
     // Form States (for Create/Edit Project)
     const [projectForm, setProjectForm] = useState({
@@ -308,6 +309,7 @@ const Projects = () => {
         end_date: "",
         sheet_integration_enabled: false,
         sheet_id: "",
+        qa_mode_enabled: false,
     });
     const [editingId, setEditingId] = useState(null);
     const [isCreatingNewProject, setIsCreatingNewProject] = useState(false); // Flag for creating a new project
@@ -356,6 +358,18 @@ const Projects = () => {
     }, [loadProjects]);
 
     useEffect(() => {
+        if (!selectedProjectId) {
+            setQaViewActive(false);
+            return;
+        }
+
+        const currentProject = projects.find((proj) => proj.id === selectedProjectId);
+        if (!currentProject?.qa_mode_enabled && qaViewActive) {
+            setQaViewActive(false);
+        }
+    }, [projects, selectedProjectId, qaViewActive]);
+
+    useEffect(() => {
         const resetTaskState = () => {
             setProjectTasks([]);
             setProjectTaskStats({ ...INITIAL_TASK_STATS });
@@ -368,6 +382,7 @@ const Projects = () => {
             return;
         }
 
+        const currentProject = projects.find((proj) => proj.id === selectedProjectId);
         let isMounted = true;
         const computeTaskStats = (tasks) => {
             const stats = { ...INITIAL_TASK_STATS };
@@ -420,7 +435,11 @@ const Projects = () => {
             setProjectTasks([]);
             setProjectTaskStats({ ...INITIAL_TASK_STATS });
             try {
-                const { data } = await SchedulerAPI.getTasks({ project_id: selectedProjectId });
+                const params = { project_id: selectedProjectId };
+                if (qaViewActive && currentProject?.qa_mode_enabled) {
+                    params.type = "qa";
+                }
+                const { data } = await SchedulerAPI.getTasks(params);
                 if (!isMounted) return;
                 const tasks = Array.isArray(data) ? data : [];
                 setProjectTasks(tasks);
@@ -443,7 +462,7 @@ const Projects = () => {
         return () => {
             isMounted = false;
         };
-    }, [selectedProjectId]);
+    }, [selectedProjectId, qaViewActive, projects]);
 
     // Event Handlers
     const handleFormChange = (e) =>
@@ -470,6 +489,7 @@ const Projects = () => {
             end_date: "",
             sheet_integration_enabled: false,
             sheet_id: "",
+            qa_mode_enabled: false,
         });
         setNotification(null); // Clear any form-related notifications
     };
@@ -508,6 +528,7 @@ const Projects = () => {
             end_date: project.end_date || "",
             sheet_integration_enabled: project.sheet_integration_enabled || false,
             sheet_id: project.sheet_id || "",
+            qa_mode_enabled: project.qa_mode_enabled || false,
         });
         setSelectedProjectId(project.id); // Ensure the project is selected in the sidebar
         setNotification(null);
@@ -524,6 +545,7 @@ const Projects = () => {
             end_date: "",
             sheet_integration_enabled: false,
             sheet_id: "",
+            qa_mode_enabled: false,
         });
         setNotification(null);
     }
@@ -675,6 +697,7 @@ const Projects = () => {
     const projectStatuses = ['running', 'upcoming', 'completed']; // Define order for display
 
     const selectedProject = projects.find((p) => p.id === selectedProjectId);
+    const taskScopeLabel = qaViewActive ? "QA tasks" : "project tasks";
     const activeTaskCount = projectTaskStats.todo + projectTaskStats.inProgress;
     const completionRate = projectTaskStats.total
         ? Math.round((projectTaskStats.completed / projectTaskStats.total) * 100)
@@ -814,6 +837,20 @@ const Projects = () => {
                                         />
                                     </div>
                                 </div>
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            name="qa_mode_enabled"
+                                            id="qa_mode_enabled"
+                                            checked={projectForm.qa_mode_enabled}
+                                            onChange={handleFormChange}
+                                            className="h-5 w-5 text-[var(--theme-color)] rounded border-gray-300 focus:ring-[var(--theme-color)]"
+                                        />
+                                        <label htmlFor="qa_mode_enabled" className="text-sm font-medium text-gray-700">Enable QA Mode</label>
+                                    </div>
+                                    <p className="text-xs text-gray-500 ml-7">Adds a QA view toggle to the project so QA-assigned tasks, scheduler items, and stats can be reviewed separately.</p>
+                                </div>
                                 <div className="flex items-center gap-2">
                                     <input
                                         type="checkbox"
@@ -899,6 +936,37 @@ const Projects = () => {
                                                 </span>
                                             )}
                                         </div>
+                                        {selectedProject.qa_mode_enabled && (
+                                            <div className="flex flex-wrap items-center gap-3 text-sm text-gray-700">
+                                                <button
+                                                    type="button"
+                                                    role="switch"
+                                                    aria-checked={qaViewActive}
+                                                    onClick={() => setQaViewActive((prev) => !prev)}
+                                                    className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors duration-200 shadow-sm ${
+                                                        qaViewActive ? 'bg-purple-600' : 'bg-slate-300'
+                                                    }`}
+                                                >
+                                                    <span
+                                                        className={`inline-block h-6 w-6 transform rounded-full bg-white shadow transition ${
+                                                            qaViewActive ? 'translate-x-8' : 'translate-x-1'
+                                                        }`}
+                                                    />
+                                                </button>
+                                                <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${
+                                                    qaViewActive
+                                                        ? 'border-purple-200 bg-purple-50 text-purple-700'
+                                                        : 'border-slate-200 bg-slate-50 text-slate-700'
+                                                }`}>
+                                                    QA mode {qaViewActive ? 'enabled' : 'available'}
+                                                </span>
+                                                <span className="text-sm text-gray-500">
+                                                    {qaViewActive
+                                                        ? 'Showing QA-assigned tasks, scheduler items, and statistics.'
+                                                        : 'Switch on to focus on QA ownership and progress.'}
+                                                </span>
+                                            </div>
+                                        )}
                                         {selectedProject.sheet_integration_enabled && selectedProject.sheet_id && (
                                             <a
                                                 href={`https://docs.google.com/spreadsheets/d/${selectedProject.sheet_id}`}
@@ -938,23 +1006,31 @@ const Projects = () => {
                                         <p className="text-xs text-slate-500">Collaborators assigned to this project.</p>
                                     </div>
                                     <div className="rounded-xl border border-slate-200 bg-white/80 p-4 shadow-sm">
-                                        <p className="text-xs uppercase tracking-wide text-slate-500">Active tasks</p>
+                                        <p className="text-xs uppercase tracking-wide text-slate-500">
+                                            {qaViewActive ? 'Active QA tasks' : 'Active tasks'}
+                                        </p>
                                         <div className="mt-2 flex items-center justify-between">
                                             <span className="text-2xl font-semibold text-slate-900">{activeTaskDisplay}</span>
                                             <FiActivity className="h-6 w-6 text-[var(--theme-color)]" />
                                         </div>
                                         <p className="text-xs text-slate-500">
-                                            {isProjectTasksLoading ? 'Refreshing task data…' : 'Across to-do and in-progress states.'}
+                                            {isProjectTasksLoading
+                                                ? 'Refreshing task data…'
+                                                : qaViewActive
+                                                    ? 'Across QA to-do and in-progress states.'
+                                                    : 'Across to-do and in-progress states.'}
                                         </p>
                                     </div>
                                     <div className="rounded-xl border border-slate-200 bg-white/80 p-4 shadow-sm">
-                                        <p className="text-xs uppercase tracking-wide text-slate-500">Completion</p>
+                                        <p className="text-xs uppercase tracking-wide text-slate-500">
+                                            {qaViewActive ? 'QA completion' : 'Completion'}
+                                        </p>
                                         <div className="mt-2 flex items-center justify-between">
                                             <span className="text-2xl font-semibold text-slate-900">{completionDisplay}</span>
                                             <FiCheckCircle className="h-6 w-6 text-[var(--theme-color)]" />
                                         </div>
                                         {!isProjectTasksLoading && projectTaskStats.total > 0 ? (
-                                            <p className="text-xs text-slate-500">{projectTaskStats.completed} of {projectTaskStats.total} tasks completed.</p>
+                                            <p className="text-xs text-slate-500">{projectTaskStats.completed} of {projectTaskStats.total} {taskScopeLabel} completed.</p>
                                         ) : (
                                             <p className="text-xs text-slate-500">Completion rate updates as tasks change.</p>
                                         )}
@@ -1145,6 +1221,18 @@ const Projects = () => {
                                     </div>
                                 </div>
                                 <div className="space-y-6 xl:sticky xl:top-8">
+                                    {selectedProject.qa_mode_enabled && (
+                                        <div
+                                            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold ${
+                                                qaViewActive
+                                                    ? 'border-purple-200 bg-purple-50 text-purple-700'
+                                                    : 'border-slate-200 bg-slate-50 text-slate-700'
+                                            }`}
+                                        >
+                                            <FiActivity className={qaViewActive ? 'text-purple-600' : 'text-slate-500'} />
+                                            <span>{qaViewActive ? 'QA mode metrics' : 'Delivery metrics'}</span>
+                                        </div>
+                                    )}
                                     <ProjectHealthCard
                                         stats={projectTaskStats}
                                         loading={isProjectTasksLoading}
