@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FiEdit2, FiTrash2, FiPlus, FiX, FiCalendar, FiChevronLeft, FiChevronRight, FiAlertTriangle } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function SprintManager({ onSprintChange, projectId, projectName, selectedDate, isVisible = true }) {
+export default function SprintManager({ onSprintChange, projectId, projectName, selectedDate, sprintId, isVisible = true }) {
   const [sprints, setSprints] = useState([]);
   const [currentSprint, setCurrentSprint] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -18,7 +18,7 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
     fetch(`/api/sprints.json${query}`)
       .then(res => res.json())
       .then(data => {
-        const sortedData = data?.sort((a, b) => new Date(a.start_date) - new Date(b.start_date)) || [];
+        const sortedData = data?.sort((a, b) => new Date(a.end_date) - new Date(b.end_date)) || [];
         const reference = selectedDate ? new Date(selectedDate) : new Date();
         const activeSprint = sortedData.find(sprint => {
           const startDate = new Date(sprint.start_date);
@@ -26,15 +26,34 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
           endDate.setHours(23, 59, 59, 999);
           return reference >= startDate && reference <= endDate;
         });
+        const mostRecentPast = sortedData
+          .filter(s => new Date(s.end_date) < reference)
+          .sort((a, b) => new Date(b.end_date) - new Date(a.end_date))[0];
 
         setSprints(sortedData);
-        const sprintToSelect = activeSprint || (sortedData.length > 0 ? sortedData[0] : null);
+
+        const preferredSprint = sprintId
+          ? sortedData.find(s => s.id === Number(sprintId))
+          : null;
+
+        const sprintToSelect = preferredSprint || activeSprint || mostRecentPast || (sortedData.length > 0 ? sortedData[0] : null);
         setCurrentSprint(sprintToSelect);
-        if (sprintToSelect && onSprintChange) onSprintChange(sprintToSelect);
+
+        if (!sprintId && sprintToSelect && onSprintChange) {
+          onSprintChange(sprintToSelect);
+        }
       })
       .catch(err => console.error("Error fetching sprints:", err))
       .finally(() => setLoading(false));
-  }, [projectId, selectedDate]);
+  }, [projectId, selectedDate, sprintId]);
+
+  useEffect(() => {
+    if (!sprintId || !sprints.length) return;
+    const matchingSprint = sprints.find(s => s.id === Number(sprintId));
+    if (matchingSprint && (!currentSprint || currentSprint.id !== matchingSprint.id)) {
+      setCurrentSprint(matchingSprint);
+    }
+  }, [sprintId, sprints, currentSprint]);
 
   // Scroll to active sprint on load or change
   const scrollSprintIntoView = (sprintId, behavior = 'smooth') => {
