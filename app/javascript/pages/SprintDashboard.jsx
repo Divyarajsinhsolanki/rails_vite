@@ -59,17 +59,27 @@ export default function SprintDashboard() {
     fetch(`/api/sprints.json${query}`)
       .then(res => res.json())
       .then(data => {
-        setSprints(data || []);
-        if (data && data.length) {
+        const list = Array.isArray(data) ? data : [];
+        const sorted = [...list].sort((a, b) => new Date(a.end_date) - new Date(b.end_date));
+
+        setSprints(sorted);
+
+        if (sorted.length) {
           const reference = selectedDate;
-          const current = data.find(s => {
+          const current = sorted.find(s => {
             const start = new Date(s.start_date);
             const end = new Date(s.end_date);
             return reference >= start && reference <= end;
-          }) || data[0];
+          });
 
-          setSprint(current);
-          setSprintId(prev => (prev !== null ? prev : current.id));
+          const mostRecentPast = sorted
+            .filter(s => new Date(s.end_date) < reference)
+            .sort((a, b) => new Date(b.end_date) - new Date(a.end_date))[0];
+
+          const sprintToSelect = current || mostRecentPast || sorted[0];
+
+          setSprint(sprintToSelect || null);
+          setSprintId(sprintToSelect ? sprintToSelect.id : null);
         } else {
           setSprintId(null);
         }
