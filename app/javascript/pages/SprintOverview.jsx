@@ -813,6 +813,9 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
         try {
             setProcessing(true);
             await SchedulerAPI.importSprintTasks(selectedSprintId);
+            const res = await SchedulerAPI.getTasks({ sprint_id: selectedSprintId, project_id: projectId });
+            const mapped = res.data.map(mapTask);
+            setTasks(mapped);
             toast.success('Imported tasks from sheet');
         } catch (e) {
             toast.error('Import failed');
