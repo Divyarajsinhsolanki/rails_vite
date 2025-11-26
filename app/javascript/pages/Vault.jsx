@@ -612,78 +612,82 @@ const Vault = () => {
           </div>
         </div>
 
-        <div className="mt-4 space-y-3">
-          {availableCategories.length > 0 && (
-            <div>
-              <div className="text-sm font-medium text-gray-600 mb-2">Filter by category</div>
-              <div className="flex flex-wrap gap-2">
-                {availableCategories.map((category) => {
-                  const isActive = selectedCategories.includes(category);
-                  return (
-                    <button
-                      key={category}
-                      type="button"
-                      onClick={() => toggleCategory(category)}
-                      className={`inline-flex items-center px-3 py-1 rounded-full border text-sm transition-colors ${
-                        isActive
-                          ? "bg-blue-100 border-blue-500 text-blue-700"
-                          : "bg-white border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600"
-                      }`}
-                    >
-                      {category}
-                    </button>
-                  );
-                })}
+        <div className="mt-4 grid gap-4 lg:grid-cols-[2fr_1fr]">
+          <div className="space-y-3">
+            {availableCategories.length > 0 && (
+              <div>
+                <div className="text-sm font-medium text-gray-600 mb-2">Filter by category</div>
+                <div className="flex flex-wrap gap-2">
+                  {availableCategories.map((category) => {
+                    const isActive = selectedCategories.includes(category);
+                    return (
+                      <button
+                        key={category}
+                        type="button"
+                        onClick={() => toggleCategory(category)}
+                        className={`inline-flex items-center px-3 py-1 rounded-full border text-sm transition-colors ${
+                          isActive
+                            ? "bg-blue-100 border-blue-500 text-blue-700"
+                            : "bg-white border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600"
+                        }`}
+                      >
+                        {category}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {availableTags.length > 0 && (
-            <div>
-              <div className="text-sm font-medium text-gray-600 mb-2">Filter by tag</div>
-              <div className="flex flex-wrap gap-2">
-                {availableTags.map((tag) => {
-                  const isActive = selectedTags.includes(tag);
-                  return (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => toggleTag(tag)}
-                      className={`inline-flex items-center px-3 py-1 rounded-full border text-sm transition-colors ${
-                        isActive
-                          ? "bg-purple-100 border-purple-500 text-purple-700"
-                          : "bg-white border-gray-300 text-gray-600 hover:border-purple-400 hover:text-purple-600"
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  );
-                })}
+            {availableTags.length > 0 && (
+              <div>
+                <div className="text-sm font-medium text-gray-600 mb-2">Filter by tag</div>
+                <div className="flex flex-wrap gap-2">
+                  {availableTags.map((tag) => {
+                    const isActive = selectedTags.includes(tag);
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => toggleTag(tag)}
+                        className={`inline-flex items-center px-3 py-1 rounded-full border text-sm transition-colors ${
+                          isActive
+                            ? "bg-purple-100 border-purple-500 text-purple-700"
+                            : "bg-white border-gray-300 text-gray-600 hover:border-purple-400 hover:text-purple-600"
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap items-center gap-3">
-              <label htmlFor="vault-sort" className="text-sm font-medium text-gray-600">
-                Sort by
-              </label>
-              <select
-                id="vault-sort"
-                value={sortOrder}
-                onChange={handleSortChange}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                {SORT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+          <div className="space-y-3 lg:pl-4 lg:border-l lg:border-gray-200">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+              <div className="flex flex-wrap items-center gap-3 justify-end">
+                <label htmlFor="vault-sort" className="text-sm font-medium text-gray-600">
+                  Sort by
+                </label>
+                <select
+                  id="vault-sort"
+                  value={sortOrder}
+                  onChange={handleSortChange}
+                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {SORT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {hasActiveFilters && (
-              <div className="flex flex-wrap items-center gap-2 text-sm">
+              <div className="flex flex-wrap items-center gap-2 text-sm justify-end">
                 <span className="text-gray-600 font-medium">Active filters:</span>
                 {selectedCategories.map((category) => (
                   <button
