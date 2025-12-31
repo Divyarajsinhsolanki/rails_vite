@@ -21,7 +21,14 @@ class Api::ContactsController < ApplicationController
   end
 
   def valid_captcha?
-    params[:contact][:captcha_answer].to_i ==
-      params[:contact][:captcha_num1].to_i + params[:contact][:captcha_num2].to_i
+    contact_params = params[:contact]
+
+    answer = contact_params&.dig(:captcha_answer)
+    num1 = contact_params&.dig(:captcha_num1)
+    num2 = contact_params&.dig(:captcha_num2)
+
+    return false if [answer, num1, num2].any?(&:blank?)
+
+    answer.to_i == num1.to_i + num2.to_i
   end
 end
