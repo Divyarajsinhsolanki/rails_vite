@@ -186,9 +186,18 @@ const Users = () => {
             <div key={user.id} className="bg-white/60 backdrop-blur-md border border-gray-200 shadow-2xl shadow-[rgb(var(--theme-color-rgb)/0.1)] rounded-3xl p-6 flex flex-col items-center text-center transition-all duration-300 hover:bg-white/80 hover:shadow-[rgb(var(--theme-color-rgb)/0.2)]">
               {editingId === user.id ? (
                 <form onSubmit={handleUpdate} className="w-full flex flex-col gap-3" encType="multipart/form-data">
-                  <input type="text" name="first_name" value={formData.first_name} onChange={handleChange} placeholder="First Name" className={inputBaseStyle} required />
-                  <input type="text" name="last_name" value={formData.last_name} onChange={handleChange} placeholder="Last Name" className={inputBaseStyle} required />
-                  <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" className={inputBaseStyle} required />
+                  <div className="text-left">
+                    <label className="text-xs font-semibold text-gray-700 mb-1 block required-label">First Name</label>
+                    <input type="text" name="first_name" value={formData.first_name} onChange={handleChange} placeholder="First Name" className={inputBaseStyle} required />
+                  </div>
+                  <div className="text-left">
+                    <label className="text-xs font-semibold text-gray-700 mb-1 block required-label">Last Name</label>
+                    <input type="text" name="last_name" value={formData.last_name} onChange={handleChange} placeholder="Last Name" className={inputBaseStyle} required />
+                  </div>
+                  <div className="text-left">
+                    <label className="text-xs font-semibold text-gray-700 mb-1 block required-label">Email</label>
+                    <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" className={inputBaseStyle} required />
+                  </div>
                   <input type="date" name="date_of_birth" value={formData.date_of_birth || ''} onChange={handleChange} className={`${inputBaseStyle} text-gray-500`} />
                   <div className={uploadContainerStyle}>
                     <label

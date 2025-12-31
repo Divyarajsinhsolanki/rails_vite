@@ -45,6 +45,8 @@ Rails.application.routes.draw do
     post 'login', to: 'auth#login'
     delete 'logout', to: 'auth#logout'
     post   'refresh',       to: 'auth#refresh'
+    post 'password/forgot', to: 'passwords#create'
+    post 'password/reset',  to: 'passwords#update'
     get 'sprints/last', to: 'sprints#last'  
     get 'view_profile', to: 'auth#view_profile'
     post 'update_profile', to: 'auth#update_profile'
@@ -99,6 +101,7 @@ Rails.application.routes.draw do
     resources :task_logs, only: [:index, :create, :update, :destroy]
 
     resources :items, only: [:index, :create, :update, :destroy]
+    resources :issues, only: [:index, :create, :update, :destroy]
 
     resources :knowledge_bookmarks, only: [:index, :create, :update, :destroy] do
       member do

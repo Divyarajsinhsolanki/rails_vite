@@ -1,25 +1,31 @@
 import React, { useEffect, useState } from 'react';
 import { fetchSheetData } from '../components/api';
 
-const Sheet = ({ sheetName, projectId }) => {
+const Sheet = ({ sheetName, projectId, sheetId }) => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const load = async () => {
+      if (!sheetId) {
+        setError("Sheet integration is enabled, but no Sheet ID is configured. Add a Sheet ID in project settings.");
+        setLoading(false);
+        return;
+      }
+
       try {
         const params = sheetName ? { sheet: sheetName, project_id: projectId } : { project_id: projectId };
         const { data } = await fetchSheetData(params);
         setRows(data.rows || []);
       } catch (err) {
-        setError(err.response?.data?.error || 'Failed to load data');
+        setError(err.response?.data?.error || 'Unable to load sheet data. Please confirm the Sheet ID and permissions.');
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, [sheetName, projectId]);
+  }, [sheetName, projectId, sheetId]);
 
   if (loading) return <p className="text-center">Loading...</p>;
   if (error) return <p className="text-center text-red-600">{error}</p>;

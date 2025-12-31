@@ -20,6 +20,19 @@ const mapTask = (t) => ({
     order: t.order,
     startDate: t.start_date || t.date,
     endDate: t.end_date || t.due_date || t.date,
+    qa_assigned: t.qa_assigned,
+    internal_qa: t.internal_qa,
+    blocker: !!t.blocker,
+    demo: !!t.demo,
+    swag_point: t.swag_point,
+    story_point: t.story_point,
+    dev_hours: t.dev_hours,
+    code_review_hours: t.code_review_hours,
+    dev_to_qa_hours: t.dev_to_qa_hours,
+    qa_hours: t.qa_hours,
+    automation_qa_hours: t.automation_qa_hours,
+    total_hours: t.total_hours,
+    priority: t.priority,
 });
 
 const formatHours = (hours) => {
@@ -78,7 +91,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                 <form onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                         <div>
-                            <label htmlFor="taskId" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="taskId" className="block text-sm font-medium text-gray-700 mb-1 required-label">
                                 Task ID
                             </label>
                             <input
@@ -87,6 +100,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                                 name="id"
                                 value={editedTask.id}
                                 onChange={handleChange}
+                                required
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
@@ -104,7 +118,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                             />
                         </div>
                         <div>
-                            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1 required-label">
                                 Status
                             </label>
                             <select
@@ -112,6 +126,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                                 name="status"
                                 value={editedTask.status}
                                 onChange={handleChange}
+                                required
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             >
                                 <option value="To Do">To Do</option>
@@ -120,7 +135,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                             </select>
                         </div>
                         <div className="md:col-span-2 lg:col-span-3">
-                            <label htmlFor="taskTitle" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="taskTitle" className="block text-sm font-medium text-gray-700 mb-1 required-label">
                                 Task Title
                             </label>
                             <textarea
@@ -129,6 +144,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                                 value={editedTask.title}
                                 onChange={handleChange}
                                 rows="3"
+                                required
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             ></textarea>
                         </div>
@@ -159,7 +175,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                             />
                         </div>
                         <div>
-                            <label htmlFor="assignedTo" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="assignedTo" className="block text-sm font-medium text-gray-700 mb-1 required-label">
                                 Assigned To Developer
                             </label>
                             <select
@@ -167,6 +183,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                                 name="assignedTo"
                                 value={editedTask.assignedTo}
                                 onChange={handleDeveloperChange}
+                                required
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             >
                                 {developers.map(dev => (
@@ -253,6 +270,141 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">QA Assigned</label>
+                            <input
+                              name="qa_assigned"
+                              value={editedTask.qa_assigned || ''}
+                              onChange={handleChange}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Internal QA</label>
+                            <input
+                              name="internal_qa"
+                              value={editedTask.internal_qa || ''}
+                              onChange={handleChange}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div className="flex items-center gap-3 mt-6">
+                            <label className="text-sm font-medium text-gray-700">Blocker?</label>
+                            <input
+                              type="checkbox"
+                              name="blocker"
+                              checked={!!editedTask.blocker}
+                              onChange={(e) => setEditedTask(prev => ({ ...prev, blocker: e.target.checked }))}
+                              className="h-5 w-5 text-[var(--theme-color)] rounded border-gray-300 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div className="flex items-center gap-3 mt-6">
+                            <label className="text-sm font-medium text-gray-700">Demo</label>
+                            <input
+                              type="checkbox"
+                              name="demo"
+                              checked={!!editedTask.demo}
+                              onChange={(e) => setEditedTask(prev => ({ ...prev, demo: e.target.checked }))}
+                              className="h-5 w-5 text-[var(--theme-color)] rounded border-gray-300 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                            <input
+                              name="priority"
+                              value={editedTask.priority || ''}
+                              onChange={handleChange}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Story Point</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              name="story_point"
+                              value={editedTask.story_point || ''}
+                              onChange={handleChange}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Swag Point</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              name="swag_point"
+                              value={editedTask.swag_point || ''}
+                              onChange={handleChange}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Dev</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              name="dev_hours"
+                              value={editedTask.dev_hours || ''}
+                              onChange={handleChange}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Code Review</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              name="code_review_hours"
+                              value={editedTask.code_review_hours || ''}
+                              onChange={handleChange}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Dev → QA</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              name="dev_to_qa_hours"
+                              value={editedTask.dev_to_qa_hours || ''}
+                              onChange={handleChange}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">QA</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              name="qa_hours"
+                              value={editedTask.qa_hours || ''}
+                              onChange={handleChange}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Automation QA</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              name="automation_qa_hours"
+                              value={editedTask.automation_qa_hours || ''}
+                              onChange={handleChange}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Total</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              name="total_hours"
+                              value={editedTask.total_hours || ''}
+                              onChange={handleChange}
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
                     </div>
                     <div className="flex justify-between items-center">
                         <button
@@ -298,7 +450,20 @@ const AddTaskModal = ({ developers, users, onClose, onCreate, projectId }) => {
         start_date: '',
         end_date: '',
         order: '',
-        project_id: projectId || ''
+        project_id: projectId || '',
+        qa_assigned: '',
+        internal_qa: '',
+        blocker: false,
+        demo: false,
+        swag_point: '',
+        story_point: '',
+        dev_hours: '',
+        code_review_hours: '',
+        dev_to_qa_hours: '',
+        qa_hours: '',
+        automation_qa_hours: '',
+        total_hours: '',
+        priority: ''
     });
 
     useEffect(() => {
@@ -310,8 +475,8 @@ const AddTaskModal = ({ developers, users, onClose, onCreate, projectId }) => {
     }, [projectId]);
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setNewTask(prev => ({ ...prev, [name]: value }));
+        const { name, value, type, checked } = e.target;
+        setNewTask(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     };
 
     const handleSubmit = (e) => {
@@ -333,7 +498,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate, projectId }) => {
                 <form onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                         <div>
-                            <label htmlFor="task_id" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="task_id" className="block text-sm font-medium text-gray-700 mb-1 required-label">
                                 Task ID
                             </label>
                             <input
@@ -342,6 +507,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate, projectId }) => {
                                 name="task_id"
                                 value={newTask.task_id}
                                 onChange={handleChange}
+                                required
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
@@ -359,7 +525,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate, projectId }) => {
                             />
                         </div>
                         <div>
-                            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1 required-label">
                                 Status
                             </label>
                             <select
@@ -367,6 +533,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate, projectId }) => {
                                 name="status"
                                 value={newTask.status}
                                 onChange={handleChange}
+                                required
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             >
                                 <option value="todo">To Do</option>
@@ -375,7 +542,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate, projectId }) => {
                             </select>
                         </div>
                         <div className="md:col-span-2 lg:col-span-3">
-                            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1 required-label">
                                 Task Title
                             </label>
                             <textarea
@@ -384,6 +551,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate, projectId }) => {
                                 value={newTask.title}
                                 onChange={handleChange}
                                 rows="3"
+                                required
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             ></textarea>
                         </div>
@@ -414,7 +582,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate, projectId }) => {
                             />
                         </div>
                         <div>
-                            <label htmlFor="developer_id" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="developer_id" className="block text-sm font-medium text-gray-700 mb-1 required-label">
                                 Assigned To Developer
                             </label>
                             <select
@@ -422,6 +590,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate, projectId }) => {
                                 name="developer_id"
                                 value={newTask.developer_id}
                                 onChange={handleChange}
+                                required
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             >
                                 {developers.map(dev => (
@@ -489,6 +658,156 @@ const AddTaskModal = ({ developers, users, onClose, onCreate, projectId }) => {
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
+                        <div>
+                            <label htmlFor="qa_assigned" className="block text-sm font-medium text-gray-700 mb-1">
+                                QA Assigned
+                            </label>
+                            <input
+                                id="qa_assigned"
+                                name="qa_assigned"
+                                value={newTask.qa_assigned}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="internal_qa" className="block text-sm font-medium text-gray-700 mb-1">
+                                Internal QA
+                            </label>
+                            <input
+                                id="internal_qa"
+                                name="internal_qa"
+                                value={newTask.internal_qa}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <label htmlFor="blocker" className="block text-sm font-medium text-gray-700">
+                                Blocker?
+                            </label>
+                            <input
+                                type="checkbox"
+                                id="blocker"
+                                name="blocker"
+                                checked={newTask.blocker}
+                                onChange={handleChange}
+                                className="h-5 w-5 text-[var(--theme-color)] rounded border-gray-300 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <label htmlFor="demo" className="block text-sm font-medium text-gray-700">
+                                Demo
+                            </label>
+                            <input
+                                type="checkbox"
+                                id="demo"
+                                name="demo"
+                                checked={newTask.demo}
+                                onChange={handleChange}
+                                className="h-5 w-5 text-[var(--theme-color)] rounded border-gray-300 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-1">
+                                Priority
+                            </label>
+                            <input
+                                id="priority"
+                                name="priority"
+                                value={newTask.priority}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Story Point</label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                name="story_point"
+                                value={newTask.story_point}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Swag Point</label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                name="swag_point"
+                                value={newTask.swag_point}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Dev</label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                name="dev_hours"
+                                value={newTask.dev_hours}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Code Review</label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                name="code_review_hours"
+                                value={newTask.code_review_hours}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Dev → QA</label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                name="dev_to_qa_hours"
+                                value={newTask.dev_to_qa_hours}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">QA</label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                name="qa_hours"
+                                value={newTask.qa_hours}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Automation QA</label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                name="automation_qa_hours"
+                                value={newTask.automation_qa_hours}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Total</label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                name="total_hours"
+                                value={newTask.total_hours}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                            />
+                        </div>
                     </div>
                     <div className="flex justify-end space-x-4">
                         <button
@@ -512,7 +831,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate, projectId }) => {
 };
 
 // Main Component
-const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationEnabled }) => {
+const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationEnabled, qaMode = false }) => {
     const [sprints, setSprints] = useState([]);
     const [developers, setDevelopers] = useState([]);
     const [users, setUsers] = useState([]);
@@ -595,18 +914,22 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
             setTasks([]);
             return;
         }
-        SchedulerAPI.getTasks({ sprint_id: selectedSprintId, project_id: projectId }).then(res => {
+        const params = { sprint_id: selectedSprintId, project_id: projectId };
+        if (qaMode) params.type = 'qa';
+        SchedulerAPI.getTasks(params).then(res => {
             const mapped = res.data.map(mapTask);
             setTasks(mapped);
         });
-    }, [selectedSprintId, projectId]);
+    }, [selectedSprintId, projectId, qaMode]);
 
     useEffect(() => {
-        SchedulerAPI.getTasks(projectId ? { project_id: projectId } : {}).then(res => {
+        const params = projectId ? { project_id: projectId } : {};
+        if (qaMode) params.type = 'qa';
+        SchedulerAPI.getTasks(params).then(res => {
             const mapped = res.data.filter(t => !t.sprint_id).map(mapTask);
             setBacklogTasks(mapped);
         });
-    }, [projectId]);
+    }, [projectId, qaMode]);
 
     const filteredTasks = tasks.filter(task => {
         if (task.sprintId !== selectedSprintId) return false;
@@ -742,7 +1065,20 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                 developer_id: Number(updatedTask.assignedTo?.[0]) || null,
                 assigned_to_user: updatedTask.assignedUser || null,
                 status: updatedTask.status?.toLowerCase().replace(" ", "") || "todo",
-                order: updatedTask.order
+                order: updatedTask.order,
+                qa_assigned: updatedTask.qa_assigned,
+                internal_qa: updatedTask.internal_qa,
+                blocker: !!updatedTask.blocker,
+                demo: !!updatedTask.demo,
+                swag_point: updatedTask.swag_point,
+                story_point: updatedTask.story_point,
+                dev_hours: updatedTask.dev_hours,
+                code_review_hours: updatedTask.code_review_hours,
+                dev_to_qa_hours: updatedTask.dev_to_qa_hours,
+                qa_hours: updatedTask.qa_hours,
+                automation_qa_hours: updatedTask.automation_qa_hours,
+                total_hours: updatedTask.total_hours,
+                priority: updatedTask.priority
             };
             await SchedulerAPI.updateTask(updatedTask.dbId, payload);
 
@@ -787,13 +1123,15 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
         try {
             const payload = {
                 ...newTask,
-                type: 'Code',
+                type: qaMode ? 'qa' : 'Code',
                 sprint_id: addingToBacklog ? null : selectedSprintId,
                 developer_id: Number(newTask.developer_id) || null,
                 assigned_to_user: newTask.assigned_to_user || null,
                 status: newTask.status,
                 date: newTask.start_date || new Date().toISOString().slice(0,10),
-                project_id: Number(newTask.project_id || projectId) || null
+                project_id: Number(newTask.project_id || projectId) || null,
+                blocker: !!newTask.blocker,
+                demo: !!newTask.demo
             };
             const { data } = await SchedulerAPI.createTask(payload);
             const mapped = mapTask(data);
@@ -813,7 +1151,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
         try {
             setProcessing(true);
             await SchedulerAPI.importSprintTasks(selectedSprintId);
-            const res = await SchedulerAPI.getTasks({ sprint_id: selectedSprintId, project_id: projectId });
+            const res = await SchedulerAPI.getTasks({ sprint_id: selectedSprintId, project_id: projectId, ...(qaMode ? { type: 'qa' } : {}) });
             const mapped = res.data.map(mapTask);
             setTasks(mapped);
             toast.success('Imported tasks from sheet');
@@ -828,7 +1166,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
             setProcessing(true);
             await SchedulerAPI.importBacklogTasks(projectId);
             toast.success('Imported backlog from sheet');
-            const res = await SchedulerAPI.getTasks(projectId ? { project_id: projectId } : {});
+            const res = await SchedulerAPI.getTasks(projectId ? { project_id: projectId, ...(qaMode ? { type: 'qa' } : {}) } : {});
             const mapped = res.data.filter(t => !t.sprint_id).map(mapTask);
             setBacklogTasks(mapped);
         } catch (e) {

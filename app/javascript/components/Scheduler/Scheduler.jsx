@@ -235,7 +235,7 @@ function TaskCell({ date, devId, tasksInCell, setEditingTask, handleTaskUpdate, 
   );
 }
 
-function Scheduler({ sprintId, projectId, sheetIntegrationEnabled }) {
+function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = false }) {
   const [sprint, setSprint] = useState(null);
   const [developers, setDevelopers] = useState([]);
   const [tasks, setTasks] = useState([]); // will hold task logs
@@ -280,6 +280,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled }) {
   useEffect(() => {
     const params = { project_id: projectId };
     if (sprintId) params.sprint_id = sprintId;
+    if (qaMode) params.type = 'qa';
 
     Promise.all([
       SchedulerAPI.getDevelopers(),
@@ -296,7 +297,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled }) {
         setError("Could not load developers or tasks");
         setLoading(l => ({ ...l, developers: false, tasks: false }));
       });
-  }, [sprintId, projectId]);
+  }, [sprintId, projectId, qaMode]);
   
   const getWeekdaysInRange = useCallback((start, end) => {
     const datesArr = [];

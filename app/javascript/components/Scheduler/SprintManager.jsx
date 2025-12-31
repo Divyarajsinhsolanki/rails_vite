@@ -283,16 +283,16 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
                   </div>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-slate-600 mb-1">Sprint Name</label>
+                      <label className="block text-sm font-medium text-slate-600 mb-1 required-label">Sprint Name</label>
                       <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="e.g., Summer Release" required className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] transition"/>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-slate-600 mb-1">Start Date</label>
+                        <label className="block text-sm font-medium text-slate-600 mb-1 required-label">Start Date</label>
                         <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} required className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] transition"/>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-600 mb-1">End Date</label>
+                        <label className="block text-sm font-medium text-slate-600 mb-1 required-label">End Date</label>
                         <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} required className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] transition"/>
                       </div>
                     </div>

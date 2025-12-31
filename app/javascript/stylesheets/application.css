@@ -24,3 +24,9 @@ body {
 .border-theme {
   border-color: var(--theme-color);
 }
+
+.required-label::after {
+  content: " *";
+  color: #e11d48;
+  font-weight: 700;
+}

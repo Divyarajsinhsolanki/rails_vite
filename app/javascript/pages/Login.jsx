@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { auth, getRedirectResult } from "../firebaseConfig";
 import { Toaster, toast } from "react-hot-toast";
 import SpinnerOverlay from "../components/ui/SpinnerOverlay";
@@ -11,6 +11,7 @@ const Login = ({ switchToSignup }) => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -107,7 +108,7 @@ const Login = ({ switchToSignup }) => {
             {/* 📝 Login Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="mb-1 block text-sm font-semibold text-slate-700" htmlFor="email">
+                <label className="mb-1 block text-sm font-semibold text-slate-700 required-label" htmlFor="email">
                   Email
                 </label>
                 <input
@@ -124,10 +125,19 @@ const Login = ({ switchToSignup }) => {
 
               <div>
                 <div className="mb-1 flex items-center justify-between">
-                  <label className="block text-sm font-semibold text-slate-700" htmlFor="password">
+                  <label className="block text-sm font-semibold text-slate-700 required-label" htmlFor="password">
                     Password
                   </label>
-                  <span className="text-xs text-blue-600">Secure login</span>
+                  <div className="flex items-center gap-3 text-xs text-blue-600">
+                    <button
+                      type="button"
+                      onClick={() => navigate("/forgot-password")}
+                      className="font-semibold text-blue-600 transition hover:text-blue-700"
+                    >
+                      Forgot?
+                    </button>
+                    <span className="text-[11px] text-blue-500/80">Secure login</span>
+                  </div>
                 </div>
                 <input
                   id="password"

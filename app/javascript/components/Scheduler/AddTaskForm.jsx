@@ -83,7 +83,7 @@ export default function AddTaskForm({ developers, dates, types, tasks, onAddTask
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Date */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">📅 Date</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2 required-label">📅 Date</label>
           <select
             name="log_date"
             value={formData.log_date || ''}
@@ -115,7 +115,7 @@ export default function AddTaskForm({ developers, dates, types, tasks, onAddTask
   
       {/* Row 2: Developer Radio Group */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">👨‍💻 Developer</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2 required-label">👨‍💻 Developer</label>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {developers.map(developer => (
             <label 
@@ -143,7 +143,7 @@ export default function AddTaskForm({ developers, dates, types, tasks, onAddTask
   
       {/* Row 3: Type Radio Group */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">🧩 Type</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2 required-label">🧩 Type</label>
         <div className="flex flex-wrap gap-3">
           {types.map(type => (
             <label 
@@ -173,7 +173,7 @@ export default function AddTaskForm({ developers, dates, types, tasks, onAddTask
       <div className="flex flex-col sm:flex-row gap-4 items-end">
         {/* Task selection with Combobox */}
         <div className="flex-1 w-full">
-          <label className="block text-sm font-medium text-gray-700 mb-2">📌 Task</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2 required-label">📌 Task</label>
           <Combobox
             value={selectedTask}
             onChange={(task) => {

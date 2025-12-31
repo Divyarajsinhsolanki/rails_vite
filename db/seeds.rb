@@ -29,6 +29,121 @@ end
   Project.find_or_create_by!(name: name)
 end
 
+# Seed starter issues for the first project to make the Issue Tracker feel alive
+first_project = Project.order(:id).first || Project.create!(name: 'Demo Project')
+sprint_names = first_project.sprints.order(:start_date).pluck(:name)
+fallback_sprints = ['Sprint 1', 'Sprint 2', 'Sprint 3']
+
+sample_issues = [
+  {
+    issue_key: 'ISS-1001',
+    title: 'Login allows empty email submit',
+    status: 'New',
+    severity: 'Medium',
+    module_name: 'Authentication',
+    sub_module: 'Login',
+    sprint_name: 'Sprint 1',
+    found_by: 'QA Bot',
+    found_on: Date.today - 2,
+    issue_description: 'Login button submits with empty email field.',
+    pre_conditions: 'Navigate to /login',
+    repro_steps: 'Leave email blank, click Login',
+    actual_result: 'Request sent with blank email',
+    expected_result: 'Client-side validation error',
+    comment: 'Seeded sample issue',
+    media_urls: ['https://placehold.co/600x320.png']
+  },
+  {
+    issue_key: 'ISS-1002',
+    title: 'Dashboard chart not rendering for Safari',
+    status: 'In Progress',
+    severity: 'High',
+    module_name: 'Dashboard',
+    sub_module: 'Charts',
+    sprint_name: 'Sprint 1',
+    found_by: 'QA Team',
+    found_on: Date.today - 3,
+    issue_description: 'Safari 16 shows blank canvas for velocity chart.',
+    repro_steps: 'Open dashboard in Safari 16, observe chart area',
+    actual_result: 'Blank white block',
+    expected_result: 'Chart renders with current sprint data',
+    comment: 'Possibly canvas polyfill issue',
+    media_urls: ['https://placehold.co/600x320.png']
+  },
+  {
+    issue_key: 'ISS-1003',
+    title: 'Attachment upload fails over 5MB',
+    status: 'Blocked',
+    severity: 'Critical',
+    module_name: 'Files',
+    sub_module: 'Uploader',
+    sprint_name: sprint_names.sample || fallback_sprints.sample,
+    found_by: 'Kajal',
+    found_on: Date.today - 1,
+    issue_description: 'Uploads >5MB return 500',
+    pre_conditions: 'Auth user, project member',
+    repro_steps: 'Upload 6MB pdf via attachments',
+    actual_result: '500 error',
+    expected_result: 'Upload succeeds or friendly limit error',
+    comment: 'Check Nginx client_max_body_size',
+    attachment_urls: ['https://example.com/specs/upload-limit']
+  },
+  {
+    issue_key: 'ISS-1004',
+    title: 'Email notification uses wrong template',
+    status: 'Resolved',
+    severity: 'Low',
+    module_name: 'Notifications',
+    sub_module: 'Email',
+    sprint_name: sprint_names.sample || fallback_sprints.sample,
+    found_by: 'QA Bot',
+    found_on: Date.today - 4,
+    issue_description: 'Password reset email shows invite copy',
+    repro_steps: 'Trigger password reset',
+    actual_result: 'Invite template content',
+    expected_result: 'Password reset instructions',
+    comment: 'Template lookup mismatch'
+  },
+  {
+    issue_key: 'ISS-1005',
+    title: 'Search results exclude archived tasks toggle',
+    status: 'New',
+    severity: 'Medium',
+    module_name: 'Search',
+    sub_module: 'Tasks',
+    sprint_name: sprint_names.sample || fallback_sprints.sample,
+    found_by: 'QA Team',
+    found_on: Date.today,
+    issue_description: 'Toggle ignored when off',
+    repro_steps: 'Enable include-archived toggle, search for archived ID',
+    actual_result: 'No archived tasks returned',
+    expected_result: 'Archived tasks included',
+    comment: 'Likely query scope issue'
+  },
+  {
+    issue_key: 'ISS-1006',
+    title: 'Video attachment preview not rendering on mobile',
+    status: 'In Progress',
+    severity: 'High',
+    module_name: 'Issues',
+    sub_module: 'Attachments',
+    sprint_name: sprint_names.sample || fallback_sprints.sample,
+    found_by: 'QA Mobile',
+    found_on: Date.today,
+    issue_description: 'MP4 preview fails on iOS 15 Safari',
+    repro_steps: 'Open issue with MP4 attachment on iPhone',
+    actual_result: 'Black box with play disabled',
+    expected_result: 'Playable video preview',
+    media_urls: ['https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4']
+  }
+]
+
+sample_issues.each do |attrs|
+  Issue.find_or_create_by!(project: first_project, issue_key: attrs[:issue_key]) do |issue|
+    issue.assign_attributes(attrs.except(:issue_key))
+  end
+end
+
 # Default Work Priorities
 [
   { name: 'High', color: 'bg-red-500', hex: '#ef4444' },
@@ -59,7 +174,7 @@ end
 end
 
 # Default Work Tags
-[
+work_tags = [
   'Team',
   'Sync',
   'Frontend',
@@ -70,7 +185,9 @@ end
   'Code Review',
   'Frontend',
   'Research'
-].each do |tag_name|
+].uniq
+
+work_tags.each do |tag_name|
   WorkTag.find_or_create_by!(name: tag_name)
 end
 
@@ -103,9 +220,11 @@ skill_names = [
   'Machine Learning',
   'Performance Optimization',
   'Security Auditing'
-]
+].uniq
 
-skills = skill_names.map { |name| Skill.find_or_create_by!(name: name) }
+# Normalize to match model titleize/strip before lookup to avoid duplicate validation
+normalized_skill_names = skill_names.map { |name| name.to_s.strip.titleize }.uniq
+skills = normalized_skill_names.map { |name| Skill.find_or_create_by!(name: name) }
 
 rng = Random.new(20_240_519)
 

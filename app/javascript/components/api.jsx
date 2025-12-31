@@ -82,12 +82,43 @@ export const login = (u) => api.post("/login", u);
 export const logout = () => api.delete("/logout");
 export const fetchUserInfo = () => api.get("/view_profile");
 export const updateUserInfo = (d) => api.post("/update_profile", d);
+export const requestPasswordReset = (email) => api.post("/password/forgot", { password: { email } });
+export const resetPassword = (payload) => api.post("/password/reset", { password: payload });
 export const getUsers = () => api.get('/users.json');
 export const deleteUser = (id) => api.delete(`/users/${id}.json`);
 export const updateUser = (id, data) =>
   api.patch(`/users/${id}.json`, data, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
+
+// ISSUE TRACKER
+const buildIssuePayload = (data) => {
+  const hasFiles = data?.mediaFiles && data.mediaFiles.length;
+  if (!hasFiles) return { issue: data };
+
+  const formData = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    if (key === 'mediaFiles') return;
+    if (Array.isArray(value)) {
+      value.forEach((v) => formData.append(`issue[${key}][]`, v));
+    } else {
+      formData.append(`issue[${key}]`, value ?? '');
+    }
+  });
+  Array.from(data.mediaFiles).forEach((file) => formData.append('issue[media_files][]', file));
+  return formData;
+};
+
+export const getIssues = (projectId) => api.get('/issues.json', { params: { project_id: projectId } });
+export const createIssue = (data) => {
+  const payload = buildIssuePayload(data);
+  return api.post('/issues.json', payload, payload instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {});
+};
+export const updateIssue = (id, data) => {
+  const payload = buildIssuePayload(data);
+  return api.patch(`/issues/${id}.json`, payload, payload instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {});
+};
+export const deleteIssue = (id) => api.delete(`/issues/${id}.json`);
 
 // POST ENDPOINTS (existing)
 export const fetchPosts = (id) => api.get(id ? `/posts?user_id=${id}` : "/posts");

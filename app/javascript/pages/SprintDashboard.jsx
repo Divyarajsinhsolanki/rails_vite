@@ -8,6 +8,7 @@ import TodoBoard from '../components/TodoBoard/TodoBoard';
 import SprintManager from '../components/Scheduler/SprintManager';
 import Sheet from './Sheet';
 import ProjectStatistics from './ProjectStatistics';
+import IssueTracker from './IssueTracker';
 
 const calculateWorkingDays = (start, end) => {
   let count = 0;
@@ -40,6 +41,8 @@ export default function SprintDashboard() {
   const [sprints, setSprints] = useState([]);
   const [project, setProject] = useState(null);
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(false);
+  const [qaMode, setQaMode] = useState(false);
+  const sheetEnabled = !!(project?.sheet_integration_enabled && project?.sheet_id);
 
   useEffect(() => {
     if (!projectId) { setProject(null); return; }
@@ -49,6 +52,20 @@ export default function SprintDashboard() {
       setProject(found || null);
     });
   }, [projectId]);
+
+  // If sheet tab is active but integration is off, bounce back to overview.
+  useEffect(() => {
+    if (activeTab === 'sheet' && !sheetEnabled) {
+      setActiveTab('overview');
+    }
+  }, [activeTab, sheetEnabled]);
+
+  // Turn off QA mode if project changes or project does not support it.
+  useEffect(() => {
+    if (!project?.qa_mode_enabled && qaMode) {
+      setQaMode(false);
+    }
+  }, [project?.qa_mode_enabled, qaMode]);
 
   // Load sprints when project changes and select the active one
   useEffect(() => {
@@ -187,15 +204,47 @@ export default function SprintDashboard() {
               </button>
               <button
                 className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
-                  ${activeTab === 'sheet'
+                  ${activeTab === 'issues'
                     ? 'bg-[var(--theme-color)] text-white shadow-lg'
                     : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
                   }`}
-                onClick={() => setActiveTab('sheet')}
+                onClick={() => setActiveTab('issues')}
               >
-                Sheet
+                Issue Tracker
               </button>
+              {sheetEnabled && (
+                <button
+                  className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
+                    ${activeTab === 'sheet'
+                      ? 'bg-[var(--theme-color)] text-white shadow-lg'
+                      : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
+                    }`}
+                  onClick={() => setActiveTab('sheet')}
+                >
+                  Sheet
+                </button>
+              )}
             </div>
+            {project?.qa_mode_enabled && (
+              <div className="ml-3 flex items-center gap-3 rounded-full border border-purple-200 bg-purple-50 px-3 py-1">
+                <span className="text-sm font-semibold text-purple-700">QA mode</span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={qaMode}
+                  onClick={() => setQaMode((prev) => !prev)}
+                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 shadow-sm ${
+                    qaMode ? 'bg-purple-600' : 'bg-slate-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${
+                      qaMode ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+            )}
           </div>
           <div
             className="flex items-center space-x-3 cursor-pointer select-none p-2 rounded-lg hover:bg-[rgb(var(--theme-color-rgb)/0.1)] transition-colors duration-200"
@@ -231,6 +280,7 @@ export default function SprintDashboard() {
           sprintId={sprintId}
           onSprintChange={handleSprintChange}
           sheetIntegrationEnabled={project?.sheet_integration_enabled}
+          qaMode={qaMode}
         />
       )}
       {activeTab === 'scheduler' && (
@@ -239,19 +289,23 @@ export default function SprintDashboard() {
             sprintId={sprintId}
             projectId={projectId}
             sheetIntegrationEnabled={project?.sheet_integration_enabled}
+            qaMode={qaMode}
           />
         ) : (
           <p className="p-4">No sprint selected</p>
         )
       )}
       {activeTab === 'todo' && (
-        sprintId ? <TodoBoard sprintId={sprintId} projectId={projectId} onSprintChange={handleSprintChange} /> : <p className="p-4">No sprint selected</p>
+        sprintId ? <TodoBoard sprintId={sprintId} projectId={projectId} qaMode={qaMode} onSprintChange={handleSprintChange} /> : <p className="p-4">No sprint selected</p>
       )}
-      {activeTab === 'sheet' && (
-        <Sheet sheetName={sprint?.name} projectId={projectId} />
+      {activeTab === 'sheet' && sheetEnabled && (
+        <Sheet sheetName={sprint?.name} projectId={projectId} sheetId={project?.sheet_id} />
       )}
       {activeTab === 'statistics' && (
         <ProjectStatistics projectId={projectId} />
+      )}
+      {activeTab === 'issues' && (
+        <IssueTracker projectId={projectId} sprint={sprint} />
       )}
     </div>
   );

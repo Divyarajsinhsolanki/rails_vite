@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-const TaskForm = ({ onAddTask, onCancel }) => {
+const TaskForm = ({ onAddTask, onCancel, defaultType = 'general' }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    type: 'general',
+    type: defaultType,
     status: 'todo',
     start_date: '',
     end_date: ''
@@ -20,14 +20,14 @@ const TaskForm = ({ onAddTask, onCancel }) => {
     e.preventDefault();
     if (!formData.title) return toast.error('Title is required.');
     onAddTask(formData);
-    setFormData({ title: '', description: '', type: 'general', status: 'todo', start_date: '', end_date: '' });
+    setFormData({ title: '', description: '', type: defaultType, status: 'todo', start_date: '', end_date: '' });
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1 required-label">Title</label>
           <input
             name="title"
             value={formData.title}

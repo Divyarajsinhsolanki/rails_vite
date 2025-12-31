@@ -63,38 +63,60 @@ const Signup = ({ switchToLogin }) => {
         {/* Signup Form */}
         <form onSubmit={handleSubmit} className="space-y-5" encType="multipart/form-data">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1 required-label" htmlFor="first_name">
+                First Name
+              </label>
+              <input
+                id="first_name"
+                type="text"
+                name="first_name"
+                placeholder="First Name"
+                required
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder-gray-400"
+                value={formData.first_name}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1 required-label" htmlFor="last_name">
+                Last Name
+              </label>
+              <input
+                id="last_name"
+                type="text"
+                name="last_name"
+                placeholder="Last Name"
+                required
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder-gray-400"
+                value={formData.last_name}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1 required-label" htmlFor="email">
+              Email
+            </label>
             <input
-              type="text"
-              name="first_name"
-              placeholder="First Name"
+              id="email"
+              type="email"
+              name="email"
+              placeholder="Email"
               required
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder-gray-400"
-              value={formData.first_name}
-              onChange={handleChange}
-            />
-            <input
-              type="text"
-              name="last_name"
-              placeholder="Last Name"
-              required
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder-gray-400"
-              value={formData.last_name}
+              value={formData.email}
               onChange={handleChange}
             />
           </div>
-
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            required
-            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder-gray-400"
-            value={formData.email}
-            onChange={handleChange}
-          />
           
           <div className="relative">
+            <label className="block text-sm font-semibold text-gray-700 mb-1 required-label" htmlFor="password">
+              Password
+            </label>
             <input
+              id="password"
               type="password"
               name="password"
               placeholder="Password"

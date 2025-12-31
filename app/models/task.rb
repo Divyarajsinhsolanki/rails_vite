@@ -19,6 +19,6 @@ class Task < ApplicationRecord
   private
 
   def general?
-    type == 'general'
+    type == 'general' || type == 'qa'
   end
 end

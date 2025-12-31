@@ -1083,7 +1083,7 @@ const Profile = () => {
             <form onSubmit={handleSubmit} className="p-6" encType="multipart/form-data">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 required-label">First Name</label>
                   <input
                     type="text"
                     name="first_name"
@@ -1095,7 +1095,7 @@ const Profile = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 required-label">Last Name</label>
                   <input
                     type="text"
                     name="last_name"
@@ -1107,7 +1107,7 @@ const Profile = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 required-label">Date of Birth</label>
                   <input
                     type="date"
                     name="date_of_birth"

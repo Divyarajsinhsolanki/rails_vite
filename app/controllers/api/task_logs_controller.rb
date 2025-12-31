@@ -7,11 +7,11 @@ class Api::TaskLogsController < Api::BaseController
     task_logs = task_logs.where(developer_id: params[:developer_id]) if params[:developer_id].present?
     task_logs = task_logs.where(log_date: params[:log_date]) if params[:log_date].present?
 
-    if params[:sprint_id].present? || params[:project_id].present?
-      task_logs = task_logs.joins(task: :sprint)
-      task_logs = task_logs.where(tasks: { sprint_id: params[:sprint_id] }) if params[:sprint_id].present?
-      task_logs = task_logs.where(sprints: { project_id: params[:project_id] }) if params[:project_id].present?
-    end
+    task_logs = task_logs.joins(:task) if params[:type].present? || params[:sprint_id].present? || params[:project_id].present?
+    task_logs = task_logs.joins(task: :sprint) if params[:sprint_id].present? || params[:project_id].present?
+    task_logs = task_logs.where(tasks: { sprint_id: params[:sprint_id] }) if params[:sprint_id].present?
+    task_logs = task_logs.where(sprints: { project_id: params[:project_id] }) if params[:project_id].present?
+    task_logs = task_logs.where(tasks: { type: params[:type] }) if params[:type].present?
 
     render json: task_logs.as_json(include: { task: {}, developer: {} })
   end

@@ -791,7 +791,7 @@ const Projects = () => {
                             <p className="text-gray-600 mb-8">{editingId ? `Update information for ${projectForm.name}.` : 'Fill in the details to create a new project.'}</p>
                             <form onSubmit={handleProjectSubmit} className="space-y-6">
                                 <div>
-                                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
+                                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1 required-label">Project Name</label>
                                     <input
                                         id="name"
                                         name="name"

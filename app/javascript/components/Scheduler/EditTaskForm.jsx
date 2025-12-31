@@ -97,11 +97,12 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
       {/* Row 1: Date and Hours */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">📅 Date</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2 required-label">📅 Date</label>
           <select
             name="log_date"
             value={formData.log_date || ''}
             onChange={handleChange}
+            required
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)] focus:border-transparent"
           >
             {dates.map(d => (
@@ -128,7 +129,7 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
 
       {/* Row 2: Developer Radio Group */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">👨‍💻 Developer</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2 required-label">👨‍💻 Developer</label>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {developers.map(developer => (
             <label
@@ -156,7 +157,7 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
 
       {/* Row 3: Type Radio Group */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">🧩 Type</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2 required-label">🧩 Type</label>
         <div className="flex flex-wrap gap-3">
           {availableTypes.map(type => (
             <label
@@ -207,7 +208,7 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
       {/* Row 5: Task Selection and Actions */}
       <div className="flex flex-col sm:flex-row gap-4 items-end">
         <div className="flex-1 w-full">
-          <label className="block text-sm font-medium text-gray-700 mb-2">📌 Task</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2 required-label">📌 Task</label>
           <Combobox
             value={selectedTask}
             onChange={taskOption => {

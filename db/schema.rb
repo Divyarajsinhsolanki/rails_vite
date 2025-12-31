@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_02_004800) do
+ActiveRecord::Schema[7.1].define(version: 2027_01_03_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -68,6 +68,44 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_02_004800) do
     t.index ["name"], name: "index_developers_on_name", unique: true
   end
 
+  create_table "friendships", force: :cascade do |t|
+    t.bigint "follower_id", null: false
+    t.bigint "followed_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["followed_id"], name: "index_friendships_on_followed_id"
+    t.index ["follower_id", "followed_id"], name: "index_friendships_on_follower_id_and_followed_id", unique: true
+    t.index ["follower_id"], name: "index_friendships_on_follower_id"
+  end
+
+  create_table "issues", force: :cascade do |t|
+    t.bigint "project_id", null: false
+    t.string "issue_key", null: false
+    t.string "title", null: false
+    t.string "status", default: "New", null: false
+    t.string "severity", default: "Medium", null: false
+    t.string "category"
+    t.string "module_name"
+    t.string "sub_module"
+    t.string "sprint_name"
+    t.string "task_id"
+    t.string "found_by"
+    t.date "found_on"
+    t.text "issue_description"
+    t.text "pre_conditions"
+    t.text "repro_steps"
+    t.text "actual_result"
+    t.text "expected_result"
+    t.string "attachment"
+    t.text "comment"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.jsonb "media_urls", default: [], null: false
+    t.jsonb "attachment_urls", default: [], null: false
+    t.index ["issue_key"], name: "index_issues_on_issue_key", unique: true
+    t.index ["project_id"], name: "index_issues_on_project_id"
+  end
+
   create_table "items", force: :cascade do |t|
     t.string "title", null: false
     t.string "category"
@@ -76,6 +114,24 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_02_004800) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_items_on_user_id"
+  end
+
+  create_table "knowledge_bookmarks", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "card_type", null: false
+    t.string "collection_name"
+    t.string "source_id"
+    t.jsonb "payload", default: {}, null: false
+    t.datetime "last_viewed_at"
+    t.datetime "last_reminded_at"
+    t.datetime "next_reminder_at"
+    t.integer "reminder_interval_days", default: 7, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["collection_name"], name: "index_knowledge_bookmarks_on_collection_name"
+    t.index ["next_reminder_at"], name: "index_knowledge_bookmarks_on_next_reminder_at"
+    t.index ["user_id", "card_type", "source_id"], name: "index_knowledge_bookmarks_on_identity", unique: true
+    t.index ["user_id"], name: "index_knowledge_bookmarks_on_user_id"
   end
 
   create_table "learning_checkpoints", force: :cascade do |t|
@@ -99,23 +155,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_02_004800) do
     t.datetime "updated_at", null: false
     t.index ["team_id"], name: "index_learning_goals_on_team_id"
     t.index ["user_id"], name: "index_learning_goals_on_user_id"
-  end
-
-  create_table "knowledge_bookmarks", force: :cascade do |t|
-    t.bigint "user_id", null: false
-    t.string "card_type", null: false
-    t.string "collection_name"
-    t.string "source_id"
-    t.jsonb "payload", default: {}, null: false
-    t.datetime "last_viewed_at"
-    t.datetime "last_reminded_at"
-    t.datetime "next_reminder_at"
-    t.integer "reminder_interval_days", default: 7, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["collection_name"], name: "index_knowledge_bookmarks_on_collection_name"
-    t.index ["next_reminder_at"], name: "index_knowledge_bookmarks_on_next_reminder_at"
-    t.index ["user_id", "card_type", "source_id"], name: "index_knowledge_bookmarks_on_identity", unique: true
   end
 
   create_table "post_likes", force: :cascade do |t|
@@ -246,6 +285,19 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_02_004800) do
     t.date "start_date"
     t.date "end_date"
     t.bigint "project_id"
+    t.string "qa_assigned"
+    t.string "internal_qa"
+    t.boolean "blocker", default: false, null: false
+    t.boolean "demo", default: false, null: false
+    t.decimal "swag_point", precision: 6, scale: 2
+    t.decimal "story_point", precision: 6, scale: 2
+    t.decimal "dev_hours", precision: 6, scale: 2
+    t.decimal "code_review_hours", precision: 6, scale: 2
+    t.decimal "dev_to_qa_hours", precision: 6, scale: 2
+    t.decimal "qa_hours", precision: 6, scale: 2
+    t.decimal "automation_qa_hours", precision: 6, scale: 2
+    t.decimal "total_hours", precision: 6, scale: 2
+    t.string "priority"
     t.index ["developer_id"], name: "index_tasks_on_developer_id"
     t.index ["project_id"], name: "index_tasks_on_project_id"
     t.index ["sprint_id"], name: "index_tasks_on_sprint_id"
@@ -271,6 +323,25 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_02_004800) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["owner_id"], name: "index_teams_on_owner_id"
+  end
+
+  create_table "topic_follows", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "topic_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["topic_id"], name: "index_topic_follows_on_topic_id"
+    t.index ["user_id", "topic_id"], name: "index_topic_follows_on_user_id_and_topic_id", unique: true
+    t.index ["user_id"], name: "index_topic_follows_on_user_id"
+  end
+
+  create_table "topics", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "description"
+    t.integer "topic_follows_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_topics_on_name", unique: true
   end
 
   create_table "user_roles", force: :cascade do |t|
@@ -399,6 +470,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_02_004800) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "comments", "posts"
   add_foreign_key "comments", "users"
+  add_foreign_key "friendships", "users", column: "followed_id"
+  add_foreign_key "friendships", "users", column: "follower_id"
+  add_foreign_key "issues", "projects"
   add_foreign_key "items", "users"
   add_foreign_key "knowledge_bookmarks", "users"
   add_foreign_key "learning_checkpoints", "learning_goals"
@@ -422,6 +496,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_02_004800) do
   add_foreign_key "team_users", "teams"
   add_foreign_key "team_users", "users"
   add_foreign_key "teams", "users", column: "owner_id"
+  add_foreign_key "topic_follows", "topics"
+  add_foreign_key "topic_follows", "users"
   add_foreign_key "user_roles", "roles"
   add_foreign_key "user_roles", "users"
   add_foreign_key "user_skills", "skills"

@@ -34,7 +34,7 @@ const initialData = {
   completed: { name: "Completed", color: "bg-green-100", items: [] },
 };
 
-export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
+export default function TodoBoard({ sprintId, projectId, onSprintChange, qaMode = false }) {
   const { user } = useContext(AuthContext);
   const [columns, setColumns] = useState(initialData);
   const [searchTerm, setSearchTerm] = useState("");
@@ -71,13 +71,14 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
 
   useEffect(() => {
     const params = selectedSprintId ? { sprint_id: selectedSprintId, project_id: projectId } : { type: 'general' };
+    if (qaMode) params.type = 'qa';
     SchedulerAPI.getTasks(params)
       .then(res => {
         const grouped = groupBy(res.data);
         setColumns(grouped);
       })
       .catch(() => toast.error("Could not load tasks"));
-  }, [selectedSprintId, projectId]);
+  }, [selectedSprintId, projectId, qaMode]);
 
   useEffect(() => {
     if (onSprintChange && selectedSprintId) {
@@ -104,8 +105,9 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
       const payload = { ...newTaskData };
       // ensure the task is assigned to the current user
       if (user) payload.assigned_to_user = user.id;
-      // Tasks created from the todo board should remain general and
-      // therefore must not be associated with any sprint or project.
+      payload.type = qaMode ? 'qa' : payload.type;
+      if (projectId) payload.project_id = projectId;
+      if (selectedSprintId) payload.sprint_id = selectedSprintId;
       const { data } = await SchedulerAPI.createTask(payload);
       const statusKey = data.status || 'todo';
       setColumns(prev => ({
@@ -219,7 +221,7 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
   const applyView = cols =>
     taskView === 'my' && user
       ? Object.fromEntries(
-          Object.entries(cols).map(([k, col]) => [k, { ...col, items: col.items.filter(t => t.assigned_to_user === user.id || t.type === 'general') }])
+          Object.entries(cols).map(([k, col]) => [k, { ...col, items: col.items.filter(t => t.assigned_to_user === user.id) }])
         )
       : cols;
 
@@ -242,10 +244,15 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
         <Toaster position="top-right" />
       <header className="mb-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-          <div className="mb-4 sm:mb-0">
+          <div className="mb-4 sm:mb-0 flex items-center gap-3">
             <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] flex items-center">
               <Squares2X2Icon className="h-7 w-7 mr-2" />Taskboard
             </h1>
+            {qaMode && (
+              <span className="inline-flex items-center rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700 border border-purple-200">
+                QA mode
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -284,7 +291,7 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange }) {
       </header>
 
       <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Add a New Task">
-        <TaskForm onAddTask={handleAddTask} onCancel={() => setShowForm(false)} />
+        <TaskForm onAddTask={handleAddTask} onCancel={() => setShowForm(false)} defaultType={qaMode ? 'qa' : 'general'} />
       </Modal>
 
       <div className="grid md:grid-cols-2 gap-6 mb-8">

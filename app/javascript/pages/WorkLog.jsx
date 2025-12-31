@@ -1673,15 +1673,18 @@ const TaskFormModal = ({
         
         <div className="p-6 space-y-4">
           <div className="flex items-center gap-4">
-            <input 
-              type="text" 
-              name="title" 
-              value={formState.title || ''} 
-              onChange={handleChange} 
-              placeholder="What are you working on?" 
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]" 
-              required 
-            />
+            <div className="w-full">
+              <label className="block text-sm font-medium text-gray-700 mb-1 required-label">Title</label>
+              <input 
+                type="text" 
+                name="title" 
+                value={formState.title || ''} 
+                onChange={handleChange} 
+                placeholder="What are you working on?" 
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]" 
+                required 
+              />
+            </div>
             <button 
               type="button" 
               onClick={handleStartTimer} 
@@ -1725,7 +1728,7 @@ const TaskFormModal = ({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1 required-label">Start Time</label>
               <input 
                 type="time" 
                 name="startTime" 
@@ -1736,7 +1739,7 @@ const TaskFormModal = ({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1 required-label">End Time</label>
               <input 
                 type="time" 
                 name="endTime" 
@@ -1811,4 +1814,3 @@ const TaskFormModal = ({
 
 // --- Helper Functions ---
 export default WorkLog;
-

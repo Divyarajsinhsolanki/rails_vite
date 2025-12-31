@@ -19,6 +19,9 @@ import Contact from "../pages/Contact";
 import Vault from "../pages/Vault";
 import Legal from "../pages/Legal";
 import SprintDashboard from "../pages/SprintDashboard";
+import IssueTracker from "../pages/IssueTracker";
+import ForgotPassword from "../pages/ForgotPassword";
+import ResetPassword from "../pages/ResetPassword";
 import WorkLog from "../pages/WorkLog";
 import Settings from "../pages/Settings";
 import PageTitle from "./PageTitle";
@@ -38,6 +41,9 @@ const App = () => {
             <Routes>
               <Route path="/contact" element={<Contact />} />
               <Route path="/legal" element={<Legal />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/projects/:projectId/issues" element={<ProjectMemberRoute><IssueTracker standalone /></ProjectMemberRoute>} />
 
               {/* 🔐 Protected */}
               <Route path="/" element={<PrivateRoute><DailyMomentumHub /></PrivateRoute>} />
