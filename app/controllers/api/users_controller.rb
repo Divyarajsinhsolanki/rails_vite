@@ -53,7 +53,8 @@ class Api::UsersController < Api::BaseController
       :cover_photo,
       :color_theme,
       :dark_mode,
-      :landing_page
+      :landing_page,
+      :department_id
     )
   end
 
@@ -64,6 +65,8 @@ class Api::UsersController < Api::BaseController
       first_name: user.first_name,
       last_name: user.last_name,
       date_of_birth: user.date_of_birth,
+      department_id: user.department_id,
+      department_name: user.department&.name,
       profile_picture: user.profile_picture.attached? ?
         rails_blob_url(user.profile_picture, only_path: true) : nil,
       cover_photo: user.cover_photo.attached? ?

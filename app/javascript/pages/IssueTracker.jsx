@@ -56,6 +56,7 @@ const IssueCard = ({ issue, onEdit, onDelete }) => {
   const isVideo = (url) => /\.(mp4|webm|ogg)$/i.test(url || "");
   const isImage = (url) => /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(url || "");
   const primaryAttachment = pickFirstAttachment(issue);
+  const dueLabel = issue.due_date ? issue.due_date : "Not set";
 
   return (
     <div className={`rounded-2xl border ${cardTone} p-5 shadow-sm hover:shadow-md transition`}>
@@ -63,7 +64,7 @@ const IssueCard = ({ issue, onEdit, onDelete }) => {
         <div>
           <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Issue ID</p>
           <p className="text-lg font-semibold text-slate-900">
-            #{issue.id || issue.issueKey || "—"}
+            #{issue.id || issue.issue_key || issue.issueKey || "—"}
           </p>
         </div>
         <div className="flex gap-2">
@@ -87,6 +88,17 @@ const IssueCard = ({ issue, onEdit, onDelete }) => {
           ) : (
             "None"
           )}
+        </div>
+      </div>
+      <div className="mt-2 grid gap-3 sm:grid-cols-3">
+        <div className="text-xs text-slate-500">
+          Owner: <span className="font-semibold text-slate-800">{issue.owner || "—"}</span>
+        </div>
+        <div className="text-xs text-slate-500">
+          Assignee: <span className="font-semibold text-slate-800">{issue.assignee || "Unassigned"}</span>
+        </div>
+        <div className="text-xs text-slate-500">
+          Due: <span className="font-semibold text-slate-800">{dueLabel}</span>
         </div>
       </div>
       {primaryAttachment && (
@@ -128,7 +140,7 @@ const IssueCard = ({ issue, onEdit, onDelete }) => {
 const IssueForm = ({ tasks, sprints, initial, onSave, onCancel }) => {
   const [payload, setPayload] = useState(
     initial || {
-      issueKey: `ISS-${Math.floor(Math.random() * 90000 + 10000)}`,
+      issue_key: `ISS-${Math.floor(Math.random() * 90000 + 10000)}`,
       title: "",
       status: "New",
       severity: "Medium",
@@ -139,6 +151,12 @@ const IssueForm = ({ tasks, sprints, initial, onSave, onCancel }) => {
       task_id: "",
       found_by: "",
       found_on: "",
+      owner: "",
+      owner_email: "",
+      assignee: "",
+      assignee_email: "",
+      assignee_slack: "",
+      due_date: "",
       issue_description: "",
       pre_conditions: "",
       repro_steps: "",
@@ -174,7 +192,9 @@ const IssueForm = ({ tasks, sprints, initial, onSave, onCancel }) => {
     if (initial) {
       setPayload((prev) => ({
         ...prev,
+        issue_key: initial.issue_key || initial.issueKey || prev.issue_key,
         attachment_urls_text: Array.isArray(initial.attachment_urls) ? initial.attachment_urls.join(', ') : '',
+        due_date: initial.due_date || "",
       }));
     }
   }, [initial]);
@@ -224,6 +244,74 @@ const IssueForm = ({ tasks, sprints, initial, onSave, onCancel }) => {
               ))}
             </select>
           </div>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <div>
+          <label className="text-sm font-medium text-slate-700">Owner</label>
+          <input
+            name="owner"
+            value={payload.owner}
+            onChange={handleChange}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 shadow-sm focus:border-[var(--theme-color)] focus:ring-2 focus:ring-[var(--theme-color)]/30"
+            placeholder="Team or person accountable"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-slate-700">Owner email</label>
+          <input
+            type="email"
+            name="owner_email"
+            value={payload.owner_email}
+            onChange={handleChange}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 shadow-sm focus:border-[var(--theme-color)] focus:ring-2 focus:ring-[var(--theme-color)]/30"
+            placeholder="alerts@example.com"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-slate-700">Due date</label>
+          <input
+            type="date"
+            name="due_date"
+            value={payload.due_date || ""}
+            onChange={handleChange}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 shadow-sm focus:border-[var(--theme-color)] focus:ring-2 focus:ring-[var(--theme-color)]/30"
+          />
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <div>
+          <label className="text-sm font-medium text-slate-700">Assignee</label>
+          <input
+            name="assignee"
+            value={payload.assignee}
+            onChange={handleChange}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 shadow-sm focus:border-[var(--theme-color)] focus:ring-2 focus:ring-[var(--theme-color)]/30"
+            placeholder="Name or team"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-slate-700">Assignee email</label>
+          <input
+            type="email"
+            name="assignee_email"
+            value={payload.assignee_email}
+            onChange={handleChange}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 shadow-sm focus:border-[var(--theme-color)] focus:ring-2 focus:ring-[var(--theme-color)]/30"
+            placeholder="assignee@example.com"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-slate-700">Assignee Slack (optional)</label>
+          <input
+            name="assignee_slack"
+            value={payload.assignee_slack}
+            onChange={handleChange}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 shadow-sm focus:border-[var(--theme-color)] focus:ring-2 focus:ring-[var(--theme-color)]/30"
+            placeholder="@handle or #channel"
+          />
         </div>
       </div>
 
@@ -300,7 +388,7 @@ const IssueForm = ({ tasks, sprints, initial, onSave, onCancel }) => {
           />
         </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <div>
           <label className="text-sm font-medium text-slate-700">Found On</label>
           <input
@@ -432,6 +520,7 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
   const [sprintFilter, setSprintFilter] = useState("all");
   const [foundByFilter, setFoundByFilter] = useState("all");
   const [moduleFilter, setModuleFilter] = useState("all");
+  const [severityFilter, setSeverityFilter] = useState("all");
   const [searchId, setSearchId] = useState("");
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -455,7 +544,7 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
     setLoading(true);
     getIssues(projectId)
       .then((res) => setIssues(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setIssues([]))
+      .catch(() => toast.error("Failed to load issues"))
       .finally(() => setLoading(false));
   }, [projectId]);
 
@@ -464,11 +553,11 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
     const params = { project_id: projectId };
     SchedulerAPI.getTasks(params)
       .then((res) => setTasks(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setTasks([]));
+      .catch(() => toast.error("Failed to load tasks"));
 
     SchedulerAPI.getSprints(projectId)
       .then((res) => setSprints(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setSprints([]));
+      .catch(() => toast.error("Failed to load sprints"));
   }, [projectId]);
 
   const filteredIssues = useMemo(() => {
@@ -477,15 +566,26 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
       const sprintOk = sprintFilter === "all" || (i.sprint_name || "").toLowerCase() === sprintFilter.toLowerCase();
       const foundOk = foundByFilter === "all" || (i.found_by || "").toLowerCase() === foundByFilter.toLowerCase();
       const moduleOk = moduleFilter === "all" || (i.module_name || "").toLowerCase() === moduleFilter.toLowerCase();
-      const idTerm = searchId.trim().toLowerCase();
-      const idOk = idTerm === "" || `${i.id || ""}`.toLowerCase().includes(idTerm) || (i.issueKey || "").toLowerCase().includes(idTerm);
-      return statusOk && sprintOk && foundOk && moduleOk && idOk;
+      const severityOk = severityFilter === "all" || (i.severity || "").toLowerCase() === severityFilter.toLowerCase();
+      const term = searchId.trim().toLowerCase();
+      const searchable = [
+        `${i.id || ""}`,
+        i.issueKey || i.issue_key || "",
+        i.title || "",
+        i.issue_description || "",
+        i.assignee || "",
+        i.owner || "",
+      ]
+        .map((v) => `${v}`.toLowerCase())
+        .some((text) => text.includes(term));
+      const searchOk = term === "" || searchable;
+      return statusOk && sprintOk && foundOk && moduleOk && severityOk && searchOk;
     });
-  }, [issues, filter, sprintFilter, foundByFilter, moduleFilter, searchId]);
+  }, [issues, filter, sprintFilter, foundByFilter, moduleFilter, severityFilter, searchId]);
 
   useEffect(() => {
     setPage(1);
-  }, [filter, sprintFilter, foundByFilter, moduleFilter, searchId]);
+  }, [filter, sprintFilter, foundByFilter, moduleFilter, severityFilter, searchId]);
 
   const totalPages = Math.max(1, Math.ceil(filteredIssues.length / pageSize));
   useEffect(() => {
@@ -500,12 +600,18 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
       toast.error("Project not selected.");
       return;
     }
+    const normalizedPayload = {
+      ...payload,
+      issue_key: payload.issue_key || payload.issueKey,
+      project_id: projectId,
+      sprint_name: payload.sprint_name || sprint?.name,
+    };
     try {
       if (payload.id) {
-        const { data } = await updateIssue(payload.id, payload);
+        const { data } = await updateIssue(payload.id, normalizedPayload);
         setIssues((prev) => prev.map((i) => (i.id === data.id ? data : i)));
       } else {
-        const { data } = await createIssue({ ...payload, project_id: projectId, sprint_name: payload.sprint_name || sprint?.name });
+        const { data } = await createIssue(normalizedPayload);
         setIssues((prev) => [data, ...prev]);
       }
       setEditing(null);
@@ -515,16 +621,27 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
     }
   };
 
+  const handleDelete = async (issue) => {
+    if (!window.confirm(`Delete issue #${issue.id}?`)) return;
+    try {
+      await deleteIssue(issue.id, projectId);
+      setIssues((prev) => prev.filter((i) => i.id !== issue.id));
+      toast.success("Issue deleted");
+    } catch (error) {
+      toast.error("Failed to delete issue");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-6">
       <Toaster position="top-right" />
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <ShieldExclamationIcon className="h-7 w-7 text-[var(--theme-color)]" />
-              <div>
-                <p className="text-sm uppercase tracking-[0.2em] text-slate-500">Issue Tracker</p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <ShieldExclamationIcon className="h-7 w-7 text-[var(--theme-color)]" />
+            <div>
+              <p className="text-sm uppercase tracking-[0.2em] text-slate-500">Issue Tracker</p>
                 <h1 className="text-2xl font-bold text-slate-900">
                   {sprint?.name ? `Issues for ${sprint.name}` : "Project Issues"}
                 </h1>
@@ -600,6 +717,21 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
                   ))}
                 </select>
               </div>
+              <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2">
+                <span className="text-xs font-semibold text-slate-600">Severity</span>
+                <select
+                  value={severityFilter}
+                  onChange={(e) => setSeverityFilter(e.target.value)}
+                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-[var(--theme-color)] focus:ring-2 focus:ring-[var(--theme-color)]/30 bg-white"
+                >
+                  <option value="all">All</option>
+                  {DEFAULT_SEVERITIES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <button
                 onClick={() => setEditing({})}
                 className="rounded-lg bg-[var(--theme-color)] px-4 py-2 text-sm font-semibold text-white shadow hover:brightness-110"
@@ -616,7 +748,27 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
         {loading ? (
           <div className="flex items-center gap-3 text-slate-500"><span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-[var(--theme-color)]" /> Loading issues...</div>
         ) : filteredIssues.length === 0 && !editing ? (
-          <EmptyState onAdd={() => setEditing({})} />
+          filter !== "all" || sprintFilter !== "all" || foundByFilter !== "all" || moduleFilter !== "all" || severityFilter !== "all" || searchId.trim() ? (
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center">
+              <h3 className="text-lg font-semibold text-slate-900">No issues match your filters</h3>
+              <p className="mt-2 text-sm text-slate-500">Try adjusting filters or search.</p>
+              <button
+                onClick={() => {
+                  setFilter("all");
+                  setSprintFilter("all");
+                  setFoundByFilter("all");
+                  setModuleFilter("all");
+                  setSeverityFilter("all");
+                  setSearchId("");
+                }}
+                className="mt-4 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:border-slate-300"
+              >
+                Clear filters
+              </button>
+            </div>
+          ) : (
+            <EmptyState onAdd={() => setEditing({})} />
+          )
         ) : (
           <>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -653,21 +805,23 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
       </div>
 
       {editing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="relative w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 overflow-y-auto">
+          <div className="relative flex w-full max-w-6xl flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl max-h-[90vh]">
             <button
               onClick={() => setEditing(null)}
               className="absolute right-4 top-4 rounded-full bg-slate-100 px-2 py-1 text-sm font-semibold text-slate-600 hover:bg-slate-200"
             >
               Close
             </button>
-            <IssueForm
-              tasks={tasks}
-              sprints={sprints}
-              initial={editing}
-              onSave={handleSave}
-              onCancel={() => setEditing(null)}
-            />
+            <div className="mt-2 flex-1 overflow-y-auto pr-1 sm:pr-2">
+              <IssueForm
+                tasks={tasks}
+                sprints={sprints}
+                initial={editing}
+                onSave={handleSave}
+                onCancel={() => setEditing(null)}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -676,13 +830,3 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
 };
 
 export default IssueTracker;
-  const handleDelete = async (issue) => {
-    if (!window.confirm(`Delete issue #${issue.id}?`)) return;
-    try {
-      await deleteIssue(issue.id);
-      setIssues((prev) => prev.filter((i) => i.id !== issue.id));
-      toast.success("Issue deleted");
-    } catch (error) {
-      toast.error("Failed to delete issue");
-    }
-  };

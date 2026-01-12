@@ -90,22 +90,27 @@ export const updateUser = (id, data) =>
   api.patch(`/users/${id}.json`, data, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
+export const fetchDepartments = () => api.get('/departments.json');
 
 // ISSUE TRACKER
-const buildIssuePayload = (data) => {
-  const hasFiles = data?.mediaFiles && data.mediaFiles.length;
-  if (!hasFiles) return { issue: data };
+const buildIssuePayload = (raw) => {
+  const normalized = {
+    ...raw,
+    issue_key: raw?.issue_key || raw?.issueKey,
+  };
+  const files = normalized?.mediaFiles ? Array.from(normalized.mediaFiles) : [];
+  if (!files.length) return { issue: normalized };
 
   const formData = new FormData();
-  Object.entries(data).forEach(([key, value]) => {
+  Object.entries(normalized).forEach(([key, value]) => {
     if (key === 'mediaFiles') return;
     if (Array.isArray(value)) {
       value.forEach((v) => formData.append(`issue[${key}][]`, v));
-    } else {
-      formData.append(`issue[${key}]`, value ?? '');
+    } else if (value !== undefined && value !== null) {
+      formData.append(`issue[${key}]`, value);
     }
   });
-  Array.from(data.mediaFiles).forEach((file) => formData.append('issue[media_files][]', file));
+  files.forEach((file) => formData.append('issue[media_files][]', file));
   return formData;
 };
 
@@ -118,7 +123,7 @@ export const updateIssue = (id, data) => {
   const payload = buildIssuePayload(data);
   return api.patch(`/issues/${id}.json`, payload, payload instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {});
 };
-export const deleteIssue = (id) => api.delete(`/issues/${id}.json`);
+export const deleteIssue = (id, projectId) => api.delete(`/issues/${id}.json`, { params: { project_id: projectId } });
 
 // POST ENDPOINTS (existing)
 export const fetchPosts = (id) => api.get(id ? `/posts?user_id=${id}` : "/posts");

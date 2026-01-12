@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2027_01_03_000000) do
+ActiveRecord::Schema[7.1].define(version: 2027_01_05_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -61,6 +61,13 @@ ActiveRecord::Schema[7.1].define(version: 2027_01_03_000000) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "departments", force: :cascade do |t|
+    t.string "name", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_departments_on_name", unique: true
+  end
+
   create_table "developers", force: :cascade do |t|
     t.string "name", null: false
     t.datetime "created_at", null: false
@@ -102,6 +109,14 @@ ActiveRecord::Schema[7.1].define(version: 2027_01_03_000000) do
     t.datetime "updated_at", null: false
     t.jsonb "media_urls", default: [], null: false
     t.jsonb "attachment_urls", default: [], null: false
+    t.string "owner"
+    t.string "owner_email"
+    t.string "assignee"
+    t.string "assignee_email"
+    t.string "assignee_slack"
+    t.date "due_date"
+    t.index ["assignee"], name: "index_issues_on_assignee"
+    t.index ["due_date"], name: "index_issues_on_due_date"
     t.index ["issue_key"], name: "index_issues_on_issue_key", unique: true
     t.index ["project_id"], name: "index_issues_on_project_id"
   end
@@ -390,8 +405,10 @@ ActiveRecord::Schema[7.1].define(version: 2027_01_03_000000) do
     t.string "availability_status", default: "available_now", null: false
     t.integer "current_projects_count", default: 0, null: false
     t.string "job_title", default: "Team Member", null: false
+    t.bigint "department_id"
     t.index ["availability_status"], name: "index_users_on_availability_status"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
+    t.index ["department_id"], name: "index_users_on_department_id"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
@@ -502,6 +519,7 @@ ActiveRecord::Schema[7.1].define(version: 2027_01_03_000000) do
   add_foreign_key "user_roles", "users"
   add_foreign_key "user_skills", "skills"
   add_foreign_key "user_skills", "users"
+  add_foreign_key "users", "departments"
   add_foreign_key "work_log_tags", "work_logs"
   add_foreign_key "work_log_tags", "work_tags"
   add_foreign_key "work_logs", "users"

@@ -5,12 +5,22 @@ class Api::EnglishPhrasesController < Api::BaseController
 
   PRIMARY_URL = 'https://api.quotable.io/random'
   FALLBACK_URL = 'https://zenquotes.io/api/random'
+  LOCAL_FALLBACK = {
+    phrase: 'Keep going; progress is built one small step at a time.',
+    author: 'Unknown'
+  }.freeze
 
   def show
     data = fetch_phrase(PRIMARY_URL) || fetch_phrase(FALLBACK_URL)
+    used_fallback = false
+
+    if data.blank?
+      used_fallback = true
+      data = LOCAL_FALLBACK
+    end
 
     if data
-      Rails.logger.info('EnglishPhrases success')
+      Rails.logger.info("EnglishPhrases success#{' (fallback)' if used_fallback}")
       render json: data
     else
       Rails.logger.error('EnglishPhrases error: failed to fetch')

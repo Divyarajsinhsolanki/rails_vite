@@ -13,6 +13,7 @@ class Issue < ApplicationRecord
 
   before_validation :ensure_issue_key
   before_validation :normalize_status_and_severity
+  after_commit :notify_assignment_or_status_change, on: %i[create update]
 
   private
 
@@ -23,5 +24,13 @@ class Issue < ApplicationRecord
   def normalize_status_and_severity
     self.status = status.presence || 'New'
     self.severity = severity.presence || 'Medium'
+  end
+
+  def notify_assignment_or_status_change
+    return unless saved_change_to_assignee? || saved_change_to_status?
+
+    previous_status = saved_change_to_status? ? saved_change_to_status.first : nil
+    previous_assignee = saved_change_to_assignee? ? saved_change_to_assignee.first : nil
+    IssueNotifierJob.perform_later(id, previous_status, previous_assignee)
   end
 end

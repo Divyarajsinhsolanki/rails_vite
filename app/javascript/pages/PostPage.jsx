@@ -323,7 +323,7 @@ const PostPage = () => {
 
         {/* Right Sidebar: Community Stats and Birthdays */}
         <aside className="lg:col-span-3">
-            <div className="space-y-8 sticky top-24">
+            <div className="space-y-8 sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-hide pr-1">
                 <QuickActions onCreatePost={handleQuickPost} />
 
                 <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm">

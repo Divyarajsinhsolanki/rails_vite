@@ -1,5 +1,6 @@
 class Api::IssuesController < Api::BaseController
   include Rails.application.routes.url_helpers
+  before_action :require_project_id!, only: [:create, :update, :destroy]
   before_action :set_issue, only: [:update, :destroy]
 
   def index
@@ -10,7 +11,7 @@ class Api::IssuesController < Api::BaseController
   end
 
   def create
-    issue = Issue.new(issue_params)
+    issue = Issue.new(issue_params.merge(project_id: @project_id))
     attach_media(issue)
     if issue.save
       render json: serialize_issue(issue), status: :created
@@ -21,7 +22,7 @@ class Api::IssuesController < Api::BaseController
 
   def update
     attach_media(@issue)
-    if @issue.update(issue_params)
+    if @issue.update(issue_params.merge(project_id: @project_id))
       render json: serialize_issue(@issue)
     else
       render json: { errors: @issue.errors.full_messages }, status: :unprocessable_entity
@@ -36,7 +37,7 @@ class Api::IssuesController < Api::BaseController
   private
 
   def set_issue
-    @issue = Issue.find(params[:id])
+    @issue = Issue.find_by!(id: params[:id], project_id: @project_id)
   end
 
   def issue_params
@@ -44,8 +45,16 @@ class Api::IssuesController < Api::BaseController
       :project_id, :issue_key, :title, :status, :severity, :category, :module_name,
       :sub_module, :sprint_name, :task_id, :found_by, :found_on, :issue_description,
       :pre_conditions, :repro_steps, :actual_result, :expected_result, :attachment, :comment,
+      :owner, :owner_email, :assignee, :assignee_email, :assignee_slack, :due_date,
       media_urls: [], attachment_urls: []
     )
+  end
+
+  def require_project_id!
+    @project_id = params[:project_id] || params.dig(:issue, :project_id)
+    unless @project_id.present?
+      render json: { error: "project_id required" }, status: :unprocessable_entity
+    end
   end
 
   def attach_media(issue)

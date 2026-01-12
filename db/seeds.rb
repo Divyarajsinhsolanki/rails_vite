@@ -45,6 +45,12 @@ sample_issues = [
     sprint_name: 'Sprint 1',
     found_by: 'QA Bot',
     found_on: Date.today - 2,
+    owner: 'Product',
+    owner_email: 'pm@example.com',
+    assignee: 'Anita',
+    assignee_email: 'anita@example.com',
+    assignee_slack: '@anita',
+    due_date: Date.today + 3,
     issue_description: 'Login button submits with empty email field.',
     pre_conditions: 'Navigate to /login',
     repro_steps: 'Leave email blank, click Login',
@@ -63,6 +69,12 @@ sample_issues = [
     sprint_name: 'Sprint 1',
     found_by: 'QA Team',
     found_on: Date.today - 3,
+    owner: 'Data',
+    owner_email: 'data-lead@example.com',
+    assignee: 'Rahul',
+    assignee_email: 'rahul@example.com',
+    assignee_slack: '@rahul',
+    due_date: Date.today + 5,
     issue_description: 'Safari 16 shows blank canvas for velocity chart.',
     repro_steps: 'Open dashboard in Safari 16, observe chart area',
     actual_result: 'Blank white block',
@@ -80,6 +92,11 @@ sample_issues = [
     sprint_name: sprint_names.sample || fallback_sprints.sample,
     found_by: 'Kajal',
     found_on: Date.today - 1,
+    owner: 'Platform',
+    owner_email: 'platform@example.com',
+    assignee: 'Vikram',
+    assignee_email: 'vikram@example.com',
+    due_date: Date.today + 1,
     issue_description: 'Uploads >5MB return 500',
     pre_conditions: 'Auth user, project member',
     repro_steps: 'Upload 6MB pdf via attachments',
@@ -98,6 +115,12 @@ sample_issues = [
     sprint_name: sprint_names.sample || fallback_sprints.sample,
     found_by: 'QA Bot',
     found_on: Date.today - 4,
+    owner: 'Growth',
+    owner_email: 'growth@example.com',
+    assignee: 'Email Squad',
+    assignee_email: 'email-squad@example.com',
+    assignee_slack: '#email-team',
+    due_date: Date.today,
     issue_description: 'Password reset email shows invite copy',
     repro_steps: 'Trigger password reset',
     actual_result: 'Invite template content',
@@ -114,6 +137,11 @@ sample_issues = [
     sprint_name: sprint_names.sample || fallback_sprints.sample,
     found_by: 'QA Team',
     found_on: Date.today,
+    owner: 'Search',
+    owner_email: 'search@example.com',
+    assignee: 'Lea',
+    assignee_email: 'lea@example.com',
+    due_date: Date.today + 2,
     issue_description: 'Toggle ignored when off',
     repro_steps: 'Enable include-archived toggle, search for archived ID',
     actual_result: 'No archived tasks returned',
@@ -189,6 +217,36 @@ work_tags = [
 
 work_tags.each do |tag_name|
   WorkTag.find_or_create_by!(name: tag_name)
+end
+
+# Departments
+departments = [
+  'Unassigned',
+  '.Net',
+  'Analytics',
+  'BA',
+  'Design',
+  'Digital Marketing',
+  'HR',
+  'Information Security',
+  'Magento',
+  'Management',
+  'Meanstack',
+  'Mobile',
+  'Odoo',
+  'PHP',
+  'QA',
+  'React',
+  'ROR',
+  'Sales',
+  'Sales & Marketing',
+  'SEO',
+  'Shopify',
+  'SRE'
+].uniq
+
+departments.each do |dept_name|
+  Department.find_or_create_by!(name: dept_name)
 end
 
 # Existing users who will receive seeded data

@@ -30,3 +30,11 @@ body {
   color: #e11d48;
   font-weight: 700;
 }
+
+/* Hide scrollbars on custom scroll regions */
+.scrollbar-hide {
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

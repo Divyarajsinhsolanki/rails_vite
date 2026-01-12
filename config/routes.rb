@@ -102,6 +102,7 @@ Rails.application.routes.draw do
 
     resources :items, only: [:index, :create, :update, :destroy]
     resources :issues, only: [:index, :create, :update, :destroy]
+    resources :departments, only: [:index]
 
     resources :knowledge_bookmarks, only: [:index, :create, :update, :destroy] do
       member do
