@@ -1,7 +1,9 @@
 import React from "react";
 import FormComponent from "./FormComponent";
 
-const FormRenderer = ({ activeForm, setActiveForm, setPdfUpdated, pdfPath }) => {
+const FormRenderer = ({ activeForm, setActiveForm, setPdfUpdated, setPdfUrl, pdfPath, droppedCoordinates }) => {
+  // ... (formConfigs remains unchanged) ...
+
   const formConfigs = {
     addText: {
       title: "Add Text",
@@ -13,6 +15,7 @@ const FormRenderer = ({ activeForm, setActiveForm, setPdfUpdated, pdfPath }) => 
         { name: "page_number", type: "number", label: "Page Number" },
       ],
     },
+    // ... (rest of configs) ...
     addPage: {
       title: "Add Page",
       endpoint: "/add_page",
@@ -118,7 +121,9 @@ const FormRenderer = ({ activeForm, setActiveForm, setPdfUpdated, pdfPath }) => 
     <FormComponent
       setActiveForm={setActiveForm}
       setPdfUpdated={setPdfUpdated}
+      setPdfUrl={setPdfUrl} // Pass down
       pdfPath={pdfPath}
+      droppedCoordinates={droppedCoordinates} // Pass coordinates
       {...config}
     />
   );

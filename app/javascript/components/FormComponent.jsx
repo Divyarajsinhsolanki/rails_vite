@@ -2,10 +2,22 @@ import React, { useState } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 import { motion } from "framer-motion";
 
-const FormComponent = ({ setActiveForm, setPdfUpdated, formFields = [], endpoint, title, pdfPath }) => {
+const FormComponent = ({ setActiveForm, setPdfUpdated, setPdfUrl, formFields = [], endpoint, title, pdfPath, droppedCoordinates }) => {
   const [formData, setFormData] = useState(
     formFields.reduce((acc, field) => ({ ...acc, [field.name]: "" }), { pdf_path: pdfPath })
   );
+
+  // Update form data when coordinates are dropped
+  React.useEffect(() => {
+    if (droppedCoordinates) {
+      setFormData(prev => ({
+        ...prev,
+        x: Math.round(droppedCoordinates.x),
+        y: Math.round(droppedCoordinates.y),
+        page_number: droppedCoordinates.pageNumber || prev.page_number
+      }));
+    }
+  }, [droppedCoordinates]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -25,8 +37,17 @@ const FormComponent = ({ setActiveForm, setPdfUpdated, formFields = [], endpoint
 
       if (!response.ok) throw new Error("Request failed");
 
-      // Increment the counter so the viewer reloads the updated PDF
-      setPdfUpdated((prev) => prev + 1);
+      const data = await response.json();
+
+      // If the backend returns a new PDF URL (because it created a new file), update it.
+      if (data.pdf_url && setPdfUrl) {
+        setPdfUrl(data.pdf_url);
+        localStorage.setItem("pdfUrl", data.pdf_url);
+      } else {
+        // Otherwise just trigger a reload of the current URL (e.g. if name didn't change but content did)
+        setPdfUpdated((prev) => prev + 1);
+      }
+
       setActiveForm(null);
     } catch (error) {
       console.error(error);

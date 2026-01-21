@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import PdfEditor from "./PdfEditor";
 import PdfViewer from "./PdfViewer";
+import SidebarToolbar from "./SidebarToolbar";
+import { AnimatePresence, motion } from "framer-motion";
 
 import {
   Upload,
@@ -33,23 +35,16 @@ const PdfPage = () => {
   const [uploadMessage, setUploadMessage] = useState("");
   const [isError, setIsError] = useState(false);
 
+  // Lifted state for Interactive Editor
+  const [activeForm, setActiveForm] = useState(null);
+  const [droppedCoordinates, setDroppedCoordinates] = useState(null);
+
   useEffect(() => {
     const storedPdf = localStorage.getItem("pdfUrl");
     if (storedPdf) setPdfUrl(storedPdf);
   }, []);
 
-  const pdfTools = [
-    { name: "Add Page", icon: Plus },
-    { name: "Remove Page", icon: Minus },
-    { name: "Merge PDFs", icon: Link },
-    { name: "Extract Pages", icon: FileSliders },
-    { name: "Rotate Page", icon: RotateCw },
-    { name: "Add Watermark", icon: Droplet },
-    { name: "Add Blank Page", icon: FilePlus },
-    { name: "Add Text", icon: Type },
-    { name: "Count Pages", icon: Hash },
-    { name: "Sign on Page", icon: Signature },
-  ];
+
 
   const handleFileUpload = async (file) => {
     if (!file) return;
@@ -115,7 +110,6 @@ const PdfPage = () => {
         },
       });
       if (response.ok) {
-        // Increment the counter to force the viewer to reload the PDF
         setPdfUpdated((prev) => prev + 1);
         setUploadMessage("PDF reset to original state!");
         setIsError(false);
@@ -140,51 +134,65 @@ const PdfPage = () => {
     setTimeout(() => setShowUploadMessage(false), 3000);
   };
 
-  return (
-    <div className="font-inter flex flex-col min-h-screen items-center bg-[rgb(var(--theme-color-rgb)/0.1)] p-4 sm:p-6 lg:p-8">
-      <header className="w-full max-w-6xl text-center mb-8">
-        <h1 className="text-4xl font-bold text-[var(--theme-color)] mb-2">PDF Modifier</h1>
-        <p className="text-lg text-gray-600">Your all-in-one online PDF editor. Upload, edit, and manage your documents with ease.</p>
-      </header>
+  const handleConfirmPosition = (coordinates) => {
+    setDroppedCoordinates(coordinates);
+    setUploadMessage(`Position set: X=${Math.round(coordinates.x)}, Y=${Math.round(coordinates.y)}`);
+    setShowUploadMessage(true);
+    setTimeout(() => setShowUploadMessage(false), 2000);
+  };
 
-      {!pdfUrl && (
-        <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-6 sm:p-8 lg:p-10 flex flex-col items-center border border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Start Editing Your PDF</h2>
+  const handleCancelTool = () => {
+    setActiveForm(null);
+  };
+
+  // If no PDF is uploaded, show the upload screen
+  if (!pdfUrl) {
+    return (
+      <div className="font-inter flex flex-col min-h-screen items-center justify-center bg-gray-50 p-4">
+        <div className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl p-8 sm:p-12 flex flex-col items-center border border-gray-100">
+          <h1 className="text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">PDF Modifier</h1>
+          <p className="text-lg text-gray-500 mb-10 text-center">Upload your document to start editing in a powerful new workspace.</p>
 
           <div
             {...getRootProps()}
             className={`
-              w-full p-10 rounded-xl border-4 transition-all duration-300 ease-in-out
-              flex flex-col items-center justify-center text-center cursor-pointer
-              ${isDragActive ? "border-[var(--theme-color)] bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)] shadow-lg" : "border-gray-300 bg-gray-50 text-gray-600 hover:border-[var(--theme-color)] hover:bg-[rgb(var(--theme-color-rgb)/0.05)]"}
+              w-full p-16 rounded-2xl border-4 border-dashed transition-all duration-300 ease-in-out
+              flex flex-col items-center justify-center text-center cursor-pointer group
+              ${isDragActive
+                ? "border-indigo-500 bg-indigo-50/50 scale-105"
+                : "border-gray-200 bg-gray-50 hover:border-indigo-300 hover:bg-gray-100"
+              }
             `}
           >
             <input {...getInputProps()} />
-            {uploading ? (
-              <Loader2 className="h-12 w-12 text-[var(--theme-color)] animate-spin mb-4" />
-            ) : (
-              <Upload className="h-12 w-12 text-gray-500 mb-4" />
-            )}
+            <div className={`
+              p-6 rounded-full bg-white shadow-lg mb-6 transition-transform duration-300
+              ${isDragActive ? "scale-110" : "group-hover:scale-110"}
+            `}>
+              {uploading ? (
+                <Loader2 className="h-10 w-10 text-indigo-600 animate-spin" />
+              ) : (
+                <Upload className="h-10 w-10 text-indigo-600" />
+              )}
+            </div>
             {isDragActive ? (
-              <p className="text-xl font-semibold">Drop your PDF here!</p>
+              <p className="text-2xl font-bold text-indigo-700">Drop your PDF here!</p>
             ) : (
-              <p className="text-lg">Drag & drop a PDF file or <span className="font-semibold text-[var(--theme-color)] underline">click to browse</span></p>
+              <div>
+                <p className="text-xl font-semibold text-gray-900">Click to upload or drag and drop</p>
+                <p className="text-sm text-gray-400 mt-2">PDF files up to 25MB</p>
+              </div>
             )}
-            <p className="text-sm text-gray-500 mt-2">Only .pdf files are accepted (Max 25MB)</p>
           </div>
 
-          {showUploadMessage && (
-            <div className={`mt-4 p-3 rounded-lg w-full text-center text-sm font-medium ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>{uploadMessage}</div>
-          )}
-
-          <div className="flex items-center justify-center w-full my-6">
-            <div className="border-t border-gray-300 flex-grow"></div>
-            <span className="px-4 text-gray-500 text-sm font-medium">OR</span>
-            <div className="border-t border-gray-300 flex-grow"></div>
+          <div className="flex items-center justify-center w-full my-8 text-gray-300">
+            <div className="h-px bg-gray-200 flex-grow"></div>
+            <span className="px-4 text-sm font-medium uppercase tracking-widest text-gray-400">or try it out</span>
+            <div className="h-px bg-gray-200 flex-grow"></div>
           </div>
 
           <button
-            className="group relative inline-flex items-center justify-center px-8 py-3 text-lg font-medium tracking-wide text-white transition-all duration-300 ease-out bg-[var(--theme-color)] rounded-lg shadow-lg hover:brightness-110 focus:outline-none focus:ring-4 focus:ring-[rgb(var(--theme-color-rgb)/0.5)] active:scale-95"
+            className="px-8 py-3 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl shadow-sm hover:bg-gray-50 hover:border-gray-300 transition-all focus:ring-4 focus:ring-gray-100"
             onClick={() => {
               setPdfUrl("/documents/sample.pdf");
               localStorage.setItem("pdfUrl", "/documents/sample.pdf");
@@ -195,78 +203,101 @@ const PdfPage = () => {
             }}
             disabled={uploading}
           >
-            <FileText className="h-6 w-6 mr-3 transition-transform duration-300 group-hover:rotate-6" />
-            {uploading ? "Loading Sample..." : "Use Sample PDF"}
+            Use Sample PDF
           </button>
+        </div>
+      </div>
+    );
+  }
 
-          <div className="w-full mt-12">
-            <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">Powerful PDF Tools at Your Fingertips</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-              {pdfTools.map((tool, index) => (
-                <div
-                  key={index}
-                  className="flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg shadow-sm hover:shadow-md hover:bg-[rgb(var(--theme-color-rgb)/0.05)] transition-all duration-200 ease-in-out cursor-pointer border border-gray-200"
-                >
-                  <tool.icon className="h-8 w-8 text-[var(--theme-color)] mb-2" />
-                  <span className="text-sm font-medium text-gray-700 text-center">{tool.name}</span>
-                </div>
-              ))}
-            </div>
+  // Workspace Layout
+  return (
+    <div className="flex h-screen w-screen bg-gray-100 overflow-hidden font-inter">
+      {/* Sidebar Toolbar */}
+      <SidebarToolbar activeTool={activeForm} setActiveTool={setActiveForm} />
+
+      {/* Main Content Area (Viewer) */}
+      <div className="flex-1 flex flex-col h-full active:cursor-grabbing relative">
+        {/* Top Header */}
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 z-10 shadow-sm">
+          <div className="flex items-center space-x-2">
+            <span className="text-gray-500 text-sm">Editing:</span>
+            <span className="font-semibold text-gray-800 bg-gray-100 px-2 py-1 rounded">document.pdf</span>
+          </div>
+
+          <div className="flex items-center space-x-3">
+            <button onClick={handleResetPdf} className="p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors" title="Reset">
+              <RefreshCcw className="h-5 w-5" />
+            </button>
+            <button onClick={handleRemovePdf} className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Remove">
+              <Trash2 className="h-5 w-5" />
+            </button>
+            <div className="h-6 w-px bg-gray-200 mx-2"></div>
+            <button
+              onClick={handleDownloadPdf}
+              className="flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-md transition-all active:scale-95"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download
+            </button>
+          </div>
+        </header>
+
+        {/* PDF Canvas Wrapper */}
+        <div className="flex-1 overflow-auto bg-gray-50/50 p-8 flex justify-center">
+          <div className="relative shadow-2xl rounded rounded-md">
+            <PdfViewer
+              pdfUrl={`${pdfUrl}?updated=${pdfUpdated}`}
+              activeTool={activeForm}
+              onConfirmPosition={handleConfirmPosition}
+              onCancelTool={handleCancelTool}
+            />
           </div>
         </div>
-      )}
 
-      {pdfUrl && (
-        <div className="w-full max-w-8xl flex flex-col lg:flex-row gap-6 mt-8">
-          <div className="w-full lg:w-2/5 bg-white rounded-2xl shadow-xl p-6 border border-gray-200 flex flex-col">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">PDF Editor</h2>
-            <div className="flex-grow border border-gray-300 rounded-lg overflow-hidden text-gray-500 p-4 bg-gray-50">
-              <PdfEditor setPdfUpdated={setPdfUpdated} pdfPath={pdfUrl} />
-            </div>
-          </div>
+        {/* Message Toast */}
+        {showUploadMessage && (
+          <motion.div
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 50, opacity: 0 }}
+            className={`absolute bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full shadow-2xl text-white font-medium z-50 flex items-center gap-3 ${isError ? 'bg-red-500' : 'bg-gray-900'}`}
+          >
+            {isError ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+            {uploadMessage}
+          </motion.div>
+        )}
+      </div>
 
-          <div className="w-full lg:w-3/5 bg-white rounded-2xl shadow-xl p-6 border border-gray-200 flex flex-col">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">PDF Viewer</h2>
-            <div className="flex-grow relative">
-              <div className="w-full h-full border border-gray-300 rounded-lg overflow-hidden">
-                <PdfViewer pdfUrl={`${pdfUrl}?updated=${pdfUpdated}`} />
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4 mt-6 justify-center">
-              <button
-                className="group relative inline-flex items-center justify-center px-6 py-3 text-base font-medium tracking-wide text-white transition-all duration-300 ease-out bg-gradient-to-br from-yellow-500 to-orange-500 rounded-lg shadow-md hover:from-yellow-600 hover:to-orange-600 focus:outline-none focus:ring-4 focus:ring-yellow-300 active:scale-95"
-                onClick={handleResetPdf}
-              >
-                <RefreshCcw className="h-5 w-5 mr-2 transition-transform duration-300 group-hover:rotate-180" />
-                Reset PDF
-              </button>
-              <button
-                className="group relative inline-flex items-center justify-center px-6 py-3 text-base font-medium tracking-wide text-white transition-all duration-300 ease-out bg-[var(--theme-color)] rounded-lg shadow-md hover:brightness-110 focus:outline-none focus:ring-4 focus:ring-[rgb(var(--theme-color-rgb)/0.5)] active:scale-95"
-                onClick={handleDownloadPdf}
-              >
-                <Download className="h-5 w-5 mr-2 transition-transform duration-300 group-hover:translate-y-1" />
-                Download PDF
-              </button>
-              <button
-                className="group relative inline-flex items-center justify-center px-6 py-3 text-base font-medium tracking-wide text-white transition-all duration-300 ease-out bg-gradient-to-br from-red-600 to-pink-500 rounded-lg shadow-md hover:from-red-700 hover:to-pink-600 focus:outline-none focus:ring-4 focus:ring-red-300 active:scale-95"
-                onClick={handleRemovePdf}
-              >
-                <Trash2 className="h-5 w-5 mr-2 transition-transform duration-300 group-hover:scale-110" />
-                Remove PDF
+      {/* Right Panel (Tool Properties / Forms) */}
+      <AnimatePresence>
+        {activeForm && (
+          <motion.div
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="w-80 h-full bg-white border-l border-gray-200 shadow-2xl z-30 flex flex-col"
+          >
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+              <h3 className="font-semibold text-gray-700">Properties</h3>
+              <button onClick={() => setActiveForm(null)} className="p-1 hover:bg-gray-200 rounded-full transition-colors">
+                <X className="h-5 w-5 text-gray-500" />
               </button>
             </div>
-          </div>
-        </div>
-      )}
 
-      {showUploadMessage && (
-        <div className={`fixed bottom-6 right-6 p-4 rounded-lg shadow-lg text-white z-50 transition-all duration-300 ease-in-out transform ${isError ? 'bg-red-500' : 'bg-green-500'} ${showUploadMessage ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}> 
-          <div className="flex items-center">
-            {isError ? <X className="h-5 w-5 mr-2" /> : <Check className="h-5 w-5 mr-2" />} 
-            <span>{uploadMessage}</span>
-          </div>
-        </div>
-      )}
+            <div className="flex-1 overflow-y-auto p-4 content-container">
+              <PdfEditor
+                setPdfUpdated={setPdfUpdated}
+                pdfPath={pdfUrl}
+                activeForm={activeForm}
+                setActiveForm={setActiveForm}
+                droppedCoordinates={droppedCoordinates}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

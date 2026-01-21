@@ -202,4 +202,10 @@ export const deleteRecord = (table, id) => api.delete(`/admin/${table}/${id}`);
 export const sendContact = (data) => api.post('/contacts', { contact: data });
 
 export const fetchSheetData = (params) => api.get('/sheet', { params });
+
+// NOTIFICATION ENDPOINTS
+export const fetchNotifications = (params = {}) => api.get('/notifications.json', { params });
+export const markNotificationRead = (id) => api.post(`/notifications/${id}/mark_read`);
+export const markAllNotificationsRead = () => api.post('/notifications/mark_all_read');
+
 export default api;

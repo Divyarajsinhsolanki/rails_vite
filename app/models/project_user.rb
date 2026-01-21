@@ -1,4 +1,21 @@
 class ProjectUser < ApplicationRecord
+  include UserStampable
+  after_create :notify_user
+
+  private
+
+  def notify_user
+    # Ensure we have an actor (created_by) and it's not the user themselves
+    return unless created_by && created_by != user_id
+
+    Notification.create(
+      recipient: user,
+      actor_id: created_by,
+      action: 'assigned',
+      notifiable: self,
+      metadata: { project_name: project.name, role: role }
+    )
+  end
   belongs_to :project, inverse_of: :project_users
   belongs_to :user, inverse_of: :project_users
 

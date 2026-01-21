@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useMatch } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { fetchProjects } from "./api";
 import logo from "../images/logo.webp";
+import NotificationCenter from "./NotificationCenter";
 
 // Icons
 import {
@@ -46,7 +47,7 @@ const HolographicAvatar = ({ user }) => {
   }, []);
 
   return (
-    <div 
+    <div
       ref={avatarRef}
       className="relative h-10 w-10 rounded-full overflow-hidden group"
     >
@@ -55,7 +56,7 @@ const HolographicAvatar = ({ user }) => {
         alt="User Avatar"
         className="absolute inset-0 h-full w-full object-cover z-10 group-hover:opacity-80 transition-opacity"
       />
-      <div 
+      <div
         className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
         style={{
           background: `linear-gradient(${angle}deg, 
@@ -86,7 +87,7 @@ const AnimatedNavLink = ({ to, label, icon: Icon, onClick }) => {
         {Icon && <Icon className="h-5 w-5" />}
         <span className="font-medium">{label}</span>
       </div>
-      
+
       {isActive && (
         <motion.div
           layoutId="nav-active-bg"
@@ -94,9 +95,9 @@ const AnimatedNavLink = ({ to, label, icon: Icon, onClick }) => {
           transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
         />
       )}
-      
+
       {!isActive && (
-        <motion.div 
+        <motion.div
           className="absolute inset-0 bg-zinc-100 dark:bg-zinc-800 opacity-0 group-hover:opacity-100 rounded-lg"
           transition={{ duration: 0.2 }}
         />
@@ -126,7 +127,7 @@ const ProjectsDropdown = ({ projects, onItemClick }) => {
 
   return (
     <div className="relative group" ref={dropdownRef}>
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-3 py-2 rounded-lg text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
       >
@@ -134,7 +135,7 @@ const ProjectsDropdown = ({ projects, onItemClick }) => {
         <span className="font-medium">Projects</span>
         <FiChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
-      
+
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -234,7 +235,7 @@ const Navbar = () => {
     'bg-white dark:bg-zinc-900 backdrop-blur-lg shadow-sm border-zinc-200 dark:border-zinc-800';
 
   return (
-    <motion.header 
+    <motion.header
       className={`sticky top-0 w-full z-50 border-b transition-all duration-300 ${getNavbarBackground()}`}
       animate={{
         height: scrolled ? '60px' : '70px',
@@ -242,13 +243,13 @@ const Navbar = () => {
     >
       <div className="container mx-auto flex justify-between items-center h-full px-4 sm:px-6">
         {/* Logo */}
-        <Link 
-          to="/" 
-          className="flex items-center gap-3 group" 
+        <Link
+          to="/"
+          className="flex items-center gap-3 group"
           onClick={() => setIsMobileMenuOpen(false)}
         >
           <img src={logo} alt="Logo" className="h-8 w-auto transition-transform group-hover:scale-110" />
-          <motion.h1 
+          <motion.h1
             className="hidden sm:block text-xl font-bold text-zinc-800 dark:text-zinc-100"
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -270,10 +271,10 @@ const Navbar = () => {
                 />
               )
           )}
-          
+
           {projects.length > 0 && (
-            <ProjectsDropdown 
-              projects={projects} 
+            <ProjectsDropdown
+              projects={projects}
               onItemClick={() => setIsMobileMenuOpen(false)}
             />
           )}
@@ -281,9 +282,10 @@ const Navbar = () => {
 
         {/* Right side actions */}
         <div className="flex items-center gap-4">
+          {user && <NotificationCenter />}
           {user ? (
             <div className="relative" ref={profileRef}>
-              <button 
+              <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="relative"
               >
@@ -294,7 +296,7 @@ const Navbar = () => {
                   </div>
                 )}
               </button>
-              
+
               <AnimatePresence>
                 {isProfileOpen && (
                   <motion.div
@@ -312,11 +314,11 @@ const Navbar = () => {
                         {user.roles?.[0]?.name.replace("_", " ") || "Member"}
                       </p>
                     </div>
-                    
+
                     <div className="p-2">
                       {hasAdminRole && (
-                        <NavLink 
-                          to="/admin" 
+                        <NavLink
+                          to="/admin"
                           onClick={() => setIsProfileOpen(false)}
                           className="flex items-center gap-3 w-full px-3 py-2.5 text-sm rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700"
                         >
@@ -324,7 +326,7 @@ const Navbar = () => {
                           Admin Panel
                         </NavLink>
                       )}
-                      
+
                       <NavLink
                         to="/profile"
                         onClick={() => setIsProfileOpen(false)}
@@ -333,7 +335,7 @@ const Navbar = () => {
                         <FiUser className="h-4 w-4 text-blue-500" />
                         My Profile
                       </NavLink>
-                      
+
                       {isOwner && (
                         <NavLink
                           to="/users"
@@ -344,7 +346,7 @@ const Navbar = () => {
                           User Management
                         </NavLink>
                       )}
-                      
+
                       <NavLink
                         to="/settings"
                         onClick={() => setIsProfileOpen(false)}
@@ -354,7 +356,7 @@ const Navbar = () => {
                         Settings
                       </NavLink>
                     </div>
-                    
+
                     <div className="border-t dark:border-zinc-700 p-2">
                       <button
                         onClick={() => { handleLogout(); setIsProfileOpen(false); }}
@@ -370,16 +372,16 @@ const Navbar = () => {
             </div>
           ) : (
             <div className="hidden lg:flex items-center gap-2">
-              <Link 
-                to="/" 
-                state={{ mode: "login" }} 
+              <Link
+                to="/"
+                state={{ mode: "login" }}
                 className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
               >
                 Login
               </Link>
-              <Link 
-                to="/" 
-                state={{ mode: "signup" }} 
+              <Link
+                to="/"
+                state={{ mode: "signup" }}
                 className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-sky-600 rounded-lg hover:from-blue-600 hover:to-sky-700 shadow-md hover:shadow-blue-500/20"
               >
                 Get Started
@@ -388,16 +390,16 @@ const Navbar = () => {
           )}
 
           {/* Mobile Menu Button */}
-          <button 
+          <button
             onClick={() => setIsMobileMenuOpen(true)}
             className="lg:hidden p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
           >
             <div className="space-y-1.5">
-              <motion.span 
+              <motion.span
                 animate={{ width: isMobileMenuOpen ? '24px' : '20px' }}
                 className="block h-0.5 w-6 bg-zinc-700 dark:bg-zinc-200"
               />
-              <motion.span 
+              <motion.span
                 animate={{ width: isMobileMenuOpen ? '24px' : '16px' }}
                 className="block h-0.5 w-5 bg-zinc-700 dark:bg-zinc-200 ml-auto"
               />
@@ -417,12 +419,12 @@ const Navbar = () => {
             className="fixed inset-0 bg-white dark:bg-zinc-900 z-50 lg:hidden"
           >
             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
-            
+
             <div className="relative h-full overflow-y-auto">
               <div className="flex justify-between items-center p-6 border-b dark:border-zinc-800">
-                <Link 
-                  to="/" 
-                  className="flex items-center gap-3" 
+                <Link
+                  to="/"
+                  className="flex items-center gap-3"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <img src={logo} alt="Logo" className="h-8 w-auto" />
@@ -430,14 +432,14 @@ const Navbar = () => {
                     Nexus<span className="text-blue-500">Hub</span>
                   </span>
                 </Link>
-                <button 
+                <button
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 >
                   <FiX className="h-6 w-6 text-zinc-700 dark:text-zinc-200" />
                 </button>
               </div>
-              
+
               <nav className="p-6 flex flex-col h-full">
                 <div className="space-y-1 mb-8">
                   {user ? (
@@ -457,7 +459,7 @@ const Navbar = () => {
                           />
                         </motion.div>
                       ))}
-                      
+
                       {projects.length > 0 && (
                         <motion.div
                           initial={{ x: 20, opacity: 0 }}
@@ -488,9 +490,9 @@ const Navbar = () => {
                         animate={{ x: 0, opacity: 1 }}
                         transition={{ delay: 0.1 }}
                       >
-                        <Link 
-                          to="/" 
-                          state={{ mode: "login" }} 
+                        <Link
+                          to="/"
+                          state={{ mode: "login" }}
                           onClick={() => setIsMobileMenuOpen(false)}
                           className="flex items-center gap-3 px-5 py-3 text-lg font-medium rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
                         >
@@ -498,15 +500,15 @@ const Navbar = () => {
                           Login
                         </Link>
                       </motion.div>
-                      
+
                       <motion.div
                         initial={{ x: 20, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         transition={{ delay: 0.15 }}
                       >
-                        <Link 
-                          to="/" 
-                          state={{ mode: "signup" }} 
+                        <Link
+                          to="/"
+                          state={{ mode: "signup" }}
                           onClick={() => setIsMobileMenuOpen(false)}
                           className="flex items-center gap-3 px-5 py-3 text-lg font-medium text-white bg-gradient-to-r from-blue-500 to-sky-600 rounded-lg"
                         >
@@ -517,7 +519,7 @@ const Navbar = () => {
                     </>
                   )}
                 </div>
-                
+
                 {user && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -534,7 +536,7 @@ const Navbar = () => {
                         </p>
                       </div>
                     </div>
-                    
+
                     <NavLink
                       to="/settings"
                       onClick={() => setIsMobileMenuOpen(false)}
@@ -543,7 +545,7 @@ const Navbar = () => {
                       <FiSettings className="h-4 w-4" />
                       Settings
                     </NavLink>
-                    
+
                     <button
                       onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
                       className="flex items-center gap-3 w-full text-left px-5 py-3 text-sm rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"

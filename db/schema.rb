@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2027_01_05_000000) do
+ActiveRecord::Schema[7.1].define(version: 2027_01_05_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -170,6 +170,21 @@ ActiveRecord::Schema[7.1].define(version: 2027_01_05_000000) do
     t.datetime "updated_at", null: false
     t.index ["team_id"], name: "index_learning_goals_on_team_id"
     t.index ["user_id"], name: "index_learning_goals_on_user_id"
+  end
+
+  create_table "notifications", force: :cascade do |t|
+    t.bigint "recipient_id", null: false
+    t.bigint "actor_id", null: false
+    t.datetime "read_at"
+    t.string "action"
+    t.string "notifiable_type", null: false
+    t.bigint "notifiable_id", null: false
+    t.jsonb "metadata"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_id"], name: "index_notifications_on_actor_id"
+    t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable"
+    t.index ["recipient_id"], name: "index_notifications_on_recipient_id"
   end
 
   create_table "post_likes", force: :cascade do |t|
@@ -495,6 +510,8 @@ ActiveRecord::Schema[7.1].define(version: 2027_01_05_000000) do
   add_foreign_key "learning_checkpoints", "learning_goals"
   add_foreign_key "learning_goals", "teams"
   add_foreign_key "learning_goals", "users"
+  add_foreign_key "notifications", "users", column: "actor_id"
+  add_foreign_key "notifications", "users", column: "recipient_id"
   add_foreign_key "post_likes", "posts"
   add_foreign_key "post_likes", "users"
   add_foreign_key "posts", "users"

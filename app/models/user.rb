@@ -37,6 +37,7 @@ class User < ApplicationRecord
   has_many :knowledge_bookmarks, dependent: :destroy, inverse_of: :user
   has_many :given_skill_endorsements, class_name: 'SkillEndorsement', foreign_key: :endorser_id, dependent: :destroy, inverse_of: :endorser
   has_many :received_skill_endorsements, through: :user_skills, source: :skill_endorsements
+  has_many :notifications, foreign_key: :recipient_id, dependent: :destroy
   belongs_to :department, optional: true
 
   enum availability_status: {

@@ -16,9 +16,36 @@ class Task < ApplicationRecord
   validates :type, presence: true
   validates :title, presence: true, if: :general?
 
+  after_create :notify_assigned_user
+  after_update :notify_assigned_user_change
+
   private
 
   def general?
     type == 'general' || type == 'qa'
+  end
+
+  def notify_assigned_user
+    return unless assigned_user && created_by
+
+    Notification.create(
+      recipient: assigned_user,
+      actor_id: created_by,
+      action: 'assigned',
+      notifiable: self,
+      metadata: { task_title: title || "Task #{task_id}" }
+    )
+  end
+
+  def notify_assigned_user_change
+    return unless saved_change_to_assigned_to_user? && assigned_user && updated_by
+
+    Notification.create(
+      recipient: assigned_user,
+      actor_id: updated_by,
+      action: 'assigned',
+      notifiable: self,
+      metadata: { task_title: title || "Task #{task_id}" }
+    )
   end
 end

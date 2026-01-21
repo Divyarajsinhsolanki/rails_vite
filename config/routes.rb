@@ -110,6 +110,15 @@ Rails.application.routes.draw do
       end
     end
 
+    resources :notifications, only: [:index] do
+      collection do
+        post :mark_all_read
+      end
+      member do
+        post :mark_read
+      end
+    end
+
     get 'daily_momentum', to: 'daily_momentum#show'
 
     resources :roles, only: [:index]
