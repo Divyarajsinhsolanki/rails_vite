@@ -47,43 +47,54 @@ const calculateDaysBetween = (start, end) => {
   return Number.isFinite(diff) ? diff : null;
 };
 
-const ProgressBar = ({ value, color = 'bg-blue-500', height = 'h-2' }) => (
-  <div className={`w-full bg-gray-200 rounded-full ${height}`}>
+const ProgressBar = ({ value, color = 'bg-blue-500', height = 'h-2', showGlow = false }) => (
+  <div className={`w-full bg-slate-200/50 rounded-full ${height} overflow-hidden`}>
     <div
-      className={`${color} ${height} rounded-full transition-all duration-500 ease-out`}
-      style={{ width: `${value}%` }}
+      className={`${color} ${height} rounded-full transition-all duration-700 ease-out ${showGlow ? 'shadow-lg' : ''}`}
+      style={{
+        width: `${value}%`,
+        boxShadow: showGlow ? `0 0 12px ${color.includes('emerald') ? 'rgba(16,185,129,0.5)' : color.includes('blue') ? 'rgba(59,130,246,0.5)' : 'rgba(99,102,241,0.5)'}` : 'none'
+      }}
     />
   </div>
 );
 
-const StatCard = ({ title, value, subtitle, icon: Icon, color = 'blue', trend, className = '' }) => {
-  const colorClasses = {
-    blue: 'text-blue-600 bg-blue-50',
-    emerald: 'text-emerald-600 bg-emerald-50',
-    amber: 'text-amber-600 bg-amber-50',
-    purple: 'text-purple-600 bg-purple-50',
-    gray: 'text-gray-600 bg-gray-50'
+const StatCard = ({ title, value, subtitle, icon: Icon, color = 'blue', trend, className = '', pulse = false }) => {
+  const gradientClasses = {
+    blue: 'from-blue-500 to-indigo-600',
+    emerald: 'from-emerald-500 to-teal-600',
+    amber: 'from-amber-500 to-orange-600',
+    purple: 'from-purple-500 to-pink-600',
+    gray: 'from-slate-500 to-slate-600',
+    rose: 'from-rose-500 to-red-600'
   };
 
   return (
-    <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-200 ${className}`}>
-      <div className="flex items-center justify-between">
+    <div className={`relative overflow-hidden rounded-2xl bg-white border border-slate-100 p-5 shadow-sm hover:shadow-xl transition-all duration-300 group ${className}`}>
+      {/* Accent gradient line */}
+      <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${gradientClasses[color]}`} />
+
+      {pulse && (
+        <div className="absolute inset-0 animate-pulse bg-rose-500/5 pointer-events-none" />
+      )}
+
+      <div className="relative flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-          <div className="flex items-baseline gap-2 mb-2">
-            <p className="text-3xl font-bold text-gray-900">{value}</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">{title}</p>
+          <div className="flex items-baseline gap-2 mb-1">
+            <p className="text-2xl font-bold text-slate-900">{value}</p>
             {trend && (
-              <span className={`text-sm font-medium ${trend > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+              <span className={`flex items-center gap-0.5 text-xs font-bold px-1.5 py-0.5 rounded-full ${trend > 0 ? 'text-emerald-700 bg-emerald-100' : 'text-rose-700 bg-rose-100'}`}>
                 {trend > 0 ? '↑' : '↓'} {Math.abs(trend)}%
               </span>
             )}
           </div>
           {subtitle && (
-            <p className="text-sm text-gray-500">{subtitle}</p>
+            <p className="text-sm text-slate-500">{subtitle}</p>
           )}
         </div>
-        <div className={`p-3 rounded-xl ${colorClasses[color]}`}>
-          <Icon className="w-6 h-6" />
+        <div className={`flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${gradientClasses[color]} shadow-lg transition-transform group-hover:scale-110`}>
+          <Icon className="w-5 h-5 text-white" />
         </div>
       </div>
     </div>
@@ -414,7 +425,7 @@ const ProjectStatistics = ({ projectId }) => {
         completedOn: formatDate(task.end_date),
         sprintId: task.sprint_id,
       })),
-  [tasks]);
+    [tasks]);
 
   const milestoneSummary = useMemo(() => ({
     upcoming: upcomingMilestones.length,
@@ -470,7 +481,7 @@ const ProjectStatistics = ({ projectId }) => {
   }
 
   const renderOverview = () => (
-    <div className="space-y-8">
+    <div className="space-y-6 pt-6">
       <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="Total Tasks"
@@ -503,130 +514,163 @@ const ProjectStatistics = ({ projectId }) => {
         />
       </section>
 
-      <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <section className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-slate-100 p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Progress Overview</h2>
-            <p className="text-gray-600 text-sm mt-1">Overall project completion status</p>
+            <h2 className="text-lg font-bold text-slate-900">Progress Overview</h2>
+            <p className="text-slate-500 text-sm mt-1">Overall project completion status</p>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-emerald-500 rounded-full" />
-              <span className="text-sm text-gray-600">Completed</span>
+              <div className="w-3 h-3 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full shadow-sm" />
+              <span className="text-sm text-slate-600">Completed</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-blue-500 rounded-full" />
-              <span className="text-sm text-gray-600">In Progress</span>
+              <div className="w-3 h-3 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full shadow-sm" />
+              <span className="text-sm text-slate-600">In Progress</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-gray-300 rounded-full" />
-              <span className="text-sm text-gray-600">To Do</span>
+              <div className="w-3 h-3 bg-slate-300 rounded-full" />
+              <span className="text-sm text-slate-600">To Do</span>
             </div>
           </div>
         </div>
 
-        <div className="space-y-4">
-          <ProgressBar value={summary.completionRate} color="bg-gradient-to-r from-blue-500 to-emerald-500" height="h-4" />
-          <div className="grid grid-cols-3 gap-4 text-center">
+        <div className="space-y-5">
+          <ProgressBar value={summary.completionRate} color="bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-500" height="h-4" showGlow />
+          <div className="grid grid-cols-3 gap-4">
             {statusDistribution.map((item) => (
-              <div key={item.status} className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{item.count}</div>
-                <div className="text-sm text-gray-600">{item.label}</div>
+              <div key={item.status} className="text-center p-4 rounded-xl bg-slate-50/80 border border-slate-100">
+                <div className="text-3xl font-bold text-slate-900">{item.count}</div>
+                <div className="text-sm font-medium text-slate-500 mt-1">{item.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between mb-6">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <section className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-slate-100 p-6">
+          <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Sprint Progress</h2>
-              <p className="text-gray-600 text-sm mt-1">Current iteration performance</p>
+              <h2 className="text-lg font-bold text-slate-900">Sprint Progress</h2>
+              <p className="text-slate-500 text-sm mt-1">Current iteration performance</p>
             </div>
-            <FlagIcon className="w-6 h-6 text-gray-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
+              <FlagIcon className="w-5 h-5 text-white" />
+            </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             {sprintBreakdown.slice(0, 3).map((sprint) => (
               <div
                 key={sprint.id}
-                className={`p-4 border rounded-xl transition-colors ${
-                  sprint.isActive
-                    ? 'border-blue-200 bg-blue-50/40'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
+                className={`p-4 rounded-xl transition-all duration-200 ${sprint.isActive
+                  ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 shadow-sm'
+                  : 'bg-slate-50/80 border border-slate-100 hover:border-slate-200 hover:shadow-sm'
+                  }`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <div>
-                    <h3 className="font-semibold text-gray-900">{sprint.name}</h3>
-                    <p className="text-sm text-gray-500">{sprint.dateRange}</p>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-slate-900">{sprint.name}</h3>
+                      {sprint.isActive && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full uppercase tracking-wide">
+                          <div className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+                          Active
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-slate-500">{sprint.dateRange}</p>
                   </div>
-                  <span className="text-sm font-medium text-gray-700">{sprint.completionRate}%</span>
+                  <div className="text-right">
+                    <span className="text-xl font-bold text-slate-900">{sprint.completionRate}%</span>
+                  </div>
                 </div>
 
-                <ProgressBar value={sprint.completionRate} />
+                <ProgressBar value={sprint.completionRate} color="bg-gradient-to-r from-blue-500 to-indigo-500" />
 
-                <div className="grid grid-cols-4 gap-3 mt-3 text-xs text-gray-600">
-                  <span className="text-emerald-600">{sprint.metrics.completed} completed</span>
-                  <span className="text-blue-600">{sprint.metrics.inProgress} in progress</span>
-                  <span className="text-gray-500">{sprint.metrics.todo} to do</span>
-                  <span className="text-right">
-                    {sprint.daysLeft !== null ? `${sprint.daysLeft} days left` : '—'}
+                <div className="flex flex-wrap items-center gap-3 mt-3 text-xs">
+                  <span className="flex items-center gap-1 text-emerald-600 font-medium">
+                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    {sprint.metrics.completed} done
                   </span>
+                  <span className="flex items-center gap-1 text-blue-600 font-medium">
+                    <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                    {sprint.metrics.inProgress} active
+                  </span>
+                  <span className="flex items-center gap-1 text-slate-500">
+                    <div className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                    {sprint.metrics.todo} pending
+                  </span>
+                  {sprint.daysLeft !== null && (
+                    <span className="ml-auto text-slate-500 font-medium">
+                      {sprint.daysLeft <= 0 ? 'Ended' : `${sprint.daysLeft}d left`}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
             {sprintBreakdown.length > 3 && (
-              <p className="text-sm text-blue-600 font-medium">
-                {sprintBreakdown.length - 3} more sprint{(sprintBreakdown.length - 3) === 1 ? '' : 's'} in detail view
-              </p>
+              <button className="w-full text-center text-sm text-indigo-600 font-semibold hover:text-indigo-700 py-2 rounded-lg hover:bg-indigo-50 transition-colors">
+                View all {sprintBreakdown.length} sprints →
+              </button>
             )}
           </div>
         </section>
 
-        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between mb-6">
+        <section className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-slate-100 p-6">
+          <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Team Performance</h2>
-              <p className="text-gray-600 text-sm mt-1">Individual contributions and progress</p>
+              <h2 className="text-lg font-bold text-slate-900">Team Performance</h2>
+              <p className="text-slate-500 text-sm mt-1">Individual contributions</p>
             </div>
-            <UserGroupIcon className="w-6 h-6 text-gray-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 shadow-lg">
+              <UserGroupIcon className="w-5 h-5 text-white" />
+            </div>
           </div>
 
-          <div className="space-y-4">
-            {userBreakdown.slice(0, 4).map((user) => (
-              <div key={user.id} className="p-4 border border-gray-200 rounded-xl hover:border-gray-300 transition-colors">
+          <div className="space-y-3">
+            {userBreakdown.slice(0, 4).map((user, index) => (
+              <div
+                key={user.id}
+                className="p-4 bg-slate-50/80 border border-slate-100 rounded-xl hover:border-slate-200 hover:shadow-sm transition-all duration-200 group"
+              >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg ${index === 0 ? 'bg-gradient-to-br from-amber-400 to-orange-500' :
+                      index === 1 ? 'bg-gradient-to-br from-slate-400 to-slate-500' :
+                        index === 2 ? 'bg-gradient-to-br from-amber-600 to-amber-700' :
+                          'bg-gradient-to-br from-blue-500 to-purple-600'
+                      }`}>
                       {user.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">{user.name}</h3>
-                      <p className="text-sm text-gray-500">{user.email || 'No email'}</p>
+                      <h3 className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{user.name}</h3>
+                      <p className="text-xs text-slate-500">{user.email || 'No email'}</p>
                     </div>
                   </div>
-                  <span className="text-sm font-medium text-gray-700">{user.completionRate}%</span>
+                  <div className="text-right">
+                    <span className="text-lg font-bold text-slate-900">{user.completionRate}%</span>
+                  </div>
                 </div>
 
-                <ProgressBar value={user.completionRate} />
+                <ProgressBar value={user.completionRate} color="bg-gradient-to-r from-purple-500 to-pink-500" />
 
-                <div className="flex items-center justify-between mt-3 text-sm text-gray-600">
-                  <span>Total: {user.total} tasks</span>
+                <div className="flex items-center justify-between mt-3 text-xs">
+                  <span className="text-slate-500 font-medium">{user.total} tasks</span>
                   <div className="flex items-center gap-3">
-                    <span className="text-emerald-600">{user.completed} done</span>
-                    <span className="text-blue-600">{user.inProgress} active</span>
-                    <span className="text-gray-500">{user.todo} pending</span>
+                    <span className="text-emerald-600 font-semibold">{user.completed} ✓</span>
+                    <span className="text-blue-600 font-medium">{user.inProgress} →</span>
+                    <span className="text-slate-400">{user.todo} ○</span>
                   </div>
                 </div>
               </div>
             ))}
             {userBreakdown.length > 4 && (
-              <p className="text-sm text-blue-600 font-medium">
-                View all {userBreakdown.length} team members in the Team tab
-              </p>
+              <button className="w-full text-center text-sm text-purple-600 font-semibold hover:text-purple-700 py-2 rounded-lg hover:bg-purple-50 transition-colors">
+                View all {userBreakdown.length} members →
+              </button>
             )}
           </div>
         </section>
@@ -708,7 +752,7 @@ const ProjectStatistics = ({ projectId }) => {
   );
 
   const renderSprints = () => (
-    <div className="space-y-8">
+    <div className="space-y-6 pt-6">
       <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="Total Sprints"
@@ -740,27 +784,28 @@ const ProjectStatistics = ({ projectId }) => {
         />
       </section>
 
-      <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <div className="flex items-center justify-between mb-6">
+      <section className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-slate-100 p-6">
+        <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Sprint Breakdown</h2>
-            <p className="text-gray-600 text-sm mt-1">Velocity and progress for each iteration</p>
+            <h2 className="text-lg font-bold text-slate-900">Sprint Breakdown</h2>
+            <p className="text-slate-500 text-sm mt-1">Velocity and progress for each iteration</p>
           </div>
-          <CalendarIcon className="w-6 h-6 text-gray-400" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
+            <CalendarIcon className="w-5 h-5 text-white" />
+          </div>
         </div>
 
         {sprintBreakdown.length === 0 ? (
-          <div className="text-center text-gray-500 py-12">No sprints have been scheduled yet.</div>
+          <div className="text-center text-slate-400 py-12">No sprints have been scheduled yet.</div>
         ) : (
           <div className="space-y-4">
             {sprintBreakdown.map((sprint) => (
               <div
                 key={sprint.id}
-                className={`p-5 border rounded-xl transition-colors ${
-                  sprint.isActive
-                    ? 'border-blue-200 bg-blue-50/40'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
+                className={`p-5 border rounded-xl transition-colors ${sprint.isActive
+                  ? 'border-blue-200 bg-blue-50/40'
+                  : 'border-gray-200 hover:border-gray-300'
+                  }`}
               >
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div>
@@ -807,7 +852,7 @@ const ProjectStatistics = ({ projectId }) => {
   );
 
   const renderTeam = () => (
-    <div className="space-y-8">
+    <div className="space-y-6 pt-6">
       <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="Team Members"
@@ -837,31 +882,33 @@ const ProjectStatistics = ({ projectId }) => {
           icon={ClockIcon}
           color="gray"
         />
-      </section>
+      </section >
 
-      {teamSummary.topContributor && (
-        <section className="bg-gradient-to-r from-emerald-50 via-blue-50 to-purple-50 border border-emerald-100 rounded-2xl p-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl font-semibold">
-                {teamSummary.topContributor.name.charAt(0).toUpperCase()}
+      {
+        teamSummary.topContributor && (
+          <section className="bg-gradient-to-r from-emerald-50 via-blue-50 to-purple-50 border border-emerald-100 rounded-2xl p-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl font-semibold">
+                  {teamSummary.topContributor.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">Top Contributor</h2>
+                  <p className="text-sm text-gray-600">{teamSummary.topContributor.name}</p>
+                  <p className="text-xs text-gray-500">{teamSummary.topContributor.email || 'No email'}</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">Top Contributor</h2>
-                <p className="text-sm text-gray-600">{teamSummary.topContributor.name}</p>
-                <p className="text-xs text-gray-500">{teamSummary.topContributor.email || 'No email'}</p>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-gray-900">{teamSummary.topContributor.completed}</p>
+                <p className="text-sm text-gray-600">Tasks completed</p>
+                <p className="text-xs text-gray-500 mt-1">{teamSummary.topContributor.completionRate}% completion</p>
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-3xl font-bold text-gray-900">{teamSummary.topContributor.completed}</p>
-              <p className="text-sm text-gray-600">Tasks completed</p>
-              <p className="text-xs text-gray-500 mt-1">{teamSummary.topContributor.completionRate}% completion</p>
-            </div>
-          </div>
-        </section>
-      )}
+          </section>
+        )
+      }
 
-      <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      < section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6" >
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Team Breakdown</h2>
@@ -870,38 +917,40 @@ const ProjectStatistics = ({ projectId }) => {
           <UserGroupIcon className="w-6 h-6 text-gray-400" />
         </div>
 
-        {userBreakdown.length === 0 ? (
-          <div className="text-center text-gray-500 py-12">No team members have been assigned tasks yet.</div>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            {userBreakdown.map((user) => (
-              <div key={user.id} className="p-4 border border-gray-200 rounded-xl hover:border-gray-300 transition-colors">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-base">
-                      {user.name.charAt(0).toUpperCase()}
+        {
+          userBreakdown.length === 0 ? (
+            <div className="text-center text-gray-500 py-12">No team members have been assigned tasks yet.</div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {userBreakdown.map((user) => (
+                <div key={user.id} className="p-4 border border-gray-200 rounded-xl hover:border-gray-300 transition-colors">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-base">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">{user.name}</h3>
+                        <p className="text-sm text-gray-500">{user.email || 'No email'}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{user.name}</h3>
-                      <p className="text-sm text-gray-500">{user.email || 'No email'}</p>
-                    </div>
+                    <span className="text-sm font-medium text-gray-700">{user.completionRate}%</span>
                   </div>
-                  <span className="text-sm font-medium text-gray-700">{user.completionRate}%</span>
-                </div>
 
-                <ProgressBar value={user.completionRate} />
+                  <ProgressBar value={user.completionRate} />
 
-                <div className="grid grid-cols-3 gap-3 mt-3 text-xs text-gray-600">
-                  <span className="text-emerald-600">{user.completed} done</span>
-                  <span className="text-blue-600">{user.inProgress} active</span>
-                  <span className="text-gray-500">{user.todo} pending</span>
+                  <div className="grid grid-cols-3 gap-3 mt-3 text-xs text-gray-600">
+                    <span className="text-emerald-600">{user.completed} done</span>
+                    <span className="text-blue-600">{user.inProgress} active</span>
+                    <span className="text-gray-500">{user.todo} pending</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-    </div>
+              ))}
+            </div>
+          )
+        }
+      </section >
+    </div >
   );
 
   const renderMilestones = () => (
@@ -1065,30 +1114,77 @@ const ProjectStatistics = ({ projectId }) => {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Project Analytics</h1>
-          <p className="text-gray-600 mt-1">Track progress, team performance, and milestones</p>
-        </div>
-        <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
-          {['overview', 'sprints', 'team', 'milestones'].map((view) => (
-            <button
-              key={view}
-              onClick={() => setActiveView(view)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeView === view
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              {view.charAt(0).toUpperCase() + view.slice(1)}
-            </button>
-          ))}
+    <div className="min-h-screen bg-slate-50">
+      {/* Premium Hero Header */}
+      <div className="relative overflow-hidden bg-slate-900 pb-8">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-700 via-slate-900 to-slate-900 opacity-90" />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
+
+        <div className="relative max-w-[98%] mx-auto px-6 pt-4 pb-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/20">
+                <ChartBarIcon className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.3em] text-purple-400">Statistics</p>
+                <h1 className="text-2xl font-bold text-white sm:text-3xl tracking-tight">
+                  Project Analytics
+                </h1>
+              </div>
+            </div>
+
+            {/* Navigation Tabs */}
+            <div className="flex items-center gap-1 bg-white/10 backdrop-blur-md border border-white/20 p-1 rounded-xl">
+              {[
+                { key: 'overview', label: 'Overview', icon: ChartBarIcon },
+                { key: 'sprints', label: 'Sprints', icon: FlagIcon },
+                { key: 'team', label: 'Team', icon: UserGroupIcon },
+                { key: 'milestones', label: 'Milestones', icon: CalendarIcon }
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveView(tab.key)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeView === tab.key
+                    ? 'bg-white text-slate-900 shadow-lg'
+                    : 'text-white/70 hover:text-white hover:bg-white/10'
+                    }`}
+                >
+                  <tab.icon className="h-4 w-4" />
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Quick Stats Row */}
+          <div className="mt-4 flex flex-wrap items-center gap-6 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-white/70">{summary.completed} Completed</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-blue-400" />
+              <span className="text-white/70">{summary.inProgress} In Progress</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-slate-400" />
+              <span className="text-white/70">{summary.todo} To Do</span>
+            </div>
+            {summary.overdue > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-rose-400 animate-pulse" />
+                <span className="text-rose-300 font-semibold">{summary.overdue} Overdue</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {renderActiveView()}
+      {/* Content Area */}
+      <div className="max-w-[98%] mx-auto px-6 -mt-4 relative z-10">
+        {renderActiveView()}
+      </div>
     </div>
   );
 };

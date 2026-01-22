@@ -53,31 +53,31 @@ const formatHours = (hours) => {
 
 // Task Details Modal Component
 const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate, onDelete }) => {
-  const [editedTask, setEditedTask] = useState({ ...task });
+    const [editedTask, setEditedTask] = useState({ ...task });
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setEditedTask(prev => ({ ...prev, [name]: value }));
-  };
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setEditedTask(prev => ({ ...prev, [name]: value }));
+    };
 
-  const handleDeveloperChange = (e) => {
-    const { options } = e.target;
-    const selectedDevIds = Array.from(options)
-      .filter(option => option.selected)
-      .map(option => option.value);
-    setEditedTask(prev => ({ ...prev, assignedTo: selectedDevIds }));
-  };
+    const handleDeveloperChange = (e) => {
+        const { options } = e.target;
+        const selectedDevIds = Array.from(options)
+            .filter(option => option.selected)
+            .map(option => option.value);
+        setEditedTask(prev => ({ ...prev, assignedTo: selectedDevIds }));
+    };
 
-  const handleUserChange = (e) => {
-    setEditedTask(prev => ({ ...prev, assignedUser: e.target.value }));
-  };
+    const handleUserChange = (e) => {
+        setEditedTask(prev => ({ ...prev, assignedUser: e.target.value }));
+    };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onUpdate(editedTask);
-  };
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onUpdate(editedTask);
+    };
 
-  return (
+    return (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4 overflow-y-auto">
             <div className="relative bg-white rounded-xl shadow-2xl p-8 w-full max-w-4xl transform transition-all scale-100 opacity-100 overflow-y-auto max-h-[80vh]">
                 <button
@@ -273,136 +273,136 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">QA Assigned</label>
                             <input
-                              name="qa_assigned"
-                              value={editedTask.qa_assigned || ''}
-                              onChange={handleChange}
-                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                                name="qa_assigned"
+                                value={editedTask.qa_assigned || ''}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Internal QA</label>
                             <input
-                              name="internal_qa"
-                              value={editedTask.internal_qa || ''}
-                              onChange={handleChange}
-                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                                name="internal_qa"
+                                value={editedTask.internal_qa || ''}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                         <div className="flex items-center gap-3 mt-6">
                             <label className="text-sm font-medium text-gray-700">Blocker?</label>
                             <input
-                              type="checkbox"
-                              name="blocker"
-                              checked={!!editedTask.blocker}
-                              onChange={(e) => setEditedTask(prev => ({ ...prev, blocker: e.target.checked }))}
-                              className="h-5 w-5 text-[var(--theme-color)] rounded border-gray-300 focus:ring-[var(--theme-color)]"
+                                type="checkbox"
+                                name="blocker"
+                                checked={!!editedTask.blocker}
+                                onChange={(e) => setEditedTask(prev => ({ ...prev, blocker: e.target.checked }))}
+                                className="h-5 w-5 text-[var(--theme-color)] rounded border-gray-300 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                         <div className="flex items-center gap-3 mt-6">
                             <label className="text-sm font-medium text-gray-700">Demo</label>
                             <input
-                              type="checkbox"
-                              name="demo"
-                              checked={!!editedTask.demo}
-                              onChange={(e) => setEditedTask(prev => ({ ...prev, demo: e.target.checked }))}
-                              className="h-5 w-5 text-[var(--theme-color)] rounded border-gray-300 focus:ring-[var(--theme-color)]"
+                                type="checkbox"
+                                name="demo"
+                                checked={!!editedTask.demo}
+                                onChange={(e) => setEditedTask(prev => ({ ...prev, demo: e.target.checked }))}
+                                className="h-5 w-5 text-[var(--theme-color)] rounded border-gray-300 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
                             <input
-                              name="priority"
-                              value={editedTask.priority || ''}
-                              onChange={handleChange}
-                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                                name="priority"
+                                value={editedTask.priority || ''}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Story Point</label>
                             <input
-                              type="number"
-                              step="0.1"
-                              name="story_point"
-                              value={editedTask.story_point || ''}
-                              onChange={handleChange}
-                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                                type="number"
+                                step="0.1"
+                                name="story_point"
+                                value={editedTask.story_point || ''}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Swag Point</label>
                             <input
-                              type="number"
-                              step="0.1"
-                              name="swag_point"
-                              value={editedTask.swag_point || ''}
-                              onChange={handleChange}
-                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                                type="number"
+                                step="0.1"
+                                name="swag_point"
+                                value={editedTask.swag_point || ''}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Dev</label>
                             <input
-                              type="number"
-                              step="0.1"
-                              name="dev_hours"
-                              value={editedTask.dev_hours || ''}
-                              onChange={handleChange}
-                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                                type="number"
+                                step="0.1"
+                                name="dev_hours"
+                                value={editedTask.dev_hours || ''}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Code Review</label>
                             <input
-                              type="number"
-                              step="0.1"
-                              name="code_review_hours"
-                              value={editedTask.code_review_hours || ''}
-                              onChange={handleChange}
-                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                                type="number"
+                                step="0.1"
+                                name="code_review_hours"
+                                value={editedTask.code_review_hours || ''}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Dev → QA</label>
                             <input
-                              type="number"
-                              step="0.1"
-                              name="dev_to_qa_hours"
-                              value={editedTask.dev_to_qa_hours || ''}
-                              onChange={handleChange}
-                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                                type="number"
+                                step="0.1"
+                                name="dev_to_qa_hours"
+                                value={editedTask.dev_to_qa_hours || ''}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">QA</label>
                             <input
-                              type="number"
-                              step="0.1"
-                              name="qa_hours"
-                              value={editedTask.qa_hours || ''}
-                              onChange={handleChange}
-                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                                type="number"
+                                step="0.1"
+                                name="qa_hours"
+                                value={editedTask.qa_hours || ''}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Automation QA</label>
                             <input
-                              type="number"
-                              step="0.1"
-                              name="automation_qa_hours"
-                              value={editedTask.automation_qa_hours || ''}
-                              onChange={handleChange}
-                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                                type="number"
+                                step="0.1"
+                                name="automation_qa_hours"
+                                value={editedTask.automation_qa_hours || ''}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Total</label>
                             <input
-                              type="number"
-                              step="0.1"
-                              name="total_hours"
-                              value={editedTask.total_hours || ''}
-                              onChange={handleChange}
-                              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                                type="number"
+                                step="0.1"
+                                name="total_hours"
+                                value={editedTask.total_hours || ''}
+                                onChange={handleChange}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             />
                         </div>
                     </div>
@@ -415,19 +415,19 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                             Delete Task
                         </button>
                         <div className="space-x-4">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition duration-200 ease-in-out shadow-md"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className="px-6 py-3 bg-[var(--theme-color)] text-white rounded-lg font-semibold hover:brightness-110 transition duration-200 ease-in-out shadow-md"
-                        >
-                            Save Changes
-                        </button>
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition duration-200 ease-in-out shadow-md"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                className="px-6 py-3 bg-[var(--theme-color)] text-white rounded-lg font-semibold hover:brightness-110 transition duration-200 ease-in-out shadow-md"
+                            >
+                                Save Changes
+                            </button>
                         </div>
                     </div>
                 </form>
@@ -612,17 +612,17 @@ const AddTaskModal = ({ developers, users, onClose, onCreate, projectId }) => {
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             >
                                 <option value="">Select user</option>
-                        {users.map(u => (
-                            <option key={u.id} value={u.id}>
-                                {u.first_name ? `${u.first_name}` : u.email}
-                            </option>
-                        ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label htmlFor="start_date" className="block text-sm font-medium text-gray-700 mb-1">
-                            Start Date
-                        </label>
+                                {users.map(u => (
+                                    <option key={u.id} value={u.id}>
+                                        {u.first_name ? `${u.first_name}` : u.email}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="start_date" className="block text-sm font-medium text-gray-700 mb-1">
+                                Start Date
+                            </label>
                             <input
                                 type="date"
                                 id="start_date"
@@ -893,12 +893,12 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                     }) || list[0];
                     setSelectedSprintId(prev => {
                         if (prev !== null) return prev;
-                        if(onSprintChange) onSprintChange(current.id);
+                        if (onSprintChange) onSprintChange(current.id);
                         return current.id;
                     });
                 } else {
                     setSelectedSprintId(null);
-                    if(onSprintChange) onSprintChange(null);
+                    if (onSprintChange) onSprintChange(null);
                 }
             });
     }, [projectId, sprintId]);
@@ -1128,7 +1128,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                 developer_id: Number(newTask.developer_id) || null,
                 assigned_to_user: newTask.assigned_to_user || null,
                 status: newTask.status,
-                date: newTask.start_date || new Date().toISOString().slice(0,10),
+                date: newTask.start_date || new Date().toISOString().slice(0, 10),
                 project_id: Number(newTask.project_id || projectId) || null,
                 blocker: !!newTask.blocker,
                 demo: !!newTask.demo
@@ -1195,7 +1195,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                 <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center space-x-4">
                         <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] flex items-center">
-                            <Squares2X2Icon className="h-7 w-7 mr-2"/>Sprint Task Manager
+                            <Squares2X2Icon className="h-7 w-7 mr-2" />Sprint Task Manager
                         </h1>
                         <div className="flex flex-wrap items-center space-x-2">
                             {users.map(u => (
@@ -1206,7 +1206,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                                 >
                                     {u.profile_picture && u.profile_picture !== 'null' ? (
                                         <img src={u.profile_picture} alt={u.first_name}
-                                             className="w-8 h-8 rounded-full object-cover" />
+                                            className="w-8 h-8 rounded-full object-cover" />
                                     ) : (
                                         <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-[var(--theme-color)] text-white text-xs font-bold flex items-center justify-center">
                                             {(u.first_name || u.email).charAt(0).toUpperCase()}
@@ -1246,43 +1246,43 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                 {/* Tasks Table */}
                 <div className="overflow-x-auto bg-white rounded-xl shadow-md">
                     <DragDropContext onDragEnd={onDragEnd}>
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-xl">
-                                    Order
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Task ID
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Task Title
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Est. Hours
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Assigned To Developer
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Assigned User
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Start Date
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    End Date
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-xl">
-                                    Status
-                                </th>
-                            </tr>
-                        </thead>
-                        {groupedTasks.length > 0 ? (
-                            groupedTasks.map(group => (
-                                <Droppable droppableId={`dev-${group.devId}`} key={group.devId}>
-                                    {(provided) => (
-                                        <tbody ref={provided.innerRef} {...provided.droppableProps} className="bg-white divide-y divide-gray-200">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-xl">
+                                        Order
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Task ID
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Task Title
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Est. Hours
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Assigned To Developer
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Assigned User
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Start Date
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        End Date
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-xl">
+                                        Status
+                                    </th>
+                                </tr>
+                            </thead>
+                            {groupedTasks.length > 0 ? (
+                                groupedTasks.map(group => (
+                                    <Droppable droppableId={`dev-${group.devId}`} key={group.devId}>
+                                        {(provided) => (
+                                            <tbody ref={provided.innerRef} {...provided.droppableProps} className="bg-white divide-y divide-gray-200">
                                                 <tr className="bg-gray-100">
                                                     <td colSpan="9" className="px-6 py-2 font-semibold text-gray-700">
                                                         {group.developer ? group.developer.name : 'Unassigned'} - Total Est. Hours: {formatHours(group.totalHours)}
@@ -1313,10 +1313,10 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                                                                     {getUserName(task.assignedUser)}
                                                                 </td>
                                                                 <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                                                                    {new Date(task.startDate).getDate()}
+                                                                    {task.startDate ? new Date(task.startDate).getDate() : '-'}
                                                                 </td>
                                                                 <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                                                                    {new Date(task.endDate).getDate()}
+                                                                    {task.endDate ? new Date(task.endDate).getDate() : '-'}
                                                                 </td>
                                                                 <td className="px-6 py-3 whitespace-nowrap text-sm">
                                                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
@@ -1345,7 +1345,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                                     </tr>
                                 </tbody>
                             )}
-                    </table>
+                        </table>
                     </DragDropContext>
                 </div>
             </div>
@@ -1354,7 +1354,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
             <div className="max-w-8xl mx-auto bg-white rounded-xl shadow-lg p-4 mt-8">
                 <div className="flex justify-between items-center mb-4">
                     <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] flex items-center">
-                        <CalendarDaysIcon className="h-7 w-7 mr-2"/>Backlog
+                        <CalendarDaysIcon className="h-7 w-7 mr-2" />Backlog
                     </h1>
                     <div className="flex space-x-2">
                         <button
@@ -1407,8 +1407,8 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                                             <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{formatHours(task.estimatedHours)}</td>
                                             <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{getDeveloperNames(task.assignedTo)}</td>
                                             <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{getUserName(task.assignedUser)}</td>
-                                            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{new Date(task.startDate).getDate()}</td>
-                                            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{new Date(task.endDate).getDate()}</td>
+                                            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{task.startDate ? new Date(task.startDate).getDate() : '-'}</td>
+                                            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{task.endDate ? new Date(task.endDate).getDate() : '-'}</td>
                                             <td className="px-6 py-3 whitespace-nowrap text-sm">
                                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
                                                     ${task.status === 'Completed' ? 'bg-green-100 text-green-800' : ''}

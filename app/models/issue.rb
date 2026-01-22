@@ -1,8 +1,23 @@
 class Issue < ApplicationRecord
   belongs_to :project
+  belongs_to :reporter, class_name: 'User', optional: true
+  belongs_to :assignee_user, class_name: 'User', optional: true
 
-  STATUSES = %w[New In\ Progress Blocked Resolved].freeze
+  STATUSES = [
+    'New',
+    'In Progress',
+    'Blocked',
+    'Resolved',
+    'Not Reproducible',
+    'Need to discuss',
+    'Retest',
+    'Not an issue'
+  ].freeze
+
   SEVERITIES = %w[Low Medium High Critical].freeze
+
+  # QA Testing status options
+  QA_STATUSES = %w[Y N].freeze
 
   has_many_attached :media_files
 
@@ -34,3 +49,4 @@ class Issue < ApplicationRecord
     IssueNotifierJob.perform_later(id, previous_status, previous_assignee)
   end
 end
+

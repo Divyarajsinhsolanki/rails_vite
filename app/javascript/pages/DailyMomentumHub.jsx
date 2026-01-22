@@ -213,16 +213,19 @@ const DailyMomentumHub = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-16 text-gray-900">
-      <div className="mx-auto max-w-7xl px-4 pt-12 sm:px-6 lg:px-8">
-        <header className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+      <div className="mx-auto max-w-[98%] px-4 pt-6 sm:px-6 lg:px-8">
+
+        <header className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.35em] text-blue-600">Daily Momentum Hub</p>
               <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
                 {user?.first_name ? `Good day, ${user.first_name}!` : "Welcome back!"}
               </h1>
-              <p className="mt-2 text-sm text-gray-500">{headerDate}</p>
-              <p className="mt-4 max-w-2xl text-base text-gray-600">
+              <p className="mt-1 text-sm text-gray-500">{headerDate}</p>
+              <p className="mt-2 max-w-2xl text-base text-gray-600">
+
                 Review yesterday, focus today, and keep your learning streak alive. Everything you need to build momentum lives here.
               </p>
             </div>
@@ -267,277 +270,277 @@ const DailyMomentumHub = () => {
         ) : (
           <div className="grid gap-8 py-12 lg:grid-cols-[minmax(0,_2fr)_minmax(0,_1fr)]">
             <div className="space-y-8">
-                <SectionCard
-                  icon={FiTarget}
-                  title="Morning Briefing"
-                  description="Clear the decks, rally your focus, and spot meetings at a glance."
-                >
-                  <div className="grid gap-5 lg:grid-cols-2">
-                    <TaskList
-                      icon={FiAlertTriangle}
-                      title="Overdue"
-                      subtitle="Resolve blockers or renegotiate commitments."
-                      tasks={data?.morning_briefing?.overdue_tasks}
-                      emptyMessage="Nothing overdue—keep the streak going!"
-                    />
-                    <TaskList
-                      icon={FiPlay}
-                      title="Today's Focus"
-                      subtitle="Your active commitments across sprints."
-                      tasks={data?.morning_briefing?.focus_tasks}
-                      emptyMessage="No active work today. Consider planning or learning time."
-                    />
+              <SectionCard
+                icon={FiTarget}
+                title="Morning Briefing"
+                description="Clear the decks, rally your focus, and spot meetings at a glance."
+              >
+                <div className="grid gap-5 lg:grid-cols-2">
+                  <TaskList
+                    icon={FiAlertTriangle}
+                    title="Overdue"
+                    subtitle="Resolve blockers or renegotiate commitments."
+                    tasks={data?.morning_briefing?.overdue_tasks}
+                    emptyMessage="Nothing overdue—keep the streak going!"
+                  />
+                  <TaskList
+                    icon={FiPlay}
+                    title="Today's Focus"
+                    subtitle="Your active commitments across sprints."
+                    tasks={data?.morning_briefing?.focus_tasks}
+                    emptyMessage="No active work today. Consider planning or learning time."
+                  />
+                </div>
+                <div className="grid gap-5 lg:grid-cols-2">
+                  <TaskList
+                    icon={FiChevronRight}
+                    title="Needs Triage"
+                    subtitle="Assign owners or slot into a sprint before they stall."
+                    tasks={data?.morning_briefing?.needs_triage}
+                    emptyMessage="Every task is assigned and scheduled."
+                  />
+                  <div className="rounded-xl border border-gray-200 bg-white p-4">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                        <FiClock className="h-4 w-4" />
+                      </span>
+                      <div>
+                        <h3 className="text-sm font-semibold uppercase tracking-widest text-gray-700">Today's Meetings</h3>
+                        <p className="text-sm text-gray-500">Auto-sourced from your work logs tagged as meetings.</p>
+                      </div>
+                    </div>
+                    <div className="mt-4 space-y-3">
+                      {(data?.morning_briefing?.meetings || []).length === 0 ? (
+                        <p className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-500">
+                          No meetings logged for today—enjoy the deep work window.
+                        </p>
+                      ) : (
+                        data.morning_briefing.meetings.map((meeting) => (
+                          <div
+                            key={meeting.id}
+                            className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700"
+                          >
+                            <div>
+                              <p className="font-semibold text-gray-900">{meeting.title}</p>
+                              {meeting.category && (
+                                <p className="text-xs text-gray-500">{meeting.category}</p>
+                              )}
+                            </div>
+                            <div className="text-right text-xs text-gray-500">
+                              <p>{formatTime(meeting.start_time)} – {formatTime(meeting.end_time)}</p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
-                  <div className="grid gap-5 lg:grid-cols-2">
-                    <TaskList
-                      icon={FiChevronRight}
-                      title="Needs Triage"
-                      subtitle="Assign owners or slot into a sprint before they stall."
-                      tasks={data?.morning_briefing?.needs_triage}
-                      emptyMessage="Every task is assigned and scheduled."
-                    />
-                    <div className="rounded-xl border border-gray-200 bg-white p-4">
-                      <div className="flex items-center gap-3">
-                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                          <FiClock className="h-4 w-4" />
+                </div>
+              </SectionCard>
+
+              <SectionCard
+                icon={FiZap}
+                title="Rapid Work Logging"
+                description="Spin up a new entry in seconds with your most used categories and tags."
+                action={data?.rapid_logging?.quick_log_template && (
+                  <div className="flex flex-col gap-2 text-xs text-gray-500">
+                    <span className="font-semibold uppercase tracking-widest text-gray-700">Smart defaults</span>
+                    <div className="flex flex-wrap items-center gap-3 text-gray-600">
+                      {data.rapid_logging.quick_log_template.default_start_time && (
+                        <span className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1 text-blue-700">
+                          <FiClock className="h-3.5 w-3.5" />
+                          {formatTime(data.rapid_logging.quick_log_template.default_start_time)}
                         </span>
-                        <div>
-                          <h3 className="text-sm font-semibold uppercase tracking-widest text-gray-700">Today's Meetings</h3>
-                          <p className="text-sm text-gray-500">Auto-sourced from your work logs tagged as meetings.</p>
-                        </div>
-                      </div>
-                      <div className="mt-4 space-y-3">
-                        {(data?.morning_briefing?.meetings || []).length === 0 ? (
-                          <p className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-500">
-                            No meetings logged for today—enjoy the deep work window.
-                          </p>
-                        ) : (
-                          data.morning_briefing.meetings.map((meeting) => (
-                            <div
-                              key={meeting.id}
-                              className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700"
-                            >
-                              <div>
-                                <p className="font-semibold text-gray-900">{meeting.title}</p>
-                                {meeting.category && (
-                                  <p className="text-xs text-gray-500">{meeting.category}</p>
-                                )}
-                              </div>
-                              <div className="text-right text-xs text-gray-500">
-                                <p>{formatTime(meeting.start_time)} – {formatTime(meeting.end_time)}</p>
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </SectionCard>
-
-                <SectionCard
-                  icon={FiZap}
-                  title="Rapid Work Logging"
-                  description="Spin up a new entry in seconds with your most used categories and tags."
-                  action={data?.rapid_logging?.quick_log_template && (
-                    <div className="flex flex-col gap-2 text-xs text-gray-500">
-                      <span className="font-semibold uppercase tracking-widest text-gray-700">Smart defaults</span>
-                      <div className="flex flex-wrap items-center gap-3 text-gray-600">
-                        {data.rapid_logging.quick_log_template.default_start_time && (
-                          <span className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1 text-blue-700">
-                            <FiClock className="h-3.5 w-3.5" />
-                            {formatTime(data.rapid_logging.quick_log_template.default_start_time)}
-                          </span>
-                        )}
-                        {data.rapid_logging.quick_log_template.default_category_id && (
-                          <span className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1 text-blue-700">
-                            <FiTag className="h-3.5 w-3.5" />
-                            Favorite category ready
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                >
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="rounded-xl border border-gray-200 bg-white p-4">
-                      <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-700">Top Categories</h3>
-                      <div className="mt-4 space-y-3">
-                        {(data?.rapid_logging?.top_categories || []).length === 0 ? (
-                          <p className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-500">
-                            Start logging work to see your go-to categories.
-                          </p>
-                        ) : (
-                          data.rapid_logging.top_categories.map((category) => (
-                            <div
-                              key={category.id || category.name}
-                              className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3"
-                            >
-                              <div>
-                                <p className="text-sm font-semibold text-gray-900">{category.name}</p>
-                                <p className="text-xs text-gray-500">{category.count} logs in the last 30 days</p>
-                              </div>
-                              <span className="text-lg font-semibold text-gray-700">#{category.count}</span>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                    <div className="rounded-xl border border-gray-200 bg-white p-4">
-                      <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-700">Top Tags</h3>
-                      <div className="mt-4 space-y-3">
-                        {(data?.rapid_logging?.top_tags || []).length === 0 ? (
-                          <p className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-500">
-                            Tag your work to unlock quick filters.
-                          </p>
-                        ) : (
-                          data.rapid_logging.top_tags.map((tag) => (
-                            <div
-                              key={tag.id || tag.name}
-                              className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3"
-                            >
-                              <div className="flex items-center gap-2 text-sm text-gray-700">
-                                <FiTag className="h-4 w-4 text-blue-500" />
-                                {tag.name}
-                              </div>
-                              <span className="text-xs uppercase tracking-widest text-gray-500">{tag.count} uses</span>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  {data?.rapid_logging?.suggestions?.recent_log_titles?.length > 0 && (
-                    <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-                      <span className="text-xs font-semibold uppercase tracking-widest text-gray-600">Recent sessions</span>
-                      <ul className="mt-3 space-y-2 text-sm text-gray-700">
-                        {data.rapid_logging.suggestions.recent_log_titles.map((title) => (
-                          <li key={title} className="flex items-center gap-2">
-                            <FiArrowRightCircle className="h-4 w-4 text-blue-500" />
-                            {title}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </SectionCard>
-              </div>
-
-              <div className="space-y-8">
-                <SectionCard
-                  icon={FiBookOpen}
-                  title="Learning Nudge"
-                  description="Keep your spaced repetition alive with a single click."
-                  action={data?.learning_nudge?.total_due ? (
-                    <div className="rounded-xl bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-blue-700">
-                      {data.learning_nudge.total_due} due today
-                    </div>
-                  ) : null}
-                >
-                  {data?.learning_nudge?.due_card ? (
-                    <div className="space-y-4">
-                      <div className="rounded-xl border border-gray-200 bg-white p-5">
-                        <p className="text-xs uppercase tracking-[0.3em] text-gray-500">{data.learning_nudge.due_card.collection_name || data.learning_nudge.due_card.card_type}</p>
-                        <h3 className="mt-3 text-lg font-semibold text-gray-900">
-                          {data.learning_nudge.due_card.title || "Review this card"}
-                        </h3>
-                        {data.learning_nudge.due_card.prompt && (
-                          <p className="mt-3 text-sm text-gray-600">{data.learning_nudge.due_card.prompt}</p>
-                        )}
-                        {data.learning_nudge.due_card.answer && (
-                          <p className="mt-4 rounded-xl bg-blue-50 px-4 py-3 text-sm text-blue-900">
-                            {data.learning_nudge.due_card.answer}
-                          </p>
-                        )}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleMarkReviewed(data.learning_nudge.due_card.id)}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-400"
-                      >
-                        <FiCheckCircle className="h-4 w-4" />
-                        Mark reviewed and reschedule
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-500">
-                      You're all caught up! Add new knowledge bookmarks to keep the streak going.
-                    </p>
-                  )}
-                </SectionCard>
-
-                <SectionCard
-                  icon={FiCalendar}
-                  title="End-of-Day Reflection"
-                  description="Close the loop on yesterday so tomorrow starts crisp."
-                >
-                  <div className="grid gap-4">
-                    <QuickMetric
-                      label="Yesterday's entries"
-                      value={reflection?.yesterday?.logs_count || 0}
-                      caption="Work logs captured"
-                      icon={FiClock}
-                    />
-                    <QuickMetric
-                      label="Time logged"
-                      value={totalMinutes > 0 ? `${hours}h ${minutesRemainder}m` : "0m"}
-                      caption="Based on your work logs"
-                      icon={FiZap}
-                    />
-                  </div>
-
-                  {reflection?.yesterday?.note && (
-                    <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
-                      <span className="text-xs font-semibold uppercase tracking-widest text-gray-600">Yesterday's note</span>
-                      <p className="mt-2 whitespace-pre-line leading-relaxed">{reflection.yesterday.note}</p>
-                    </div>
-                  )}
-
-                  <div className="space-y-4">
-                    <TaskList
-                      icon={FiAlertTriangle}
-                      title="Blockers"
-                      subtitle="Resolve or escalate before tomorrow's standup."
-                      tasks={reflection?.blockers}
-                      emptyMessage="No blockers flagged—keep pushing forward."
-                    />
-                    <div className="rounded-xl border border-gray-200 bg-white p-4">
-                      <div className="flex items-center gap-3">
-                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                          <FiRefreshCcw className="h-4 w-4" />
+                      )}
+                      {data.rapid_logging.quick_log_template.default_category_id && (
+                        <span className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1 text-blue-700">
+                          <FiTag className="h-3.5 w-3.5" />
+                          Favorite category ready
                         </span>
-                        <div>
-                          <h3 className="text-sm font-semibold uppercase tracking-widest text-gray-700">Open Logs</h3>
-                          <p className="text-sm text-gray-500">Finish these entries by adding outcomes or time spent.</p>
-                        </div>
-                      </div>
-                      <div className="mt-4 space-y-3">
-                        {(reflection?.unfinished_logs || []).length === 0 ? (
-                          <p className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-500">
-                            All caught up—no unfinished logs for today.
-                          </p>
-                        ) : (
-                          reflection.unfinished_logs.map((log) => (
-                            <div
-                              key={log.id || log.title}
-                              className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700"
-                            >
-                              <div>
-                                <p className="font-semibold text-gray-900">{log.title}</p>
-                                <p className="text-xs text-gray-500">{formatTime(log.start_time)} – {formatTime(log.end_time)}</p>
-                              </div>
-                              <span className="text-xs uppercase tracking-widest text-amber-600">Needs wrap-up</span>
-                            </div>
-                          ))
-                        )}
-                      </div>
+                      )}
                     </div>
                   </div>
-                </SectionCard>
-              </div>
+                )}
+              >
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="rounded-xl border border-gray-200 bg-white p-4">
+                    <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-700">Top Categories</h3>
+                    <div className="mt-4 space-y-3">
+                      {(data?.rapid_logging?.top_categories || []).length === 0 ? (
+                        <p className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-500">
+                          Start logging work to see your go-to categories.
+                        </p>
+                      ) : (
+                        data.rapid_logging.top_categories.map((category) => (
+                          <div
+                            key={category.id || category.name}
+                            className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3"
+                          >
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900">{category.name}</p>
+                              <p className="text-xs text-gray-500">{category.count} logs in the last 30 days</p>
+                            </div>
+                            <span className="text-lg font-semibold text-gray-700">#{category.count}</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-gray-200 bg-white p-4">
+                    <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-700">Top Tags</h3>
+                    <div className="mt-4 space-y-3">
+                      {(data?.rapid_logging?.top_tags || []).length === 0 ? (
+                        <p className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-500">
+                          Tag your work to unlock quick filters.
+                        </p>
+                      ) : (
+                        data.rapid_logging.top_tags.map((tag) => (
+                          <div
+                            key={tag.id || tag.name}
+                            className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3"
+                          >
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <FiTag className="h-4 w-4 text-blue-500" />
+                              {tag.name}
+                            </div>
+                            <span className="text-xs uppercase tracking-widest text-gray-500">{tag.count} uses</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+                {data?.rapid_logging?.suggestions?.recent_log_titles?.length > 0 && (
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                    <span className="text-xs font-semibold uppercase tracking-widest text-gray-600">Recent sessions</span>
+                    <ul className="mt-3 space-y-2 text-sm text-gray-700">
+                      {data.rapid_logging.suggestions.recent_log_titles.map((title) => (
+                        <li key={title} className="flex items-center gap-2">
+                          <FiArrowRightCircle className="h-4 w-4 text-blue-500" />
+                          {title}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </SectionCard>
             </div>
-          )}
-        </div>
+
+            <div className="space-y-8">
+              <SectionCard
+                icon={FiBookOpen}
+                title="Learning Nudge"
+                description="Keep your spaced repetition alive with a single click."
+                action={data?.learning_nudge?.total_due ? (
+                  <div className="rounded-xl bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-blue-700">
+                    {data.learning_nudge.total_due} due today
+                  </div>
+                ) : null}
+              >
+                {data?.learning_nudge?.due_card ? (
+                  <div className="space-y-4">
+                    <div className="rounded-xl border border-gray-200 bg-white p-5">
+                      <p className="text-xs uppercase tracking-[0.3em] text-gray-500">{data.learning_nudge.due_card.collection_name || data.learning_nudge.due_card.card_type}</p>
+                      <h3 className="mt-3 text-lg font-semibold text-gray-900">
+                        {data.learning_nudge.due_card.title || "Review this card"}
+                      </h3>
+                      {data.learning_nudge.due_card.prompt && (
+                        <p className="mt-3 text-sm text-gray-600">{data.learning_nudge.due_card.prompt}</p>
+                      )}
+                      {data.learning_nudge.due_card.answer && (
+                        <p className="mt-4 rounded-xl bg-blue-50 px-4 py-3 text-sm text-blue-900">
+                          {data.learning_nudge.due_card.answer}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleMarkReviewed(data.learning_nudge.due_card.id)}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-400"
+                    >
+                      <FiCheckCircle className="h-4 w-4" />
+                      Mark reviewed and reschedule
+                    </button>
+                  </div>
+                ) : (
+                  <p className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-500">
+                    You're all caught up! Add new knowledge bookmarks to keep the streak going.
+                  </p>
+                )}
+              </SectionCard>
+
+              <SectionCard
+                icon={FiCalendar}
+                title="End-of-Day Reflection"
+                description="Close the loop on yesterday so tomorrow starts crisp."
+              >
+                <div className="grid gap-4">
+                  <QuickMetric
+                    label="Yesterday's entries"
+                    value={reflection?.yesterday?.logs_count || 0}
+                    caption="Work logs captured"
+                    icon={FiClock}
+                  />
+                  <QuickMetric
+                    label="Time logged"
+                    value={totalMinutes > 0 ? `${hours}h ${minutesRemainder}m` : "0m"}
+                    caption="Based on your work logs"
+                    icon={FiZap}
+                  />
+                </div>
+
+                {reflection?.yesterday?.note && (
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+                    <span className="text-xs font-semibold uppercase tracking-widest text-gray-600">Yesterday's note</span>
+                    <p className="mt-2 whitespace-pre-line leading-relaxed">{reflection.yesterday.note}</p>
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <TaskList
+                    icon={FiAlertTriangle}
+                    title="Blockers"
+                    subtitle="Resolve or escalate before tomorrow's standup."
+                    tasks={reflection?.blockers}
+                    emptyMessage="No blockers flagged—keep pushing forward."
+                  />
+                  <div className="rounded-xl border border-gray-200 bg-white p-4">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                        <FiRefreshCcw className="h-4 w-4" />
+                      </span>
+                      <div>
+                        <h3 className="text-sm font-semibold uppercase tracking-widest text-gray-700">Open Logs</h3>
+                        <p className="text-sm text-gray-500">Finish these entries by adding outcomes or time spent.</p>
+                      </div>
+                    </div>
+                    <div className="mt-4 space-y-3">
+                      {(reflection?.unfinished_logs || []).length === 0 ? (
+                        <p className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-500">
+                          All caught up—no unfinished logs for today.
+                        </p>
+                      ) : (
+                        reflection.unfinished_logs.map((log) => (
+                          <div
+                            key={log.id || log.title}
+                            className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700"
+                          >
+                            <div>
+                              <p className="font-semibold text-gray-900">{log.title}</p>
+                              <p className="text-xs text-gray-500">{formatTime(log.start_time)} – {formatTime(log.end_time)}</p>
+                            </div>
+                            <span className="text-xs uppercase tracking-widest text-amber-600">Needs wrap-up</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </SectionCard>
+            </div>
+          </div>
+        )}
       </div>
+    </div>
   );
 };
 

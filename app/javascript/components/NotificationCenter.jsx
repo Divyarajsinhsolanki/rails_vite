@@ -22,7 +22,10 @@ const NotificationCenter = () => {
       setNotifications(response.data.notifications);
       setUnreadCount(response.data.meta.unread_count);
     } catch (error) {
-      console.error("Failed to load notifications", error);
+      // Silently ignore 401 errors (user not authenticated) to avoid console spam
+      if (error?.response?.status !== 401) {
+        console.error("Failed to load notifications", error);
+      }
     }
   };
 

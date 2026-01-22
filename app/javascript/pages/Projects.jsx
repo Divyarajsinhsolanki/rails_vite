@@ -1,105 +1,133 @@
 import React, { useEffect, useState, useContext, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { fetchProjects, createProject, updateProject, deleteProject, addProjectUser, updateProjectUser, deleteProjectUser, leaveProject, SchedulerAPI } from "../components/api";
 import UserMultiSelect from "../components/UserMultiSelect";
 import { AuthContext } from "../context/AuthContext";
-// Import icons (e.g., from Feather Icons)
 import {
-    FiPlus,
-    FiEdit,
-    FiTrash2,
-    FiUsers,
-    FiSearch,
-    FiUserPlus,
-    FiChevronRight,
-    FiXCircle,
-    FiCheckCircle,
-    FiInfo,
-    FiLoader,
-    FiCalendar,
-    FiLink,
-    FiFolder,
-    FiAlertTriangle,
-    FiTrendingUp,
-    FiActivity,
-} from 'react-icons/fi'; // Added more icons
+    FiPlus, FiEdit2, FiTrash2, FiUsers, FiSearch, FiUserPlus,
+    FiChevronRight, FiX, FiCheck, FiInfo, FiLoader, FiCalendar,
+    FiLink, FiFolder, FiAlertTriangle, FiTrendingUp, FiActivity,
+    FiCheckCircle, FiXCircle
+} from 'react-icons/fi';
 
-// --- Utility Components (re-used from Teams UI) ---
+// --- Premium UI Components ---
 
-// Avatar component with improved styling and accessibility
-const Avatar = ({ name, src, size = 'md' }) => {
+const Avatar = ({ name, src, size = 'md', className = '' }) => {
     const sizeClasses = {
-        sm: "w-6 h-6 text-xs",
-        md: "w-8 h-8 text-sm",
-        lg: "w-10 h-10 text-base",
+        sm: "w-7 h-7 text-xs",
+        md: "w-9 h-9 text-sm",
+        lg: "w-11 h-11 text-base",
+        xl: "w-14 h-14 text-lg",
     };
     const currentSizeClass = sizeClasses[size] || sizeClasses.md;
 
-    // Handle potential 'null' string for src
     if (src && src !== 'null') {
         return (
             <img
                 src={src}
-                alt={`${name}'s avatar`}
-                className={`rounded-full mr-2 object-cover border border-gray-200 ${currentSizeClass}`}
+                alt={`${name} 's avatar`}
+                className={`rounded-full object-cover ring-2 ring-white dark:ring-zinc-800 shadow-sm ${currentSizeClass} ${className}`}
             />
         );
     }
     const initial = name ? name.charAt(0).toUpperCase() : "?";
+    const colors = [
+        'bg-gradient-to-br from-violet-400 to-violet-600',
+        'bg-gradient-to-br from-blue-400 to-blue-600',
+        'bg-gradient-to-br from-emerald-400 to-emerald-600',
+        'bg-gradient-to-br from-amber-400 to-amber-600',
+        'bg-gradient-to-br from-rose-400 to-rose-600',
+    ];
+    const colorIndex = name ? name.charCodeAt(0) % colors.length : 0;
+
     return (
-        <div className={`rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold mr-2 ${currentSizeClass}`}>
+        <div className={`rounded-full ${colors[colorIndex]} text-white flex items-center justify-center font-bold ring-2 ring-white dark:ring-zinc-800 shadow-sm ${currentSizeClass} ${className}`}>
             {initial}
         </div>
     );
 };
 
-// Modal component for confirmations and forms
-const Modal = ({ isOpen, onClose, title, children, footer, className = "" }) => {
-    if (!isOpen) return null;
-
+const AvatarStack = ({ members, max = 4 }) => {
+    const visible = members.slice(0, max);
+    const remaining = members.length - max;
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 animate-fadeIn">
-            <div className={`bg-white rounded-lg shadow-xl p-6 w-full max-w-lg transform scale-95 animate-scaleIn ${className}`}>
-                <div className="flex justify-between items-center border-b pb-3 mb-4">
-                    <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                        <FiXCircle className="w-6 h-6" />
-                    </button>
+        <div className="flex items-center -space-x-2">
+            {visible.map((member, i) => (
+                <motion.div
+                    key={member.id || i}
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="relative hover:z-10 hover:scale-110 transition-transform"
+                >
+                    <Avatar name={member.name} src={member.profile_picture} size="md" />
+                </motion.div>
+            ))}
+            {remaining > 0 && (
+                <div className="w-9 h-9 rounded-full bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 text-xs font-semibold flex items-center justify-center ring-2 ring-white dark:ring-zinc-800">
+                    +{remaining}
                 </div>
-                <div className="modal-body max-h-[70vh] overflow-y-auto pr-2">
-                    {children}
-                </div>
-                {footer && (
-                    <div className="border-t pt-4 mt-4 flex justify-end space-x-3">
-                        {footer}
-                    </div>
-                )}
-            </div>
+            )}
         </div>
     );
 };
 
-// Notification/Toast component
-const Notification = ({ message, type, onClose }) => {
-    const typeClasses = {
-        success: "bg-green-100 border-green-400 text-green-700",
-        error: "bg-red-100 border-red-400 text-red-700",
-        info: "bg-blue-100 border-blue-400 text-blue-700",
-    };
-
-    const icon = {
-        success: <FiCheckCircle className="w-5 h-5 mr-2" />,
-        error: <FiXCircle className="w-5 h-5 mr-2" />,
-        info: <FiInfo className="w-5 h-5 mr-2" />,
-    }[type];
-
+const Modal = ({ isOpen, onClose, title, children, footer, size = 'md' }) => {
+    const sizeClasses = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl' };
     return (
-        <div className={`fixed bottom-4 right-4 p-4 rounded-lg shadow-lg flex items-center ${typeClasses[type]} animate-slideInFromRight z-50`}>
-            {icon}
-            <span>{message}</span>
-            <button onClick={onClose} className="ml-4 text-current hover:opacity-75">
-                <FiXCircle className="w-4 h-4" />
-            </button>
-        </div>
+        <AnimatePresence>
+            {isOpen && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                >
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                        transition={{ type: "spring", duration: 0.4 }}
+                        className={`relative bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full ${sizeClasses[size]} overflow-hidden`}
+                    >
+                        <div className="flex items-center justify-between p-5 border-b border-zinc-100 dark:border-zinc-800">
+                            <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">{title}</h3>
+                            <button onClick={onClose} className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 transition-colors">
+                                <FiX className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-5 max-h-[60vh] overflow-y-auto">{children}</div>
+                        {footer && (
+                            <div className="flex items-center justify-end gap-3 p-5 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
+                                {footer}
+                            </div>
+                        )}
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
+};
+
+const Notification = ({ message, type, onClose }) => {
+    const styles = {
+        success: "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/30 dark:border-emerald-800 dark:text-emerald-300",
+        error: "bg-red-50 border-red-200 text-red-700 dark:bg-red-900/30 dark:border-red-800 dark:text-red-300",
+        info: "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300",
+    };
+    const icons = { success: <FiCheck className="w-5 h-5" />, error: <FiX className="w-5 h-5" />, info: <FiInfo className="w-5 h-5" /> };
+    return (
+        <motion.div
+            initial={{ opacity: 0, x: 100, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 100, scale: 0.9 }}
+            className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg ${styles[type]}`}
+        >
+            {icons[type]}
+            <span className="font-medium">{message}</span>
+            <button onClick={onClose} className="ml-2 opacity-60 hover:opacity-100"><FiX className="w-4 h-4" /></button>
+        </motion.div>
     );
 };
 
@@ -239,11 +267,10 @@ const ProjectHealthCard = ({ stats, loading, error }) => {
                                 <p className="text-xs text-slate-500">Across to-do and in-progress stages.</p>
                             </div>
                             <div
-                                className={`flex items-center gap-3 rounded-xl border p-4 shadow-sm ${
-                                    stats.overdue > 0
-                                        ? "border-red-200 bg-red-50"
-                                        : "border-emerald-200 bg-emerald-50"
-                                }`}
+                                className={`flex items-center gap-3 rounded-xl border p-4 shadow-sm ${stats.overdue > 0
+                                    ? "border-red-200 bg-red-50"
+                                    : "border-emerald-200 bg-emerald-50"
+                                    }`}
                             >
                                 <FiXCircle
                                     className={`h-6 w-6 ${stats.overdue > 0 ? "text-red-500" : "text-emerald-500"}`}
@@ -251,9 +278,8 @@ const ProjectHealthCard = ({ stats, loading, error }) => {
                                 <div>
                                     <p className="text-xs uppercase tracking-wide text-slate-500">Overdue tasks</p>
                                     <p
-                                        className={`text-2xl font-semibold ${
-                                            stats.overdue > 0 ? "text-red-600" : "text-emerald-600"
-                                        }`}
+                                        className={`text-2xl font-semibold ${stats.overdue > 0 ? "text-red-600" : "text-emerald-600"
+                                            }`}
                                     >
                                         {stats.overdue}
                                     </p>
@@ -712,78 +738,102 @@ const Projects = () => {
 
     // Render UI
     return (
-        <div className="flex h-screen bg-gray-100 font-sans text-gray-800">
+        <div className="flex h-screen bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200">
             {/* Sidebar */}
-            <aside className="w-80 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col shadow-lg">
-                <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-[var(--theme-color)] text-white">
-                    <h2 className="text-xl font-bold">Projects</h2>
-                    {canEdit && (
-                        <button
-                            onClick={handleNewClick}
-                            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-[var(--theme-color)] hover:brightness-110 transition-colors rounded-full shadow-md active:scale-95 transform"
-                            title="Create New Project"
-                        >
-                            <FiPlus className="w-4 h-4" /> New Project
-                        </button>
-                    )}
+            <aside className="w-80 flex-shrink-0 bg-white dark:bg-zinc-800 border-r border-zinc-100 dark:border-zinc-700 flex flex-col">
+                <div className="p-5 border-b border-zinc-100 dark:border-zinc-700 bg-gradient-to-r from-violet-600 to-purple-600">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white/20 rounded-lg">
+                                <FiFolder className="w-5 h-5 text-white" />
+                            </div>
+                            <h2 className="text-lg font-bold text-white">Projects</h2>
+                        </div>
+                        <span className="text-sm text-white/70">{projects.length}</span>
+                    </div>
                 </div>
-                <div className="p-4 border-b border-gray-200">
+
+                <div className="p-4">
                     <div className="relative">
-                        <FiSearch className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400" />
+                        <FiSearch className="absolute top-1/2 left-3 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                         <input
                             type="text"
                             placeholder="Search projects..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none transition-all duration-200"
+                            className="w-full pl-10 pr-4 py-2.5 bg-zinc-50 dark:bg-zinc-700/50 border border-zinc-200 dark:border-zinc-600 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
                         />
                     </div>
                 </div>
-                <nav className="flex-1 overflow-y-auto custom-scrollbar">
+
+                <nav className="flex-1 overflow-y-auto p-3 space-y-4">
                     {isLoading ? (
-                        <div className="p-6 flex flex-col items-center justify-center text-gray-500">
-                            <FiLoader className="animate-spin text-3xl mb-3 text-[var(--theme-color)]" />
-                            <p>Loading projects...</p>
+                        <div className="flex flex-col items-center justify-center py-12 text-zinc-500">
+                            <FiLoader className="w-8 h-8 animate-spin text-violet-500 mb-3" />
+                            <p className="text-sm">Loading projects...</p>
                         </div>
                     ) : filteredProjects.length > 0 ? (
                         projectStatuses.map((status) => (
                             groupedProjects[status] && groupedProjects[status].length > 0 && (
                                 <div key={status}>
-                                    <h3 className="px-4 pt-4 pb-2 text-xs font-semibold text-gray-500 uppercase">
+                                    <h3 className="px-2 py-2 text-xs font-semibold text-zinc-500 uppercase tracking-wide">
                                         {status}
                                     </h3>
-                                    <ul>
+                                    <div className="space-y-2">
                                         {groupedProjects[status].map((project) => (
-                                            <li key={project.id}>
-                                                <button
-                                                    onClick={() => handleSelectProject(project.id)}
-                                                    className={`w-full text-left flex items-center justify-between p-4 border-b border-gray-100 transition-colors duration-200 ${selectedProjectId === project.id ? 'bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)] border-l-4 border-[var(--theme-color)] font-semibold' : 'hover:bg-gray-50'}`}
-                                                >
-                                                    <div>
-                                                        <p className="text-base">{project.name}</p>
-                                                        <p className="text-xs text-gray-500">{project.users.length} member(s)</p>
-                                                    </div>
-                                                    <FiChevronRight className={`text-gray-400 transition-transform duration-200 ${selectedProjectId === project.id ? 'translate-x-1 text-[var(--theme-color)]' : ''}`} />
-                                                </button>
-                                            </li>
+                                            <motion.button
+                                                key={project.id}
+                                                onClick={() => handleSelectProject(project.id)}
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${selectedProjectId === project.id
+                                                    ? 'bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 border-violet-200 dark:border-violet-800 shadow-md'
+                                                    : 'bg-white dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-700/50 hover:border-zinc-200 dark:hover:border-zinc-600 hover:shadow-md'
+                                                    }`}
+                                            >
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <h4 className={`font-semibold ${selectedProjectId === project.id ? 'text-violet-700 dark:text-violet-300' : 'text-zinc-800 dark:text-white'}`}>
+                                                        {project.name}
+                                                    </h4>
+                                                    <FiChevronRight className={`w-4 h-4 transition-transform ${selectedProjectId === project.id ? 'text-violet-500 translate-x-1' : 'text-zinc-400'}`} />
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <AvatarStack members={project.users} max={3} />
+                                                    <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                                                        {project.users.length} member{project.users.length !== 1 ? 's' : ''}
+                                                    </span>
+                                                </div>
+                                            </motion.button>
                                         ))}
-                                    </ul>
+                                    </div>
                                 </div>
                             )
                         ))
                     ) : (
-                        <div className="p-6 text-center text-gray-500">
-                            <FiFolder className="mx-auto text-5xl text-gray-300 mb-4" />
-                            <p className="font-semibold text-lg">No projects found</p>
-                            <p className="text-sm">Try adjusting your search or create a new project.</p>
+                        <div className="text-center py-12">
+                            <FiFolder className="w-12 h-12 text-zinc-300 dark:text-zinc-600 mx-auto mb-3" />
+                            <p className="font-medium text-zinc-600 dark:text-zinc-400">No projects found</p>
+                            <p className="text-sm text-zinc-500">Try a different search</p>
                         </div>
                     )}
                 </nav>
+
+                {canEdit && (
+                    <div className="p-4 border-t border-zinc-100 dark:border-zinc-700">
+                        <button
+                            onClick={handleNewClick}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-semibold rounded-xl hover:from-violet-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
+                        >
+                            <FiPlus className="w-4 h-4" />
+                            New Project
+                        </button>
+                    </div>
+                )}
             </aside>
 
             {/* Main Content Area */}
-            <main className="flex-1 p-8 overflow-y-auto custom-scrollbar bg-gradient-to-br from-gray-100 to-gray-200">
-                <div className="max-w-7xl mx-auto rounded-3xl border border-gray-200 bg-white/90 p-8 shadow-xl lg:p-12">
+            <main className="flex-1 overflow-y-auto">
+                <div className="p-8">
                     {isFormVisible ? (
                         // Create / Edit Project Form
                         <div className="animate-fadeInUp">
@@ -910,13 +960,12 @@ const Projects = () => {
                                         <div className="flex flex-wrap items-center gap-3">
                                             <h1 className="text-4xl font-extrabold text-gray-900">{selectedProject.name}</h1>
                                             <span
-                                                className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${
-                                                    selectedProject.status === 'completed'
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : selectedProject.status === 'upcoming'
-                                                            ? 'bg-yellow-100 text-yellow-700'
-                                                            : 'bg-blue-100 text-blue-700'
-                                                }`}
+                                                className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${selectedProject.status === 'completed'
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : selectedProject.status === 'upcoming'
+                                                        ? 'bg-yellow-100 text-yellow-700'
+                                                        : 'bg-blue-100 text-blue-700'
+                                                    }`}
                                             >
                                                 {selectedProject.status || 'Running'}
                                             </span>
@@ -943,21 +992,18 @@ const Projects = () => {
                                                     role="switch"
                                                     aria-checked={qaViewActive}
                                                     onClick={() => setQaViewActive((prev) => !prev)}
-                                                    className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors duration-200 shadow-sm ${
-                                                        qaViewActive ? 'bg-purple-600' : 'bg-slate-300'
-                                                    }`}
+                                                    className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors duration-200 shadow-sm ${qaViewActive ? 'bg-purple-600' : 'bg-slate-300'
+                                                        }`}
                                                 >
                                                     <span
-                                                        className={`inline-block h-6 w-6 transform rounded-full bg-white shadow transition ${
-                                                            qaViewActive ? 'translate-x-8' : 'translate-x-1'
-                                                        }`}
+                                                        className={`inline-block h-6 w-6 transform rounded-full bg-white shadow transition ${qaViewActive ? 'translate-x-8' : 'translate-x-1'
+                                                            }`}
                                                     />
                                                 </button>
-                                                <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${
-                                                    qaViewActive
-                                                        ? 'border-purple-200 bg-purple-50 text-purple-700'
-                                                        : 'border-slate-200 bg-slate-50 text-slate-700'
-                                                }`}>
+                                                <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${qaViewActive
+                                                    ? 'border-purple-200 bg-purple-50 text-purple-700'
+                                                    : 'border-slate-200 bg-slate-50 text-slate-700'
+                                                    }`}>
                                                     QA mode {qaViewActive ? 'enabled' : 'available'}
                                                 </span>
                                                 <span className="text-sm text-gray-500">
@@ -984,7 +1030,7 @@ const Projects = () => {
                                                 onClick={() => handleEditClick(selectedProject)}
                                                 className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-[var(--theme-color)]"
                                             >
-                                                <FiEdit className="h-4 w-4" /> Edit project
+                                                <FiEdit2 className="h-4 w-4" /> Edit project
                                             </button>
                                             <span className="h-5 w-px bg-slate-200" aria-hidden="true" />
                                             <button
@@ -1223,11 +1269,10 @@ const Projects = () => {
                                 <div className="space-y-6 xl:sticky xl:top-8">
                                     {selectedProject.qa_mode_enabled && (
                                         <div
-                                            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold ${
-                                                qaViewActive
-                                                    ? 'border-purple-200 bg-purple-50 text-purple-700'
-                                                    : 'border-slate-200 bg-slate-50 text-slate-700'
-                                            }`}
+                                            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold ${qaViewActive
+                                                ? 'border-purple-200 bg-purple-50 text-purple-700'
+                                                : 'border-slate-200 bg-slate-50 text-slate-700'
+                                                }`}
                                         >
                                             <FiActivity className={qaViewActive ? 'text-purple-600' : 'text-slate-500'} />
                                             <span>{qaViewActive ? 'QA mode metrics' : 'Delivery metrics'}</span>
@@ -1252,7 +1297,7 @@ const Projects = () => {
                             {projects.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
                                     <div className="md:col-span-full bg-[rgb(var(--theme-color-rgb)/0.1)] border border-[var(--theme-color)] rounded-xl p-6 mb-4 flex items-center gap-4 shadow-sm">
-                                        <FiInfo className="text-[var(--theme-color)] text-3xl"/>
+                                        <FiInfo className="text-[var(--theme-color)] text-3xl" />
                                         <div>
                                             <h2 className="text-xl font-semibold text-[var(--theme-color)]">Select a Project to View Details</h2>
                                             <p className="text-[var(--theme-color)] text-sm">Click on any project in the sidebar to manage its members and edit its information.</p>
@@ -1265,11 +1310,10 @@ const Projects = () => {
                                             <div className="mb-4">
                                                 <div className="flex justify-between items-start mb-1">
                                                     <h3 className="text-xl font-bold text-gray-900">{project.name}</h3>
-                                                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${
-                                                        project.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${project.status === 'completed' ? 'bg-green-100 text-green-700' :
                                                         project.status === 'upcoming' ? 'bg-yellow-100 text-yellow-700' :
-                                                        'bg-blue-100 text-blue-700' // Default for 'running' or undefined
-                                                    }`}>
+                                                            'bg-blue-100 text-blue-700' // Default for 'running' or undefined
+                                                        }`}>
                                                         {project.status || 'Running'}
                                                     </span>
                                                 </div>
@@ -1277,8 +1321,8 @@ const Projects = () => {
                                                     <p className="text-sm text-gray-600 line-clamp-3">{project.description}</p>
                                                 )}
                                                 <div className="flex items-center gap-2 text-sm text-gray-500 mt-3">
-                                                    {project.start_date && <span className="flex items-center gap-1"><FiCalendar className="w-4 h-4"/>{project.start_date}</span>}
-                                                    {project.end_date && <span className="flex items-center gap-1"><FiChevronRight className="w-4 h-4"/>{project.end_date}</span>}
+                                                    {project.start_date && <span className="flex items-center gap-1"><FiCalendar className="w-4 h-4" />{project.start_date}</span>}
+                                                    {project.end_date && <span className="flex items-center gap-1"><FiChevronRight className="w-4 h-4" />{project.end_date}</span>}
                                                 </div>
                                             </div>
                                             <div className="flex items-center -space-x-2 mb-4">
@@ -1324,44 +1368,41 @@ const Projects = () => {
             <Modal
                 isOpen={showDeleteConfirm}
                 onClose={() => setShowDeleteConfirm(false)}
-                title="Confirm Delete"
+                title="Delete Project"
                 footer={
                     <>
                         <button
                             onClick={() => setShowDeleteConfirm(false)}
-                            className="px-5 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+                            className="px-4 py-2 text-zinc-600 dark:text-zinc-400 font-medium hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleDeleteProject}
-                            className="px-5 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center gap-2"
                             disabled={isSaving}
+                            className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
                         >
-                            {isSaving ? (
-                                <>
-                                    <FiLoader className="animate-spin" /> Deleting...
-                                </>
-                            ) : (
-                                <>
-                                    <FiTrash2 /> Delete
-                                </>
-                            )}
+                            {isSaving ? <FiLoader className="w-4 h-4 animate-spin" /> : <FiTrash2 className="w-4 h-4" />}
+                            Delete
                         </button>
                     </>
                 }
             >
-                <p className="text-gray-700">Are you sure you want to delete the project "<span className="font-semibold">{projects.find(p => p.id === projectToDeleteId)?.name}</span>"? This action cannot be undone.</p>
+                <p className="text-zinc-600 dark:text-zinc-400">
+                    Are you sure you want to delete <span className="font-semibold text-zinc-800 dark:text-white">{projects.find(p => p.id === projectToDeleteId)?.name}</span>? This action cannot be undone.
+                </p>
             </Modal>
 
-            {/* Notification Toast */}
-            {notification && (
-                <Notification
-                    message={notification.message}
-                    type={notification.type}
-                    onClose={() => setNotification(null)}
-                />
-            )}
+            {/* Notification */}
+            <AnimatePresence>
+                {notification && (
+                    <Notification
+                        message={notification.message}
+                        type={notification.type}
+                        onClose={() => setNotification(null)}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 };

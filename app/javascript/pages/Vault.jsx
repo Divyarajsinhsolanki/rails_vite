@@ -1,19 +1,37 @@
 import React, { useState, useEffect } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import { fetchItems, createItem, updateItem, deleteItem } from "../components/api";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  DocumentDuplicateIcon,
-  PencilIcon,
-  TrashIcon,
-  EllipsisVerticalIcon,
-  PlusIcon,
-  ArrowDownTrayIcon,
-  MagnifyingGlassIcon,
-  XMarkIcon,
-  EyeIcon,
-  EyeSlashIcon
-} from "@heroicons/react/24/outline";
-import { CheckCircleIcon as CheckCircleSolidIcon } from "@heroicons/react/24/solid";
+  FiPlus,
+  FiSearch,
+  FiFilter,
+  FiGrid,
+  FiList,
+  FiX,
+  FiMoreVertical,
+  FiEdit2,
+  FiTrash2,
+  FiCopy,
+  FiCheckCircle,
+  FiEye,
+  FiEyeOff,
+  FiShield,
+  FiKey,
+  FiTerminal,
+  FiFileText,
+  FiLock,
+  FiUnlock,
+  FiDownload,
+  FiRefreshCw,
+  FiFolder,
+  FiTag,
+  FiCpu,
+  FiDatabase,
+  FiServer,
+  FiGlobe
+} from "react-icons/fi";
+
 
 const DEFAULT_SORT = "recent";
 
@@ -23,6 +41,55 @@ const SORT_OPTIONS = [
   { value: "title_asc", label: "Title A-Z" },
   { value: "title_desc", label: "Title Z-A" }
 ];
+
+
+// Premium Statistics Card
+const StatCard = ({ icon: Icon, label, value, color, delay = 0 }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.4, delay }}
+    className="relative overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur-md p-4 shadow-lg"
+  >
+    <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent" />
+    <div className="relative flex items-center gap-4">
+      <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${color} shadow-lg`}>
+        <Icon className="h-6 w-6 text-white" />
+      </div>
+      <div>
+        <p className="text-sm font-medium text-white/70">{label}</p>
+        <p className="text-2xl font-bold text-white">{value}</p>
+      </div>
+    </div>
+  </motion.div>
+);
+
+// Premium Category Tab
+const CategoryTab = ({ id, label, icon: Icon, isActive, onClick, index }) => (
+  <motion.button
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.3, delay: index * 0.05 }}
+    onClick={onClick}
+    className={`relative flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 ${isActive
+      ? "bg-white text-gray-900 shadow-xl shadow-white/20"
+      : "bg-gray-100/80 text-gray-600 hover:bg-gray-200/80 hover:text-gray-900 backdrop-blur-sm"
+      }`}
+
+  >
+    <Icon className="text-lg" />
+    <span>{label}</span>
+    {isActive && (
+      <motion.div
+        layoutId="activeVaultTab"
+        className="absolute inset-0 rounded-xl bg-white -z-10"
+        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+      />
+    )}
+  </motion.button>
+);
+
+
 
 const extractCategories = (items = []) => {
   const categories = new Set();
@@ -54,903 +121,474 @@ const extractTags = (items = []) => {
   return Array.from(tags).sort((a, b) => a.localeCompare(b));
 };
 
+// Premium Vault Card
+const VaultCard = ({ item, onEdit, onDelete, onCopy, showPassword, togglePassword }) => {
+  const isCredential = item.category === "Credential";
+  const isCode = item.category === "Command" || item.category === "Token";
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      whileHover={{ y: -4 }}
+      className="group relative bg-white/50 backdrop-blur-sm border border-white/60 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300"
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/10 rounded-2xl -z-10" />
+      <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-indigo-500/0 via-indigo-500/50 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex items-center gap-3">
+          <div className={`p-2.5 rounded-xl ${isCredential ? "bg-amber-100/50 text-amber-600" : isCode ? "bg-slate-800 text-emerald-400" : "bg-indigo-100/50 text-indigo-600"}`}>
+            {isCredential ? <FiKey className="h-5 w-5" /> : isCode ? <FiTerminal className="h-5 w-5" /> : <FiFileText className="h-5 w-5" />}
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-900 leading-tight">{item.title}</h3>
+            <span className="text-xs font-medium text-gray-500 bg-white/60 px-2 py-0.5 rounded-full border border-gray-100 mt-1 inline-block">
+              {item.category || "General"}
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+          <button onClick={() => onEdit(item)} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+            <FiEdit2 className="h-4 w-4" />
+          </button>
+          <button onClick={() => onDelete(item.id)} className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
+            <FiTrash2 className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {isCredential ? (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between p-2.5 bg-white/60 rounded-xl border border-gray-100/50 group/field hover:border-indigo-200 transition-colors">
+              <div className="flex items-center gap-2 overflow-hidden">
+                <FiPlus className="h-4 w-4 text-gray-400" />
+                <span className="text-sm text-gray-700 font-mono truncate">{item.title}</span>
+              </div>
+              <button onClick={() => onCopy(item.title, `user-${item.id}`)} className="text-gray-400 hover:text-indigo-600 p-1">
+                <FiCopy className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex items-center justify-between p-2.5 bg-white/60 rounded-xl border border-gray-100/50 group/field hover:border-indigo-200 transition-colors">
+              <div className="flex items-center gap-2 overflow-hidden flex-1">
+                <FiLock className="h-4 w-4 text-gray-400" />
+                <span className="text-sm text-gray-700 font-mono truncate">
+                  {showPassword ? item.content : "••••••••••••"}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <button onClick={() => togglePassword(item.id)} className="text-gray-400 hover:text-indigo-600 p-1">
+                  {showPassword ? <FiEyeOff className="h-4 w-4" /> : <FiEye className="h-4 w-4" />}
+                </button>
+                <button onClick={() => onCopy(item.content, `pass-${item.id}`)} className="text-gray-400 hover:text-indigo-600 p-1">
+                  <FiCopy className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : isCode ? (
+          <div className="relative group/code">
+            <div className="absolute right-2 top-2 opacity-0 group-hover/code:opacity-100 transition-opacity">
+              <button
+                onClick={() => onCopy(item.content, `code-${item.id}`)}
+                className="p-1.5 bg-white/10 backdrop-blur-md rounded-lg text-white hover:bg-white/20 transition-colors border border-white/20"
+              >
+                <FiCopy className="h-4 w-4" />
+              </button>
+            </div>
+            <pre className="p-3 bg-slate-900 rounded-xl text-emerald-400 font-mono text-sm overflow-x-auto border border-slate-800 shadow-inner">
+              {item.content}
+            </pre>
+          </div>
+        ) : (
+          <div className="p-3 bg-indigo-50/50 rounded-xl text-gray-700 text-sm border border-indigo-100/50 leading-relaxed relative group/text">
+            <button
+              onClick={() => onCopy(item.content, `note-${item.id}`)}
+              className="absolute right-2 top-2 p-1.5 bg-white/50 backdrop-blur-sm rounded-lg text-indigo-600 opacity-0 group-hover/text:opacity-100 transition-all hover:bg-white z-10"
+            >
+              <FiCopy className="h-4 w-4" />
+            </button>
+            <div className="relative">
+              <div className={`${!showPassword && item.content?.length > 150 ? "max-h-24 overflow-hidden" : ""}`}>
+                {item.content}
+              </div>
+              {item.content?.length > 150 && (
+                <button
+                  onClick={() => togglePassword(item.id)}
+                  className="mt-2 text-indigo-600 font-bold hover:text-indigo-700 text-xs flex items-center gap-1"
+                >
+                  {showPassword ? "Show Less" : "Show More"}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+    </motion.div>
+  );
+};
+
+
+const VaultModal = ({ isOpen, onClose, title, category, content, onSave, onTitleChange, onCategoryChange, onContentChange, isEditing }) => {
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="relative h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                  {isEditing ? <FiEdit2 className="h-5 w-5" /> : <FiPlus className="h-5 w-5" />}
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">{isEditing ? "Edit Item" : "Add New Item"}</h2>
+              </div>
+              <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <FiX className="h-6 w-6" />
+              </button>
+            </div>
+
+            <form onSubmit={onSave} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                <input
+                  type="text"
+                  required
+                  value={title}
+                  onChange={(e) => onTitleChange(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                  placeholder="e.g., GitHub API Key"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select
+                  value={category}
+                  onChange={(e) => onCategoryChange(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all appearance-none bg-white"
+                >
+                  <option value="">Select Category...</option>
+                  <option value="Credential">Credential</option>
+                  <option value="Command">Command</option>
+                  <option value="Token">Token</option>
+                  <option value="Note">Note</option>
+                  <option value="Server">Server</option>
+                  <option value="Database">Database</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                <textarea
+                  required
+                  rows={5}
+                  value={content}
+                  onChange={(e) => onContentChange(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all font-mono text-sm"
+                  placeholder="Paste your secret, command, or note here..."
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl shadow-lg shadow-indigo-200 transition-all"
+                >
+                  {isEditing ? "Save Changes" : "Create Item"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
 const Vault = () => {
   const [items, setItems] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalCategory, setModalCategory] = useState("");
-  const [newTitle, setNewTitle] = useState("");
-  const [newCategory, setNewCategory] = useState("");
-  const [newContent, setNewContent] = useState("");
+  const [modalMode, setModalMode] = useState("create"); // create | edit
+  const [currentItem, setCurrentItem] = useState({ title: "", category: "", content: "" });
   const [editingId, setEditingId] = useState(null);
-  const [editTitle, setEditTitle] = useState("");
-  const [editCategory, setEditCategory] = useState("");
-  const [editContent, setEditContent] = useState("");
-  const [openMenuId, setOpenMenuId] = useState(null);
-  const [copiedKey, setCopiedKey] = useState(null);
-  const [showPassword, setShowPassword] = useState({});
-  const [availableCategories, setAvailableCategories] = useState([]);
-  const [availableTags, setAvailableTags] = useState([]);
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [selectedTags, setSelectedTags] = useState([]);
-  const [sortOrder, setSortOrder] = useState(DEFAULT_SORT);
+  const [showPasswords, setShowPasswords] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Stats
+  const stats = {
+    total: items.length,
+    credentials: items.filter(i => i.category === "Credential").length,
+    code: items.filter(i => ["Command", "Token"].includes(i.category)).length,
+    notes: items.filter(i => !["Credential", "Command", "Token"].includes(i.category)).length
+  };
 
   useEffect(() => {
     loadItems();
   }, []);
 
   const loadItems = async (overrides = {}) => {
-    const params = {
-      q: overrides.q !== undefined ? overrides.q : searchQuery,
-      categories:
-        overrides.categories !== undefined ? overrides.categories : selectedCategories,
-      tags: overrides.tags !== undefined ? overrides.tags : selectedTags,
-      sort: overrides.sort !== undefined ? overrides.sort : sortOrder,
-    };
-
-    const requestParams = {};
-    if (params.q) requestParams.q = params.q;
-    if (Array.isArray(params.categories) && params.categories.length > 0) {
-      requestParams.categories = params.categories;
-    }
-    if (Array.isArray(params.tags) && params.tags.length > 0) {
-      requestParams.tags = params.tags;
-    }
-    if (params.sort) {
-      requestParams.sort = params.sort;
-    }
-
+    setIsLoading(true);
     try {
-      const { data } = await fetchItems(requestParams);
-      if (Array.isArray(data)) {
-        setItems(data);
-        setAvailableCategories(extractCategories(data));
-        setAvailableTags(extractTags(data));
-      } else {
-        const nextItems = Array.isArray(data.items) ? data.items : [];
-        setItems(nextItems);
-
-        const categoriesFromResponse = Array.isArray(data.filters?.categories)
-          ? data.filters.categories.filter(Boolean)
-          : extractCategories(nextItems);
-        const tagsFromResponse = Array.isArray(data.filters?.tags)
-          ? data.filters.tags.filter(Boolean)
-          : extractTags(nextItems);
-
-        setAvailableCategories(categoriesFromResponse);
-        setAvailableTags(tagsFromResponse);
-      }
+      const { data } = await fetchItems({});
+      const loadedItems = Array.isArray(data) ? data : (data.items || []);
+      setItems(loadedItems);
     } catch {
       setItems([]);
-      setAvailableCategories([]);
-      setAvailableTags([]);
+      toast.error("Failed to load vault items");
+    } finally {
+      setTimeout(() => setIsLoading(false), 500);
     }
   };
 
-  const handleSearchChange = (e) => {
-    const q = e.target.value;
-    setSearchQuery(q);
-    loadItems({ q });
-  };
+  const filteredItems = items.filter(item => {
+    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.content.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesTab = activeTab === "All" ||
+      (activeTab === "Credentials" && item.category === "Credential") ||
+      (activeTab === "Code" && ["Command", "Token"].includes(item.category)) ||
+      (activeTab === "Notes" && !["Credential", "Command", "Token"].includes(item.category));
+    return matchesSearch && matchesTab;
+  });
 
-  const clearSearch = () => {
-    setSearchQuery("");
-    loadItems({ q: "" });
-  };
-
-  const toggleCategory = (category) => {
-    const nextCategories = selectedCategories.includes(category)
-      ? selectedCategories.filter((c) => c !== category)
-      : [...selectedCategories, category];
-
-    setSelectedCategories(nextCategories);
-    loadItems({ categories: nextCategories });
-  };
-
-  const toggleTag = (tag) => {
-    const nextTags = selectedTags.includes(tag)
-      ? selectedTags.filter((t) => t !== tag)
-      : [...selectedTags, tag];
-
-    setSelectedTags(nextTags);
-    loadItems({ tags: nextTags });
-  };
-
-  const updateSort = (value) => {
-    setSortOrder(value);
-    loadItems({ sort: value });
-  };
-
-  const handleSortChange = (e) => {
-    updateSort(e.target.value);
-  };
-
-  const clearFilters = () => {
-    if (
-      selectedCategories.length === 0 &&
-      selectedTags.length === 0 &&
-      sortOrder === DEFAULT_SORT
-    ) {
-      return;
-    }
-
-    setSelectedCategories([]);
-    setSelectedTags([]);
-    setSortOrder(DEFAULT_SORT);
-    loadItems({ categories: [], tags: [], sort: DEFAULT_SORT });
-  };
-
-  const openModal = (category = "") => {
-    setModalCategory(category);
-    setNewCategory(category);
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setNewTitle("");
-    setNewCategory("");
-    setNewContent("");
-  };
-
-  const handleAddItem = async (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (!newTitle.trim() || !newContent.trim()) {
+    if (!currentItem.title.trim() || !currentItem.content.trim()) {
       toast.error("Title and content are required");
       return;
     }
+
     try {
-      await createItem({
-        title: newTitle.trim(),
-        category: newCategory.trim(),
-        content: newContent.trim()
-      });
-      toast.success("Item added successfully");
-      closeModal();
+      if (modalMode === "create") {
+        await createItem(currentItem);
+        toast.success("Item created successfully");
+      } else {
+        await updateItem(editingId, currentItem);
+        toast.success("Item updated successfully");
+      }
+      setIsModalOpen(false);
+      resetForm();
       loadItems();
     } catch {
-      toast.error("Failed to add item");
+      toast.error(`Failed to ${modalMode} item`);
     }
   };
 
-  const startEditing = (item) => {
-    setEditingId(item.id);
-    setEditTitle(item.title);
-    setEditCategory(item.category || "");
-    setEditContent(item.content);
-    setOpenMenuId(null);
-  };
-
-  const cancelEditing = () => {
-    setEditingId(null);
-  };
-
-  const handleUpdateItem = async (id) => {
-    if (!editTitle.trim() || !editContent.trim()) {
-      toast.error("Title and content are required");
-      return;
-    }
-    try {
-      await updateItem(id, {
-        title: editTitle.trim(),
-        category: editCategory.trim(),
-        content: editContent.trim()
-      });
-      toast.success("Item updated successfully");
-      setEditingId(null);
-      loadItems();
-    } catch {
-      toast.error("Failed to update item");
-    }
-  };
-
-  const handleDeleteItem = async (id) => {
+  const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this item?")) return;
     try {
       await deleteItem(id);
-      toast.success("Item deleted successfully");
+      toast.success("Item deleted");
       loadItems();
     } catch {
-      toast.error("Failed to delete item");
+      toast.error("Failed to delete");
     }
-    setOpenMenuId(null);
   };
 
-  const copyText = (key, text) => {
-    if (!text) {
-      toast.error("Nothing to copy");
-      return;
-    }
-    navigator.clipboard.writeText(text).then(
-      () => {
-        toast.success("Copied to clipboard");
-        setCopiedKey(key);
-        setTimeout(() => setCopiedKey(null), 2000);
-      },
-      () => toast.error("Failed to copy")
-    );
+  const resetForm = () => {
+    setCurrentItem({ title: "", category: "", content: "" });
+    setEditingId(null);
   };
 
-  const toggleMenu = (id, e) => {
-    e.stopPropagation();
-    setOpenMenuId(openMenuId === id ? null : id);
+  const openCreateModal = (category = "") => {
+    setModalMode("create");
+    setCurrentItem({ title: "", category, content: "" });
+    setIsModalOpen(true);
   };
 
-  const closeAllMenus = () => {
-    setOpenMenuId(null);
+  const openEditModal = (item) => {
+    setModalMode("edit");
+    setEditingId(item.id);
+    setCurrentItem({ title: item.title, category: item.category, content: item.content });
+    setIsModalOpen(true);
   };
 
-  const togglePasswordVisibility = (id) => {
-    setShowPassword(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }));
+  const copyText = (text, key) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard", { id: key });
   };
 
-  const hasActiveFilters =
-    selectedCategories.length > 0 ||
-    selectedTags.length > 0 ||
-    sortOrder !== DEFAULT_SORT;
-
-  const currentSortLabel =
-    SORT_OPTIONS.find((option) => option.value === sortOrder)?.label || SORT_OPTIONS[0].label;
-
-  const handleExportAll = () => {
-    if (items.length === 0) return toast.error("No items to export");
-    const dataStr = JSON.stringify(items, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `vault_export_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success("Export downloaded");
+  const togglePassword = (id) => {
+    setShowPasswords(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // Categorize items
-  const credentials = items.filter((i) => i.category === "Credential");
-  const commands = items.filter((i) => i.category === "Command");
-  const tokens = items.filter((i) => i.category === "Token");
-  const others = items.filter(
-    (i) => !["Credential", "Command", "Token"].includes(i.category)
-  );
+  const tabs = [
+    { id: "All", label: "All Items", icon: FiGrid },
+    { id: "Credentials", label: "Credentials", icon: FiKey },
+    { id: "Code", label: "Commands & Tokens", icon: FiTerminal },
+    { id: "Notes", label: "Secure Notes", icon: FiLock },
+  ];
 
-  // Render password field with toggle
-  const renderPasswordField = (item) => (
-    <div className="flex items-center mt-2">
-      <span className="text-sm text-gray-600 mr-2">Password:</span>
-      <span className="flex-grow break-all font-mono">
-        {showPassword[item.id] ? (
-          item.content
-        ) : (
-          <span className="tracking-widest">••••••••</span>
-        )}
-      </span>
-      <button
-        onClick={() => togglePasswordVisibility(item.id)}
-        className="ml-2 p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100"
-        title={showPassword[item.id] ? "Hide password" : "Show password"}
-      >
-        {showPassword[item.id] ? (
-          <EyeSlashIcon className="h-5 w-5" />
-        ) : (
-          <EyeIcon className="h-5 w-5" />
-        )}
-      </button>
-      <button
-        className="ml-1 p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100 relative"
-        onClick={() => copyText(`content-${item.id}`, item.content)}
-        title="Copy password"
-      >
-        <DocumentDuplicateIcon className="h-5 w-5" />
-        {copiedKey === `content-${item.id}` && (
-          <CheckCircleSolidIcon className="h-3 w-3 text-green-500 absolute -top-1 -right-1" />
-        )}
-      </button>
-    </div>
-  );
-
-  // Render editable field
-  const renderEditableField = (label, value, onChange, isTextarea = false) => (
-    <div className="mb-3">
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label}
-      </label>
-      {isTextarea ? (
-        <textarea
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          rows={3}
-          value={value}
-          onChange={onChange}
-        />
-      ) : (
-        <input
-          type="text"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          value={value}
-          onChange={onChange}
-        />
-      )}
-    </div>
-  );
-
-  // Render edit card
-  const renderEditCard = (item) => (
-    <div className="p-4 border rounded-lg bg-white shadow-sm mb-4">
-      <div className="font-semibold mb-3 text-lg">Editing Item</div>
-      {renderEditableField("Title", editTitle, (e) => setEditTitle(e.target.value))}
-      {renderEditableField("Category", editCategory, (e) => setEditCategory(e.target.value))}
-      {renderEditableField("Content", editContent, (e) => setEditContent(e.target.value), true)}
-      <div className="flex justify-end space-x-2 mt-4">
-        <button
-          className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-          onClick={cancelEditing}
-        >
-          Cancel
-        </button>
-        <button
-          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-          onClick={() => handleUpdateItem(item.id)}
-        >
-          Save Changes
-        </button>
-      </div>
-    </div>
-  );
-
-  // Render item menu
-  const renderItemMenu = (item) => (
-    <div className="relative">
-      <button
-        className="p-1 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
-        onClick={(e) => toggleMenu(item.id, e)}
-      >
-        <EllipsisVerticalIcon className="h-5 w-5" />
-      </button>
-      {openMenuId === item.id && (
-        <div
-          className="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-10 py-1"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-            onClick={() => startEditing(item)}
-          >
-            <PencilIcon className="h-4 w-4 mr-2" />
-            Edit
-          </button>
-          <button
-            className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-gray-100"
-            onClick={() => handleDeleteItem(item.id)}
-          >
-            <TrashIcon className="h-4 w-4 mr-2" />
-            Delete
-          </button>
-        </div>
-      )}
-    </div>
-  );
-
-  // Render credential card
-  const renderCredential = (item) => (
-    <div
-      key={item.id}
-      className="p-4 border border-gray-200 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow relative"
-      onClick={closeAllMenus}
-    >
-      {editingId === item.id ? (
-        renderEditCard(item)
-      ) : (
-        <>
-          <div className="flex justify-between items-start mb-2">
-            <div>
-              <h3 className="font-semibold text-lg text-gray-800">{item.title}</h3>
-              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                {item.category}
-              </span>
-            </div>
-            {renderItemMenu(item)}
-          </div>
-          
-          <div className="flex items-center mt-2">
-            <span className="text-sm text-gray-600 mr-2">Username:</span>
-            <span className="flex-grow break-all">{item.title}</span>
-            <button
-              className="ml-2 p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100 relative"
-              onClick={() => copyText(`title-${item.id}`, item.title)}
-              title="Copy username"
-            >
-              <DocumentDuplicateIcon className="h-5 w-5" />
-              {copiedKey === `title-${item.id}` && (
-                <CheckCircleSolidIcon className="h-3 w-3 text-green-500 absolute -top-1 -right-1" />
-              )}
-            </button>
-          </div>
-          
-          {renderPasswordField(item)}
-        </>
-      )}
-    </div>
-  );
-
-  // Render command/token card
-  const renderCodeItem = (item) => (
-    <div
-      key={item.id}
-      className="p-4 border border-gray-200 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow relative"
-      onClick={closeAllMenus}
-    >
-      {editingId === item.id ? (
-        renderEditCard(item)
-      ) : (
-        <>
-          <div className="flex justify-between items-start mb-2">
-            <div>
-              <h3 className="font-semibold text-lg text-gray-800">{item.title}</h3>
-              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                {item.category}
-              </span>
-            </div>
-            {renderItemMenu(item)}
-          </div>
-          
-          <div className="mt-2 flex items-start">
-            <pre className="flex-grow bg-gray-50 p-3 rounded-md whitespace-pre-wrap break-words font-mono text-sm">
-              {item.content}
-            </pre>
-            <button
-              className="ml-2 p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100 relative self-start"
-              onClick={() => copyText(`content-${item.id}`, item.content)}
-              title="Copy"
-            >
-              <DocumentDuplicateIcon className="h-5 w-5" />
-              {copiedKey === `content-${item.id}` && (
-                <CheckCircleSolidIcon className="h-3 w-3 text-green-500 absolute -top-1 -right-1" />
-              )}
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  );
-
-  // Render other item card
-  const renderOtherItem = (item) => (
-    <div
-      key={item.id}
-      className="p-4 border border-gray-200 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow relative"
-      onClick={closeAllMenus}
-    >
-      {editingId === item.id ? (
-        renderEditCard(item)
-      ) : (
-        <>
-          <div className="flex justify-between items-start mb-2">
-            <div>
-              <h3 className="font-semibold text-lg text-gray-800">{item.title}</h3>
-              {item.category && (
-                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                  {item.category}
-                </span>
-              )}
-            </div>
-            {renderItemMenu(item)}
-          </div>
-          
-          <div className="mt-2 flex items-start group">
-            <div className="bg-gray-50 p-3 rounded-md whitespace-pre-wrap break-words flex-grow">
-              {item.content.length > 150 ? (
-                <>
-                  {item.content.slice(0, 150)}
-                  <span className="text-gray-400">...</span>
-                </>
-              ) : (
-                item.content
-              )}
-            </div>
-            <button
-              className="ml-2 p-1 text-gray-500 hover:text-blue-600 rounded-full hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity relative self-start"
-              onClick={() => copyText(`content-${item.id}`, item.content)}
-              title="Copy"
-            >
-              <DocumentDuplicateIcon className="h-5 w-5" />
-              {copiedKey === `content-${item.id}` && (
-                <CheckCircleSolidIcon className="h-3 w-3 text-green-500 absolute -top-1 -right-1" />
-              )}
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  );
+  const currentDate = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   return (
-    <div className="w-[90%] mx-auto px-4 py-6" onClick={closeAllMenus}>
+    <div className="min-h-screen bg-gray-50 text-gray-900 pb-20">
       <Toaster position="top-right" />
-      
-      {/* Header and Search */}
-      <div className="mb-8">
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Secure Vault</h1>
-            <p className="text-gray-600">Store and manage your sensitive information securely</p>
-          </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full md:w-auto">
-            <div className="relative w-full sm:w-72 md:w-64">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+      {/* Premium Hero Header */}
+      <div className="relative overflow-hidden bg-slate-900 pb-16">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-600 opacity-90" />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
+
+        <div className="relative max-w-[98%] mx-auto px-6 pt-6 pb-6">
+
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex justify-between items-start mb-8"
+          >
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 shadow-lg">
+                  <FiShield className="h-8 w-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold text-white tracking-tight">Secure Vault</h1>
+                  <p className="text-indigo-100 text-sm font-medium">{currentDate}</p>
+                </div>
               </div>
-              <input
-                className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Search items..."
-                value={searchQuery}
-                onChange={handleSearchChange}
-              />
-              {searchQuery && (
-                <button
-                  onClick={clearSearch}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  type="button"
-                >
-                  <XMarkIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                </button>
-              )}
+              <p className="text-indigo-100/80 max-w-xl text-lg">
+                Manage your credentials, API tokens, and sensitive notes in a secure, encrypted environment.
+              </p>
             </div>
 
             <button
-              onClick={handleExportAll}
-              type="button"
-              className="flex items-center justify-center gap-1 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 whitespace-nowrap"
+              onClick={() => openCreateModal()}
+              className="flex items-center gap-2 px-6 py-3 bg-white text-indigo-600 font-bold rounded-xl shadow-lg hover:shadow-xl hover:bg-gray-50 transition-all transform hover:-translate-y-1"
             >
-              <ArrowDownTrayIcon className="h-4 w-4" />
-              Export
+              <FiPlus className="h-5 w-5" />
+              New Item
             </button>
+          </motion.div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard icon={FiList} label="Total Items" value={stats.total} color="bg-blue-500" delay={0.1} />
+            <StatCard icon={FiKey} label="Credentials" value={stats.credentials} color="bg-amber-500" delay={0.2} />
+            <StatCard icon={FiTerminal} label="Code Snippets" value={stats.code} color="bg-emerald-500" delay={0.3} />
+            <StatCard icon={FiLock} label="Secure Notes" value={stats.notes} color="bg-purple-500" delay={0.4} />
           </div>
         </div>
+      </div>
 
-        <div className="mt-4 grid gap-4 lg:grid-cols-[2fr_1fr]">
-          <div className="space-y-3">
-            {availableCategories.length > 0 && (
-              <div>
-                <div className="text-sm font-medium text-gray-600 mb-2">Filter by category</div>
-                <div className="flex flex-wrap gap-2">
-                  {availableCategories.map((category) => {
-                    const isActive = selectedCategories.includes(category);
-                    return (
-                      <button
-                        key={category}
-                        type="button"
-                        onClick={() => toggleCategory(category)}
-                        className={`inline-flex items-center px-3 py-1 rounded-full border text-sm transition-colors ${
-                          isActive
-                            ? "bg-blue-100 border-blue-500 text-blue-700"
-                            : "bg-white border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600"
-                        }`}
-                      >
-                        {category}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+      {/* Main Content */}
+      <div className="max-w-[98%] mx-auto px-6 -mt-12 relative z-10">
 
-            {availableTags.length > 0 && (
-              <div>
-                <div className="text-sm font-medium text-gray-600 mb-2">Filter by tag</div>
-                <div className="flex flex-wrap gap-2">
-                  {availableTags.map((tag) => {
-                    const isActive = selectedTags.includes(tag);
-                    return (
-                      <button
-                        key={tag}
-                        type="button"
-                        onClick={() => toggleTag(tag)}
-                        className={`inline-flex items-center px-3 py-1 rounded-full border text-sm transition-colors ${
-                          isActive
-                            ? "bg-purple-100 border-purple-500 text-purple-700"
-                            : "bg-white border-gray-300 text-gray-600 hover:border-purple-400 hover:text-purple-600"
-                        }`}
-                      >
-                        {tag}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-3 lg:pl-4 lg:border-l lg:border-gray-200">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-              <div className="flex flex-wrap items-center gap-3 justify-end">
-                <label htmlFor="vault-sort" className="text-sm font-medium text-gray-600">
-                  Sort by
-                </label>
-                <select
-                  id="vault-sort"
-                  value={sortOrder}
-                  onChange={handleSortChange}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {SORT_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/40 p-2 sm:p-4 mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            {/* Tabs */}
+            <div className="flex overflow-x-auto pb-2 md:pb-0 w-full md:w-auto gap-2 scrollbar-none">
+              {tabs.map((tab, idx) => (
+                <CategoryTab
+                  key={tab.id}
+                  {...tab}
+                  isActive={activeTab === tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  index={idx}
+                />
+              ))}
             </div>
 
-            {hasActiveFilters && (
-              <div className="flex flex-wrap items-center gap-2 text-sm justify-end">
-                <span className="text-gray-600 font-medium">Active filters:</span>
-                {selectedCategories.map((category) => (
-                  <button
-                    key={`active-category-${category}`}
-                    type="button"
-                    onClick={() => toggleCategory(category)}
-                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-100 text-blue-700"
-                  >
-                    {category}
-                    <XMarkIcon className="h-4 w-4" />
-                  </button>
-                ))}
-                {selectedTags.map((tag) => (
-                  <button
-                    key={`active-tag-${tag}`}
-                    type="button"
-                    onClick={() => toggleTag(tag)}
-                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-purple-100 text-purple-700"
-                  >
-                    {tag}
-                    <XMarkIcon className="h-4 w-4" />
-                  </button>
-                ))}
-                {sortOrder !== DEFAULT_SORT && (
-                  <button
-                    type="button"
-                    onClick={() => updateSort(DEFAULT_SORT)}
-                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gray-200 text-gray-700"
-                  >
-                    {currentSortLabel}
-                    <XMarkIcon className="h-4 w-4" />
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="text-sm font-medium text-blue-600 hover:text-blue-700"
-                >
-                  Clear all
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Add Buttons */}
-      <div className="flex flex-wrap gap-3 mb-8">
-        <button
-          onClick={() => openModal("Credential")}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
-        >
-          <PlusIcon className="-ml-1 mr-1 h-4 w-4" />
-          Add Credential
-        </button>
-        <button
-          onClick={() => openModal("Command")}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-        >
-          <PlusIcon className="-ml-1 mr-1 h-4 w-4" />
-          Add Command
-        </button>
-        <button
-          onClick={() => openModal("Token")}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700"
-        >
-          <PlusIcon className="-ml-1 mr-1 h-4 w-4" />
-          Add Token
-        </button>
-        <button
-          onClick={() => openModal("")}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700"
-        >
-          <PlusIcon className="-ml-1 mr-1 h-4 w-4" />
-          Add Other
-        </button>
-      </div>
-
-      {/* Main Content - Side by Side Layout */}
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Left Column - Credentials */}
-        <div className="lg:w-1/2">
-          {credentials.length > 0 ? (
-            <section className="mb-10">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-800">Credentials</h2>
-                <span className="text-sm text-gray-500">
-                  {credentials.length} {credentials.length === 1 ? "item" : "items"}
-                </span>
-              </div>
-              <div className="grid gap-4">
-                {credentials.map(renderCredential)}
-              </div>
-            </section>
-          ) : (
-            <section className="mb-10 p-6 border border-dashed border-gray-300 rounded-lg text-center">
-              <h2 className="text-xl font-semibold text-gray-800 mb-2">No Credentials</h2>
-              <p className="text-gray-500 mb-4">Add your first credential to get started</p>
-              <button
-                onClick={() => openModal("Credential")}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
-              >
-                <PlusIcon className="-ml-1 mr-1 h-4 w-4" />
-                Add Credential
-              </button>
-            </section>
-          )}
-        </div>
-
-        {/* Right Column - Commands */}
-        <div className="lg:w-1/2">
-          {commands.length > 0 ? (
-            <section className="mb-10">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-800">Commands</h2>
-                <span className="text-sm text-gray-500">
-                  {commands.length} {commands.length === 1 ? "item" : "items"}
-                </span>
-              </div>
-              <div className="grid gap-4">
-                {commands.map(renderCodeItem)}
-              </div>
-            </section>
-          ) : (
-            <section className="mb-10 p-6 border border-dashed border-gray-300 rounded-lg text-center">
-              <h2 className="text-xl font-semibold text-gray-800 mb-2">No Commands</h2>
-              <p className="text-gray-500 mb-4">Add your first command to get started</p>
-              <button
-                onClick={() => openModal("Command")}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-              >
-                <PlusIcon className="-ml-1 mr-1 h-4 w-4" />
-                Add Command
-              </button>
-            </section>
-          )}
-        </div>
-      </div>
-
-      {/* Other Categories Below */}
-      {/* Tokens Section */}
-      {tokens.length > 0 && (
-        <section className="mb-10">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-800">Tokens</h2>
-            <span className="text-sm text-gray-500">
-              {tokens.length} {tokens.length === 1 ? "item" : "items"}
-            </span>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            {tokens.map(renderCodeItem)}
-          </div>
-        </section>
-      )}
-
-      {/* Other Items Section */}
-      {others.length > 0 && (
-        <section className="mb-10">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-800">Other Items</h2>
-            <span className="text-sm text-gray-500">
-              {others.length} {others.length === 1 ? "item" : "items"}
-            </span>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            {others.map(renderOtherItem)}
-          </div>
-        </section>
-      )}
-
-      {/* Empty State - when no items at all */}
-      {items.length === 0 && (
-        <div className="text-center py-12">
-          <div className="mx-auto h-24 w-24 text-gray-400 mb-4">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1}
-                d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"
+            {/* Search */}
+            <div className="relative w-full md:w-80">
+              <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search vault..."
+                className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
               />
-            </svg>
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-1">No items found</h3>
-          <p className="text-gray-500 mb-4">
-            {searchQuery
-              ? "Try a different search term"
-              : "Get started by adding a new item"}
-          </p>
-          <button
-            onClick={() => openModal("")}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-          >
-            <PlusIcon className="-ml-1 mr-1 h-4 w-4" />
-            Add Item
-          </button>
-        </div>
-      )}
-
-      {/* Add Item Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-          <div
-            className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center p-4 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Add New {modalCategory || "Item"}
-              </h3>
-              <button
-                onClick={closeModal}
-                className="text-gray-400 hover:text-gray-500"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
             </div>
-            <form onSubmit={handleAddItem} className="p-4">
-              {renderEditableField("Title", newTitle, (e) => setNewTitle(e.target.value))}
-              {modalCategory ? (
-                <div className="mb-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Category
-                  </label>
-                  <input
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 cursor-not-allowed"
-                    value={newCategory}
-                    readOnly
-                  />
-                </div>
-              ) : (
-                renderEditableField("Category", newCategory, (e) => setNewCategory(e.target.value))
-              )}
-              {renderEditableField(
-                "Content",
-                newContent,
-                (e) => setNewContent(e.target.value),
-                true
-              )}
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-                >
-                  Add Item
-                </button>
-              </div>
-            </form>
           </div>
         </div>
-      )}
+
+        {/* Content Grid */}
+        <AnimatePresence mode="wait">
+          {isLoading ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-48 bg-white/50 rounded-2xl animate-pulse border border-white/50" />
+              ))}
+            </motion.div>
+          ) : (
+            <motion.div
+              layout
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
+              {filteredItems.map(item => (
+                <VaultCard
+                  key={item.id}
+                  item={item}
+                  onEdit={openEditModal}
+                  onDelete={handleDelete}
+                  onCopy={copyText}
+                  showPassword={showPasswords[item.id]}
+                  togglePassword={togglePassword}
+                />
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {!isLoading && filteredItems.length === 0 && (
+          <div className="text-center py-24 opacity-60">
+            <FiShield className="h-24 w-24 mx-auto text-gray-300 mb-4" />
+            <h3 className="text-xl font-medium text-gray-500">No items found</h3>
+            <p className="text-gray-400">Try adjusting your search or add a new item.</p>
+          </div>
+        )}
+      </div>
+
+      <VaultModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={currentItem.title}
+        category={currentItem.category}
+        content={currentItem.content}
+        onTitleChange={(val) => setCurrentItem(prev => ({ ...prev, title: val }))}
+        onCategoryChange={(val) => setCurrentItem(prev => ({ ...prev, category: val }))}
+        onContentChange={(val) => setCurrentItem(prev => ({ ...prev, content: val }))}
+        onSave={handleSave}
+        isEditing={modalMode === "edit"}
+      />
     </div>
   );
 };

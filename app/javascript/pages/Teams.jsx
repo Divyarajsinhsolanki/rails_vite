@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useContext, useCallback, useMemo } from "react";
 import { useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
     fetchTeams,
     createTeam,
@@ -26,113 +27,283 @@ import SkillDirectory from "../components/teams/SkillDirectory";
 import SkillEndorsementsPanel from "../components/teams/SkillEndorsementsPanel";
 import LearningGoalsPanel from "../components/teams/LearningGoalsPanel";
 import { AuthContext } from "../context/AuthContext";
-// Import icons (e.g., from Feather Icons)
-import { FiPlus, FiEdit, FiTrash2, FiUsers, FiSearch, FiUserPlus, FiChevronRight, FiXCircle, FiCheckCircle, FiInfo, FiLoader } from 'react-icons/fi'; // Added more icons
+import {
+    FiPlus, FiEdit2, FiTrash2, FiUsers, FiSearch, FiUserPlus,
+    FiChevronRight, FiX, FiCheck, FiInfo, FiLoader, FiTarget,
+    FiAward, FiTrendingUp, FiZap, FiStar
+} from 'react-icons/fi';
 
-// --- Utility Components ---
+// --- Premium UI Components ---
 
-// Avatar component with improved styling and accessibility
-const Avatar = ({ name, src, size = 'md' }) => {
+const Avatar = ({ name, src, size = 'md', className = '' }) => {
     const sizeClasses = {
-        sm: "w-6 h-6 text-xs",
-        md: "w-8 h-8 text-sm",
-        lg: "w-10 h-10 text-base",
+        sm: "w-7 h-7 text-xs",
+        md: "w-9 h-9 text-sm",
+        lg: "w-11 h-11 text-base",
+        xl: "w-14 h-14 text-lg",
     };
     const currentSizeClass = sizeClasses[size] || sizeClasses.md;
 
-    if (src && src !== 'null') { // Ensure src is not 'null' string
+    if (src && src !== 'null') {
         return (
             <img
                 src={src}
                 alt={`${name}'s avatar`}
-                className={`rounded-full mr-2 object-cover border border-gray-200 ${currentSizeClass}`}
+                className={`rounded-full object-cover ring-2 ring-white dark:ring-zinc-800 shadow-sm ${currentSizeClass} ${className}`}
             />
         );
     }
     const initial = name ? name.charAt(0).toUpperCase() : "?";
+    const colors = [
+        'bg-gradient-to-br from-blue-400 to-blue-600',
+        'bg-gradient-to-br from-purple-400 to-purple-600',
+        'bg-gradient-to-br from-emerald-400 to-emerald-600',
+        'bg-gradient-to-br from-amber-400 to-amber-600',
+        'bg-gradient-to-br from-rose-400 to-rose-600',
+    ];
+    const colorIndex = name ? name.charCodeAt(0) % colors.length : 0;
+
     return (
-        <div className={`rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold mr-2 ${currentSizeClass}`}>
+        <div className={`rounded-full ${colors[colorIndex]} text-white flex items-center justify-center font-bold ring-2 ring-white dark:ring-zinc-800 shadow-sm ${currentSizeClass} ${className}`}>
             {initial}
         </div>
     );
 };
 
-// Modal component for confirmations and forms
-const Modal = ({ isOpen, onClose, title, children, footer, className = "" }) => {
-    if (!isOpen) return null;
+const AvatarStack = ({ members, max = 4 }) => {
+    const visible = members.slice(0, max);
+    const remaining = members.length - max;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 animate-fadeIn">
-            <div className={`bg-white rounded-lg shadow-xl p-6 w-full max-w-lg transform scale-95 animate-scaleIn ${className}`}>
-                <div className="flex justify-between items-center border-b pb-3 mb-4">
-                    <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                        <FiXCircle className="w-6 h-6" />
-                    </button>
+        <div className="flex items-center -space-x-2">
+            {visible.map((member, i) => (
+                <motion.div
+                    key={member.id || i}
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="relative hover:z-10 hover:scale-110 transition-transform"
+                >
+                    <Avatar name={member.name} src={member.profile_picture} size="md" />
+                </motion.div>
+            ))}
+            {remaining > 0 && (
+                <div className="w-9 h-9 rounded-full bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 text-xs font-semibold flex items-center justify-center ring-2 ring-white dark:ring-zinc-800">
+                    +{remaining}
                 </div>
-                <div className="modal-body max-h-[70vh] overflow-y-auto pr-2">
-                    {children}
-                </div>
-                {footer && (
-                    <div className="border-t pt-4 mt-4 flex justify-end space-x-3">
-                        {footer}
-                    </div>
-                )}
-            </div>
+            )}
         </div>
     );
 };
 
-// Notification/Toast component
-const Notification = ({ message, type, onClose }) => {
-    const typeClasses = {
-        success: "bg-green-100 border-green-400 text-green-700",
-        error: "bg-red-100 border-red-400 text-red-700",
-        info: "bg-[rgb(var(--theme-color-rgb)/0.1)] border-[var(--theme-color)] text-[var(--theme-color)]",
+const Modal = ({ isOpen, onClose, title, children, footer, size = 'md' }) => {
+    const sizeClasses = {
+        sm: 'max-w-sm',
+        md: 'max-w-lg',
+        lg: 'max-w-2xl',
     };
 
-    const icon = {
-        success: <FiCheckCircle className="w-5 h-5 mr-2" />,
-        error: <FiXCircle className="w-5 h-5 mr-2" />,
-        info: <FiInfo className="w-5 h-5 mr-2" />,
-    }[type];
-
     return (
-        <div className={`fixed bottom-4 right-4 p-4 rounded-lg shadow-lg flex items-center ${typeClasses[type]} animate-slideInFromRight z-50`}>
-            {icon}
-            <span>{message}</span>
-            <button onClick={onClose} className="ml-4 text-current hover:opacity-75">
-                <FiXCircle className="w-4 h-4" />
-            </button>
-        </div>
+        <AnimatePresence>
+            {isOpen && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                >
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                        transition={{ type: "spring", duration: 0.4 }}
+                        className={`relative bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full ${sizeClasses[size]} overflow-hidden`}
+                    >
+                        <div className="flex items-center justify-between p-5 border-b border-zinc-100 dark:border-zinc-800">
+                            <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">{title}</h3>
+                            <button
+                                onClick={onClose}
+                                className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
+                            >
+                                <FiX className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-5 max-h-[60vh] overflow-y-auto">{children}</div>
+                        {footer && (
+                            <div className="flex items-center justify-end gap-3 p-5 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
+                                {footer}
+                            </div>
+                        )}
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
     );
 };
+
+const Notification = ({ message, type, onClose }) => {
+    const styles = {
+        success: "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/30 dark:border-emerald-800 dark:text-emerald-300",
+        error: "bg-red-50 border-red-200 text-red-700 dark:bg-red-900/30 dark:border-red-800 dark:text-red-300",
+        info: "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300",
+    };
+
+    const icons = {
+        success: <FiCheck className="w-5 h-5" />,
+        error: <FiX className="w-5 h-5" />,
+        info: <FiInfo className="w-5 h-5" />,
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, x: 100, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 100, scale: 0.9 }}
+            className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg ${styles[type]}`}
+        >
+            {icons[type]}
+            <span className="font-medium">{message}</span>
+            <button onClick={onClose} className="ml-2 opacity-60 hover:opacity-100 transition-opacity">
+                <FiX className="w-4 h-4" />
+            </button>
+        </motion.div>
+    );
+};
+
+const StatCard = ({ icon: Icon, label, value, accent = false }) => (
+    <div className={`flex items-center gap-3 p-4 rounded-xl ${accent ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white' : 'bg-zinc-50 dark:bg-zinc-800/50'}`}>
+        <div className={`p-2 rounded-lg ${accent ? 'bg-white/20' : 'bg-blue-100 dark:bg-blue-900/30'}`}>
+            <Icon className={`w-5 h-5 ${accent ? 'text-white' : 'text-blue-600 dark:text-blue-400'}`} />
+        </div>
+        <div>
+            <p className={`text-2xl font-bold ${accent ? 'text-white' : 'text-zinc-900 dark:text-white'}`}>{value}</p>
+            <p className={`text-sm ${accent ? 'text-white/80' : 'text-zinc-500 dark:text-zinc-400'}`}>{label}</p>
+        </div>
+    </div>
+);
+
+const TeamCard = ({ team, isSelected, onClick }) => (
+    <motion.button
+        onClick={onClick}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${isSelected
+                ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800 shadow-md'
+                : 'bg-white dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-700/50 hover:border-zinc-200 dark:hover:border-zinc-600 hover:shadow-md'
+            }`}
+    >
+        <div className="flex items-center justify-between mb-3">
+            <h3 className={`font-semibold ${isSelected ? 'text-blue-700 dark:text-blue-300' : 'text-zinc-800 dark:text-white'}`}>
+                {team.name}
+            </h3>
+            <FiChevronRight className={`w-4 h-4 transition-transform ${isSelected ? 'text-blue-500 translate-x-1' : 'text-zinc-400'}`} />
+        </div>
+        <div className="flex items-center justify-between">
+            <AvatarStack members={team.users} max={3} />
+            <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                {team.users.length} member{team.users.length !== 1 ? 's' : ''}
+            </span>
+        </div>
+    </motion.button>
+);
+
+const MemberRow = ({ member, canManage, isEditing, onEdit, onSave, onCancel, onRemove, editRole, setEditRole, isSaving, isCurrentUser }) => (
+    <motion.div
+        layout
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between p-4 bg-white dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-700/50 hover:shadow-md transition-all"
+    >
+        <div className="flex items-center gap-3">
+            <Avatar name={member.name} src={member.profile_picture} size="lg" />
+            <div>
+                <p className="font-semibold text-zinc-800 dark:text-white">{member.name || "Invited User"}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 capitalize">
+                        {member.role}
+                    </span>
+                    {member.job_title && (
+                        <span className="text-xs text-zinc-500 dark:text-zinc-400">{member.job_title}</span>
+                    )}
+                </div>
+            </div>
+        </div>
+
+        {canManage && (
+            isEditing ? (
+                <form onSubmit={onSave} className="flex items-center gap-2">
+                    <select
+                        value={editRole}
+                        onChange={(e) => setEditRole(e.target.value)}
+                        className="text-sm border border-zinc-200 dark:border-zinc-600 rounded-lg px-3 py-1.5 bg-white dark:bg-zinc-700 focus:ring-2 focus:ring-blue-500 outline-none"
+                        disabled={isSaving}
+                    >
+                        <option value="admin">Admin</option>
+                        <option value="team_leader">Team Leader</option>
+                        <option value="member">Member</option>
+                        <option value="viewer">Viewer</option>
+                    </select>
+                    <button
+                        type="submit"
+                        disabled={isSaving}
+                        className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 transition-colors"
+                    >
+                        {isSaving ? <FiLoader className="w-4 h-4 animate-spin" /> : <FiCheck className="w-4 h-4" />}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onCancel}
+                        disabled={isSaving}
+                        className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
+                    >
+                        <FiX className="w-4 h-4" />
+                    </button>
+                </form>
+            ) : (
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={onEdit}
+                        className="p-2 rounded-lg text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-blue-500 transition-all"
+                    >
+                        <FiEdit2 className="w-4 h-4" />
+                    </button>
+                    {!isCurrentUser && (
+                        <button
+                            onClick={onRemove}
+                            className="p-2 rounded-lg text-zinc-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-all"
+                        >
+                            <FiTrash2 className="w-4 h-4" />
+                        </button>
+                    )}
+                </div>
+            )
+        )}
+    </motion.div>
+);
 
 // --- Main Teams Component ---
 
 const Teams = () => {
     const { user } = useContext(AuthContext);
     const location = useLocation();
-    // Simplified role checks for cleaner code
     const canEdit = user?.roles?.some((r) => ["owner", "team_leader"].includes(r.name));
     const canManageMembers = user?.roles?.some((r) => r.name === "admin");
 
-    // State Management
+    // State
     const [teams, setTeams] = useState([]);
     const [selectedTeamId, setSelectedTeamId] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [isSaving, setIsSaving] = useState(false); // For form submission loading
+    const [isSaving, setIsSaving] = useState(false);
     const [isInsightsLoading, setIsInsightsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [teamInsights, setTeamInsights] = useState(null);
     const [insightsTeamId, setInsightsTeamId] = useState(null);
 
-    // Form States (for Create/Edit Team)
+    // Form States
     const [teamForm, setTeamForm] = useState({ name: "", description: "" });
-    const [editingId, setEditingId] = useState(null); // ID of team being edited
-    const [isCreatingNewTeam, setIsCreatingNewTeam] = useState(false); // Flag for creating a new team
-
-    // Form States (for Add/Remove Members)
+    const [editingId, setEditingId] = useState(null);
+    const [isCreatingNewTeam, setIsCreatingNewTeam] = useState(false);
     const [memberForm, setMemberForm] = useState({ role: "member" });
     const [selectedUsersToAdd, setSelectedUsersToAdd] = useState([]);
     const [editingMemberId, setEditingMemberId] = useState(null);
@@ -142,15 +313,11 @@ const Teams = () => {
     // Modals & Notifications
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [teamToDeleteId, setTeamToDeleteId] = useState(null);
-    const [notification, setNotification] = useState(null); // { message, type }
+    const [notification, setNotification] = useState(null);
 
     const extractErrorMessage = (error, fallback = "Something went wrong.") => {
-        if (error?.response?.data?.errors) {
-            return error.response.data.errors.join(', ');
-        }
-        if (error?.response?.data?.error) {
-            return error.response.data.error;
-        }
+        if (error?.response?.data?.errors) return error.response.data.errors.join(', ');
+        if (error?.response?.data?.error) return error.response.data.error;
         return fallback;
     };
 
@@ -161,7 +328,6 @@ const Teams = () => {
             const { data } = await fetchTeams();
             const validTeams = Array.isArray(data) ? data : [];
             setTeams(validTeams);
-            // After loading, ensure selectedTeamId is still valid or reset it
             if (selectedTeamId && !validTeams.some(t => t.id === selectedTeamId)) {
                 setSelectedTeamId(null);
             }
@@ -172,7 +338,7 @@ const Teams = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [selectedTeamId]); // Dependency on selectedTeamId to re-validate selection
+    }, [selectedTeamId]);
 
     const loadTeamInsights = useCallback(async (teamId) => {
         if (!teamId) {
@@ -180,10 +346,7 @@ const Teams = () => {
             setInsightsTeamId(null);
             return;
         }
-
-        if (teamId !== insightsTeamId) {
-            setTeamInsights(null);
-        }
+        if (teamId !== insightsTeamId) setTeamInsights(null);
         setInsightsTeamId(teamId);
         setIsInsightsLoading(true);
         try {
@@ -192,42 +355,31 @@ const Teams = () => {
             setInsightsTeamId(teamId);
         } catch (error) {
             console.error("Failed to fetch team insights:", error);
-            setNotification({ message: "Failed to load team insights.", type: "error" });
             setTeamInsights(null);
         } finally {
             setIsInsightsLoading(false);
         }
-    }, [insightsTeamId, setNotification]);
+    }, [insightsTeamId]);
 
     const refreshInsights = useCallback(async () => {
-        if (selectedTeamId) {
-            await loadTeamInsights(selectedTeamId);
-        }
+        if (selectedTeamId) await loadTeamInsights(selectedTeamId);
     }, [selectedTeamId, loadTeamInsights]);
 
-    useEffect(() => {
-        loadTeams();
-    }, [loadTeams]);
+    useEffect(() => { loadTeams(); }, [loadTeams]);
 
     useEffect(() => {
-        if (selectedTeamId) {
-            loadTeamInsights(selectedTeamId);
-        } else {
-            setTeamInsights(null);
-            setInsightsTeamId(null);
-        }
+        if (selectedTeamId) loadTeamInsights(selectedTeamId);
+        else { setTeamInsights(null); setInsightsTeamId(null); }
     }, [selectedTeamId, loadTeamInsights]);
 
-    // Handle deep linking for specific team selection
     useEffect(() => {
         if (teams.length > 0 && location.state?.teamId) {
             setSelectedTeamId(location.state.teamId);
-            // Clear location state to prevent re-triggering on subsequent renders
             window.history.replaceState({}, document.title);
         }
     }, [teams, location.state]);
 
-    // Event Handlers
+    // Handlers
     const handleFormChange = (e) => setTeamForm({ ...teamForm, [e.target.name]: e.target.value });
     const handleRoleChange = (e) => setMemberForm({ ...memberForm, role: e.target.value });
 
@@ -235,7 +387,7 @@ const Teams = () => {
         setEditingId(null);
         setIsCreatingNewTeam(false);
         setTeamForm({ name: "", description: "" });
-        setNotification(null); // Clear any form-related notifications
+        setNotification(null);
         setEditingMemberId(null);
         setEditingMemberRole("member");
         setMemberSavingId(null);
@@ -245,23 +397,21 @@ const Teams = () => {
 
     const handleSelectTeam = (id) => {
         setSelectedTeamId(id);
-        resetAndCloseForms(); // Close any open forms when selecting a new team
-    }
+        resetAndCloseForms();
+    };
 
     const handleTeamSubmit = async (e) => {
         e.preventDefault();
         setIsSaving(true);
-        setNotification(null); // Clear previous notifications
-
+        setNotification(null);
         const action = editingId ? updateTeam(editingId, teamForm) : createTeam(teamForm);
         try {
             await action;
             resetAndCloseForms();
-            await loadTeams(); // Reload to get the latest data
+            await loadTeams();
             await refreshInsights();
             setNotification({ message: `Team ${editingId ? 'updated' : 'created'} successfully!`, type: "success" });
         } catch (err) {
-            console.error("Failed to save team:", err);
             setNotification({ message: `Failed to save team: ${err.message || 'An error occurred.'}`, type: "error" });
         } finally {
             setIsSaving(false);
@@ -272,17 +422,17 @@ const Teams = () => {
         setEditingId(team.id);
         setIsCreatingNewTeam(false);
         setTeamForm({ name: team.name, description: team.description || "" });
-        setSelectedTeamId(team.id); // Ensure the team is selected in the sidebar
+        setSelectedTeamId(team.id);
         setNotification(null);
     };
 
     const handleNewClick = () => {
         setIsCreatingNewTeam(true);
         setEditingId(null);
-        setSelectedTeamId(null); // Deselect any team
+        setSelectedTeamId(null);
         setTeamForm({ name: "", description: "" });
         setNotification(null);
-    }
+    };
 
     const confirmDeleteTeam = (id) => {
         setTeamToDeleteId(id);
@@ -291,18 +441,14 @@ const Teams = () => {
 
     const handleDeleteTeam = async () => {
         setShowDeleteConfirm(false);
-        setIsSaving(true); // Indicate deletion is in progress
+        setIsSaving(true);
         setNotification(null);
-
         try {
             await deleteTeam(teamToDeleteId);
-            if (selectedTeamId === teamToDeleteId) {
-                setSelectedTeamId(null);
-            }
+            if (selectedTeamId === teamToDeleteId) setSelectedTeamId(null);
             await loadTeams();
             setNotification({ message: "Team deleted successfully!", type: "success" });
         } catch (err) {
-            console.error("Failed to delete team:", err);
             setNotification({ message: `Failed to delete team: ${err.message || 'An error occurred.'}`, type: "error" });
         } finally {
             setIsSaving(false);
@@ -318,7 +464,6 @@ const Teams = () => {
         }
         setIsSaving(true);
         setNotification(null);
-
         try {
             await Promise.all(
                 selectedUsersToAdd.map((u) =>
@@ -331,7 +476,6 @@ const Teams = () => {
             await refreshInsights();
             setNotification({ message: "Member(s) added successfully!", type: "success" });
         } catch (err) {
-            console.error("Failed to add member:", err);
             setNotification({ message: `Failed to add member: ${err.message || 'An error occurred.'}`, type: "error" });
         } finally {
             setIsSaving(false);
@@ -339,18 +483,16 @@ const Teams = () => {
     };
 
     const handleRemoveMember = async (teamUserId, memberName) => {
-        if (!window.confirm(`Are you sure you want to remove ${memberName} from this team?`)) return; // A simple confirm for now, can be replaced by modal
-        setIsSaving(true); // Indicate removal is in progress
+        if (!window.confirm(`Remove ${memberName} from this team?`)) return;
+        setIsSaving(true);
         setNotification(null);
-
         try {
             await deleteTeamUser(teamUserId);
             await loadTeams();
             await refreshInsights();
             setNotification({ message: `${memberName} removed from team.`, type: "success" });
         } catch (err) {
-            console.error("Failed to remove member:", err);
-            setNotification({ message: `Failed to remove ${memberName}: ${err.message || 'An error occurred.'}`, type: "error" });
+            setNotification({ message: `Failed to remove ${memberName}.`, type: "error" });
         } finally {
             setIsSaving(false);
         }
@@ -369,10 +511,8 @@ const Teams = () => {
     const handleUpdateMember = async (event, member) => {
         event.preventDefault();
         if (!editingMemberId) return;
-
         setMemberSavingId(editingMemberId);
         setNotification(null);
-
         try {
             await updateTeamUser(editingMemberId, { role: editingMemberRole });
             await loadTeams();
@@ -381,44 +521,38 @@ const Teams = () => {
             setEditingMemberId(null);
             setEditingMemberRole("member");
         } catch (err) {
-            console.error("Failed to update member:", err);
-            setNotification({ message: `Failed to update member: ${err.message || 'An error occurred.'}`, type: "error" });
+            setNotification({ message: `Failed to update member.`, type: "error" });
         } finally {
             setMemberSavingId(null);
         }
     };
 
     const handleLeaveTeam = async () => {
-        if (!window.confirm('Are you sure you want to leave this team?')) return;
+        if (!window.confirm('Leave this team?')) return;
         setIsSaving(true);
         setNotification(null);
-
         try {
             await leaveTeam(selectedTeamId);
             await loadTeams();
             setNotification({ message: 'You have left the team.', type: 'success' });
         } catch (err) {
-            console.error('Failed to leave team:', err);
-            setNotification({ message: `Failed to leave team: ${err.message || 'An error occurred.'}`, type: 'error' });
+            setNotification({ message: `Failed to leave team.`, type: 'error' });
         } finally {
             setIsSaving(false);
             setSelectedTeamId(null);
         }
     };
 
+    // Skill handlers
     const handleToggleEndorsement = async ({ userSkillId, endorsed, endorsementId }) => {
-        if (!selectedTeamId) {
-            setNotification({ message: "Select a team to manage endorsements.", type: "info" });
-            return;
-        }
-
+        if (!selectedTeamId) return;
         try {
             if (endorsed && endorsementId) {
                 await revokeSkillEndorsement(endorsementId);
                 setNotification({ message: "Endorsement removed.", type: "success" });
             } else {
                 await endorseSkill({ user_skill_id: userSkillId, team_id: selectedTeamId });
-                setNotification({ message: "Skill endorsed successfully!", type: "success" });
+                setNotification({ message: "Skill endorsed!", type: "success" });
             }
             await refreshInsights();
         } catch (error) {
@@ -429,7 +563,7 @@ const Teams = () => {
     const handleAddSkill = async (payload) => {
         try {
             await createUserSkill(payload);
-            setNotification({ message: "Skill added to your profile.", type: "success" });
+            setNotification({ message: "Skill added.", type: "success" });
             await refreshInsights();
         } catch (error) {
             setNotification({ message: extractErrorMessage(error, "Unable to add skill."), type: "error" });
@@ -449,7 +583,7 @@ const Teams = () => {
     const handleDeleteSkill = async (skillId) => {
         try {
             await deleteUserSkill(skillId);
-            setNotification({ message: "Skill removed from your profile.", type: "success" });
+            setNotification({ message: "Skill removed.", type: "success" });
             await refreshInsights();
         } catch (error) {
             setNotification({ message: extractErrorMessage(error, "Unable to remove skill."), type: "error" });
@@ -457,27 +591,23 @@ const Teams = () => {
     };
 
     const handleCreateGoal = async (goal) => {
-        if (!selectedTeamId) {
-            setNotification({ message: "Select a team to add learning goals.", type: "info" });
-            return;
-        }
-
+        if (!selectedTeamId) return;
         try {
             await createLearningGoal({ ...goal, team_id: selectedTeamId });
             setNotification({ message: "Learning goal created.", type: "success" });
             await refreshInsights();
         } catch (error) {
-            setNotification({ message: extractErrorMessage(error, "Unable to create learning goal."), type: "error" });
+            setNotification({ message: extractErrorMessage(error, "Unable to create goal."), type: "error" });
         }
     };
 
     const handleDeleteGoal = async (goalId) => {
         try {
             await deleteLearningGoal(goalId);
-            setNotification({ message: "Learning goal removed.", type: "success" });
+            setNotification({ message: "Goal removed.", type: "success" });
             await refreshInsights();
         } catch (error) {
-            setNotification({ message: extractErrorMessage(error, "Unable to delete learning goal."), type: "error" });
+            setNotification({ message: extractErrorMessage(error, "Unable to delete goal."), type: "error" });
         }
     };
 
@@ -485,7 +615,6 @@ const Teams = () => {
         try {
             await createLearningCheckpoint({ learning_goal_id: goalId, ...checkpoint });
             await refreshInsights();
-            setNotification({ message: "Checkpoint added.", type: "success" });
         } catch (error) {
             setNotification({ message: extractErrorMessage(error, "Unable to add checkpoint."), type: "error" });
         }
@@ -500,55 +629,7 @@ const Teams = () => {
         }
     };
 
-    const renderSkillGapAnalysis = () => {
-        if (!teamInsights?.skill_gap || insightsTeamId !== selectedTeamId) {
-            return null;
-        }
-
-        const strengths = teamInsights.skill_gap.strengths || [];
-        const opportunities = teamInsights.skill_gap.opportunities || [];
-        const memberCount = Math.max(teamInsights.members?.length || 1, 1);
-
-        const renderList = (items, accentClass) => {
-            if (items.length === 0) {
-                return <p className="text-sm text-gray-500">Not enough data yet. Encourage teammates to log their skills.</p>;
-            }
-
-            return items.map((item) => {
-                const active = item.expert_count + item.advanced_count;
-                const width = Math.min(100, Math.round((active / memberCount) * 100));
-                return (
-                    <div key={item.name}>
-                        <div className="flex justify-between text-sm mb-1">
-                            <span>{item.name}</span>
-                            <span>{item.expert_count} expert{item.expert_count === 1 ? '' : 's'}</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div className={`${accentClass} h-2 rounded-full`} style={{ width: `${width}%` }} />
-                        </div>
-                    </div>
-                );
-            });
-        };
-
-        return (
-            <section id="skill-gap-analysis" className="bg-white rounded-xl shadow-md p-6 xl:col-span-2">
-                <h2 className="text-xl font-bold text-gray-800 mb-4">Skill Gap Analysis</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <h3 className="font-semibold text-gray-700 mb-3">Most Developed Skills</h3>
-                        <div className="space-y-3">{renderList(strengths, 'bg-green-500')}</div>
-                    </div>
-                    <div>
-                        <h3 className="font-semibold text-gray-700 mb-3">Skills Needing Development</h3>
-                        <div className="space-y-3">{renderList(opportunities, 'bg-amber-500')}</div>
-                    </div>
-                </div>
-            </section>
-        );
-    };
-
-    // Derived State for rendering
+    // Derived State
     const filteredTeams = teams.filter((t) =>
         `${t.name} ${t.users.map((u) => u.name).join(" ")}`
             .toLowerCase()
@@ -564,43 +645,19 @@ const Teams = () => {
 
     const aggregatedStats = useMemo(() => {
         const totalTeams = teams.length;
-        const stats = {
-            totalTeams,
-            totalMembers: 0,
-            avgMembers: 0,
-            uniqueRoles: 0,
-            uniqueSkills: 0,
-            topSkills: [],
-            busiestTeam: null,
-        };
+        const stats = { totalTeams, totalMembers: 0, avgMembers: 0, uniqueSkills: 0, topSkills: [] };
+        if (totalTeams === 0) return stats;
 
-        if (totalTeams === 0) {
-            return stats;
-        }
-
-        const roles = new Set();
         const skillSet = new Set();
         const skillFrequency = new Map();
-        let busiestTeam = null;
 
         teams.forEach((team) => {
             const members = team.users || [];
             stats.totalMembers += members.length;
-            if (!busiestTeam || members.length > (busiestTeam.users?.length || 0)) {
-                busiestTeam = team;
-            }
-
             members.forEach((member) => {
-                if (member.role) {
-                    roles.add(member.role);
-                }
-
                 const memberSkills = Array.isArray(member.skills) ? member.skills : [];
                 memberSkills.forEach((skill) => {
-                    const name =
-                        typeof skill === "string"
-                            ? skill
-                            : skill?.name || skill?.skill_name || skill?.title;
+                    const name = typeof skill === "string" ? skill : skill?.name || skill?.skill_name;
                     if (name) {
                         skillSet.add(name);
                         skillFrequency.set(name, (skillFrequency.get(name) || 0) + 1);
@@ -610,739 +667,501 @@ const Teams = () => {
         });
 
         stats.avgMembers = totalTeams ? Math.round((stats.totalMembers / totalTeams) * 10) / 10 : 0;
-        stats.uniqueRoles = roles.size;
         stats.uniqueSkills = skillSet.size;
         stats.topSkills = Array.from(skillFrequency.entries())
             .sort((a, b) => b[1] - a[1])
-            .slice(0, 3)
+            .slice(0, 5)
             .map(([name, count]) => ({ name, count }));
-        stats.busiestTeam = busiestTeam
-            ? { name: busiestTeam.name, count: busiestTeam.users?.length || 0 }
-            : null;
 
         return stats;
     }, [teams]);
 
-    const selectedTeamStats = useMemo(() => {
-        if (!selectedTeam) {
-            return null;
-        }
+    const renderSkillGapAnalysis = () => {
+        if (!teamInsights?.skill_gap || insightsTeamId !== selectedTeamId) return null;
 
-        const memberCount = selectedTeam.users?.length || 0;
-        const roles = new Set();
-        const skillSet = new Set();
-        const skillFrequency = new Map();
+        const strengths = teamInsights.skill_gap.strengths || [];
+        const opportunities = teamInsights.skill_gap.opportunities || [];
+        const memberCount = Math.max(teamInsights.members?.length || 1, 1);
 
-        selectedTeam.users?.forEach((member) => {
-            if (member.role) {
-                roles.add(member.role);
+        const renderList = (items, accentClass) => {
+            if (items.length === 0) {
+                return <p className="text-sm text-zinc-500">Not enough data yet.</p>;
             }
-
-            const memberSkills = Array.isArray(member.skills) ? member.skills : [];
-            memberSkills.forEach((skill) => {
-                const name =
-                    typeof skill === "string" ? skill : skill?.name || skill?.skill_name || skill?.title;
-                if (name) {
-                    skillSet.add(name);
-                    skillFrequency.set(name, (skillFrequency.get(name) || 0) + 1);
-                }
+            return items.map((item) => {
+                const active = item.expert_count + item.advanced_count;
+                const width = Math.min(100, Math.round((active / memberCount) * 100));
+                return (
+                    <div key={item.name} className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                            <span className="font-medium text-zinc-700 dark:text-zinc-300">{item.name}</span>
+                            <span className="text-zinc-500">{item.expert_count} expert{item.expert_count === 1 ? '' : 's'}</span>
+                        </div>
+                        <div className="w-full bg-zinc-100 dark:bg-zinc-700 rounded-full h-2">
+                            <div className={`${accentClass} h-2 rounded-full transition-all`} style={{ width: `${width}%` }} />
+                        </div>
+                    </div>
+                );
             });
-        });
-
-        if (Array.isArray(teamInsights?.skills)) {
-            teamInsights.skills.forEach((skill) => {
-                const name = skill?.name || skill?.skill_name || skill?.title;
-                if (name) {
-                    skillSet.add(name);
-                    const count = skill?.member_count || skill?.count || 1;
-                    skillFrequency.set(name, Math.max(skillFrequency.get(name) || 0, count));
-                }
-            });
-        }
-
-        const topSkills = Array.from(skillFrequency.entries())
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 3)
-            .map(([name, count]) => ({ name, count }));
-
-        const experts = Array.isArray(teamInsights?.team_experts)
-            ? teamInsights.team_experts.slice(0, 3)
-            : [];
-
-        const learningGoalsCount = Array.isArray(teamInsights?.learning_goals)
-            ? teamInsights.learning_goals.length
-            : Array.isArray(teamInsights?.current_user_learning_goals)
-                ? teamInsights.current_user_learning_goals.length
-                : 0;
-
-        return {
-            memberCount,
-            roleCount: roles.size,
-            uniqueSkills: skillSet.size,
-            topSkills,
-            experts,
-            learningGoalsCount,
         };
-    }, [selectedTeam, teamInsights]);
 
-    const scrollToSection = useCallback((sectionId) => {
-        if (!sectionId) return;
-        const element = document.getElementById(sectionId);
-        if (element) {
-            element.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-    }, []);
+        return (
+            <section id="skill-gap-analysis" className="bg-white dark:bg-zinc-800/50 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-700/50 p-6 xl:col-span-2">
+                <h2 className="text-lg font-semibold text-zinc-800 dark:text-white mb-4 flex items-center gap-2">
+                    <FiTrendingUp className="w-5 h-5 text-blue-500" />
+                    Skill Gap Analysis
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 className="font-medium text-zinc-600 dark:text-zinc-400 mb-3 text-sm uppercase tracking-wide">Strengths</h3>
+                        <div className="space-y-3">{renderList(strengths, 'bg-emerald-500')}</div>
+                    </div>
+                    <div>
+                        <h3 className="font-medium text-zinc-600 dark:text-zinc-400 mb-3 text-sm uppercase tracking-wide">Opportunities</h3>
+                        <div className="space-y-3">{renderList(opportunities, 'bg-amber-500')}</div>
+                    </div>
+                </div>
+            </section>
+        );
+    };
 
     const hasInsights = Boolean(teamInsights && insightsTeamId === selectedTeam?.id);
 
-    // Render UI
+    // Render
     return (
-        <div className="flex h-screen bg-gray-100 font-sans text-gray-800">
+        <div className="flex h-screen bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200">
             {/* Sidebar */}
-            <aside className="w-80 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col shadow-lg">
-                <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-theme text-white">
-                    <h2 className="text-xl font-bold">Teams</h2>
-                    {/* {canEdit && (
-                        <button
-                            onClick={handleNewClick}
-                            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-theme hover:brightness-110 transition-colors rounded-full shadow-md active:scale-95 transform"
-                            title="Create New Team"
-                        >
-                            <FiPlus className="w-4 h-4" /> New Team
-                        </button>
-                    )} */}
+            <aside className="w-80 flex-shrink-0 bg-white dark:bg-zinc-800 border-r border-zinc-100 dark:border-zinc-700 flex flex-col">
+                <div className="p-5 border-b border-zinc-100 dark:border-zinc-700 bg-gradient-to-r from-blue-600 to-indigo-600">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white/20 rounded-lg">
+                                <FiUsers className="w-5 h-5 text-white" />
+                            </div>
+                            <h2 className="text-lg font-bold text-white">Teams</h2>
+                        </div>
+                        <span className="text-sm text-white/70">{teams.length}</span>
+                    </div>
                 </div>
-                <div className="p-4 border-b border-gray-200">
+
+                <div className="p-4">
                     <div className="relative">
-                        <FiSearch className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400" />
+                        <FiSearch className="absolute top-1/2 left-3 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                         <input
                             type="text"
                             placeholder="Search teams..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none transition-all duration-200"
+                            className="w-full pl-10 pr-4 py-2.5 bg-zinc-50 dark:bg-zinc-700/50 border border-zinc-200 dark:border-zinc-600 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                         />
                     </div>
                 </div>
-                <nav className="flex-1 overflow-y-auto custom-scrollbar">
+
+                <nav className="flex-1 overflow-y-auto p-3 space-y-2">
                     {isLoading ? (
-                        <div className="p-6 flex flex-col items-center justify-center text-gray-500">
-                            <FiLoader className="animate-spin text-3xl mb-3 text-[var(--theme-color)]" />
-                            <p>Loading teams...</p>
+                        <div className="flex flex-col items-center justify-center py-12 text-zinc-500">
+                            <FiLoader className="w-8 h-8 animate-spin text-blue-500 mb-3" />
+                            <p className="text-sm">Loading teams...</p>
                         </div>
                     ) : filteredTeams.length > 0 ? (
-                        <ul>
-                            {filteredTeams.map((team) => (
-                                <li key={team.id}>
-                                    <button
-                                        onClick={() => handleSelectTeam(team.id)}
-                                        className={`w-full text-left flex items-center justify-between p-4 border-b border-gray-100 transition-colors duration-200 ${selectedTeamId === team.id ? 'bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)] border-l-4 border-[var(--theme-color)] font-semibold' : 'hover:bg-gray-50'}`}
-                                    >
-                                        <div>
-                                            <p className="text-base">{team.name}</p>
-                                            <p className="text-xs text-gray-500">{team.users.length} member(s)</p>
-                                        </div>
-                                        <FiChevronRight className={`text-gray-400 transition-transform duration-200 ${selectedTeamId === team.id ? 'translate-x-1 text-[var(--theme-color)]' : ''}`} />
-                                    </button>
-                                </li>
-                            ))}
-                        </ul>
+                        filteredTeams.map((team) => (
+                            <TeamCard
+                                key={team.id}
+                                team={team}
+                                isSelected={selectedTeamId === team.id}
+                                onClick={() => handleSelectTeam(team.id)}
+                            />
+                        ))
                     ) : (
-                        <div className="p-6 text-center text-gray-500">
-                            <FiUsers className="mx-auto text-5xl text-gray-300 mb-4" />
-                            <p className="font-semibold text-lg">No teams found</p>
-                            <p className="text-sm">Try adjusting your search or create a new team.</p>
+                        <div className="text-center py-12">
+                            <FiUsers className="w-12 h-12 text-zinc-300 dark:text-zinc-600 mx-auto mb-3" />
+                            <p className="font-medium text-zinc-600 dark:text-zinc-400">No teams found</p>
+                            <p className="text-sm text-zinc-500">Try a different search</p>
                         </div>
                     )}
                 </nav>
+
+                {canEdit && (
+                    <div className="p-4 border-t border-zinc-100 dark:border-zinc-700">
+                        <button
+                            onClick={handleNewClick}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg"
+                        >
+                            <FiPlus className="w-4 h-4" />
+                            New Team
+                        </button>
+                    </div>
+                )}
             </aside>
 
-            {/* Main Content Area */}
-            <main className="flex-1 p-8 overflow-y-auto custom-scrollbar bg-gradient-to-br from-gray-100 to-gray-200">
-                <div className="flex flex-col lg:flex-row gap-8">
-                    <section className="flex-1">
-                        <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
-                            {isFormVisible ? (
-                                // Create / Edit Team Form
-                                <div className="animate-fadeInUp">
-                                    <h1 className="text-3xl font-extrabold text-gray-900 mb-2">{editingId ? 'Edit Team Details' : 'Create a New Team'}</h1>
-                                    <p className="text-gray-600 mb-8">{editingId ? `Update information for ${teamForm.name}.` : 'Fill in the details to create a new team.'}</p>
-                                    <form onSubmit={handleTeamSubmit} className="space-y-6">
-                                        <div>
-                                            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1 required-label">Team Name</label>
-                                            <input
-                                                id="name"
-                                                name="name"
-                                                value={teamForm.name}
-                                                onChange={handleFormChange}
-                                                placeholder="e.g. Product Development"
-                                                required
-                                                className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none transition-all duration-200"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Description <span className="text-gray-400 text-xs">(Optional)</span></label>
-                                            <textarea
-                                                id="description"
-                                                name="description"
-                                                value={teamForm.description}
-                                                onChange={handleFormChange}
-                                                placeholder="A short description of the team's purpose and goals."
-                                                className="w-full border border-gray-300 rounded-lg p-3 h-32 resize-y text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none transition-all duration-200"
-                                            />
-                                        </div>
-                                        <div className="flex items-center gap-4 justify-end">
+            {/* Main Content */}
+            <main className="flex-1 overflow-y-auto">
+                <div className="p-8">
+                    {isFormVisible ? (
+                        // Create/Edit Form
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="max-w-2xl mx-auto"
+                        >
+                            <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-lg border border-zinc-100 dark:border-zinc-700 overflow-hidden">
+                                <div className="p-6 border-b border-zinc-100 dark:border-zinc-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
+                                    <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
+                                        {editingId ? 'Edit Team' : 'Create New Team'}
+                                    </h1>
+                                    <p className="text-zinc-600 dark:text-zinc-400 mt-1">
+                                        {editingId ? `Update details for ${teamForm.name}` : 'Set up a new team for your organization'}
+                                    </p>
+                                </div>
+
+                                <form onSubmit={handleTeamSubmit} className="p-6 space-y-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                            Team Name *
+                                        </label>
+                                        <input
+                                            name="name"
+                                            value={teamForm.name}
+                                            onChange={handleFormChange}
+                                            placeholder="e.g. Product Development"
+                                            required
+                                            className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-700/50 border border-zinc-200 dark:border-zinc-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                            Description <span className="text-zinc-400">(optional)</span>
+                                        </label>
+                                        <textarea
+                                            name="description"
+                                            value={teamForm.description}
+                                            onChange={handleFormChange}
+                                            placeholder="What does this team focus on?"
+                                            rows={4}
+                                            className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-700/50 border border-zinc-200 dark:border-zinc-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center justify-end gap-3 pt-4">
+                                        <button
+                                            type="button"
+                                            onClick={resetAndCloseForms}
+                                            disabled={isSaving}
+                                            className="px-5 py-2.5 text-zinc-600 dark:text-zinc-400 font-medium hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-xl transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={isSaving}
+                                            className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md flex items-center gap-2"
+                                        >
+                                            {isSaving ? (
+                                                <>
+                                                    <FiLoader className="w-4 h-4 animate-spin" />
+                                                    Saving...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <FiCheck className="w-4 h-4" />
+                                                    {editingId ? 'Save Changes' : 'Create Team'}
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </motion.div>
+                    ) : selectedTeam ? (
+                        // Team Details
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="space-y-8"
+                        >
+                            {/* Header */}
+                            <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-700 p-6">
+                                <div className="flex items-start justify-between">
+                                    <div>
+                                        <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">{selectedTeam.name}</h1>
+                                        <p className="text-zinc-600 dark:text-zinc-400 mt-2 max-w-2xl">
+                                            {selectedTeam.description || 'No description provided.'}
+                                        </p>
+                                    </div>
+                                    {canEdit && (
+                                        <div className="flex items-center gap-2">
                                             <button
-                                                type="button"
-                                                onClick={resetAndCloseForms}
-                                                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium active:scale-95 transform"
-                                                disabled={isSaving}
+                                                onClick={() => handleEditClick(selectedTeam)}
+                                                className="p-2.5 rounded-xl text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-blue-500 transition-all"
                                             >
-                                                Cancel
+                                                <FiEdit2 className="w-5 h-5" />
                                             </button>
                                             <button
+                                                onClick={() => confirmDeleteTeam(selectedTeam.id)}
+                                                className="p-2.5 rounded-xl text-zinc-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-all"
+                                            >
+                                                <FiTrash2 className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Quick Stats */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                                    <StatCard icon={FiUsers} label="Members" value={selectedTeam.users.length} accent />
+                                    <StatCard icon={FiTarget} label="Skills Tracked" value={teamInsights?.skills?.length || 0} />
+                                    <StatCard icon={FiAward} label="Experts" value={teamInsights?.team_experts?.length || 0} />
+                                    <StatCard icon={FiZap} label="Learning Goals" value={teamInsights?.current_user_learning_goals?.length || 0} />
+                                </div>
+                            </div>
+
+                            {/* Members Section */}
+                            <section id="team-members-section" className="bg-white dark:bg-zinc-800 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-700 p-6">
+                                <h2 className="text-lg font-semibold text-zinc-800 dark:text-white mb-4 flex items-center gap-2">
+                                    <FiUsers className="w-5 h-5 text-blue-500" />
+                                    Team Members
+                                </h2>
+
+                                <div className="space-y-3">
+                                    {selectedTeam.users.length > 0 ? (
+                                        selectedTeam.users.map((member) => (
+                                            <MemberRow
+                                                key={member.team_user_id}
+                                                member={member}
+                                                canManage={canManageSelectedTeamMembers}
+                                                isEditing={editingMemberId === member.team_user_id}
+                                                onEdit={() => handleEditMemberClick(member)}
+                                                onSave={(e) => handleUpdateMember(e, member)}
+                                                onCancel={handleCancelMemberEdit}
+                                                onRemove={() => handleRemoveMember(member.team_user_id, member.name)}
+                                                editRole={editingMemberRole}
+                                                setEditRole={setEditingMemberRole}
+                                                isSaving={memberSavingId === member.team_user_id}
+                                                isCurrentUser={member.id === user.id}
+                                            />
+                                        ))
+                                    ) : (
+                                        <p className="text-center text-zinc-500 py-8">No members yet.</p>
+                                    )}
+                                </div>
+
+                                {/* Add Member Form */}
+                                {canManageSelectedTeamMembers && (
+                                    <form
+                                        id="add-member-form"
+                                        onSubmit={handleAddMember}
+                                        className="mt-6 pt-6 border-t border-zinc-100 dark:border-zinc-700 grid grid-cols-1 md:grid-cols-4 gap-4"
+                                    >
+                                        <div className="md:col-span-2">
+                                            <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">
+                                                Add Members
+                                            </label>
+                                            <UserMultiSelect
+                                                selectedUsers={selectedUsersToAdd}
+                                                setSelectedUsers={setSelectedUsersToAdd}
+                                                excludedIds={selectedTeam.users.map((u) => u.id)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">
+                                                Role
+                                            </label>
+                                            <select
+                                                value={memberForm.role}
+                                                onChange={handleRoleChange}
+                                                className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-700/50 border border-zinc-200 dark:border-zinc-600 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                                            >
+                                                <option value="admin">Admin</option>
+                                                <option value="team_leader">Team Leader</option>
+                                                <option value="member">Member</option>
+                                                <option value="viewer">Viewer</option>
+                                            </select>
+                                        </div>
+                                        <div className="flex items-end">
+                                            <button
                                                 type="submit"
-                                                className="px-6 py-2 bg-theme text-white rounded-lg hover:brightness-110 transition-colors font-semibold shadow-md flex items-center gap-2 justify-center active:scale-95 transform"
-                                                disabled={isSaving}
+                                                disabled={isSaving || selectedUsersToAdd.length === 0}
+                                                className="w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
                                             >
                                                 {isSaving ? (
-                                                    <>
-                                                        <FiLoader className="animate-spin" /> Saving...
-                                                    </>
+                                                    <FiLoader className="w-4 h-4 animate-spin" />
                                                 ) : (
-                                                    editingId ? "Save Changes" : "Create Team"
+                                                    <FiUserPlus className="w-4 h-4" />
                                                 )}
+                                                Add
                                             </button>
                                         </div>
                                     </form>
+                                )}
+                            </section>
+
+                            {/* Insights */}
+                            {isInsightsLoading && !teamInsights ? (
+                                <div className="bg-white dark:bg-zinc-800 rounded-2xl p-8 flex items-center justify-center text-zinc-500">
+                                    <FiLoader className="w-6 h-6 animate-spin mr-3" />
+                                    Loading insights...
                                 </div>
-                            ) : selectedTeam ? (
-                                // Selected Team Details
-                                <div className="animate-fadeIn">
-                                    <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
-                                        <div className="flex justify-between items-start mb-8 pb-4 border-b border-gray-200">
-                                            <div>
-                                                <h1 className="text-4xl font-extrabold text-gray-900">{selectedTeam.name}</h1>
-                                                <p className="text-gray-600 mt-2 text-lg">{selectedTeam.description || 'No description provided for this team.'}</p>
-                                            </div>
-                                            {canEdit && (
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        onClick={() => handleEditClick(selectedTeam)}
-                                                        className="p-3 text-gray-500 hover:bg-gray-100 rounded-full transition-colors tooltip"
-                                                        data-tooltip="Edit Team"
-                                                    >
-                                                        <FiEdit className="w-5 h-5" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => confirmDeleteTeam(selectedTeam.id)}
-                                                        className="p-3 text-red-500 hover:bg-red-100 rounded-full transition-colors tooltip"
-                                                        data-tooltip="Delete Team"
-                                                    >
-                                                        <FiTrash2 className="w-5 h-5" />
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
+                            ) : hasInsights && (
+                                <>
+                                    <section id="team-skill-matrix">
+                                        <TeamSkillMatrix
+                                            members={teamInsights.members}
+                                            skills={teamInsights.skills}
+                                            roles={teamInsights.roles}
+                                        />
+                                    </section>
 
-                                        {/* Member List */}
-                                        <section id="team-members-section" className="bg-gray-50 p-6 rounded-xl shadow-inner border border-gray-100">
-                                            <h3 className="text-xl font-semibold text-gray-800 mb-5 flex items-center gap-2">
-                                                <FiUsers className="w-5 h-5 text-[var(--theme-color)]" /> Members ({selectedTeam.users.length})
-                                            </h3>
-                                            {selectedTeam.users.length > 0 ? (
-                                                <ul className="space-y-4">
-                                                    {selectedTeam.users.map((member) => (
-                                                        <li key={member.team_user_id} className="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-100 shadow-sm transition-all duration-200 hover:shadow-lg">
-                                                            <div className="flex items-center flex-grow">
-                                                                <Avatar name={member.name} src={member.profile_picture} size="lg" />
-                                                                <div>
-                                                                    <p className="font-medium text-lg text-gray-900">{member.name || "Invited User"}</p>
-                                                                    <p className="text-sm text-gray-500">{member.job_title || member.role}</p>
-                                                                    <p className="text-xs text-gray-400 capitalize">Team {member.role}</p>
-                                                                    {member.email && (
-                                                                        <p className="text-sm text-gray-500">{member.email}</p>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                            {canManageSelectedTeamMembers && (
-                                                                editingMemberId === member.team_user_id ? (
-                                                                    <form
-                                                                        onSubmit={(event) => handleUpdateMember(event, member)}
-                                                                        className="flex items-center gap-2"
-                                                                    >
-                                                                        <select
-                                                                            value={editingMemberRole}
-                                                                            onChange={(event) => setEditingMemberRole(event.target.value)}
-                                                                            className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)]"
-                                                                            disabled={memberSavingId === member.team_user_id}
-                                                                        >
-                                                                            <option value="admin">Admin</option>
-                                                                            <option value="team_leader">Team Leader</option>
-                                                                            <option value="member">Member</option>
-                                                                            <option value="viewer">Viewer</option>
-                                                                        </select>
-                                                                        <button
-                                                                            type="submit"
-                                                                            className="text-sm text-[var(--theme-color)] font-medium hover:underline disabled:opacity-60 flex items-center gap-1"
-                                                                            disabled={memberSavingId === member.team_user_id}
-                                                                        >
-                                                                            {memberSavingId === member.team_user_id ? (
-                                                                                <>
-                                                                                    <FiLoader className="animate-spin" />
-                                                                                    Saving
-                                                                                </>
-                                                                            ) : (
-                                                                                "Save"
-                                                                            )}
-                                                                        </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={handleCancelMemberEdit}
-                                                                            className="text-sm text-gray-500 hover:text-gray-700"
-                                                                            disabled={memberSavingId === member.team_user_id}
-                                                                        >
-                                                                            Cancel
-                                                                        </button>
-                                                                    </form>
-                                                                ) : (
-                                                                    <div className="flex items-center gap-2">
-                                                                        <button
-                                                                            onClick={() => handleEditMemberClick(member)}
-                                                                            className="text-sm text-[var(--theme-color)] font-medium hover:underline"
-                                                                        >
-                                                                            Edit
-                                                                        </button>
-                                                                        {user.id !== member.id && (
-                                                                            <button
-                                                                                onClick={() => handleRemoveMember(member.team_user_id, member.name || "this member")}
-                                                                                className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-colors font-medium"
-                                                                            >
-                                                                                Remove
-                                                                            </button>
-                                                                        )}
-                                                                    </div>
-                                                                )
-                                                            )}
-                                                            {member.id === user.id && user.roles?.some((r) => r.name === "team_leader") && (
-                                                                <button
-                                                                    onClick={handleLeaveTeam}
-                                                                    className="text-sm text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded-md transition-colors font-medium ml-2"
-                                                                >
-                                                                    Leave
-                                                                </button>
-                                                            )}
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            ) : (
-                                                <p className="text-center text-gray-500 py-6">This team currently has no members.</p>
-                                            )}
-
-                                            {/* Add Member Form */}
-                                            {canManageSelectedTeamMembers && (
-                                                <form
-                                                    id="add-member-form"
-                                                    onSubmit={handleAddMember}
-                                                    className="mt-8 pt-6 border-t border-gray-200 grid grid-cols-1 md:grid-cols-4 gap-4 items-end"
-                                                >
-                                                    <div className="md:col-span-2">
-                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Select Users to Add</label>
-                                                        <UserMultiSelect
-                                                            selectedUsers={selectedUsersToAdd}
-                                                            setSelectedUsers={setSelectedUsersToAdd}
-                                                            excludedIds={selectedTeam.users.map((u) => u.id)}
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                                                        <select
-                                                            name="role"
-                                                            id="role"
-                                                            value={memberForm.role}
-                                                            onChange={handleRoleChange}
-                                                            className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none appearance-none bg-white pr-8"
-                                                        >
-                                                            <option value="admin">Admin</option>
-                                                            <option value="team_leader">Team Leader</option>
-                                                            <option value="member">Member</option>
-                                                            <option value="viewer">Viewer</option>
-                                                        </select>
-                                                    </div>
-                                                    <button
-                                                        type="submit"
-                                                        className="md:col-span-1 px-5 py-2.5 bg-theme text-white rounded-lg hover:brightness-110 transition-colors font-semibold shadow-md flex items-center justify-center gap-2 whitespace-nowrap active:scale-95 transform mt-4 md:mt-0"
-                                                        disabled={isSaving || selectedUsersToAdd.length === 0}
-                                                    >
-                                                        {isSaving ? (
-                                                            <>
-                                                                <FiLoader className="animate-spin" /> Adding...
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <FiUserPlus className="w-5 h-5" /> Add Member(s)
-                                                            </>
-                                                        )}
-                                                    </button>
-                                                </form>
-                                            )}
+                                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                                        {renderSkillGapAnalysis()}
+                                        <section id="endorsements-panel">
+                                            <SkillEndorsementsPanel
+                                                skills={teamInsights.current_user_skills}
+                                                availableSkills={teamInsights.available_skills}
+                                                teamExperts={teamInsights.team_experts}
+                                                recentEndorsements={teamInsights.recent_endorsements}
+                                                onAddSkill={handleAddSkill}
+                                                onUpdateSkill={handleUpdateSkill}
+                                                onRemoveSkill={handleDeleteSkill}
+                                            />
+                                        </section>
+                                        <section id="learning-goals-panel">
+                                            <LearningGoalsPanel
+                                                goals={teamInsights.current_user_learning_goals}
+                                                onCreateGoal={handleCreateGoal}
+                                                onDeleteGoal={handleDeleteGoal}
+                                                onAddCheckpoint={handleAddCheckpoint}
+                                                onToggleCheckpoint={handleToggleCheckpoint}
+                                            />
+                                        </section>
+                                        <section id="skills-directory-panel" className="xl:col-span-2">
+                                            <SkillDirectory
+                                                members={teamInsights.members}
+                                                skills={teamInsights.skills}
+                                                roles={teamInsights.roles}
+                                                availabilityOptions={teamInsights.availability_options}
+                                                onToggleEndorse={handleToggleEndorsement}
+                                            />
                                         </section>
                                     </div>
+                                </>
+                            )}
+                        </motion.div>
+                    ) : isLoading ? (
+                        <div className="flex flex-col items-center justify-center h-full py-20">
+                            <FiLoader className="w-10 h-10 animate-spin text-blue-500 mb-4" />
+                            <p className="text-zinc-500">Loading teams...</p>
+                        </div>
+                    ) : (
+                        // Empty State / All Teams View
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                            {teams.length > 0 ? (
+                                <>
+                                    {/* Stats Overview */}
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                                        <StatCard icon={FiUsers} label="Total Teams" value={aggregatedStats.totalTeams} accent />
+                                        <StatCard icon={FiStar} label="Total Members" value={aggregatedStats.totalMembers} />
+                                        <StatCard icon={FiTarget} label="Avg Members/Team" value={aggregatedStats.avgMembers} />
+                                        <StatCard icon={FiZap} label="Skills Tracked" value={aggregatedStats.uniqueSkills} />
+                                    </div>
 
-                                    <div className="mt-8 space-y-10">
-                                        {isInsightsLoading && (teamInsights === null || insightsTeamId !== selectedTeam.id) ? (
-                                            <div className="bg-white rounded-xl shadow-md p-6 flex items-center justify-center text-gray-500">
-                                                <FiLoader className="animate-spin mr-3" />
-                                                <span>Loading team insights...</span>
-                                            </div>
-                                        ) : teamInsights && insightsTeamId === selectedTeam.id ? (
-                                            <>
-                                                <section id="team-skill-matrix">
-                                                    <TeamSkillMatrix
-                                                        members={teamInsights.members}
-                                                        skills={teamInsights.skills}
-                                                        roles={teamInsights.roles}
-                                                    />
-                                                </section>
-                                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
-                                                    {renderSkillGapAnalysis()}
-                                                    <section id="endorsements-panel">
-                                                        <SkillEndorsementsPanel
-                                                            skills={teamInsights.current_user_skills}
-                                                            availableSkills={teamInsights.available_skills}
-                                                            teamExperts={teamInsights.team_experts}
-                                                            recentEndorsements={teamInsights.recent_endorsements}
-                                                            onAddSkill={handleAddSkill}
-                                                            onUpdateSkill={handleUpdateSkill}
-                                                            onRemoveSkill={handleDeleteSkill}
-                                                        />
-                                                    </section>
-                                                    <section id="learning-goals-panel">
-                                                        <LearningGoalsPanel
-                                                            goals={teamInsights.current_user_learning_goals}
-                                                            onCreateGoal={handleCreateGoal}
-                                                            onDeleteGoal={handleDeleteGoal}
-                                                            onAddCheckpoint={handleAddCheckpoint}
-                                                            onToggleCheckpoint={handleToggleCheckpoint}
-                                                        />
-                                                    </section>
-                                                    <section id="skills-directory-panel" className="xl:col-span-2">
-                                                        <SkillDirectory
-                                                            members={teamInsights.members}
-                                                            skills={teamInsights.skills}
-                                                            roles={teamInsights.roles}
-                                                            availabilityOptions={teamInsights.availability_options}
-                                                            onToggleEndorse={handleToggleEndorsement}
-                                                        />
-                                                    </section>
-                                                </div>
-                                            </>
-                                        ) : isInsightsLoading ? (
-                                            <div className="bg-white rounded-xl shadow-md p-6 flex items-center justify-center text-gray-500">
-                                                <FiLoader className="animate-spin mr-3" />
-                                                <span>Loading team insights...</span>
-                                            </div>
-                                        ) : (
-                                            <div className="bg-white rounded-xl shadow-md p-6 text-gray-500 text-sm">
-                                                Insights will appear here once team members start tracking their skills.
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            ) : isLoading ? (
-                                // This case is handled by the initial isLoading check in the sidebar,
-                                // but keeping a fallback here for clarity.
-                                <div className="text-center h-full flex flex-col items-center justify-center min-h-[50vh]">
-                                    <FiLoader className="animate-spin text-5xl mb-4 text-[var(--theme-color)]" />
-                                    <p className="text-gray-600 text-lg">Loading team data...</p>
-                                </div>
-                            ) : (
-                                // Show introductory message or all team cards
-                                <div>
-                                    {teams.length > 0 ? (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
-                                            <div className="md:col-span-full bg-[rgb(var(--theme-color-rgb)/0.1)] border border-[var(--theme-color)] rounded-xl p-6 mb-4 flex items-center gap-4 shadow-sm">
-                                                <FiInfo className="text-[var(--theme-color)] text-3xl"/>
-                                                <div>
-                                                    <h2 className="text-xl font-semibold text-[var(--theme-color)]">Select a Team to View Details</h2>
-                                                    <p className="text-[var(--theme-color)] text-sm">Click on any team in the sidebar to manage its members and edit its information.</p>
-                                                </div>
-                                            </div>
-                                            {teams.map((team) => (
-                                                <div key={team.id} className="border border-gray-200 rounded-xl shadow-md p-6 bg-white flex flex-col justify-between transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg cursor-pointer"
-                                                    onClick={() => handleSelectTeam(team.id)}
-                                                >
-                                                    <div className="mb-4">
-                                                        <h3 className="text-xl font-bold text-gray-900 mb-1">{team.name}</h3>
-                                                        {team.description && (
-                                                            <p className="text-sm text-gray-600 line-clamp-3">{team.description}</p>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex items-center -space-x-2 mb-4">
-                                                        {team.users.slice(0, 4).map((member) => (
-                                                            <Avatar key={member.id} name={member.name} src={member.profile_picture} size="md" />
-                                                        ))}
-                                                        {team.users.length > 4 && (
-                                                            <span className="text-sm text-gray-500 ml-4 font-medium">+{team.users.length - 4} more</span>
-                                                        )}
-                                                        {team.users.length === 0 && (
-                                                            <span className="text-sm text-gray-500 italic">No members yet</span>
-                                                        )}
-                                                    </div>
-                                                    <button className="self-start text-base text-[var(--theme-color)] hover:underline flex items-center gap-1">
-                                                        View Details <FiChevronRight className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            ))}
+                                    {/* Info Banner */}
+                                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-100 dark:border-blue-800/50 rounded-2xl p-5 mb-8 flex items-center gap-4">
+                                        <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
+                                            <FiInfo className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                                         </div>
-                                    ) : (
-                                        <div className="text-center h-full flex flex-col items-center justify-center min-h-[70vh]">
-                                            <FiUsers className="text-8xl text-gray-300 mb-6" />
-                                            <h2 className="text-3xl font-extrabold text-gray-800">No Teams Created Yet</h2>
-                                            <p className="text-gray-600 mt-2 text-lg max-w-md">
-                                                It looks like there are no teams in your organization. Get started by creating your first team!
-                                            </p>
-                                            {canEdit && (
-                                                <button
-                                                    onClick={handleNewClick}
-                                                    className="mt-8 px-8 py-3 bg-theme text-white rounded-lg hover:brightness-110 transition-colors font-semibold shadow-lg flex items-center gap-2 active:scale-95 transform"
-                                                >
-                                                    <FiPlus /> Create First Team
-                                                </button>
-                                            )}
+                                        <div>
+                                            <h3 className="font-semibold text-blue-700 dark:text-blue-300">Select a Team</h3>
+                                            <p className="text-sm text-blue-600/80 dark:text-blue-400/80">Click on any team in the sidebar to view details and manage members.</p>
                                         </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </section>
-                    <aside className="lg:w-80 xl:w-96 flex-shrink-0 mt-8 lg:mt-0">
-                        <div className="sticky top-8 space-y-6">
-                            {isLoading ? (
-                                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 text-center text-gray-500">
-                                    <FiLoader className="mx-auto mb-3 text-3xl animate-spin text-[var(--theme-color)]" />
-                                    <p>Crunching team metrics...</p>
-                                </div>
-                            ) : selectedTeam && selectedTeamStats ? (
-                                <>
-                                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
-                                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Team Snapshot</h3>
-                                        <dl className="space-y-3 text-sm text-gray-600">
-                                            <div className="flex justify-between">
-                                                <dt className="font-medium text-gray-700">Members</dt>
-                                                <dd>{selectedTeamStats.memberCount}</dd>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <dt className="font-medium text-gray-700">Unique Roles</dt>
-                                                <dd>{selectedTeamStats.roleCount}</dd>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <dt className="font-medium text-gray-700">Skills Tracked</dt>
-                                                <dd>{selectedTeamStats.uniqueSkills}</dd>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <dt className="font-medium text-gray-700">Learning Goals</dt>
-                                                <dd>{selectedTeamStats.learningGoalsCount}</dd>
-                                            </div>
-                                        </dl>
-                                        {selectedTeamStats.topSkills.length > 0 && (
-                                            <div className="mt-5">
-                                                <h4 className="text-sm font-semibold text-gray-700 mb-2">Top Skills</h4>
-                                                <ul className="flex flex-wrap gap-2">
-                                                    {selectedTeamStats.topSkills.map((skill) => (
-                                                        <li
-                                                            key={skill.name}
-                                                            className="px-2.5 py-1 rounded-full bg-[rgb(var(--theme-color-rgb)/0.08)] text-[var(--theme-color)] text-xs font-medium"
-                                                        >
-                                                            {skill.name}
-                                                            {skill.count ? ` · ${skill.count}` : ""}
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        )}
-                                        {selectedTeamStats.experts.length > 0 && (
-                                            <div className="mt-5">
-                                                <h4 className="text-sm font-semibold text-gray-700 mb-2">Go-to Experts</h4>
-                                                <ul className="space-y-2">
-                                                    {selectedTeamStats.experts.map((expert, index) => (
-                                                        <li
-                                                            key={expert.id || `${expert.name || expert.full_name || 'expert'}-${index}`}
-                                                            className="text-sm text-gray-600 flex items-center gap-2"
-                                                        >
-                                                            <span className="w-2 h-2 rounded-full bg-[var(--theme-color)]" />
-                                                            <span className="font-medium text-gray-800">{expert.name || expert.full_name || "Unknown"}</span>
-                                                            {(expert.skill || expert.primary_skill || expert.skill_name || expert.expertise) && (
-                                                                <span className="text-xs text-gray-500">({expert.skill || expert.primary_skill || expert.skill_name || expert.expertise})</span>
-                                                            )}
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        )}
                                     </div>
-                                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
-                                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
-                                        <ul className="space-y-3 text-sm">
-                                            <li>
-                                                <button
-                                                    onClick={() => scrollToSection('team-members-section')}
-                                                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200 hover:border-[var(--theme-color)] hover:text-[var(--theme-color)] transition-colors"
-                                                >
-                                                    Review Members
-                                                    <FiChevronRight className="w-4 h-4" />
-                                                </button>
-                                            </li>
-                                            {canManageSelectedTeamMembers && (
-                                                <li>
-                                                    <button
-                                                        onClick={() => scrollToSection('add-member-form')}
-                                                        className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200 hover:border-[var(--theme-color)] hover:text-[var(--theme-color)] transition-colors"
-                                                    >
-                                                        Invite Teammates
-                                                        <FiChevronRight className="w-4 h-4" />
-                                                    </button>
-                                                </li>
-                                            )}
-                                            {hasInsights && (
-                                                <>
-                                                    <li>
-                                                        <button
-                                                            onClick={() => scrollToSection('team-skill-matrix')}
-                                                            className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200 hover:border-[var(--theme-color)] hover:text-[var(--theme-color)] transition-colors"
-                                                        >
-                                                            View Skill Matrix
-                                                            <FiChevronRight className="w-4 h-4" />
-                                                        </button>
-                                                    </li>
-                                                    <li>
-                                                        <button
-                                                            onClick={() => scrollToSection('learning-goals-panel')}
-                                                            className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200 hover:border-[var(--theme-color)] hover:text-[var(--theme-color)] transition-colors"
-                                                        >
-                                                            Track Learning Goals
-                                                            <FiChevronRight className="w-4 h-4" />
-                                                        </button>
-                                                    </li>
-                                                </>
-                                            )}
-                                        </ul>
-                                    </div>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
-                                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Organization Snapshot</h3>
-                                        {aggregatedStats.totalTeams > 0 ? (
-                                            <>
-                                                <dl className="space-y-3 text-sm text-gray-600">
-                                                    <div className="flex justify-between">
-                                                        <dt className="font-medium text-gray-700">Teams</dt>
-                                                        <dd>{aggregatedStats.totalTeams}</dd>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <dt className="font-medium text-gray-700">People on Teams</dt>
-                                                        <dd>{aggregatedStats.totalMembers}</dd>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <dt className="font-medium text-gray-700">Avg. Members / Team</dt>
-                                                        <dd>{aggregatedStats.avgMembers}</dd>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <dt className="font-medium text-gray-700">Unique Roles</dt>
-                                                        <dd>{aggregatedStats.uniqueRoles}</dd>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <dt className="font-medium text-gray-700">Skills Tracked</dt>
-                                                        <dd>{aggregatedStats.uniqueSkills}</dd>
-                                                    </div>
-                                                </dl>
-                                                {aggregatedStats.topSkills.length > 0 && (
-                                                    <div className="mt-5">
-                                                        <h4 className="text-sm font-semibold text-gray-700 mb-2">Popular Skills</h4>
-                                                        <ul className="flex flex-wrap gap-2">
-                                                            {aggregatedStats.topSkills.map((skill) => (
-                                                                <li key={skill.name} className="px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-medium">
-                                                                    {skill.name}
-                                                                    {skill.count ? ` · ${skill.count}` : ""}
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <p className="text-sm text-gray-600">Create your first team to start tracking collaboration and skill coverage.</p>
-                                        )}
-                                    </div>
-                                    {aggregatedStats.busiestTeam && (
-                                        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
-                                            <h3 className="text-lg font-semibold text-gray-800 mb-2">Most Active Team</h3>
-                                            <p className="text-sm text-gray-600">
-                                                <span className="font-semibold text-gray-900">{aggregatedStats.busiestTeam.name}</span> currently has {aggregatedStats.busiestTeam.count} member{aggregatedStats.busiestTeam.count === 1 ? '' : 's'}.
-                                            </p>
-                                        </div>
-                                    )}
-                                    {canEdit && (
-                                        <div className="bg-white rounded-xl shadow-lg p-6 border border-dashed border-[var(--theme-color)] text-center">
-                                            <h3 className="text-lg font-semibold text-gray-800 mb-2">Build Your Next Team</h3>
-                                            <p className="text-sm text-gray-600 mb-4">Use teams to coordinate skills, plan learning goals and assign owners.</p>
-                                            <button
-                                                onClick={handleNewClick}
-                                                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-theme text-white font-semibold shadow hover:brightness-110 transition-colors active:scale-95 transform"
+
+                                    {/* Team Grid */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {teams.map((team) => (
+                                            <motion.div
+                                                key={team.id}
+                                                whileHover={{ y: -4 }}
+                                                onClick={() => handleSelectTeam(team.id)}
+                                                className="bg-white dark:bg-zinc-800 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-700 p-6 cursor-pointer hover:shadow-lg transition-all"
                                             >
-                                                <FiPlus className="w-4 h-4" /> Create Team
-                                            </button>
-                                        </div>
-                                    )}
+                                                <h3 className="text-lg font-semibold text-zinc-800 dark:text-white mb-2">{team.name}</h3>
+                                                {team.description && (
+                                                    <p className="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2 mb-4">{team.description}</p>
+                                                )}
+                                                <div className="flex items-center justify-between">
+                                                    <AvatarStack members={team.users} max={4} />
+                                                    <button className="text-sm text-blue-600 dark:text-blue-400 font-medium flex items-center gap-1 hover:gap-2 transition-all">
+                                                        View <FiChevronRight className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </div>
                                 </>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-full py-20 text-center">
+                                    <div className="w-20 h-20 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-6">
+                                        <FiUsers className="w-10 h-10 text-zinc-400" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold text-zinc-800 dark:text-white mb-2">No Teams Yet</h2>
+                                    <p className="text-zinc-500 max-w-md mb-8">
+                                        Create your first team to start collaborating and tracking skills across your organization.
+                                    </p>
+                                    {canEdit && (
+                                        <button
+                                            onClick={handleNewClick}
+                                            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg flex items-center gap-2"
+                                        >
+                                            <FiPlus className="w-5 h-5" />
+                                            Create First Team
+                                        </button>
+                                    )}
+                                </div>
                             )}
-                        </div>
-                    </aside>
+                        </motion.div>
+                    )}
                 </div>
             </main>
-            {/* Delete Confirmation Modal */}
+
+            {/* Delete Modal */}
             <Modal
                 isOpen={showDeleteConfirm}
                 onClose={() => setShowDeleteConfirm(false)}
-                title="Confirm Delete"
+                title="Delete Team"
                 footer={
                     <>
                         <button
                             onClick={() => setShowDeleteConfirm(false)}
-                            className="px-5 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+                            className="px-4 py-2 text-zinc-600 dark:text-zinc-400 font-medium hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleDeleteTeam}
-                            className="px-5 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center gap-2"
                             disabled={isSaving}
+                            className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
                         >
-                            {isSaving ? (
-                                <>
-                                    <FiLoader className="animate-spin" /> Deleting...
-                                </>
-                            ) : (
-                                <>
-                                    <FiTrash2 /> Delete
-                                </>
-                            )}
+                            {isSaving ? <FiLoader className="w-4 h-4 animate-spin" /> : <FiTrash2 className="w-4 h-4" />}
+                            Delete
                         </button>
                     </>
                 }
             >
-                <p className="text-gray-700">Are you sure you want to delete the team "<span className="font-semibold">{teams.find(t => t.id === teamToDeleteId)?.name}</span>"? This action cannot be undone.</p>
+                <p className="text-zinc-600 dark:text-zinc-400">
+                    Are you sure you want to delete <span className="font-semibold text-zinc-800 dark:text-white">{teams.find(t => t.id === teamToDeleteId)?.name}</span>? This action cannot be undone.
+                </p>
             </Modal>
 
-            {/* Notification Toast */}
-            {notification && (
-                <Notification
-                    message={notification.message}
-                    type={notification.type}
-                    onClose={() => setNotification(null)}
-                />
-            )}
+            {/* Notification */}
+            <AnimatePresence>
+                {notification && (
+                    <Notification
+                        message={notification.message}
+                        type={notification.type}
+                        onClose={() => setNotification(null)}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 };

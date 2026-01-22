@@ -6,7 +6,9 @@ class Api::IssuesController < Api::BaseController
   def index
     return render json: { error: "project_id required" }, status: :unprocessable_entity unless params[:project_id].present?
 
-    issues = Issue.where(project_id: params[:project_id]).order(created_at: :desc)
+    issues = Issue.includes(:reporter, :assignee_user)
+                  .where(project_id: params[:project_id])
+                  .order(created_at: :desc)
     render json: issues.map { |i| serialize_issue(i) }
   end
 
@@ -46,6 +48,9 @@ class Api::IssuesController < Api::BaseController
       :sub_module, :sprint_name, :task_id, :found_by, :found_on, :issue_description,
       :pre_conditions, :repro_steps, :actual_result, :expected_result, :attachment, :comment,
       :owner, :owner_email, :assignee, :assignee_email, :assignee_slack, :due_date,
+      :section_detail, :mf6_app, :local_qa, :team_test, :comment_qa,
+      :dev_comments_dated, :developer_comment, :issue_present_in_rails4,
+      :reporter_id, :assignee_user_id,
       media_urls: [], attachment_urls: []
     )
   end
@@ -70,7 +75,10 @@ class Api::IssuesController < Api::BaseController
     issue.as_json.merge(
       media_files: media_urls,
       media_urls: issue.media_urls || [],
-      attachment_urls: issue.attachment_urls || []
+      attachment_urls: issue.attachment_urls || [],
+      reporter_name: issue.reporter&.full_name,
+      assignee_user_name: issue.assignee_user&.full_name
     )
   end
 end
+

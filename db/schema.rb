@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2027_01_05_000001) do
+ActiveRecord::Schema[7.1].define(version: 2027_01_06_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -115,10 +115,25 @@ ActiveRecord::Schema[7.1].define(version: 2027_01_05_000001) do
     t.string "assignee_email"
     t.string "assignee_slack"
     t.date "due_date"
+    t.string "section_detail"
+    t.string "mf6_app"
+    t.string "local_qa"
+    t.string "team_test"
+    t.text "comment_qa"
+    t.text "dev_comments_dated"
+    t.text "developer_comment"
+    t.string "issue_present_in_rails4"
+    t.bigint "reporter_id"
+    t.bigint "assignee_user_id"
     t.index ["assignee"], name: "index_issues_on_assignee"
+    t.index ["assignee_user_id"], name: "index_issues_on_assignee_user_id"
     t.index ["due_date"], name: "index_issues_on_due_date"
     t.index ["issue_key"], name: "index_issues_on_issue_key", unique: true
+    t.index ["local_qa"], name: "index_issues_on_local_qa"
+    t.index ["mf6_app"], name: "index_issues_on_mf6_app"
     t.index ["project_id"], name: "index_issues_on_project_id"
+    t.index ["reporter_id"], name: "index_issues_on_reporter_id"
+    t.index ["team_test"], name: "index_issues_on_team_test"
   end
 
   create_table "items", force: :cascade do |t|
@@ -505,6 +520,8 @@ ActiveRecord::Schema[7.1].define(version: 2027_01_05_000001) do
   add_foreign_key "friendships", "users", column: "followed_id"
   add_foreign_key "friendships", "users", column: "follower_id"
   add_foreign_key "issues", "projects"
+  add_foreign_key "issues", "users", column: "assignee_user_id"
+  add_foreign_key "issues", "users", column: "reporter_id"
   add_foreign_key "items", "users"
   add_foreign_key "knowledge_bookmarks", "users"
   add_foreign_key "learning_checkpoints", "learning_goals"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { 
+import {
   format, startOfDay, endOfDay, addDays, isSameDay, getDay, startOfWeek, endOfWeek, parse,
   differenceInMinutes, addMinutes, isBefore, isAfter, eachDayOfInterval, startOfMonth,
   endOfMonth, eachWeekOfInterval, isSameMonth, isSameWeek
@@ -11,7 +11,7 @@ import {
   ClockIcon,
   CalendarIcon,
   PlusIcon,
-  PencilIcon, 
+  PencilIcon,
   TrashIcon,
   ChartPieIcon,
   ChevronLeftIcon,
@@ -128,7 +128,7 @@ const WorkLog = () => {
     tags: []
   });
   const [goalMinutes, setGoalMinutes] = useState({});
-  
+
   const timerRef = useRef(null);
   const pomodoroRef = useRef(null);
 
@@ -153,17 +153,17 @@ const WorkLog = () => {
       try {
         const { data: priorityData } = await fetchWorkPriorities();
         setPriorities(priorityData.sort((a, b) => a.id - b.id));
-      } catch {}
+      } catch { }
 
       try {
         const { data: categoryData } = await fetchWorkCategories();
         setCategories(categoryData.sort((a, b) => a.id - b.id));
-      } catch {}
+      } catch { }
 
       try {
         const { data: tagData } = await fetchWorkTags();
         setTags(tagData.map(t => t.name));
-      } catch {}
+      } catch { }
     };
     loadInitialData();
   }, []);
@@ -173,13 +173,13 @@ const WorkLog = () => {
       try {
         const params = viewMode === 'weekly'
           ? {
-              from: format(startOfWeek(selectedDate), 'yyyy-MM-dd'),
-              to: format(endOfWeek(selectedDate), 'yyyy-MM-dd')
-            }
+            from: format(startOfWeek(selectedDate), 'yyyy-MM-dd'),
+            to: format(endOfWeek(selectedDate), 'yyyy-MM-dd')
+          }
           : { date: format(selectedDate, 'yyyy-MM-dd') };
         const { data } = await getWorkLogs(params);
         setTasks(data.map(formatLog));
-      } catch {}
+      } catch { }
 
       try {
         const { data: noteData } = await getWorkNote(format(selectedDate, 'yyyy-MM-dd'));
@@ -199,12 +199,12 @@ const WorkLog = () => {
       if (noteId) {
         try {
           await updateWorkNote(noteId, payload);
-        } catch {}
+        } catch { }
       } else if (dailyNote.trim() !== '') {
         try {
           const { data } = await createWorkNote(payload);
           setNoteId(data.id);
-        } catch {}
+        } catch { }
       }
     }, 500);
     return () => clearTimeout(timer);
@@ -271,7 +271,7 @@ const WorkLog = () => {
         }));
       }, 60000); // Update every minute
     }
-    
+
     return () => clearInterval(timerRef.current);
   }, [activeTimer]);
 
@@ -288,7 +288,7 @@ const WorkLog = () => {
         });
       }, 1000);
     }
-    
+
     return () => clearInterval(pomodoroRef.current);
   }, [pomodoroState.isActive]);
 
@@ -335,14 +335,14 @@ const WorkLog = () => {
 
     categories.forEach(cat => summary.byCategory[cat.id] = 0);
     priorities.forEach(pri => summary.byPriority[pri.id] = 0);
-    
+
     currentTasks.forEach(task => {
       const start = parse(task.startTime, 'HH:mm', new Date());
       const end = parse(task.endTime, 'HH:mm', new Date());
       let duration = differenceInMinutes(end, start);
-      
+
       if (duration < 0) duration += 24 * 60; // Handle overnight tasks
-      
+
       if (duration > 0) {
         summary.totalMinutes += duration;
         summary.byCategory[task.category] = (summary.byCategory[task.category] || 0) + duration;
@@ -354,12 +354,12 @@ const WorkLog = () => {
         }
       }
     });
-    
+
     // Calculate productivity score (0-100)
     const maxPossible = 8 * 60; // 8 hours
     const score = Math.min(100, Math.round((summary.productiveMinutes / maxPossible) * 100));
     setProductivityScore(score);
-    
+
     return summary;
   }, [currentTasks, categories, priorities]);
 
@@ -537,7 +537,7 @@ const WorkLog = () => {
     setEditingTask(task);
     setShowForm(true);
   }, []);
-  
+
   const closeForm = () => {
     setShowForm(false);
     setEditingTask(null);
@@ -559,12 +559,12 @@ const WorkLog = () => {
       try {
         const { data } = await updateWorkLog(editingTask.id, payload);
         setTasks(tasks.map(t => t.id === data.id ? formatLog(data) : t));
-      } catch {}
+      } catch { }
     } else {
       try {
         const { data } = await createWorkLog(payload);
         setTasks([...tasks, formatLog(data)]);
-      } catch {}
+      } catch { }
     }
     closeForm();
   };
@@ -576,12 +576,12 @@ const WorkLog = () => {
       stopTimer();
     }
   };
-  
+
   const startTimer = (taskId) => {
     setActiveTimer({ taskId, startTime: new Date() });
     setActiveTaskId(taskId);
   };
-  
+
   const stopTimer = () => {
     if (activeTimer) {
       const task = tasks.find(t => t.id === activeTimer.taskId);
@@ -592,23 +592,23 @@ const WorkLog = () => {
     setActiveTimer(null);
     setActiveTaskId(null);
   };
-  
+
   const startPomodoro = () => {
     setPomodoroState(prev => ({
       ...prev,
       isActive: true,
-      timeLeft: prev.mode === 'work' 
+      timeLeft: prev.mode === 'work'
         ? POMODORO_DURATION * 60
-        : prev.mode === 'shortBreak' 
+        : prev.mode === 'shortBreak'
           ? SHORT_BREAK_DURATION * 60
           : LONG_BREAK_DURATION * 60
     }));
   };
-  
+
   const pausePomodoro = () => {
     setPomodoroState(prev => ({ ...prev, isActive: false }));
   };
-  
+
   const resetPomodoro = () => {
     setPomodoroState({
       mode: 'work',
@@ -617,32 +617,32 @@ const WorkLog = () => {
       isActive: false
     });
   };
-  
+
   const handlePomodoroComplete = () => {
     if (pomodoroState.mode === 'work') {
       const newCount = pomodoroState.count + 1;
-      const nextMode = newCount % POMODOROS_FOR_LONG_BREAK === 0 
-        ? 'longBreak' 
+      const nextMode = newCount % POMODOROS_FOR_LONG_BREAK === 0
+        ? 'longBreak'
         : 'shortBreak';
-      
+
       setPomodoroState({
         mode: nextMode,
         count: newCount,
-        timeLeft: nextMode === 'shortBreak' 
-          ? SHORT_BREAK_DURATION * 60 
+        timeLeft: nextMode === 'shortBreak'
+          ? SHORT_BREAK_DURATION * 60
           : LONG_BREAK_DURATION * 60,
         isActive: false
       });
-      
+
       // Add a break task automatically
-      const breakDuration = nextMode === 'shortBreak' 
-        ? SHORT_BREAK_DURATION 
+      const breakDuration = nextMode === 'shortBreak'
+        ? SHORT_BREAK_DURATION
         : LONG_BREAK_DURATION;
-      
+
       const now = new Date();
       const startTime = format(now, 'HH:mm');
       const endTime = format(addMinutes(now, breakDuration), 'HH:mm');
-      
+
       const breakCat = categories.find(c => c.name === 'Break');
       const lowPriority = priorities.find(p => p.name === 'Low');
       handleSaveTask({
@@ -662,20 +662,20 @@ const WorkLog = () => {
       });
     }
   };
-  
+
   const getTasksForDate = (date) => filteredTasks.filter(task => isSameDay(task.date, date));
-  
+
   const toggleFilter = (type, value) => {
     setFilter(prev => {
       const currentValues = prev[type] || [];
       const newValues = currentValues.includes(value)
         ? currentValues.filter(v => v !== value)
         : [...currentValues, value];
-      
+
       return { ...prev, [type]: newValues };
     });
   };
-  
+
   const clearFilters = () => {
     setFilter({ categories: [], priorities: [], tags: [] });
   };
@@ -693,20 +693,22 @@ const WorkLog = () => {
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-gray-50 to-[rgb(var(--theme-color-rgb)/0.1)] font-sans text-gray-800 p-4 sm:p-6 lg:p-8 ${isExpandedView ? 'fixed inset-0 z-50 bg-white overflow-y-auto' : ''}`}>
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[98%] mx-auto">
+
         {/* Header */}
-        <header className="mb-8">
+        <header className="mb-4">
+
           <div className="flex flex-wrap justify-between items-start gap-4">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3">
-                <SparklesIcon className="h-8 w-8 text-[var(--theme-color)]"/>
+                <SparklesIcon className="h-8 w-8 text-[var(--theme-color)]" />
                 Work Log
               </h1>
               <p className="text-gray-500 mt-1">Your personal dashboard for productivity and time management.</p>
             </div>
-            
+
             <div className="flex items-center gap-3">
-              <button 
+              <button
                 onClick={() => setIsExpandedView(!isExpandedView)}
                 className="p-2 rounded-full bg-gray-100 hover:bg-gray-200"
                 title={isExpandedView ? "Exit fullscreen" : "Enter fullscreen"}
@@ -717,7 +719,7 @@ const WorkLog = () => {
                   <ArrowsPointingOutIcon className="h-5 w-5" />
                 )}
               </button>
-              
+
               <div className="flex gap-2">
                 <button
                   onClick={() => setViewMode('daily')}
@@ -734,9 +736,10 @@ const WorkLog = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Productivity Score */}
-          <div className="mt-6 bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color-light)] rounded-xl p-4 text-white">
+          <div className="mt-4 bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color-light)] rounded-xl p-4 text-white">
+
             <div className="flex justify-between items-center">
               <div>
                 <h2 className="text-lg font-semibold">Today's Productivity</h2>
@@ -746,7 +749,7 @@ const WorkLog = () => {
                     : "Start tracking your work to see insights"}
                 </p>
               </div>
-              
+
               <div className="relative w-20 h-20">
                 <svg viewBox="0 0 36 36" className="w-full h-full">
                   <path
@@ -779,21 +782,21 @@ const WorkLog = () => {
         <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Calendar & Summary */}
           <aside className="lg:col-span-1 space-y-8">
-            <CalendarWidget 
-              selectedDate={selectedDate} 
+            <CalendarWidget
+              selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
               handleDateChange={handleDateChange}
               getTasksForDate={getTasksForDate}
               viewMode={viewMode}
             />
-            
-            <PomodoroWidget 
+
+            <PomodoroWidget
               pomodoroState={pomodoroState}
               onStart={startPomodoro}
               onPause={pausePomodoro}
               onReset={resetPomodoro}
             />
-            
+
             <TimeSummaryWidget
               timeSummary={timeSummary}
               categories={categories}
@@ -801,7 +804,7 @@ const WorkLog = () => {
               weeklySummary={weeklySummary}
               viewMode={viewMode}
             />
-            
+
             {viewMode === 'daily' && (
               <DailyNotes
                 note={dailyNote}
@@ -814,7 +817,7 @@ const WorkLog = () => {
               onGoalChange={handleGoalChange}
             />
           </aside>
-          
+
           {/* Right Column - Timeline */}
           <section className="lg:col-span-2">
             <FilterWidget
@@ -825,7 +828,7 @@ const WorkLog = () => {
               onToggleFilter={toggleFilter}
               onClearFilters={clearFilters}
             />
-            
+
             <TimelineView
               tasks={currentTasks}
               selectedDate={selectedDate}
@@ -843,7 +846,7 @@ const WorkLog = () => {
             />
           </section>
         </main>
-        
+
         <TaskFormModal
           isOpen={showForm}
           onClose={closeForm}
@@ -866,14 +869,14 @@ const CalendarWidget = ({ selectedDate, setSelectedDate, handleDateChange, getTa
   const weekStartsOn = 1; // Monday
   const firstDayOfMonth = startOfMonth(selectedDate);
   const lastDayOfMonth = endOfMonth(selectedDate);
-  
+
   // For weekly view
   const weekStart = startOfWeek(selectedDate, { weekStartsOn });
   const weekDays = eachDayOfInterval({
     start: weekStart,
     end: addDays(weekStart, 6)
   });
-  
+
   // For monthly view
   const monthWeeks = eachWeekOfInterval(
     { start: firstDayOfMonth, end: lastDayOfMonth },
@@ -884,8 +887,8 @@ const CalendarWidget = ({ selectedDate, setSelectedDate, handleDateChange, getTa
     <motion.div layout className="bg-white rounded-2xl shadow-sm p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">
-          {viewMode === 'daily' 
-            ? format(selectedDate, 'MMMM yyyy') 
+          {viewMode === 'daily'
+            ? format(selectedDate, 'MMMM yyyy')
             : `Week of ${format(weekStart, 'MMM d')}`}
         </h2>
         <div className="flex items-center space-x-1">
@@ -900,19 +903,19 @@ const CalendarWidget = ({ selectedDate, setSelectedDate, handleDateChange, getTa
           </button>
         </div>
       </div>
-      
+
       {viewMode === 'daily' ? (
         <>
           <div className="grid grid-cols-7 gap-1 text-center text-xs text-gray-500 font-medium">
             {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(day => <div key={day}>{day}</div>)}
           </div>
           <div className="grid grid-cols-7 gap-1 mt-2">
-            {monthWeeks.flatMap(weekStart => 
+            {monthWeeks.flatMap(weekStart =>
               eachDayOfInterval({ start: weekStart, end: addDays(weekStart, 6) }).map((date, i) => {
                 const isSelected = isSameDay(date, selectedDate);
                 const hasTasks = getTasksForDate(date).length > 0;
                 const isCurrentMonth = isSameMonth(date, selectedDate);
-                
+
                 return (
                   <button
                     key={`${weekStart}-${i}`}
@@ -935,7 +938,7 @@ const CalendarWidget = ({ selectedDate, setSelectedDate, handleDateChange, getTa
           {weekDays.map((date, i) => {
             const isSelected = isSameDay(date, selectedDate);
             const hasTasks = getTasksForDate(date).length > 0;
-            
+
             return (
               <button
                 key={i}
@@ -959,11 +962,11 @@ const CalendarWidget = ({ selectedDate, setSelectedDate, handleDateChange, getTa
 const PomodoroWidget = ({ pomodoroState, onStart, onPause, onReset }) => {
   const minutes = Math.floor(pomodoroState.timeLeft / 60);
   const seconds = pomodoroState.timeLeft % 60;
-  const progress = (pomodoroState.timeLeft / 
-    (pomodoroState.mode === 'work' 
-      ? POMODORO_DURATION * 60 
-      : pomodoroState.mode === 'shortBreak' 
-        ? SHORT_BREAK_DURATION * 60 
+  const progress = (pomodoroState.timeLeft /
+    (pomodoroState.mode === 'work'
+      ? POMODORO_DURATION * 60
+      : pomodoroState.mode === 'shortBreak'
+        ? SHORT_BREAK_DURATION * 60
         : LONG_BREAK_DURATION * 60)
   ) * 100;
 
@@ -974,34 +977,34 @@ const PomodoroWidget = ({ pomodoroState, onStart, onPause, onReset }) => {
         <div className="flex items-center gap-1 bg-gray-100 rounded-full px-2 py-1 text-sm">
           <span className={`w-2 h-2 rounded-full ${pomodoroState.mode === 'work' ? 'bg-red-500' : 'bg-green-500'}`}></span>
           <span className="font-medium">
-            {pomodoroState.mode === 'work' 
-              ? 'Work' 
-              : pomodoroState.mode === 'shortBreak' 
-                ? 'Short Break' 
+            {pomodoroState.mode === 'work'
+              ? 'Work'
+              : pomodoroState.mode === 'shortBreak'
+                ? 'Short Break'
                 : 'Long Break'}
           </span>
         </div>
       </div>
-      
+
       <div className="relative">
         <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden mb-6">
-          <div 
+          <div
             className={`h-full ${pomodoroState.mode === 'work' ? 'bg-red-500' : 'bg-green-500'}`}
             style={{ width: `${progress}%` }}
           ></div>
         </div>
-        
+
         <div className="text-center mb-6">
           <div className="text-4xl font-bold tracking-tighter">
             {minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}
           </div>
           <div className="text-sm text-gray-500 mt-1">
-            {pomodoroState.mode === 'work' 
-              ? `Session ${pomodoroState.count + 1}` 
+            {pomodoroState.mode === 'work'
+              ? `Session ${pomodoroState.count + 1}`
               : 'Take a break!'}
           </div>
         </div>
-        
+
         <div className="flex justify-center gap-3">
           {pomodoroState.isActive ? (
             <button onClick={onPause} className="px-5 py-2.5 bg-gray-800 text-white rounded-lg hover:bg-gray-900">
@@ -1047,7 +1050,7 @@ const TimeSummaryWidget = ({ timeSummary, categories, priorities, weeklySummary,
         </h2>
         <span className="font-bold text-[var(--theme-color)] text-lg">{totalHours} hrs</span>
       </div>
-      
+
       {viewMode === 'daily' ? (
         timeSummary.totalMinutes > 0 ? (
           <div className="space-y-4">
@@ -1069,7 +1072,7 @@ const TimeSummaryWidget = ({ timeSummary, categories, priorities, weeklySummary,
                 );
               })}
             </div>
-            
+
             <div className="pt-4 border-t border-gray-200">
               <h3 className="text-sm font-medium text-gray-700 mb-2">By Priority</h3>
               <div className="space-y-2">
@@ -1099,22 +1102,22 @@ const TimeSummaryWidget = ({ timeSummary, categories, priorities, weeklySummary,
         )
       ) : (
         <div className="h-64">
-          <Bar 
-            data={weeklyChartData} 
-            options={{ 
+          <Bar
+            data={weeklyChartData}
+            options={{
               responsive: true,
               maintainAspectRatio: false,
               scales: {
                 y: {
                   beginAtZero: true,
                   ticks: {
-                    callback: function(value) {
+                    callback: function (value) {
                       return value + 'm';
                     }
                   }
                 }
               }
-            }} 
+            }}
           />
         </div>
       )}
@@ -1131,14 +1134,14 @@ const DailyNotes = ({ note, onChange }) => {
           Daily Notes
         </h2>
       </div>
-      
+
       <textarea
         value={note}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Reflect on your day, note important insights, or plan for tomorrow..."
         className="w-full min-h-[120px] p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]"
       />
-      
+
       <div className="mt-3 text-xs text-gray-500 flex items-center">
         <LightBulbIcon className="h-4 w-4 mr-1" />
         Tip: These notes are saved automatically
@@ -1309,7 +1312,7 @@ const InsightsSidebar = ({ insights, onGoalChange }) => {
 
 const FilterWidget = ({ categories, priorities, tags, filter, onToggleFilter, onClearFilters }) => {
   const hasFilters = filter.categories.length > 0 || filter.priorities.length > 0 || filter.tags.length > 0;
-  
+
   return (
     <div className="bg-white rounded-2xl shadow-sm p-4 mb-6">
       <div className="flex flex-wrap gap-4">
@@ -1320,11 +1323,10 @@ const FilterWidget = ({ categories, priorities, tags, filter, onToggleFilter, on
               <button
                 key={cat.id}
                 onClick={() => onToggleFilter('categories', cat.id)}
-                className={`px-2 py-1 text-xs rounded-full transition-all ${
-                  filter.categories.includes(cat.id)
+                className={`px-2 py-1 text-xs rounded-full transition-all ${filter.categories.includes(cat.id)
                     ? 'text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                  }`}
                 style={filter.categories.includes(cat.id) ? { backgroundColor: cat.hex } : {}}
               >
                 {cat.name}
@@ -1332,7 +1334,7 @@ const FilterWidget = ({ categories, priorities, tags, filter, onToggleFilter, on
             ))}
           </div>
         </div>
-        
+
         <div>
           <h3 className="text-sm font-medium text-gray-700 mb-1">Priority</h3>
           <div className="flex flex-wrap gap-1">
@@ -1340,11 +1342,10 @@ const FilterWidget = ({ categories, priorities, tags, filter, onToggleFilter, on
               <button
                 key={pri.id}
                 onClick={() => onToggleFilter('priorities', pri.id)}
-                className={`px-2 py-1 text-xs rounded-full transition-all ${
-                  filter.priorities.includes(pri.id)
+                className={`px-2 py-1 text-xs rounded-full transition-all ${filter.priorities.includes(pri.id)
                     ? 'text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                  }`}
                 style={filter.priorities.includes(pri.id) ? { backgroundColor: pri.hex } : {}}
               >
                 {pri.name}
@@ -1352,7 +1353,7 @@ const FilterWidget = ({ categories, priorities, tags, filter, onToggleFilter, on
             ))}
           </div>
         </div>
-        
+
         <div>
           <h3 className="text-sm font-medium text-gray-700 mb-1">Tags</h3>
           <div className="flex flex-wrap gap-1">
@@ -1360,11 +1361,10 @@ const FilterWidget = ({ categories, priorities, tags, filter, onToggleFilter, on
               <button
                 key={tag}
                 onClick={() => onToggleFilter('tags', tag)}
-                className={`px-2 py-1 text-xs rounded-full transition-all flex items-center ${
-                  filter.tags.includes(tag)
+                className={`px-2 py-1 text-xs rounded-full transition-all flex items-center ${filter.tags.includes(tag)
                     ? 'bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)]'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                  }`}
               >
                 <TagIcon className="h-3 w-3 mr-1" />
                 {tag}
@@ -1372,7 +1372,7 @@ const FilterWidget = ({ categories, priorities, tags, filter, onToggleFilter, on
             ))}
           </div>
         </div>
-        
+
         {hasFilters && (
           <div className="flex items-end">
             <button
@@ -1388,13 +1388,13 @@ const FilterWidget = ({ categories, priorities, tags, filter, onToggleFilter, on
   );
 };
 
-const TimelineView = ({ 
-  tasks, 
-  selectedDate, 
-  categories, 
+const TimelineView = ({
+  tasks,
+  selectedDate,
+  categories,
   priorities,
-  onAddTask, 
-  onEditTask, 
+  onAddTask,
+  onEditTask,
   onDeleteTask,
   onStartTimer,
   onStopTimer,
@@ -1404,15 +1404,15 @@ const TimelineView = ({
   timeSummary
 }) => {
   const hours = Array.from({ length: 18 }, (_, i) => i + 5); // 5 AM to 10 PM
-  
+
   const timeToPosition = (time) => {
     const [h, m] = time.split(':').map(Number);
     const totalMinutes = (h * 60 + m) - (5 * 60); // Minutes from 5 AM
     return (totalMinutes / (18 * 60)) * 100; // As a percentage of the total height
   };
-  
+
   const getDuration = (task) => calculateTaskDuration(task);
-  
+
   if (viewMode === 'weekly') {
     return (
       <div className="bg-white rounded-2xl shadow-sm">
@@ -1420,24 +1420,24 @@ const TimelineView = ({
           <div>
             <h2 className="text-lg font-semibold">Weekly Overview</h2>
             <p className="text-sm text-gray-500">
-              {format(startOfWeek(selectedDate, { weekStartsOn: 1 }), 'MMM d')} - 
+              {format(startOfWeek(selectedDate, { weekStartsOn: 1 }), 'MMM d')} -
               {format(addDays(startOfWeek(selectedDate, { weekStartsOn: 1 }), 6), 'MMM d')}
             </p>
           </div>
         </div>
-        
+
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
             {weeklySummary.map((day, index) => (
               <div key={index} className="text-center">
                 <div className="font-medium text-sm text-gray-700">{day.dayName}</div>
                 <div className="text-lg font-bold mt-1">{Math.floor(day.minutes / 60)}h {day.minutes % 60}m</div>
-                
+
                 <div className="mt-4 space-y-2">
                   {tasks.filter(task => isSameDay(task.date, day.date)).map(task => {
                     const category = categories.find(c => c.id === task.category);
                     const priority = priorities.find(p => p.id === task.priority);
-                    
+
                     return (
                       <div
                         key={task.id}
@@ -1510,7 +1510,7 @@ const TimelineView = ({
                   const top = timeToPosition(task.startTime);
                   const duration = getDuration(task);
                   const height = (duration / (18 * 60)) * 100;
-                  
+
                   return (
                     <motion.div
                       key={task.id}
@@ -1527,7 +1527,7 @@ const TimelineView = ({
                         style={{ backgroundColor: category?.hex }}
                       >
                         <div className="absolute top-0 left-0 w-full h-1 bg-white/30"></div>
-                        
+
                         <div>
                           <div className="flex justify-between items-start">
                             <h3 className="font-bold text-sm truncate">{task.title}</h3>
@@ -1551,10 +1551,10 @@ const TimelineView = ({
                             </div>
                           )}
                         </div>
-                        
+
                         <div className="mt-2 flex items-center justify-between">
                           {activeTaskId === task.id ? (
-                            <button 
+                            <button
                               onClick={() => onStopTimer()}
                               className="text-xs bg-red-500 hover:bg-red-600 px-2 py-1 rounded flex items-center"
                             >
@@ -1562,7 +1562,7 @@ const TimelineView = ({
                               Stop Timer
                             </button>
                           ) : (
-                            <button 
+                            <button
                               onClick={() => onStartTimer(task.id)}
                               className="text-xs bg-white/20 hover:bg-white/30 px-2 py-1 rounded flex items-center"
                             >
@@ -1570,7 +1570,7 @@ const TimelineView = ({
                               Start Timer
                             </button>
                           )}
-                          
+
                           <div className="absolute top-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button onClick={() => onEditTask(task)} className="p-1.5 bg-black/20 rounded-full hover:bg-black/40">
                               <PencilIcon className="h-4 w-4" />
@@ -1593,12 +1593,12 @@ const TimelineView = ({
   );
 };
 
-const TaskFormModal = ({ 
-  isOpen, 
-  onClose, 
-  onSave, 
-  task, 
-  categories, 
+const TaskFormModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  task,
+  categories,
   priorities,
   lastTaskEnd,
   tags,
@@ -1606,13 +1606,13 @@ const TaskFormModal = ({
 }) => {
   const [formState, setFormState] = useState({});
   const [newTag, setNewTag] = useState('');
-  
+
   useEffect(() => {
     if (isOpen) {
       const defaultStartTime = lastTaskEnd || '09:00';
       const parsedTime = parse(defaultStartTime, 'HH:mm', new Date());
       const defaultEndTime = format(addMinutes(parsedTime, 60), 'HH:mm');
-      
+
       setFormState(task || {
         title: '',
         description: '',
@@ -1624,18 +1624,18 @@ const TaskFormModal = ({
       });
     }
   }, [task, isOpen, lastTaskEnd]);
-  
+
   const handleChange = e => setFormState({ ...formState, [e.target.name]: e.target.value });
-  
+
   const handleTagChange = (tag) => {
     const currentTags = formState.tags || [];
     const newTags = currentTags.includes(tag)
       ? currentTags.filter(t => t !== tag)
       : [...currentTags, tag];
-      
+
     setFormState({ ...formState, tags: newTags });
   };
-  
+
   const handleAddTag = () => {
     if (newTag.trim() && !tags.includes(newTag.trim())) {
       setTags([...tags, newTag.trim()]);
@@ -1643,7 +1643,7 @@ const TaskFormModal = ({
     }
     setNewTag('');
   };
-  
+
   const handleStartTimer = () => {
     const now = new Date();
     setFormState({
@@ -1658,7 +1658,7 @@ const TaskFormModal = ({
     e.preventDefault();
     onSave(formState);
   };
-  
+
   if (!isOpen) return null;
 
   return (
@@ -1670,40 +1670,40 @@ const TaskFormModal = ({
             <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
-        
+
         <div className="p-6 space-y-4">
           <div className="flex items-center gap-4">
             <div className="w-full">
               <label className="block text-sm font-medium text-gray-700 mb-1 required-label">Title</label>
-              <input 
-                type="text" 
-                name="title" 
-                value={formState.title || ''} 
-                onChange={handleChange} 
-                placeholder="What are you working on?" 
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]" 
-                required 
+              <input
+                type="text"
+                name="title"
+                value={formState.title || ''}
+                onChange={handleChange}
+                placeholder="What are you working on?"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]"
+                required
               />
             </div>
-            <button 
-              type="button" 
-              onClick={handleStartTimer} 
-              title="Start Timer" 
+            <button
+              type="button"
+              onClick={handleStartTimer}
+              title="Start Timer"
               className="flex-shrink-0 flex items-center gap-2 p-3 bg-green-500 text-white rounded-lg hover:bg-green-600"
             >
               <PlayIcon className="h-5 w-5" />
             </button>
           </div>
-          
-          <textarea 
-            name="description" 
-            value={formState.description || ''} 
-            onChange={handleChange} 
-            placeholder="Add a description..." 
-            rows="3" 
+
+          <textarea
+            name="description"
+            value={formState.description || ''}
+            onChange={handleChange}
+            placeholder="Add a description..."
+            rows="3"
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]"
           ></textarea>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
@@ -1729,28 +1729,28 @@ const TaskFormModal = ({
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1 required-label">Start Time</label>
-              <input 
-                type="time" 
-                name="startTime" 
-                value={formState.startTime || ''} 
-                onChange={handleChange} 
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]" 
-                required 
+              <input
+                type="time"
+                name="startTime"
+                value={formState.startTime || ''}
+                onChange={handleChange}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]"
+                required
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1 required-label">End Time</label>
-              <input 
-                type="time" 
-                name="endTime" 
-                value={formState.endTime || ''} 
-                onChange={handleChange} 
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]" 
-                required 
+              <input
+                type="time"
+                name="endTime"
+                value={formState.endTime || ''}
+                onChange={handleChange}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]"
+                required
               />
             </div>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
             <div className="flex flex-wrap gap-2 mb-2">
@@ -1770,24 +1770,24 @@ const TaskFormModal = ({
                 </span>
               ))}
             </div>
-            
+
             <div className="flex gap-2">
-              <input 
-                type="text" 
-                value={newTag} 
-                onChange={(e) => setNewTag(e.target.value)} 
-                placeholder="Add new tag" 
+              <input
+                type="text"
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                placeholder="Add new tag"
                 className="flex-grow p-2 border border-gray-300 rounded-lg"
               />
-              <button 
-                type="button" 
-                onClick={handleAddTag} 
+              <button
+                type="button"
+                onClick={handleAddTag}
                 className="px-3 bg-gray-800 text-white rounded-lg hover:bg-gray-900"
               >
                 Add
               </button>
             </div>
-            
+
             <div className="mt-2 flex flex-wrap gap-1">
               {tags.filter(tag => !(formState.tags || []).includes(tag)).map(tag => (
                 <button
