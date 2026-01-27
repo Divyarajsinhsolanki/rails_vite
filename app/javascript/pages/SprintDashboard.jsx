@@ -34,7 +34,7 @@ export default function SprintDashboard() {
   const dateParam = searchParams.get('date');
   const selectedDate = React.useMemo(() =>
     dateParam ? new Date(dateParam) : new Date(),
-  [dateParam]);
+    [dateParam]);
   const [activeTab, setActiveTab] = useState(initialTab);
   const [sprintId, setSprintId] = useState(null);
   const [sprint, setSprint] = useState(null);
@@ -132,7 +132,7 @@ export default function SprintDashboard() {
 
 
   return (
-    <div className="space-y-6">
+    <div className="">
       <header className="bg-white shadow-sm p-2">
         {/* {project && (
           <div className="mb-2">
@@ -144,7 +144,7 @@ export default function SprintDashboard() {
         )} */}
         <div className="flex justify-between items-center">
           <h1 className="text-xl font-bold text-gray-800 flex items-center">
-            <CalendarDaysIcon className="h-7 w-7 mr-2 text-[var(--theme-color)]"/>
+            <CalendarDaysIcon className="h-7 w-7 mr-2 text-[var(--theme-color)]" />
             {sprint ? (
               <span className="flex flex-col sm:flex-row sm:items-center">
                 <span className="truncate">Sprint: {sprint.name}</span>
@@ -233,14 +233,12 @@ export default function SprintDashboard() {
                   role="switch"
                   aria-checked={qaMode}
                   onClick={() => setQaMode((prev) => !prev)}
-                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 shadow-sm ${
-                    qaMode ? 'bg-purple-600' : 'bg-slate-300'
-                  }`}
+                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 shadow-sm ${qaMode ? 'bg-purple-600' : 'bg-slate-300'
+                    }`}
                 >
                   <span
-                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${
-                      qaMode ? 'translate-x-6' : 'translate-x-1'
-                    }`}
+                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${qaMode ? 'translate-x-6' : 'translate-x-1'
+                      }`}
                   />
                 </button>
               </div>

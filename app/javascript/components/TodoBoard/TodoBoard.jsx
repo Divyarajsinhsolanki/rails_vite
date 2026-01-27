@@ -90,7 +90,7 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange, qaMode 
     const cols = JSON.parse(JSON.stringify(initialData));
     tasks.forEach(task => {
       const status = task.status || 'todo';
-      if(cols[status]) {
+      if (cols[status]) {
         cols[status].items.push(task);
       }
     });
@@ -98,7 +98,7 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange, qaMode 
   }
 
   const currentSprint = sprints.find(s => s.id === selectedSprintId);
-  
+
   // --- HANDLERS ---
   const handleAddTask = async (newTaskData) => {
     try {
@@ -133,39 +133,39 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange, qaMode 
       toast.error("Failed to delete task.");
     }
   };
-  
-  const handleUpdateTask = async (colId, taskId, updates) => {
-     try {
-        const { data } = await SchedulerAPI.updateTask(taskId, updates);
-        const newStatus = data.status || colId;
-        setColumns(prev => {
-            // if status didn't change, update in place
-            if (newStatus === colId) {
-                return {
-                    ...prev,
-                    [colId]: {
-                        ...prev[colId],
-                        items: prev[colId].items.map(t => t.id === data.id ? data : t)
-                    }
-                };
-            }
 
-            const updatedPrev = { ...prev };
-            // remove task from the original column
-            updatedPrev[colId] = {
-                ...updatedPrev[colId],
-                items: updatedPrev[colId].items.filter(t => t.id !== data.id)
-            };
-            // add task to the column corresponding to its new status
-            updatedPrev[newStatus] = {
-                ...updatedPrev[newStatus],
-                items: [...updatedPrev[newStatus].items, data]
-            };
-            return updatedPrev;
-        });
-        toast.success("Task updated");
+  const handleUpdateTask = async (colId, taskId, updates) => {
+    try {
+      const { data } = await SchedulerAPI.updateTask(taskId, updates);
+      const newStatus = data.status || colId;
+      setColumns(prev => {
+        // if status didn't change, update in place
+        if (newStatus === colId) {
+          return {
+            ...prev,
+            [colId]: {
+              ...prev[colId],
+              items: prev[colId].items.map(t => t.id === data.id ? data : t)
+            }
+          };
+        }
+
+        const updatedPrev = { ...prev };
+        // remove task from the original column
+        updatedPrev[colId] = {
+          ...updatedPrev[colId],
+          items: updatedPrev[colId].items.filter(t => t.id !== data.id)
+        };
+        // add task to the column corresponding to its new status
+        updatedPrev[newStatus] = {
+          ...updatedPrev[newStatus],
+          items: [...updatedPrev[newStatus].items, data]
+        };
+        return updatedPrev;
+      });
+      toast.success("Task updated");
     } catch (error) {
-        toast.error("Failed to update task.");
+      toast.error("Failed to update task.");
     }
   };
 
@@ -202,104 +202,102 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange, qaMode 
       [source.droppableId]: { ...srcCol, items: srcItems },
       [destination.droppableId]: { ...dstCol, items: dstItems }
     }));
-    
+
     // API Call
     try {
-        await SchedulerAPI.moveTask(movedItem.id, { task: { status: updatedItem.status } });
+      await SchedulerAPI.moveTask(movedItem.id, { task: { status: updatedItem.status } });
     } catch (error) {
-        toast.error("Failed to move task. Reverting.");
-        // Revert UI on failure
-        dstItems.splice(destination.index, 1);
-        srcItems.splice(source.index, 0, movedItem);
-        setColumns(prev => ({
-            ...prev,
-            [source.droppableId]: { ...srcCol, items: srcItems },
-            [destination.droppableId]: { ...dstCol, items: dstItems }
-        }));
+      toast.error("Failed to move task. Reverting.");
+      // Revert UI on failure
+      dstItems.splice(destination.index, 1);
+      srcItems.splice(source.index, 0, movedItem);
+      setColumns(prev => ({
+        ...prev,
+        [source.droppableId]: { ...srcCol, items: srcItems },
+        [destination.droppableId]: { ...dstCol, items: dstItems }
+      }));
     }
   };
   const applyView = cols =>
     taskView === 'my' && user
       ? Object.fromEntries(
-          Object.entries(cols).map(([k, col]) => [k, { ...col, items: col.items.filter(t => t.assigned_to_user === user.id) }])
-        )
+        Object.entries(cols).map(([k, col]) => [k, { ...col, items: col.items.filter(t => t.assigned_to_user === user.id) }])
+      )
       : cols;
 
   const filteredColumns = Object.entries(applyView(columns)).reduce((acc, [colId, colData]) => {
-      const term = (searchTerm || "").toLowerCase();
-      acc[colId] = {
-        ...colData,
-        items: colData.items.filter(item => {
-            const content = (item.task_id || item.title || "").toLowerCase();
-            const tagMatch = Array.isArray(item.tags) ? item.tags.some(tag => (tag || "").toLowerCase().includes(term)) : false;
-            return content.includes(term) || tagMatch;
-        })
-      };
-      return acc;
+    const term = (searchTerm || "").toLowerCase();
+    acc[colId] = {
+      ...colData,
+      items: colData.items.filter(item => {
+        const content = (item.task_id || item.title || "").toLowerCase();
+        const tagMatch = Array.isArray(item.tags) ? item.tags.some(tag => (tag || "").toLowerCase().includes(term)) : false;
+        return content.includes(term) || tagMatch;
+      })
+    };
+    return acc;
   }, {});
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 p-8 font-sans text-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 px-8 pb-8 pt-2 font-sans text-gray-800">
       <div className="max-w-8xl mx-auto bg-white rounded-xl shadow-lg p-4">
         <Toaster position="top-right" />
-      <header className="mb-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-          <div className="mb-4 sm:mb-0 flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] flex items-center">
-              <Squares2X2Icon className="h-7 w-7 mr-2" />Taskboard
-            </h1>
-            {qaMode && (
-              <span className="inline-flex items-center rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700 border border-purple-200">
-                QA mode
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 bg-[var(--theme-color)] hover:brightness-110 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all transform hover:scale-105"
-            >
-              <PlusIcon className="h-5 w-5" />
-              <span>Add Task</span>
-            </button>
-            <div className="flex bg-white rounded-full p-1 shadow-md border border-gray-200">
+        <header className="mb-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+            <div className="mb-4 sm:mb-0 flex items-center gap-3">
+              <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] flex items-center">
+                <Squares2X2Icon className="h-7 w-7 mr-2" />Taskboard
+              </h1>
+              {qaMode && (
+                <span className="inline-flex items-center rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700 border border-purple-200">
+                  QA mode
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
               <button
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ${
-                  taskView === 'all'
-                    ? 'bg-[var(--theme-color)] text-white shadow'
-                    : 'text-gray-600 hover:bg-[rgb(var(--theme-color-rgb)/0.1)]'
-                }`}
-                onClick={() => setTaskView('all')}
+                onClick={() => setShowForm(true)}
+                className="flex items-center gap-2 bg-[var(--theme-color)] hover:brightness-110 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all transform hover:scale-105"
               >
-                <Squares2X2Icon className="h-5 w-5"/>
-                All Tasks
+                <PlusIcon className="h-5 w-5" />
+                <span>Add Task</span>
               </button>
-              <button
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ml-1 ${
-                  taskView === 'my'
-                    ? 'bg-[var(--theme-color)] text-white shadow'
-                    : 'text-gray-600 hover:bg-[rgb(var(--theme-color-rgb)/0.1)]'
-                }`}
-                onClick={() => setTaskView('my')}
-              >
-                <UserIcon className="h-5 w-5"/>
-                My Tasks
-              </button>
+              <div className="flex bg-white rounded-full p-1 shadow-md border border-gray-200">
+                <button
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ${taskView === 'all'
+                      ? 'bg-[var(--theme-color)] text-white shadow'
+                      : 'text-gray-600 hover:bg-[rgb(var(--theme-color-rgb)/0.1)]'
+                    }`}
+                  onClick={() => setTaskView('all')}
+                >
+                  <Squares2X2Icon className="h-5 w-5" />
+                  All Tasks
+                </button>
+                <button
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ml-1 ${taskView === 'my'
+                      ? 'bg-[var(--theme-color)] text-white shadow'
+                      : 'text-gray-600 hover:bg-[rgb(var(--theme-color-rgb)/0.1)]'
+                    }`}
+                  onClick={() => setTaskView('my')}
+                >
+                  <UserIcon className="h-5 w-5" />
+                  My Tasks
+                </button>
+              </div>
             </div>
           </div>
+        </header>
+
+        <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Add a New Task">
+          <TaskForm onAddTask={handleAddTask} onCancel={() => setShowForm(false)} defaultType={qaMode ? 'qa' : 'general'} />
+        </Modal>
+
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <Heatmap columns={columns} view={taskView} onViewChange={setTaskView} sprint={currentSprint} />
+          <ProgressPieChart columns={applyView(columns)} />
         </div>
-      </header>
 
-      <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Add a New Task">
-        <TaskForm onAddTask={handleAddTask} onCancel={() => setShowForm(false)} defaultType={qaMode ? 'qa' : 'general'} />
-      </Modal>
-
-      <div className="grid md:grid-cols-2 gap-6 mb-8">
-        <Heatmap columns={columns} view={taskView} onViewChange={setTaskView} sprint={currentSprint} />
-        <ProgressPieChart columns={applyView(columns)} />
-      </div>
-
-      {/* <div className="mb-6">
+        {/* <div className="mb-6">
         <input
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -307,22 +305,22 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange, qaMode 
           className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] transition-all"
         />
       </div> */}
-      
-      <DragDropContext onDragEnd={onDragEnd}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <DragDropContext onDragEnd={onDragEnd}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {Object.entries(filteredColumns).map(([columnId, column]) => (
-                <KanbanColumn
-                    key={columnId}
-                    columnId={columnId}
-                    column={column}
-                    tasks={column.items}
-                    onDelete={handleDeleteTask}
-                    onUpdate={handleUpdateTask}
-                />
+              <KanbanColumn
+                key={columnId}
+                columnId={columnId}
+                column={column}
+                tasks={column.items}
+                onDelete={handleDeleteTask}
+                onUpdate={handleUpdateTask}
+              />
             ))}
-        </div>
-      </DragDropContext>
-      <style>{`
+          </div>
+        </DragDropContext>
+        <style>{`
         @keyframes modalShow {
           to {
             opacity: 1;
@@ -333,7 +331,7 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange, qaMode 
           animation: modalShow 0.3s ease-out forwards;
         }
       `}</style>
-    </div>
+      </div>
     </div>
   );
 }

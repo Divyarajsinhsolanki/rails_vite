@@ -1188,7 +1188,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 p-8 font-sans text-gray-800">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 px-8 pb-8 pt-2 font-sans text-gray-800">
             <Toaster position="top-right" />
             {processing && <SpinnerOverlay />}
             <div className="max-w-8xl mx-auto bg-white rounded-xl shadow-lg p-4">

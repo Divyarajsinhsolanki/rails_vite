@@ -221,11 +221,11 @@ function TaskCell({ date, devId, tasksInCell, setEditingTask, handleTaskUpdate, 
       <div className={`absolute bottom-0 left-0 right-0 h-1 ${capacityColor} opacity-70 transition-all duration-300`} style={{ width: `${hoursPercentage}%` }} title={`${totalHoursInCell}h / ${cellCapacity}h`}></div>
       {tasksInCell.filter(t => !t.deleted).map(task => (
         <TaskCard
-            key={task.id}
-            task={task}
-            onEdit={() => setEditingTask(task)}
-            onTaskUpdate={handleTaskUpdate}
-            onDuplicate={onDuplicate}
+          key={task.id}
+          task={task}
+          onEdit={() => setEditingTask(task)}
+          onTaskUpdate={handleTaskUpdate}
+          onDuplicate={onDuplicate}
         />
       ))}
       {tasksInCell.filter(t => !t.deleted).length === 0 && (
@@ -242,9 +242,9 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
   const [allTasks, setAllTasks] = useState([]); // options from tasks table
   const types = useMemo(() => ['Code', 'Code review', 'Dev to QA', 'Planning', 'Testing', 'Bug Fixing'], []);
 
-  const [loading, setLoading] = useState({sprint: true, developers: true, tasks: true});
+  const [loading, setLoading] = useState({ sprint: true, developers: true, tasks: true });
   const [error, setError] = useState(null);
-  
+
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [processing, setProcessing] = useState(false);
@@ -298,12 +298,12 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
         setLoading(l => ({ ...l, developers: false, tasks: false }));
       });
   }, [sprintId, projectId, qaMode]);
-  
+
   const getWeekdaysInRange = useCallback((start, end) => {
     const datesArr = [];
     if (!start || !end) return datesArr;
-    let current = new Date(new Date(start).toISOString().slice(0,10) + 'T00:00:00Z');
-    const endDate = new Date(new Date(end).toISOString().slice(0,10) + 'T00:00:00Z');
+    let current = new Date(new Date(start).toISOString().slice(0, 10) + 'T00:00:00Z');
+    const endDate = new Date(new Date(end).toISOString().slice(0, 10) + 'T00:00:00Z');
 
     while (current <= endDate) {
       const day = current.getUTCDay();
@@ -314,7 +314,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
     }
     return datesArr;
   }, []);
-  
+
   const dates = useMemo(() => sprint ? getWeekdaysInRange(sprint.start_date, sprint.end_date) : [], [sprint, getWeekdaysInRange]);
 
   const tasksByDateDev = useMemo(() => {
@@ -339,15 +339,15 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
     setTasks(prev => [...prev, newTask]);
     setIsAddTaskModalOpen(false);
 
-  try {
-    const { data: created } = await SchedulerAPI.createTaskLog({ ...formData });
-    setTasks(prev => prev.map(t => t.id === tempId ? created : t));
-  } catch (error) {
-    console.error("Error adding task:", error);
-    setTasks(prev => prev.filter(t => t.id !== tempId));
-    toast.error(`Error: Could not add task. ${error.message}`);
-  }
-};
+    try {
+      const { data: created } = await SchedulerAPI.createTaskLog({ ...formData });
+      setTasks(prev => prev.map(t => t.id === tempId ? created : t));
+    } catch (error) {
+      console.error("Error adding task:", error);
+      setTasks(prev => prev.filter(t => t.id !== tempId));
+      toast.error(`Error: Could not add task. ${error.message}`);
+    }
+  };
 
   const duplicateLog = async (formData, originalTask) => {
     const tempId = `temp-${Date.now()}`;
@@ -370,14 +370,14 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...formData, developer_id: Number(formData.developer_id), hours_logged: parseFloat(formData.hours_logged) } : t));
     setEditingTask(null);
 
-  try {
-    const { data: updated } = await SchedulerAPI.updateTaskLog(taskId, formData);
-    setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
-  } catch (error) {
-    console.error("Error updating task:", error);
-    toast.error(`Error: Could not update task. ${error.message}`);
-  }
-};
+    try {
+      const { data: updated } = await SchedulerAPI.updateTaskLog(taskId, formData);
+      setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
+    } catch (error) {
+      console.error("Error updating task:", error);
+      toast.error(`Error: Could not update task. ${error.message}`);
+    }
+  };
 
   const handleExportScheduler = async () => {
     if (!sprint) return;
@@ -385,9 +385,9 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
       setProcessing(true);
       await SchedulerAPI.exportSprintLogs(sprint.id);
       toast.success('Exported logs to sheet');
-  } catch (e) {
+    } catch (e) {
       toast.error('Export failed');
-  }
+    }
     setProcessing(false);
   };
 
@@ -412,7 +412,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
     if (!originalTask) return;
 
     const updatedTaskData = { ...originalTask, log_date: newDate, developer_id: newDevId };
-    
+
     setTasks(prev => prev.map(t => (t.id === taskId ? updatedTaskData : t)));
 
     try {
@@ -424,7 +424,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
       toast.error(`Error: Could not move task. ${error.message}`);
     }
   };
-  
+
   const { hoursByDevDate, hoursByDateDev, dailyTotalsPerDev, grandTotalsPerDev, dailyTotalsPerDate } = useMemo(() => {
     const hByDevDate = {};
     developers.forEach(dev => {
@@ -447,25 +447,25 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
         hByDateDev[task.log_date][task.developer_id] += hrs;
       }
     });
-    
+
     const dtPerDev = {};
     developers.forEach(dev => {
-        dtPerDev[dev.id] = {};
-        dates.forEach(date => {
-            dtPerDev[dev.id][date] = (tasksByDateDev[date]?.[dev.id] || [])
-                .filter(t => !t.deleted)
-                .reduce((sum, task) => sum + (parseFloat(task.hours_logged) || 0), 0);
-        });
+      dtPerDev[dev.id] = {};
+      dates.forEach(date => {
+        dtPerDev[dev.id][date] = (tasksByDateDev[date]?.[dev.id] || [])
+          .filter(t => !t.deleted)
+          .reduce((sum, task) => sum + (parseFloat(task.hours_logged) || 0), 0);
+      });
     });
 
     const gtPerDev = {};
     developers.forEach(dev => {
-        gtPerDev[dev.id] = dates.reduce((sum, date) => sum + (dtPerDev[dev.id][date] || 0), 0);
+      gtPerDev[dev.id] = dates.reduce((sum, date) => sum + (dtPerDev[dev.id][date] || 0), 0);
     });
-    
+
     const dtPerDate = {};
     dates.forEach(date => {
-        dtPerDate[date] = developers.reduce((sum, dev) => sum + (dtPerDev[dev.id][date] || 0), 0);
+      dtPerDate[date] = developers.reduce((sum, dev) => sum + (dtPerDev[dev.id][date] || 0), 0);
     });
 
     return { hoursByDevDate: hByDevDate, hoursByDateDev: hByDateDev, dailyTotalsPerDev: dtPerDev, grandTotalsPerDev: gtPerDev, dailyTotalsPerDate: dtPerDate };
@@ -474,7 +474,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
 
   const formatDate = useCallback((isoDateString) => {
     if (!isoDateString) return '';
-    const date = new Date(isoDateString + 'T00:00:00'); 
+    const date = new Date(isoDateString + 'T00:00:00');
     return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
   }, []);
 
@@ -482,9 +482,9 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <header ref={mainHeaderRef} className="bg-white shadow-sm p-4"> {/* Added ref here */}
-          <h1 className="text-2xl font-bold text-gray-800 flex items-center"><CalendarDaysIcon className="h-7 w-7 mr-2 text-[var(--theme-color)]"/>Sprint Logs</h1>
+          <h1 className="text-2xl font-bold text-gray-800 flex items-center"><CalendarDaysIcon className="h-7 w-7 mr-2 text-[var(--theme-color)]" />Sprint Logs</h1>
         </header>
-        <main className="flex-grow container mx-auto p-4 lg:p-6">
+        <main className="flex-grow container mx-auto px-4 pb-4 pt-2 lg:px-6 lg:pb-6 lg:pt-2">
           <LoadingSpinner />
         </main>
       </div>
@@ -492,7 +492,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
   }
 
   if (error) {
-     return (
+    return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
         <div className="bg-white p-8 rounded-lg shadow-xl text-center">
           <ExclamationTriangleIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
@@ -508,7 +508,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
       </div>
     );
   }
-  
+
   if (!sprint) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600">
@@ -531,7 +531,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
               <div className="container mx-auto px-4 py-3"> {/* Added some padding for better click area */}
                 <div className="flex justify-between items-center">
                   <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] flex items-center">
-                    <TableCellsIcon className="h-6 w-6 mr-2 text-[var(--theme-color)]"/> Sprint Logs
+                    <TableCellsIcon className="h-6 w-6 mr-2 text-[var(--theme-color)]" /> Sprint Logs
                   </h1>
                   <div className="flex space-x-2">
                     <button
@@ -554,120 +554,120 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
                 </div>
               </div>
             </header>
-              <div className="overflow-x-auto relative">
-                  <table className="min-w-full divide-y divide-gray-200 border-collapse">
-                  {/* **FIX 3: Adjusted sticky top position dynamically** */}
-                  <thead className="bg-gray-50/80 backdrop-blur-sm sticky z-30" >
-                      <tr>
-                      <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-r border-gray-200 sticky left-0 bg-gray-100/90 z-20">
-                          Date
+            <div className="overflow-x-auto relative">
+              <table className="min-w-full divide-y divide-gray-200 border-collapse">
+                {/* **FIX 3: Adjusted sticky top position dynamically** */}
+                <thead className="bg-gray-50/80 backdrop-blur-sm sticky z-30" >
+                  <tr>
+                    <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-r border-gray-200 sticky left-0 bg-gray-100/90 z-20">
+                      Date
+                    </th>
+                    {developers.map(dev => (
+                      <th key={dev.id} className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-r border-gray-200 whitespace-nowrap">
+                        {dev.name}
+                        <span className="block text-[10px] font-normal text-gray-400">Total: {grandTotalsPerDev[dev.id] || 0}h</span>
                       </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {dates.length === 0 && (
+                    <tr>
+                      <td colSpan={developers.length + 1} className="p-6 text-center text-gray-500">
+                        <InformationCircleIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                        No dates found for this sprint, or developers are not loaded.
+                      </td>
+                    </tr>
+                  )}
+                  {dates.map(date => (
+                    <tr key={date} className="hover:bg-sky-50/50 transition-colors duration-100">
+                      <td className="px-4 py-3 font-medium text-sm text-gray-700 border-r border-gray-200 sticky left-0 bg-white/90 hover:bg-sky-50/50 z-10 whitespace-nowrap">
+                        {formatDate(date)}
+                        <span className="block text-xs text-gray-400">{dailyTotalsPerDate[date] || 0}h Total</span>
+                      </td>
                       {developers.map(dev => (
-                          <th key={dev.id} className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-r border-gray-200 whitespace-nowrap">
-                          {dev.name}
-                          <span className="block text-[10px] font-normal text-gray-400">Total: {grandTotalsPerDev[dev.id] || 0}h</span>
-                          </th>
+                        <TaskCell
+                          key={`${date}-${dev.id}`}
+                          date={date}
+                          devId={dev.id}
+                          tasksInCell={tasksByDateDev[date]?.[dev.id] || []}
+                          setEditingTask={setEditingTask}
+                          handleTaskUpdate={handleTaskUpdate}
+                          onDuplicate={duplicateLog}
+                          totalHoursInCell={dailyTotalsPerDev[dev.id]?.[date] || 0}
+                        />
                       ))}
-                      </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                      {dates.length === 0 && (
-                          <tr>
-                              <td colSpan={developers.length + 1} className="p-6 text-center text-gray-500">
-                                  <InformationCircleIcon className="h-8 w-8 mx-auto mb-2 text-gray-400"/>
-                                  No dates found for this sprint, or developers are not loaded.
-                              </td>
-                          </tr>
-                      )}
-                      {dates.map(date => (
-                      <tr key={date} className="hover:bg-sky-50/50 transition-colors duration-100">
-                          <td className="px-4 py-3 font-medium text-sm text-gray-700 border-r border-gray-200 sticky left-0 bg-white/90 hover:bg-sky-50/50 z-10 whitespace-nowrap">
-                              {formatDate(date)}
-                              <span className="block text-xs text-gray-400">{dailyTotalsPerDate[date] || 0}h Total</span>
-                          </td>
-                          {developers.map(dev => (
-                          <TaskCell
-                              key={`${date}-${dev.id}`}
-                              date={date}
-                              devId={dev.id}
-                              tasksInCell={tasksByDateDev[date]?.[dev.id] || []}
-                              setEditingTask={setEditingTask}
-                              handleTaskUpdate={handleTaskUpdate}
-                              onDuplicate={duplicateLog}
-                              totalHoursInCell={dailyTotalsPerDev[dev.id]?.[date] || 0}
-                          />
-                          ))}
-                      </tr>
-                      ))}
-                  </tbody>
-                  </table>
-              </div>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </section>
 
           <section className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-700 mb-4 flex items-center">
-                  <UserGroupIcon className="h-6 w-6 mr-2 text-sky-600"/>Workload Summaries
-              </h2>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-white/70 backdrop-blur-md shadow-xl rounded-xl overflow-hidden border border-gray-200">
-                  <h3 className="text-lg font-medium text-gray-700 px-5 py-3 border-b border-gray-200">Developer Hours</h3>
-                  <div className="overflow-x-auto"> {/* Added overflow-x-auto here for scrolling */}
-                      <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50/80">
-                          <tr>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Developer</th>
+            <h2 className="text-xl font-semibold text-gray-700 mb-4 flex items-center">
+              <UserGroupIcon className="h-6 w-6 mr-2 text-sky-600" />Workload Summaries
+            </h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-white/70 backdrop-blur-md shadow-xl rounded-xl overflow-hidden border border-gray-200">
+                <h3 className="text-lg font-medium text-gray-700 px-5 py-3 border-b border-gray-200">Developer Hours</h3>
+                <div className="overflow-x-auto"> {/* Added overflow-x-auto here for scrolling */}
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50/80">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Developer</th>
+                        {/* **FIX 1: Removed .slice() to show all dates** */}
+                        {dates.map(date => (
+                          <th key={date} className="px-3 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{formatDate(date).split(',')[0]}</th>
+                        ))}
+                        <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {developers.map((dev, index) => (
+                        <tr key={dev.id} className={index % 2 === 0 ? undefined : 'bg-gray-50/70'}>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-800">{dev.name}</td>
                           {/* **FIX 1: Removed .slice() to show all dates** */}
                           {dates.map(date => (
-                              <th key={date} className="px-3 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{formatDate(date).split(',')[0]}</th>
+                            <td key={date} className="px-3 py-3 whitespace-nowrap text-sm text-gray-600 text-center">{hoursByDevDate[dev.id]?.[date] || '0'}</td>
                           ))}
-                          <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
-                          </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                          {developers.map((dev, index) => (
-                          <tr key={dev.id} className={index % 2 === 0 ? undefined : 'bg-gray-50/70'}>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-800">{dev.name}</td>
-                              {/* **FIX 1: Removed .slice() to show all dates** */}
-                              {dates.map(date => (
-                              <td key={date} className="px-3 py-3 whitespace-nowrap text-sm text-gray-600 text-center">{hoursByDevDate[dev.id]?.[date] || '0'}</td>
-                              ))}
-                              <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-800 text-center">{grandTotalsPerDev[dev.id] || '0'}</td>
-                          </tr>
-                          ))}
-                      </tbody>
-                      </table>
-                  </div>
-                  </div>
-
-                  <div className="bg-white/70 backdrop-blur-md shadow-xl rounded-xl overflow-hidden border border-gray-200">
-                  <h3 className="text-lg font-medium text-gray-700 px-5 py-3 border-b border-gray-200">Daily Hours</h3>
-                  <div className="overflow-x-auto"> {/* Added overflow-x-auto here for scrolling */}
-                      <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50/80">
-                          <tr>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                          {/* Showing all developers, ensure this is intended or use slice if needed */}
-                          {developers.map(dev => (
-                              <th key={dev.id} className="px-3 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">{dev.name.split(' ')[0]}</th>
-                          ))}
-                          <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
-                          </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                          {dates.map((date, index) => (
-                          <tr key={date} className={index % 2 === 0 ? undefined : 'bg-gray-50/70'}>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-800">{formatDate(date)}</td>
-                              {developers.map(dev => (
-                              <td key={dev.id} className="px-3 py-3 whitespace-nowrap text-sm text-gray-600 text-center">{hoursByDateDev[date]?.[dev.id] || '0'}</td>
-                              ))}
-                              <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-800 text-center">{dailyTotalsPerDate[date] || '0'}</td>
-                          </tr>
-                          ))}
-                      </tbody>
-                      </table>
-                  </div>
-                  </div>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-800 text-center">{grandTotalsPerDev[dev.id] || '0'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
+
+              <div className="bg-white/70 backdrop-blur-md shadow-xl rounded-xl overflow-hidden border border-gray-200">
+                <h3 className="text-lg font-medium text-gray-700 px-5 py-3 border-b border-gray-200">Daily Hours</h3>
+                <div className="overflow-x-auto"> {/* Added overflow-x-auto here for scrolling */}
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50/80">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                        {/* Showing all developers, ensure this is intended or use slice if needed */}
+                        {developers.map(dev => (
+                          <th key={dev.id} className="px-3 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">{dev.name.split(' ')[0]}</th>
+                        ))}
+                        <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {dates.map((date, index) => (
+                        <tr key={date} className={index % 2 === 0 ? undefined : 'bg-gray-50/70'}>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-800">{formatDate(date)}</td>
+                          {developers.map(dev => (
+                            <td key={dev.id} className="px-3 py-3 whitespace-nowrap text-sm text-gray-600 text-center">{hoursByDateDev[date]?.[dev.id] || '0'}</td>
+                          ))}
+                          <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-800 text-center">{dailyTotalsPerDate[date] || '0'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           </section>
         </main>
       </div>
@@ -695,7 +695,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
           />
         )}
       </Modal>
-       <style>{`
+      <style>{`
         @keyframes modalShow {
           to {
             opacity: 1;
