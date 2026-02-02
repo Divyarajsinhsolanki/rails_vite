@@ -1114,70 +1114,62 @@ const ProjectStatistics = ({ projectId }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Premium Hero Header */}
-      <div className="relative overflow-hidden bg-slate-900 pb-8">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-700 via-slate-900 to-slate-900 opacity-90" />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
-
-        <div className="relative max-w-[98%] mx-auto px-6 pt-4 pb-4">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/20">
-                <ChartBarIcon className="h-7 w-7 text-white" />
-              </div>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.3em] text-purple-400">Statistics</p>
-                <h1 className="text-2xl font-bold text-white sm:text-3xl tracking-tight">
-                  Project Analytics
-                </h1>
-              </div>
+    <div className="min-h-screen bg-slate-50/50 p-6">
+      {/* Unified Header */}
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-xl overflow-hidden mb-6">
+        <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-2xl shadow-inner">
+              <ChartBarIcon className="h-8 w-8 text-purple-600 dark:text-purple-400" />
             </div>
-
-            {/* Navigation Tabs */}
-            <div className="flex items-center gap-1 bg-white/10 backdrop-blur-md border border-white/20 p-1 rounded-xl">
-              {[
-                { key: 'overview', label: 'Overview', icon: ChartBarIcon },
-                { key: 'sprints', label: 'Sprints', icon: FlagIcon },
-                { key: 'team', label: 'Team', icon: UserGroupIcon },
-                { key: 'milestones', label: 'Milestones', icon: CalendarIcon }
-              ].map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveView(tab.key)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeView === tab.key
-                    ? 'bg-white text-slate-900 shadow-lg'
-                    : 'text-white/70 hover:text-white hover:bg-white/10'
-                    }`}
-                >
-                  <tab.icon className="h-4 w-4" />
-                  {tab.label}
-                </button>
-              ))}
+            <div>
+              <h1 className="text-2xl font-bold text-zinc-800 dark:text-zinc-100 tracking-tight">Project Analytics</h1>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Deep insights into sprint performance</p>
             </div>
           </div>
 
-          {/* Quick Stats Row */}
-          <div className="mt-4 flex flex-wrap items-center gap-6 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-white/70">{summary.completed} Completed</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-blue-400" />
-              <span className="text-white/70">{summary.inProgress} In Progress</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-slate-400" />
-              <span className="text-white/70">{summary.todo} To Do</span>
-            </div>
-            {summary.overdue > 0 && (
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-rose-400 animate-pulse" />
-                <span className="text-rose-300 font-semibold">{summary.overdue} Overdue</span>
-              </div>
-            )}
+          <div className="flex flex-wrap items-center gap-1 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 p-1.5 rounded-2xl">
+            {[
+              { key: 'overview', label: 'Overview', icon: ChartBarIcon },
+              { key: 'sprints', label: 'Sprints', icon: FlagIcon },
+              { key: 'team', label: 'Team', icon: UserGroupIcon },
+              { key: 'milestones', label: 'Milestones', icon: CalendarIcon }
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveView(tab.key)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${activeView === tab.key
+                  ? 'bg-white dark:bg-zinc-700 text-slate-900 dark:text-white shadow-md'
+                  : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                  }`}
+              >
+                <tab.icon className="h-4 w-4" />
+                {tab.label}
+              </button>
+            ))}
           </div>
+        </div>
+
+        {/* Quick Stats Row */}
+        <div className="px-6 py-4 bg-zinc-50/50 dark:bg-zinc-800/20 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
+            <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{summary.completed} Completed</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.4)]" />
+            <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{summary.inProgress} In Progress</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-slate-400" />
+            <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">{summary.todo} To Do</span>
+          </div>
+          {summary.overdue > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1 bg-rose-50 dark:bg-rose-900/20 rounded-lg animate-pulse border border-rose-100 dark:border-rose-900/30">
+              <div className="h-2 w-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]" />
+              <span className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">{summary.overdue} Overdue</span>
+            </div>
+          )}
         </div>
       </div>
 

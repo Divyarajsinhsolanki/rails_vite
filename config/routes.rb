@@ -95,7 +95,10 @@ Rails.application.routes.draw do
     resources :learning_goals, only: [:index, :create, :update, :destroy]
     resources :learning_checkpoints, only: [:create, :update, :destroy]
 
-    resources :projects, only: [:index, :create, :update, :destroy]
+    resources :projects, only: [:index, :create, :update, :destroy] do
+      resources :environments, controller: 'project_environments', only: [:index, :create, :update, :destroy]
+      resources :vault_items, controller: 'project_vault_items', only: [:index, :create, :update, :destroy]
+    end
     resources :project_users, only: [:create, :update, :destroy]
     delete 'project_users/leave/:project_id', to: 'project_users#leave'
     resources :task_logs, only: [:index, :create, :update, :destroy]

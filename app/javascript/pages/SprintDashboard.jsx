@@ -9,6 +9,7 @@ import SprintManager from '../components/Scheduler/SprintManager';
 import Sheet from './Sheet';
 import ProjectStatistics from './ProjectStatistics';
 import IssueTracker from './IssueTracker';
+import ProjectVault from './ProjectVault';
 
 const calculateWorkingDays = (start, end) => {
   let count = 0;
@@ -29,13 +30,23 @@ const formatDateRange = (start, end) => {
 
 export default function SprintDashboard() {
   const { projectId } = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'overview';
   const dateParam = searchParams.get('date');
   const selectedDate = React.useMemo(() =>
     dateParam ? new Date(dateParam) : new Date(),
     [dateParam]);
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const [activeTab, setActiveTabState] = useState(initialTab);
+
+  // Custom setter that also updates URL
+  const setActiveTab = (tab) => {
+    setActiveTabState(tab);
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set('tab', tab);
+      return newParams;
+    }, { replace: true });
+  };
   const [sprintId, setSprintId] = useState(null);
   const [sprint, setSprint] = useState(null);
   const [sprints, setSprints] = useState([]);
@@ -224,6 +235,16 @@ export default function SprintDashboard() {
                   Sheet
                 </button>
               )}
+              <button
+                className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
+                  ${activeTab === 'vault'
+                    ? 'bg-[var(--theme-color)] text-white shadow-lg'
+                    : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
+                  }`}
+                onClick={() => setActiveTab('vault')}
+              >
+                Vault
+              </button>
             </div>
             {project?.qa_mode_enabled && (
               <div className="ml-3 flex items-center gap-3 rounded-full border border-purple-200 bg-purple-50 px-3 py-1">
@@ -304,6 +325,9 @@ export default function SprintDashboard() {
       )}
       {activeTab === 'issues' && (
         <IssueTracker projectId={projectId} sprint={sprint} />
+      )}
+      {activeTab === 'vault' && (
+        <ProjectVault projectId={projectId} />
       )}
     </div>
   );

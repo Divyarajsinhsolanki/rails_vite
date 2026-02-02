@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2027_01_06_000000) do
+ActiveRecord::Schema[7.1].define(version: 2027_01_30_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -222,6 +222,17 @@ ActiveRecord::Schema[7.1].define(version: 2027_01_06_000000) do
     t.index ["user_id"], name: "index_posts_on_user_id"
   end
 
+  create_table "project_environments", force: :cascade do |t|
+    t.bigint "project_id", null: false
+    t.string "name", null: false
+    t.string "url"
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["project_id", "name"], name: "index_project_environments_on_project_id_and_name", unique: true
+    t.index ["project_id"], name: "index_project_environments_on_project_id"
+  end
+
   create_table "project_users", force: :cascade do |t|
     t.bigint "project_id", null: false
     t.bigint "user_id", null: false
@@ -234,6 +245,21 @@ ActiveRecord::Schema[7.1].define(version: 2027_01_06_000000) do
     t.index ["project_id", "user_id"], name: "index_project_users_on_project_id_and_user_id", unique: true
     t.index ["project_id"], name: "index_project_users_on_project_id"
     t.index ["user_id"], name: "index_project_users_on_user_id"
+  end
+
+  create_table "project_vault_items", force: :cascade do |t|
+    t.bigint "project_id", null: false
+    t.bigint "project_environment_id"
+    t.string "title", null: false
+    t.string "category"
+    t.text "content", null: false
+    t.string "username"
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["project_environment_id"], name: "index_project_vault_items_on_project_environment_id"
+    t.index ["project_id", "category"], name: "index_project_vault_items_on_project_id_and_category"
+    t.index ["project_id"], name: "index_project_vault_items_on_project_id"
   end
 
   create_table "projects", force: :cascade do |t|
@@ -532,8 +558,11 @@ ActiveRecord::Schema[7.1].define(version: 2027_01_06_000000) do
   add_foreign_key "post_likes", "posts"
   add_foreign_key "post_likes", "users"
   add_foreign_key "posts", "users"
+  add_foreign_key "project_environments", "projects"
   add_foreign_key "project_users", "projects"
   add_foreign_key "project_users", "users"
+  add_foreign_key "project_vault_items", "project_environments"
+  add_foreign_key "project_vault_items", "projects"
   add_foreign_key "projects", "users", column: "owner_id"
   add_foreign_key "skill_endorsements", "teams"
   add_foreign_key "skill_endorsements", "user_skills"

@@ -173,22 +173,21 @@ const pickFirstAttachment = (issue) => {
 
 const StatCard = ({ icon: Icon, label, value, color, delay = 0, pulse = false }) => (
   <motion.div
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={{ opacity: 1, scale: 1 }}
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.4, delay }}
-    className="relative overflow-hidden rounded-xl border border-white/20 bg-white/10 backdrop-blur-md p-3 shadow-lg group"
+    className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-sm group hover:shadow-md transition-all"
   >
-    <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
     {pulse && (
-      <div className="absolute inset-0 animate-pulse bg-rose-500/10 pointer-events-none" />
+      <div className="absolute inset-0 animate-pulse bg-rose-500/5 pointer-events-none" />
     )}
-    <div className="relative flex items-center gap-3">
-      <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${color} shadow-lg transition-transform group-hover:scale-110`}>
-        <Icon className="h-5 w-5 text-white" />
+    <div className="relative flex items-center gap-4">
+      <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${color.replace('bg-', 'bg-gradient-to-br from-').replace('500', '500 to-').concat(color.includes('rose') ? 'rose-600' : color.includes('indigo') ? 'indigo-600' : color.includes('amber') ? 'amber-600' : 'emerald-600')} shadow-lg transition-transform group-hover:scale-110 shrink-0`}>
+        <Icon className="h-6 w-6 text-white" />
       </div>
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-white/70">{label}</p>
-        <p className="text-xl font-bold text-white">{value}</p>
+        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
+        <p className="text-2xl font-bold text-slate-900">{value}</p>
       </div>
     </div>
   </motion.div>
@@ -1402,62 +1401,60 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50/50 p-6">
       <Toaster position="top-right" />
 
-      {/* Premium Hero Header */}
-      <div className="relative overflow-hidden bg-slate-900 pb-10">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-700 via-slate-900 to-slate-900 opacity-90" />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
+      {/* Unified Header */}
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-xl overflow-hidden mb-6">
+        <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-4"
+          >
+            <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl shadow-inner">
+              <ShieldExclamationIcon className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-zinc-800 dark:text-zinc-100 tracking-tight">Issue Tracker</h1>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Capture and manage project issues</p>
+            </div>
+          </motion.div>
 
-        <div className="relative max-w-[98%] mx-auto px-6 pt-4 pb-4">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-4"
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => setEditing({})}
+              className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all font-semibold shadow-lg shadow-indigo-500/25 active:scale-95 transform"
             >
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/20">
-                <ShieldExclamationIcon className="h-8 w-8 text-white" />
-              </div>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.3em] text-indigo-400">Issue Tracker</p>
-                <h1 className="text-3xl font-bold text-white sm:text-4xl tracking-tight">
-                  Premium Dashboard
-                </h1>
-              </div>
-            </motion.div>
+              <SparklesIcon className="h-4 w-4" />
+              <span>Log New Issue</span>
+            </button>
 
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setEditing({})}
-                className="group relative flex items-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-sm font-bold text-white shadow-xl transition-all hover:scale-105 active:scale-95"
-              >
-                <SparklesIcon className="h-4 w-4" />
-                <span>Log New Issue</span>
-                <div className="absolute inset-0 translate-x-[-100%] bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 group-hover:translate-x-[100%]" />
-              </button>
-              <button
-                onClick={() => setIsActivityOpen(true)}
-                className="flex items-center gap-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 px-3 py-2 text-sm font-bold text-white hover:bg-white/20 transition-all"
-              >
-                <FireIcon className="h-4 w-4 text-amber-400" />
-                Live
-              </button>
-              <div className="h-8 w-[1px] bg-white/10" />
-              <div className="flex flex-col items-end">
-                <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest">Sprint</span>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <div className="h-1.5 w-20 bg-white/10 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500 w-3/4 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-                  </div>
-                  <span className="text-xs font-bold text-white">75%</span>
+            <button
+              onClick={() => setIsActivityOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 rounded-xl font-semibold hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all"
+            >
+              <FireIcon className="h-4 w-4 text-amber-500" />
+              Live
+            </button>
+
+            <div className="h-10 w-[1px] bg-zinc-200 dark:bg-zinc-700 hidden lg:block mx-2" />
+
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sprint Health</span>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="h-2 w-24 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-500 w-3/4 shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
                 </div>
+                <span className="text-xs font-bold text-slate-600 dark:text-slate-300">75%</span>
               </div>
             </div>
           </div>
-          {/* Stats Grid */}
-          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+        </div>
+
+        {/* Stats Row */}
+        <div className="px-6 py-4 bg-zinc-50/50 dark:bg-zinc-800/20 border-t border-zinc-100 dark:border-zinc-800">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <StatCard
               icon={ClipboardDocumentListIcon}
               label="Total Issues"

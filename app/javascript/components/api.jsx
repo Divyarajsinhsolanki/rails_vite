@@ -176,6 +176,19 @@ export const updateProjectUser = (id, data) => api.patch(`/project_users/${id}.j
 export const deleteProjectUser = (id) => api.delete(`/project_users/${id}.json`);
 export const leaveProject = (projectId) => api.delete(`/project_users/leave/${projectId}.json`);
 
+// PROJECT VAULT ENDPOINTS
+// Environments
+export const fetchProjectEnvironments = (projectId) => api.get(`/projects/${projectId}/environments.json`);
+export const createProjectEnvironment = (projectId, data) => api.post(`/projects/${projectId}/environments.json`, { project_environment: data });
+export const updateProjectEnvironment = (projectId, id, data) => api.patch(`/projects/${projectId}/environments/${id}.json`, { project_environment: data });
+export const deleteProjectEnvironment = (projectId, id) => api.delete(`/projects/${projectId}/environments/${id}.json`);
+
+// Vault Items
+export const fetchProjectVaultItems = (projectId, params = {}) => api.get(`/projects/${projectId}/vault_items.json`, { params });
+export const createProjectVaultItem = (projectId, data) => api.post(`/projects/${projectId}/vault_items.json`, { project_vault_item: data });
+export const updateProjectVaultItem = (projectId, id, data) => api.patch(`/projects/${projectId}/vault_items/${id}.json`, { project_vault_item: data });
+export const deleteProjectVaultItem = (projectId, id) => api.delete(`/projects/${projectId}/vault_items/${id}.json`);
+
 export const fetchDailyMomentum = () => api.get('/daily_momentum');
 
 // WORK LOG ENDPOINTS
