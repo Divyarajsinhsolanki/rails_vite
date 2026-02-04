@@ -26,11 +26,14 @@ class Task < ApplicationRecord
   end
 
   def notify_assigned_user
-    return unless assigned_user && created_by
+    return unless assigned_user
+
+    actor_id = notification_actor_id(created_by)
+    return unless actor_id
 
     Notification.create(
       recipient: assigned_user,
-      actor_id: created_by,
+      actor_id: actor_id,
       action: 'assigned',
       notifiable: self,
       metadata: { task_title: title || "Task #{task_id}" }
@@ -38,14 +41,21 @@ class Task < ApplicationRecord
   end
 
   def notify_assigned_user_change
-    return unless saved_change_to_assigned_to_user? && assigned_user && updated_by
+    return unless saved_change_to_assigned_to_user? && assigned_user
+
+    actor_id = notification_actor_id(updated_by)
+    return unless actor_id
 
     Notification.create(
       recipient: assigned_user,
-      actor_id: updated_by,
+      actor_id: actor_id,
       action: 'assigned',
       notifiable: self,
       metadata: { task_title: title || "Task #{task_id}" }
     )
+  end
+
+  def notification_actor_id(default_id)
+    default_id || Current.user&.id || created_by
   end
 end
