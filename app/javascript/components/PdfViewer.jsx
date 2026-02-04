@@ -11,6 +11,8 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onCancelTool }) => {
   const [scale, setScale] = useState(1.0);
   const [pageWidth, setPageWidth] = useState(null);
   const [pageHeight, setPageHeight] = useState(null);
+  const placementTools = new Set(["addText", "addSignature", "addStamp"]);
+  const shouldShowOverlay = placementTools.has(activeTool);
 
   function onDocumentLoadSuccess({ numPages }) {
     setNumPages(numPages);
@@ -68,7 +70,7 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onCancelTool }) => {
             />
 
             {/* Overlay for Drag and Drop */}
-            {activeTool && (
+            {shouldShowOverlay && (
               <DraggableOverlay
                 activeTool={activeTool}
                 onConfirmPosition={(pos) => onConfirmPosition({ ...pos, pageNumber })}
