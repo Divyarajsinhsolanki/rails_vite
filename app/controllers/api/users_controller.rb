@@ -54,7 +54,8 @@ class Api::UsersController < Api::BaseController
       :color_theme,
       :dark_mode,
       :landing_page,
-      :department_id
+      :department_id,
+      :notification_preferences
     )
   end
 
