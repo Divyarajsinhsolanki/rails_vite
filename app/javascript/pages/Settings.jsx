@@ -3,6 +3,7 @@ import api from "../components/api";
 import { AuthContext } from "../context/AuthContext";
 import { COLOR_MAP } from "/utils/theme";
 import { Switch, Tab } from "@headlessui/react";
+import { Toaster, toast } from "react-hot-toast";
 import {
   User,
   Palette,
@@ -73,8 +74,10 @@ const Settings = () => {
         dark_mode: darkMode,
         landing_page: landingPage,
       }));
+      toast.success("Settings updated.");
     } catch (err) {
       console.error("Failed to update profile", err);
+      toast.error("Unable to update settings. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -92,8 +95,10 @@ const Settings = () => {
         ...prev,
         notification_preferences: notificationPrefs,
       }));
+      toast.success("Notification preferences saved.");
     } catch (err) {
       console.error("Failed to update notification preferences", err);
+      toast.error("Unable to save notifications. Please try again.");
     } finally {
       setSavingNotifications(false);
     }
@@ -108,6 +113,7 @@ const Settings = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <Toaster position="top-right" />
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
