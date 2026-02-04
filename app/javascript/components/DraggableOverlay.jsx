@@ -17,6 +17,8 @@ const DraggableOverlay = ({
   pageHeight
 }) => {
   const nodeRef = React.useRef(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [bounds, setBounds] = useState("parent");
 
   useEffect(() => {
     if (pageWidth && pageHeight) {
@@ -26,6 +28,8 @@ const DraggableOverlay = ({
         right: pageWidth - 100, // Approximate width of the element
         bottom: pageHeight - 50 // Approximate height
       });
+    } else {
+      setBounds("parent");
     }
   }, [pageWidth, pageHeight]);
 
@@ -51,7 +55,7 @@ const DraggableOverlay = ({
         nodeRef={nodeRef}
         position={position}
         onStop={handleStop}
-        bounds="parent"
+        bounds={bounds}
         handle=".handle"
       >
         <div ref={nodeRef} className="pointer-events-auto absolute flex flex-col items-center group">
