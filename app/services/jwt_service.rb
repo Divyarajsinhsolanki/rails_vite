@@ -7,7 +7,7 @@ class JwtService
   end
 
   def self.decode(token)
-    decoded = JWT.decode(token, SECRET_KEY)[0]
+    decoded = JWT.decode(token, SECRET_KEY, true, { algorithm: "HS256" })[0]
     decoded.with_indifferent_access
   rescue JWT::ExpiredSignature
     nil # Token expired

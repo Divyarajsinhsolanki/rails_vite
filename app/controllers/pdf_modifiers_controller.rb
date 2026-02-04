@@ -198,6 +198,10 @@ class PdfModifiersController < ApplicationController
     text_boxes = params[:textBoxes]
     # Use params[:pdfUrl] but secure it
     file_path = safe_pdf_path(params[:pdfUrl])
+
+    unless text_boxes.is_a?(Hash)
+      return render json: { error: "Invalid text box data." }, status: :unprocessable_entity
+    end
     
     text_boxes.each do |page_number, boxes|
       boxes.each do |box|
@@ -256,4 +260,3 @@ class PdfModifiersController < ApplicationController
     path.to_s
   end
 end
-

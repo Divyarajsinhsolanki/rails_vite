@@ -13,7 +13,7 @@ class GoogleSheetsReader
   def read_data
     range = "#{@sheet_name}!A1:Z"
     response = @service.get_spreadsheet_values(@spreadsheet_id, range)
-    response.values
+    response.values || []
   end
 
   private

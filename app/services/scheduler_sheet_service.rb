@@ -98,7 +98,9 @@ class SchedulerSheetService
     @sheet_id ||= begin
       spreadsheet = @service.get_spreadsheet(@spreadsheet_id)
       sheet = spreadsheet.sheets.find { |s| s.properties.title == @sheet_name }
-      sheet.properties.sheet_id
+      return sheet.properties.sheet_id if sheet
+
+      raise StandardError, "Sheet not found: #{@sheet_name}"
     end
   end
 end
