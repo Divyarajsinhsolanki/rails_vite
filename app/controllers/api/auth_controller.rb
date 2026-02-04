@@ -163,7 +163,7 @@ class Api::AuthController < Api::BaseController
       :color_theme,
       :dark_mode,
       :landing_page,
-      :notification_preferences
+      notification_preferences: {}
     )
     permitted.delete(:profile_picture) if permitted[:profile_picture] == "null"
     permitted.delete(:cover_photo) if permitted[:cover_photo] == "null"

@@ -55,7 +55,7 @@ class Api::UsersController < Api::BaseController
       :dark_mode,
       :landing_page,
       :department_id,
-      :notification_preferences
+      notification_preferences: {}
     )
   end
 
