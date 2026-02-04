@@ -32,24 +32,29 @@ function classNames(...classes) {
 const Settings = () => {
   const { user, setUser } = useContext(AuthContext);
   const initialColor = COLOR_MAP[user?.color_theme] || user?.color_theme || "#3b82f6";
+  const defaultNotificationPrefs = {
+    commented: true,
+    assigned: true,
+    update: true,
+    digest: false
+  };
 
   // State
   const [color, setColor] = useState(initialColor);
   const [darkMode, setDarkMode] = useState(user?.dark_mode || false);
   const [landingPage, setLandingPage] = useState(user?.landing_page || "posts");
   const [saving, setSaving] = useState(false);
-
-  // Mock Notification Settings
-  const [emailNotifs, setEmailNotifs] = useState({
-    comments: true,
-    tasks: true,
-    digest: false
-  });
+  const [savingNotifications, setSavingNotifications] = useState(false);
+  const [notificationPrefs, setNotificationPrefs] = useState(defaultNotificationPrefs);
 
   useEffect(() => {
     setDarkMode(user?.dark_mode || false);
     setLandingPage(user?.landing_page || "posts");
     setColor(COLOR_MAP[user?.color_theme] || user?.color_theme || "#3b82f6");
+    setNotificationPrefs({
+      ...defaultNotificationPrefs,
+      ...(user?.notification_preferences || {})
+    });
   }, [user]);
 
   const handleSave = async () => {
@@ -68,11 +73,29 @@ const Settings = () => {
         dark_mode: darkMode,
         landing_page: landingPage,
       }));
-      // In a real app, we'd save notification prefs here too
     } catch (err) {
       console.error("Failed to update profile", err);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveNotifications = async () => {
+    setSavingNotifications(true);
+    try {
+      await api.post("/update_profile", {
+        auth: {
+          notification_preferences: notificationPrefs
+        },
+      });
+      setUser((prev) => ({
+        ...prev,
+        notification_preferences: notificationPrefs,
+      }));
+    } catch (err) {
+      console.error("Failed to update notification preferences", err);
+    } finally {
+      setSavingNotifications(false);
     }
   };
 
@@ -249,12 +272,12 @@ const Settings = () => {
                         Get notified when someone posts a comment on your task.
                       </Switch.Description>
                     </span>
-                    <Switch
-                      checked={emailNotifs.comments}
-                      onChange={(val) => setEmailNotifs(p => ({ ...p, comments: val }))}
-                      className={`${emailNotifs.comments ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                  <Switch
+                      checked={notificationPrefs.commented}
+                      onChange={(val) => setNotificationPrefs((p) => ({ ...p, commented: val }))}
+                      className={`${notificationPrefs.commented ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
                     >
-                      <span aria-hidden="true" className={`${emailNotifs.comments ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200`} />
+                      <span aria-hidden="true" className={`${notificationPrefs.commented ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200`} />
                     </Switch>
                   </Switch.Group>
 
@@ -270,11 +293,31 @@ const Settings = () => {
                       </Switch.Description>
                     </span>
                     <Switch
-                      checked={emailNotifs.tasks}
-                      onChange={(val) => setEmailNotifs(p => ({ ...p, tasks: val }))}
-                      className={`${emailNotifs.tasks ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                      checked={notificationPrefs.assigned}
+                      onChange={(val) => setNotificationPrefs((p) => ({ ...p, assigned: val }))}
+                      className={`${notificationPrefs.assigned ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
                     >
-                      <span aria-hidden="true" className={`${emailNotifs.tasks ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200`} />
+                      <span aria-hidden="true" className={`${notificationPrefs.assigned ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200`} />
+                    </Switch>
+                  </Switch.Group>
+
+                  <div className="border-t border-gray-100"></div>
+
+                  <Switch.Group as="div" className="flex items-center justify-between py-3">
+                    <span className="flex-grow flex flex-col">
+                      <Switch.Label as="span" className="text-sm font-medium text-gray-900" passive>
+                        Task Updates
+                      </Switch.Label>
+                      <Switch.Description as="span" className="text-sm text-gray-500">
+                        Get notified when a task assigned to you changes status.
+                      </Switch.Description>
+                    </span>
+                    <Switch
+                      checked={notificationPrefs.update}
+                      onChange={(val) => setNotificationPrefs((p) => ({ ...p, update: val }))}
+                      className={`${notificationPrefs.update ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                    >
+                      <span aria-hidden="true" className={`${notificationPrefs.update ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200`} />
                     </Switch>
                   </Switch.Group>
 
@@ -290,13 +333,23 @@ const Settings = () => {
                       </Switch.Description>
                     </span>
                     <Switch
-                      checked={emailNotifs.digest}
-                      onChange={(val) => setEmailNotifs(p => ({ ...p, digest: val }))}
-                      className={`${emailNotifs.digest ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                      checked={notificationPrefs.digest}
+                      onChange={(val) => setNotificationPrefs((p) => ({ ...p, digest: val }))}
+                      className={`${notificationPrefs.digest ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
                     >
-                      <span aria-hidden="true" className={`${emailNotifs.digest ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200`} />
+                      <span aria-hidden="true" className={`${notificationPrefs.digest ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200`} />
                     </Switch>
                   </Switch.Group>
+                </div>
+
+                <div className="flex justify-end pt-6 border-t border-gray-100">
+                  <button
+                    onClick={handleSaveNotifications}
+                    disabled={savingNotifications}
+                    className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                  >
+                    {savingNotifications ? 'Saving...' : 'Save Notifications'}
+                  </button>
                 </div>
               </Tab.Panel>
 

@@ -12,6 +12,12 @@ class User < ApplicationRecord
     'available_soon' => 'Available in 2 weeks',
     'fully_booked' => 'Fully Booked'
   }.freeze
+  NOTIFICATION_PREFERENCES_DEFAULTS = {
+    "commented" => true,
+    "assigned" => true,
+    "update" => true,
+    "digest" => false
+  }.freeze
 
   has_one_attached :profile_picture
   has_one_attached :cover_photo
@@ -84,6 +90,14 @@ class User < ApplicationRecord
 
   def availability_label
     AVAILABILITY_LABELS[availability_status] || availability_status.to_s.humanize
+  end
+
+  def notification_preferences_with_defaults
+    NOTIFICATION_PREFERENCES_DEFAULTS.merge((notification_preferences || {}).stringify_keys)
+  end
+
+  def notification_preference_enabled?(action)
+    notification_preferences_with_defaults.fetch(action.to_s, true)
   end
 
   private
