@@ -106,12 +106,7 @@ The project serves as a learning playground and starting point for applications 
 
 ## Tests
 
-Run the Rails and front-end test suites with:
-
-```bash
-bundle exec rspec
-npm test
-```
+No Rails RSpec test suite is configured in this project.
 
 ## Deployment
 

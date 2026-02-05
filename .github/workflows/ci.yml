@@ -44,8 +44,5 @@ jobs:
       - name: Prepare database
         run: bin/rails db:prepare
 
-      - name: Run RSpec
-        run: bundle exec rspec
-
       - name: Run front-end tests
         run: npm test
