@@ -10,6 +10,7 @@ import Sheet from './Sheet';
 import ProjectStatistics from './ProjectStatistics';
 import IssueTracker from './IssueTracker';
 import ProjectVault from './ProjectVault';
+import PageLoader from '../components/ui/PageLoader';
 
 const calculateWorkingDays = (start, end) => {
   let count = 0;
@@ -53,6 +54,7 @@ export default function SprintDashboard() {
   const [project, setProject] = useState(null);
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(false);
   const [qaMode, setQaMode] = useState(false);
+  const [isLoadingDashboard, setIsLoadingDashboard] = useState(true);
   const sheetEnabled = !!(project?.sheet_integration_enabled && project?.sheet_id);
 
   useEffect(() => {
@@ -82,6 +84,7 @@ export default function SprintDashboard() {
   useEffect(() => {
     setSprint(null);
     setSprints([]);
+    setIsLoadingDashboard(true);
 
     const query = projectId ? `?project_id=${projectId}` : '';
     fetch(`/api/sprints.json${query}`)
@@ -111,7 +114,13 @@ export default function SprintDashboard() {
         } else {
           setSprintId(null);
         }
-      });
+      })
+      .catch(() => {
+        setSprint(null);
+        setSprintId(null);
+        setSprints([]);
+      })
+      .finally(() => setIsLoadingDashboard(false));
   }, [projectId, selectedDate]);
 
   useEffect(() => {
@@ -120,6 +129,10 @@ export default function SprintDashboard() {
       if (found) setSprint(found);
     }
   }, [sprintId, sprints]);
+
+  if (isLoadingDashboard) {
+    return <PageLoader title="Project dashboard" message="Loading sprint board, tasks, and project data…" />;
+  }
 
   const isCurrentSprint = (s) => {
     if (!s) return false;

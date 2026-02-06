@@ -1,5 +1,5 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 
 import { AuthProvider } from "../context/AuthContext";
 import PrivateRoute from "../components/PrivateRoute";
@@ -26,6 +26,25 @@ import WorkLog from "../pages/WorkLog";
 import Settings from "../pages/Settings";
 import PageTitle from "./PageTitle";
 import DailyMomentumHub from "../pages/DailyMomentumHub";
+import PageLoader from "./ui/PageLoader";
+
+const RouteTransitionLoader = ({ children }) => {
+  const location = useLocation();
+  const [isRouteLoading, setIsRouteLoading] = useState(false);
+
+  useEffect(() => {
+    setIsRouteLoading(true);
+    const timer = setTimeout(() => setIsRouteLoading(false), 350);
+    return () => clearTimeout(timer);
+  }, [location.pathname, location.search]);
+
+  return (
+    <>
+      {isRouteLoading ? <PageLoader title="Opening page" message="Just a moment while we load everything…" overlay /> : null}
+      {children}
+    </>
+  );
+};
 
 const App = () => {
   return (
@@ -38,6 +57,7 @@ const App = () => {
           <Navbar />
 
           {/* ✅ Page Content */}
+          <RouteTransitionLoader>
             <Routes>
               <Route path="/contact" element={<Contact />} />
               <Route path="/legal" element={<Legal />} />
@@ -60,7 +80,8 @@ const App = () => {
               <Route path="/users" element={<PrivateRoute ownerOnly><Users /></PrivateRoute>} />
               <Route path="/admin" element={<PrivateRoute ownerOnly><Admin /></PrivateRoute>} />
               <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
-              </Routes>
+            </Routes>
+          </RouteTransitionLoader>
 
           {/* ✅ Footer */}
           <Footer />
