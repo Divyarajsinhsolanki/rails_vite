@@ -10,10 +10,15 @@ export default function PageLoader({
   message = MESSAGES.default,
   title = "Loading",
   compact = false,
+  overlay = false,
 }) {
+  const containerClass = overlay
+    ? "fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 px-4 backdrop-blur-[2px]"
+    : `flex items-center justify-center ${compact ? "py-10" : "min-h-[55vh] px-4"}`;
+
   return (
-    <div className={`flex items-center justify-center ${compact ? "py-10" : "min-h-[55vh] px-4"}`}>
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white/95 p-6 shadow-sm">
+    <div className={containerClass}>
+      <div className={`w-full max-w-md rounded-2xl border border-slate-200 bg-white/95 p-6 ${overlay ? "shadow-2xl" : "shadow-sm"}`}>
         <div className="mb-4 flex items-center gap-3">
           <span className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[var(--theme-color)]" />
           <div>

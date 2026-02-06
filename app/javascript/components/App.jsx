@@ -34,13 +34,13 @@ const RouteTransitionLoader = ({ children }) => {
 
   useEffect(() => {
     setIsRouteLoading(true);
-    const timer = setTimeout(() => setIsRouteLoading(false), 250);
+    const timer = setTimeout(() => setIsRouteLoading(false), 350);
     return () => clearTimeout(timer);
   }, [location.pathname, location.search]);
 
   return (
     <>
-      {isRouteLoading ? <PageLoader title="Navigating" message="Getting your page ready…" compact /> : null}
+      {isRouteLoading ? <PageLoader title="Opening page" message="Just a moment while we load everything…" overlay /> : null}
       {children}
     </>
   );
