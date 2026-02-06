@@ -3,6 +3,7 @@ import { useParams, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { fetchProjects } from "./api";
 import AuthPage from "../pages/AuthPage";
+import PageLoader from "./ui/PageLoader";
 
 const ProjectMemberRoute = ({ children }) => {
   const { projectId } = useParams();
@@ -27,7 +28,7 @@ const ProjectMemberRoute = ({ children }) => {
     };
   }, [projectId, isAuthenticated, user]);
 
-  if (initializing || isMember === null) return <div>Loading…</div>;
+  if (initializing || isMember === null) return <PageLoader title="Project access" message="Verifying project permissions…" />;
   if (!isAuthenticated) return <AuthPage mode={mode} />;
   if (!isMember) return <div className="p-4">Unauthorized</div>;
   return children;

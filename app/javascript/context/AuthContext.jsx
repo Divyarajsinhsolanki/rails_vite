@@ -5,6 +5,7 @@ import { auth, googleProvider } from "../firebaseConfig";
 import { signInWithPopup } from "firebase/auth";
 import { toast } from "react-hot-toast";
 import { COLOR_MAP, toRgb, lightenColor, darkenColor } from '/utils/theme';
+import PageLoader from "../components/ui/PageLoader";
 
 export const AuthContext = createContext();
 
@@ -120,7 +121,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={value}>
-      {initializing ? <div>Loading…</div> : children}
+      {initializing ? <PageLoader title="Authenticating" message="Checking your session…" /> : children}
     </AuthContext.Provider>
   );
 }
