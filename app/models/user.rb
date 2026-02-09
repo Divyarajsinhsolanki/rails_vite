@@ -92,6 +92,29 @@ class User < ApplicationRecord
     AVAILABILITY_LABELS[availability_status] || availability_status.to_s.humanize
   end
 
+  def keka_connected?
+    keka_base_url.present? && keka_api_key.present? && keka_employee_id.present?
+  end
+
+  def keka_api_key_masked
+    return if keka_api_key.blank?
+
+    visible = keka_api_key.to_s.last(4)
+    masked_length = [keka_api_key.to_s.length - 4, 0].max
+    "#{'*' * masked_length}#{visible}"
+  end
+
+  def keka_payload
+    {
+      connected: keka_connected?,
+      base_url: keka_base_url,
+      employee_id: keka_employee_id,
+      api_key_masked: keka_api_key_masked,
+      last_synced_at: keka_last_synced_at,
+      data: keka_profile_data || {}
+    }
+  end
+
   def notification_preferences_with_defaults
     NOTIFICATION_PREFERENCES_DEFAULTS.merge((notification_preferences || {}).stringify_keys)
   end

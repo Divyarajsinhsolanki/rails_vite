@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchUserInfo, fetchPosts, SchedulerAPI, fetchTeams } from "../components/api";
+import { fetchUserInfo, fetchPosts, SchedulerAPI, fetchTeams, saveKekaCredentials, refreshKekaProfile } from "../components/api";
 import { getStatusClasses } from '/utils/taskUtils';
 import { Squares2X2Icon, FolderIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { AuthContext } from '../context/AuthContext';
@@ -53,6 +53,23 @@ const Profile = () => {
     cover_photo: null,
     color_theme: "#3b82f6",
   });
+  const [keka, setKeka] = useState({
+    connected: false,
+    base_url: "",
+    employee_id: "",
+    api_key_masked: "",
+    last_synced_at: null,
+    data: {}
+  });
+  const [kekaForm, setKekaForm] = useState({
+    base_url: "",
+    employee_id: "",
+    api_key: ""
+  });
+  const [kekaSaving, setKekaSaving] = useState(false);
+  const [kekaRefreshing, setKekaRefreshing] = useState(false);
+  const [kekaError, setKekaError] = useState("");
+  const [kekaSuccess, setKekaSuccess] = useState("");
 
   const refreshUserInfo = async () => {
     setIsLoading(true);
@@ -85,6 +102,22 @@ const Profile = () => {
         cover_photo: data.user.cover_photo,
         color_theme: theme,
       });
+      if (data.keka) {
+        setKeka({
+          connected: data.keka.connected,
+          base_url: data.keka.base_url || "",
+          employee_id: data.keka.employee_id || "",
+          api_key_masked: data.keka.api_key_masked || "",
+          last_synced_at: data.keka.last_synced_at,
+          data: data.keka.data || {}
+        });
+        setKekaForm((prev) => ({
+          ...prev,
+          base_url: data.keka.base_url || "",
+          employee_id: data.keka.employee_id || "",
+          api_key: ""
+        }));
+      }
       
       const postsResponse = await fetchPosts(data.user.id);
       setPosts(postsResponse.data);
@@ -116,6 +149,56 @@ const Profile = () => {
       ...prevData,
       [name]: files[0],
     }));
+  };
+
+  const handleKekaChange = (e) => {
+    const { name, value } = e.target;
+    setKekaForm((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleKekaSave = async (e) => {
+    e.preventDefault();
+    setKekaSaving(true);
+    setKekaError("");
+    setKekaSuccess("");
+    try {
+      const { data } = await saveKekaCredentials({
+        base_url: kekaForm.base_url,
+        api_key: kekaForm.api_key,
+        employee_id: kekaForm.employee_id
+      });
+      if (data?.keka) {
+        setKeka(data.keka);
+        setKekaForm((prev) => ({ ...prev, api_key: "" }));
+      }
+      setKekaSuccess("Keka credentials saved and synced.");
+    } catch (error) {
+      const message = error?.response?.data?.error || "Failed to save Keka credentials.";
+      setKekaError(message);
+    } finally {
+      setKekaSaving(false);
+    }
+  };
+
+  const handleKekaRefresh = async () => {
+    setKekaRefreshing(true);
+    setKekaError("");
+    setKekaSuccess("");
+    try {
+      const { data } = await refreshKekaProfile();
+      if (data?.keka) {
+        setKeka(data.keka);
+      }
+      setKekaSuccess("Keka data refreshed.");
+    } catch (error) {
+      const message = error?.response?.data?.error || "Failed to refresh Keka data.";
+      setKekaError(message);
+    } finally {
+      setKekaRefreshing(false);
+    }
   };
 
   function getCSRFToken() {
@@ -171,6 +254,39 @@ const Profile = () => {
   const initial = (user?.first_name || user?.email || "").charAt(0).toUpperCase();
 
   const todayStr = new Date().toISOString().split("T")[0];
+  const normalizeKekaPayload = (payload) => {
+    if (!payload) return null;
+    return payload.data?.data || payload.data?.result || payload.data || payload;
+  };
+  const extractArray = (payload) => {
+    if (!payload) return [];
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload.logs)) return payload.logs;
+    if (Array.isArray(payload.entries)) return payload.entries;
+    if (Array.isArray(payload.data)) return payload.data;
+    return [];
+  };
+  const extractNumber = (payload, keys = []) => {
+    if (!payload) return null;
+    for (const key of keys) {
+      const value = payload[key];
+      if (typeof value === "number") return value;
+      if (typeof value === "string" && value.trim() !== "" && !Number.isNaN(Number(value))) {
+        return Number(value);
+      }
+    }
+    return null;
+  };
+  const kekaPayload = keka?.data || {};
+  const kekaProfile = normalizeKekaPayload(kekaPayload.profile);
+  const kekaAttendance = normalizeKekaPayload(kekaPayload.attendance);
+  const kekaTimesheets = normalizeKekaPayload(kekaPayload.timesheets);
+  const kekaLeave = normalizeKekaPayload(kekaPayload.leave_balances);
+  const kekaAttendanceLogs = extractArray(kekaAttendance);
+  const kekaTimesheetEntries = extractArray(kekaTimesheets);
+  const kekaTotalHours = extractNumber(kekaTimesheets, ["totalHours", "totalHoursWorked", "total_hours"]);
+  const kekaTotalMinutes = extractNumber(kekaTimesheets, ["totalMinutes", "total_minutes"]);
+  const kekaHoursDisplay = kekaTotalHours ?? (kekaTotalMinutes ? (kekaTotalMinutes / 60).toFixed(2) : null);
   const completedTasks = useMemo(
     () => tasks.filter((task) => {
       const normalizedStatus = (task.status || '').toLowerCase();
@@ -527,6 +643,15 @@ const Profile = () => {
                   <path fillRule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
                 Projects
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('keka')}
+              className={`px-6 py-3 font-medium whitespace-nowrap transition-all ${activeTab === 'keka' ? 'text-[var(--theme-color)] border-b-2 border-[var(--theme-color)]' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <div className="flex items-center gap-2">
+                <Squares2X2Icon className="h-5 w-5" />
+                Keka
               </div>
             </button>
           </div>
@@ -1065,6 +1190,194 @@ const Profile = () => {
                     <p className="mt-1 text-gray-500">Get started by joining a project</p>
                   </div>
                 )}
+              </div>
+            )}
+
+            {activeTab === 'keka' && (
+              <div className="space-y-8">
+                <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-800">Keka Integration</h2>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Connect your Keka account to surface attendance logs, hours, and employee details.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={handleKekaRefresh}
+                        disabled={kekaRefreshing || !keka.connected}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[rgb(var(--theme-color-rgb)/0.2)] text-[var(--theme-color)] hover:bg-[rgb(var(--theme-color-rgb)/0.1)] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <ArrowPathIcon className={`h-4 w-4 ${kekaRefreshing ? "animate-spin" : ""}`} />
+                        Refresh Data
+                      </button>
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleKekaSave} className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Keka Base URL</label>
+                      <input
+                        type="text"
+                        name="base_url"
+                        value={kekaForm.base_url}
+                        onChange={handleKekaChange}
+                        placeholder="https://yourcompany.keka.com"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Employee ID</label>
+                      <input
+                        type="text"
+                        name="employee_id"
+                        value={kekaForm.employee_id}
+                        onChange={handleKekaChange}
+                        placeholder="EMP000123"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">API Key</label>
+                      <input
+                        type="password"
+                        name="api_key"
+                        value={kekaForm.api_key}
+                        onChange={handleKekaChange}
+                        placeholder={keka.api_key_masked ? `Saved (${keka.api_key_masked})` : "Paste your API key"}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none"
+                        required
+                      />
+                    </div>
+                    <div className="md:col-span-3 flex flex-wrap items-center gap-3">
+                      <button
+                        type="submit"
+                        disabled={kekaSaving}
+                        className="px-5 py-2 bg-[var(--theme-color)] text-white rounded-lg hover:bg-[var(--theme-color)]/90 transition disabled:opacity-50"
+                      >
+                        {kekaSaving ? "Saving..." : "Save & Sync"}
+                      </button>
+                      {keka.last_synced_at && (
+                        <span className="text-sm text-gray-500">
+                          Last synced {new Date(keka.last_synced_at).toLocaleString()}
+                        </span>
+                      )}
+                      {kekaSuccess && <span className="text-sm text-green-600">{kekaSuccess}</span>}
+                      {kekaError && <span className="text-sm text-red-600">{kekaError}</span>}
+                    </div>
+                  </form>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-6 border border-indigo-100">
+                    <p className="text-sm text-indigo-600 font-medium">Attendance Logs</p>
+                    <h3 className="text-2xl font-bold text-indigo-800 mt-1">{kekaAttendanceLogs.length}</h3>
+                    <p className="text-xs text-indigo-600 mt-2">Last 30 days</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-100">
+                    <p className="text-sm text-emerald-600 font-medium">Hours Logged</p>
+                    <h3 className="text-2xl font-bold text-emerald-800 mt-1">
+                      {kekaHoursDisplay !== null ? `${kekaHoursDisplay} hrs` : "—"}
+                    </h3>
+                    <p className="text-xs text-emerald-600 mt-2">From timesheets</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-6 border border-amber-100">
+                    <p className="text-sm text-amber-600 font-medium">Timesheet Entries</p>
+                    <h3 className="text-2xl font-bold text-amber-800 mt-1">{kekaTimesheetEntries.length}</h3>
+                    <p className="text-xs text-amber-600 mt-2">Last 30 days</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Employee Details</h3>
+                    {kekaProfile ? (
+                      <div className="space-y-3 text-sm text-gray-600">
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Name</span>
+                          <span className="font-medium text-gray-800">
+                            {kekaProfile.fullName || kekaProfile.name || kekaProfile.displayName || "—"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Email</span>
+                          <span className="font-medium text-gray-800">{kekaProfile.email || kekaProfile.workEmail || "—"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Department</span>
+                          <span className="font-medium text-gray-800">{kekaProfile.department || kekaProfile.departmentName || "—"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Designation</span>
+                          <span className="font-medium text-gray-800">{kekaProfile.designation || kekaProfile.jobTitle || "—"}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">No employee details available yet.</p>
+                    )}
+                  </div>
+
+                  <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Leave Balances</h3>
+                    {kekaLeave ? (
+                      <div className="space-y-3 text-sm text-gray-600">
+                        {extractArray(kekaLeave).length > 0 ? (
+                          extractArray(kekaLeave).slice(0, 6).map((leave, index) => (
+                            <div key={`${leave.name || leave.type || index}`} className="flex justify-between">
+                              <span className="text-gray-500">{leave.name || leave.type || "Leave"}</span>
+                              <span className="font-medium text-gray-800">{leave.balance ?? leave.available ?? "—"}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500">No leave balance data returned.</p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">Leave balances will appear after sync.</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-800">Recent Attendance Logs</h3>
+                    <span className="text-xs text-gray-500">Showing last 5</span>
+                  </div>
+                  {kekaAttendanceLogs.length > 0 ? (
+                    <div className="space-y-3">
+                      {kekaAttendanceLogs.slice(0, 5).map((log, index) => (
+                        <div key={log.id || log.logId || index} className="p-3 border border-gray-100 rounded-lg flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-medium text-gray-800">{log.date || log.attendanceDate || log.shiftDate || "—"}</p>
+                            <p className="text-xs text-gray-500">{log.status || log.attendanceStatus || log.type || "Logged"}</p>
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {log.inTime || log.checkIn || log.firstIn || "—"} - {log.outTime || log.checkOut || log.lastOut || "—"}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {log.totalHours || log.workedHours || log.hours || "—"} hrs
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">No attendance logs returned yet.</p>
+                  )}
+                </div>
+
+                <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Raw Keka Payload</h3>
+                  <details className="text-sm text-gray-600">
+                    <summary className="cursor-pointer text-[var(--theme-color)] font-medium">View JSON</summary>
+                    <pre className="mt-3 whitespace-pre-wrap break-words text-xs bg-gray-50 border border-gray-100 rounded-lg p-4">
+                      {JSON.stringify(kekaPayload, null, 2)}
+                    </pre>
+                  </details>
+                </div>
               </div>
             )}
           </div>
