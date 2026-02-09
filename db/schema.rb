@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2027_01_30_000002) do
+ActiveRecord::Schema[7.1].define(version: 2027_02_01_000003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -462,6 +462,11 @@ ActiveRecord::Schema[7.1].define(version: 2027_01_30_000002) do
     t.integer "current_projects_count", default: 0, null: false
     t.string "job_title", default: "Team Member", null: false
     t.bigint "department_id"
+    t.string "keka_base_url"
+    t.string "keka_api_key"
+    t.string "keka_employee_id"
+    t.jsonb "keka_profile_data", default: {}, null: false
+    t.datetime "keka_last_synced_at"
     t.index ["availability_status"], name: "index_users_on_availability_status"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["department_id"], name: "index_users_on_department_id"

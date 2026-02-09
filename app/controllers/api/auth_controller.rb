@@ -126,7 +126,8 @@ class Api::AuthController < Api::BaseController
       user: current_user.as_json(include: { roles: { only: [:name] } })
                       .merge(profile_picture: profile_picture_url, cover_photo: cover_photo_url),
       teams: teams,
-      projects: projects
+      projects: projects,
+      keka: current_user.keka_payload
     }
   end
 

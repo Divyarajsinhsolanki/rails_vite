@@ -59,6 +59,9 @@ Rails.application.routes.draw do
     get 'news/policy_briefs', to: 'news#policy_briefs'
     get 'open_issue_spotlight', to: 'open_source_issues#show'
     get 'sheet', to: 'sheets#show'
+    post 'keka/credentials', to: 'keka#credentials'
+    get 'keka/profile', to: 'keka#profile'
+    post 'keka/refresh', to: 'keka#refresh'
 
     resources :users, only: [:index, :update, :destroy]
     resources :posts, only: [:index, :create, :update, :destroy] do
