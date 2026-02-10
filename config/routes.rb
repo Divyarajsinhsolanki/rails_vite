@@ -116,6 +116,12 @@ Rails.application.routes.draw do
       end
     end
 
+
+    resources :calendar_events, only: [:index, :create, :update, :destroy] do
+      resources :event_reminders, only: [:create]
+    end
+    resources :event_reminders, only: [:update, :destroy]
+
     resources :notifications, only: [:index] do
       collection do
         post :mark_all_read
