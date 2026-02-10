@@ -462,6 +462,7 @@ ActiveRecord::Schema[7.1].define(version: 2027_02_01_000003) do
     t.integer "current_projects_count", default: 0, null: false
     t.string "job_title", default: "Team Member", null: false
     t.bigint "department_id"
+    t.jsonb "notification_preferences", default: {"digest"=>false, "update"=>true, "assigned"=>true, "commented"=>true}, null: false
     t.string "keka_base_url"
     t.string "keka_api_key"
     t.string "keka_employee_id"
