@@ -8,6 +8,7 @@ class Project < ApplicationRecord
   has_many :developers, -> { distinct }, through: :tasks, source: :developer
   has_many :project_environments, dependent: :destroy, inverse_of: :project
   has_many :project_vault_items, dependent: :destroy, inverse_of: :project
+  has_many :calendar_events, dependent: :nullify
 
   enum status: {
     upcoming: 'upcoming',
