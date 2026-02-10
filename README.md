@@ -103,6 +103,7 @@ The project serves as a learning playground and starting point for applications 
 - `app/javascript` – React application compiled by Vite.
 - `app/controllers` – API endpoints consumed by the front end.
 - `app/services` – integration helpers such as Google Sheets readers and JWT helpers.
+- `docs/calendar_reminder_plan.md` – proposed roadmap for calendar, reminder, and meeting scheduling features.
 
 ## Tests
 
