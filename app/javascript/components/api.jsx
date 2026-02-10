@@ -224,4 +224,14 @@ export const fetchNotifications = (params = {}) => api.get('/notifications.json'
 export const markNotificationRead = (id) => api.post(`/notifications/${id}/mark_read`);
 export const markAllNotificationsRead = () => api.post('/notifications/mark_all_read');
 
+
+// CALENDAR ENDPOINTS
+export const fetchCalendarEvents = (params = {}) => api.get('/calendar_events', { params });
+export const createCalendarEvent = (data) => api.post('/calendar_events', { calendar_event: data });
+export const updateCalendarEvent = (id, data) => api.patch(`/calendar_events/${id}`, { calendar_event: data });
+export const deleteCalendarEvent = (id) => api.delete(`/calendar_events/${id}`);
+export const createEventReminder = (calendarEventId, data) => api.post(`/calendar_events/${calendarEventId}/event_reminders`, { event_reminder: data });
+export const updateEventReminder = (id, data) => api.patch(`/event_reminders/${id}`, { event_reminder: data });
+export const deleteEventReminder = (id) => api.delete(`/event_reminders/${id}`);
+
 export default api;

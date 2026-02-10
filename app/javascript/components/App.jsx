@@ -26,6 +26,7 @@ import WorkLog from "../pages/WorkLog";
 import Settings from "../pages/Settings";
 import PageTitle from "./PageTitle";
 import DailyMomentumHub from "../pages/DailyMomentumHub";
+import Calendar from "../pages/Calendar";
 import PageLoader from "./ui/PageLoader";
 
 const RouteTransitionLoader = ({ children }) => {
@@ -74,6 +75,7 @@ const App = () => {
               <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
               <Route path="/knowledge" element={<PrivateRoute><KnowledgeDashboard /></PrivateRoute>} />
               <Route path="/worklog" element={<PrivateRoute><WorkLog /></PrivateRoute>} />
+              <Route path="/calendar" element={<PrivateRoute><Calendar /></PrivateRoute>} />
               <Route path="/projects" element={<PrivateRoute><Projects /></PrivateRoute>} />
               <Route path="/teams" element={<PrivateRoute><Teams /></PrivateRoute>} />
               <Route path="/projects/:projectId/dashboard" element={<ProjectMemberRoute><SprintDashboard /></ProjectMemberRoute>} />
