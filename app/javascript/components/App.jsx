@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 import { AuthProvider } from "../context/AuthContext";
 import PrivateRoute from "../components/PrivateRoute";
@@ -25,7 +25,6 @@ import ResetPassword from "../pages/ResetPassword";
 import WorkLog from "../pages/WorkLog";
 import Settings from "../pages/Settings";
 import PageTitle from "./PageTitle";
-import DailyMomentumHub from "../pages/DailyMomentumHub";
 import Calendar from "../pages/Calendar";
 import PageLoader from "./ui/PageLoader";
 
@@ -67,8 +66,8 @@ const App = () => {
               <Route path="/projects/:projectId/issues" element={<ProjectMemberRoute><IssueTracker standalone /></ProjectMemberRoute>} />
 
               {/* 🔐 Protected */}
-              <Route path="/" element={<PrivateRoute><DailyMomentumHub /></PrivateRoute>} />
-              <Route path="/momentum" element={<PrivateRoute><DailyMomentumHub /></PrivateRoute>} />
+              <Route path="/" element={<PrivateRoute><Calendar /></PrivateRoute>} />
+              <Route path="/momentum" element={<Navigate to="/calendar" replace />} />
               <Route path="/pdf" element={<PrivateRoute><PdfPage /></PrivateRoute>} />
               <Route path="/posts" element={<PrivateRoute><PostPage /></PrivateRoute>} />
               <Route path="/vault" element={<PrivateRoute><Vault /></PrivateRoute>} />
