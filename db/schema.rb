@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2027_02_01_000003) do
+ActiveRecord::Schema[7.1].define(version: 2027_02_10_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -40,6 +40,31 @@ ActiveRecord::Schema[7.1].define(version: 2027_02_01_000003) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "calendar_events", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "project_id"
+    t.bigint "task_id"
+    t.bigint "sprint_id"
+    t.string "title", null: false
+    t.text "description"
+    t.datetime "start_at", null: false
+    t.datetime "end_at", null: false
+    t.boolean "all_day", default: false, null: false
+    t.string "event_type", default: "meeting", null: false
+    t.string "visibility", default: "personal", null: false
+    t.string "status", default: "scheduled", null: false
+    t.string "location_or_meet_link"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_type"], name: "index_calendar_events_on_event_type"
+    t.index ["project_id"], name: "index_calendar_events_on_project_id"
+    t.index ["sprint_id"], name: "index_calendar_events_on_sprint_id"
+    t.index ["task_id"], name: "index_calendar_events_on_task_id"
+    t.index ["user_id", "start_at"], name: "index_calendar_events_on_user_id_and_start_at"
+    t.index ["user_id"], name: "index_calendar_events_on_user_id"
+    t.index ["visibility", "start_at"], name: "index_calendar_events_on_visibility_and_start_at"
   end
 
   create_table "comments", force: :cascade do |t|
@@ -73,6 +98,20 @@ ActiveRecord::Schema[7.1].define(version: 2027_02_01_000003) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_developers_on_name", unique: true
+  end
+
+  create_table "event_reminders", force: :cascade do |t|
+    t.bigint "calendar_event_id", null: false
+    t.string "channel", default: "in_app", null: false
+    t.integer "minutes_before", default: 10, null: false
+    t.datetime "send_at", null: false
+    t.datetime "sent_at"
+    t.string "state", default: "pending", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["calendar_event_id", "minutes_before", "channel"], name: "idx_unique_event_reminder_window", unique: true
+    t.index ["calendar_event_id"], name: "index_event_reminders_on_calendar_event_id"
+    t.index ["state", "send_at"], name: "index_event_reminders_on_state_and_send_at"
   end
 
   create_table "friendships", force: :cascade do |t|
@@ -547,8 +586,13 @@ ActiveRecord::Schema[7.1].define(version: 2027_02_01_000003) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "calendar_events", "projects"
+  add_foreign_key "calendar_events", "sprints"
+  add_foreign_key "calendar_events", "tasks"
+  add_foreign_key "calendar_events", "users"
   add_foreign_key "comments", "posts"
   add_foreign_key "comments", "users"
+  add_foreign_key "event_reminders", "calendar_events"
   add_foreign_key "friendships", "users", column: "followed_id"
   add_foreign_key "friendships", "users", column: "follower_id"
   add_foreign_key "issues", "projects"
