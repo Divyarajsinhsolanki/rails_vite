@@ -10,7 +10,7 @@ import {
   FiChevronDown, FiMenu, FiX, FiLogOut, FiUser,
   FiUsers, FiBriefcase, FiLayers, FiBook,
   FiMessageSquare, FiSettings, FiZap, FiAward, FiFileText,
-  FiClock, FiTarget, FiCalendar
+  FiClock, FiCalendar
 } from "react-icons/fi";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 
@@ -207,7 +207,6 @@ const Navbar = () => {
 
   // Navigation configuration
   const navLinks = [
-    { to: "/", label: "Momentum", icon: FiTarget, visible: !!user },
     { to: "/posts", label: "Updates", icon: FiMessageSquare, visible: !!user },
     { to: "/pdf", label: "PDF Modifier", icon: FiFileText, visible: !!user },
     { to: "/knowledge", label: "Knowledge", icon: FiBook, visible: !!user },

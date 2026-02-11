@@ -18,6 +18,7 @@ const PageTitle = () => {
       "/profile": "Profile",
       "/knowledge": "Knowledge Dashboard",
       "/worklog": "Work Log",
+      "/calendar": "Calendar",
       "/projects": "Projects",
       "/teams": "Teams",
       "/users": "Users",
@@ -28,7 +29,7 @@ const PageTitle = () => {
     let title = APP_NAME;
 
     if (pathname === "/") {
-      title = `Daily Momentum Hub | ${APP_NAME}`;
+      title = `Calendar | ${APP_NAME}`;
     } else if (/^\/projects\/[^/]+\/dashboard$/.test(pathname)) {
       title = `Sprint Dashboard | ${APP_NAME}`;
     } else if (titles[pathname]) {
