@@ -9,7 +9,7 @@ import {
   FiMapPin,
   FiRefreshCw,
   FiSearch,
-  FiSparkles,
+  FiStar,
 } from "react-icons/fi";
 import {
   createCalendarEvent,
@@ -443,7 +443,7 @@ const Calendar = () => {
           <div className="flex flex-wrap items-center gap-2 justify-between">
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Agenda</h2>
             <div className="flex items-center gap-2 text-xs text-zinc-500">
-              <FiSparkles />
+              <FiStar />
               Smarter filters and timeline view
             </div>
           </div>
