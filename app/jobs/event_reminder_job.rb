@@ -21,7 +21,9 @@ class EventReminderJob < ApplicationJob
         channel: reminder.channel,
         minutes_before: reminder.minutes_before
       }
-    )
+    ) if reminder.channel == 'in_app'
+
+    CalendarEventReminderMailer.reminder(reminder).deliver_later if reminder.channel == 'email'
 
     reminder.update!(state: 'sent', sent_at: Time.current)
   rescue StandardError

@@ -1,0 +1,15 @@
+Hi <%= @user.first_name.presence || @user.email %>,
+
+This is a reminder for your calendar event.
+
+Title: <%= @event.title %>
+Starts at: <%= @event.start_at.in_time_zone.strftime('%B %d, %Y at %I:%M %p') %>
+Reminder lead time: <%= @event_reminder.minutes_before %> minutes before
+<% if @event.description.present? %>
+Description: <%= @event.description %>
+<% end %>
+<% if @event.location_or_meet_link.present? %>
+Location / Link: <%= @event.location_or_meet_link %>
+<% end %>
+
+Please open your calendar to review details.
