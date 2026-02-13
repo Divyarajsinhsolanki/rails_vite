@@ -117,6 +117,7 @@ const Calendar = () => {
     project_id: "",
     location_or_meet_link: "",
     reminder_minutes: "10",
+    email_reminder_enabled: true,
   });
 
   const load = async () => {
@@ -219,10 +220,19 @@ const Calendar = () => {
       const { data: createdEvent } = await createCalendarEvent(payload);
 
       if (form.reminder_minutes) {
+        const minutesBefore = Number(form.reminder_minutes);
+
         await createEventReminder(createdEvent.id, {
           channel: "in_app",
-          minutes_before: Number(form.reminder_minutes),
+          minutes_before: minutesBefore,
         });
+
+        if (form.email_reminder_enabled) {
+          await createEventReminder(createdEvent.id, {
+            channel: "email",
+            minutes_before: minutesBefore,
+          });
+        }
       }
 
       setForm((prev) => ({
@@ -428,6 +438,16 @@ const Calendar = () => {
                 <option key={option.value || "none"} value={option.value}>{option.label}</option>
               ))}
             </select>
+
+            <label className="flex items-center gap-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-200">
+              <input
+                type="checkbox"
+                checked={form.email_reminder_enabled}
+                onChange={(e) => setForm((f) => ({ ...f, email_reminder_enabled: e.target.checked }))}
+                className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+              />
+              Send email notification too
+            </label>
 
             <button
               type="submit"
