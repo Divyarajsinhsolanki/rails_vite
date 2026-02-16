@@ -336,26 +336,24 @@ const Navbar = () => {
                         My Profile
                       </NavLink>
 
-                      {isOwner && (
-                        <>
-                          <NavLink
-                            to="/users"
-                            onClick={() => setIsProfileOpen(false)}
-                            className="flex items-center gap-3 w-full px-3 py-2.5 text-sm rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700"
-                          >
-                            <FiUsers className="h-4 w-4 text-blue-500" />
-                            User Management
-                          </NavLink>
+                      <NavLink
+                        to="/users"
+                        onClick={() => setIsProfileOpen(false)}
+                        className="flex items-center gap-3 w-full px-3 py-2.5 text-sm rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                      >
+                        <FiUsers className="h-4 w-4 text-blue-500" />
+                        User Management
+                      </NavLink>
 
-                          <NavLink
-                            to="/admin/login-as-user"
-                            onClick={() => setIsProfileOpen(false)}
-                            className="flex items-center gap-3 w-full px-3 py-2.5 text-sm rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700"
-                          >
-                            <FiLogOut className="h-4 w-4 text-blue-500" />
-                            Login as User
-                          </NavLink>
-                        </>
+                      {isOwner && (
+                        <NavLink
+                          to="/admin/login-as-user"
+                          onClick={() => setIsProfileOpen(false)}
+                          className="flex items-center gap-3 w-full px-3 py-2.5 text-sm rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                        >
+                          <FiLogOut className="h-4 w-4 text-blue-500" />
+                          Login as User
+                        </NavLink>
                       )}
 
                       <NavLink
@@ -547,6 +545,15 @@ const Navbar = () => {
                         </p>
                       </div>
                     </div>
+
+                    <NavLink
+                      to="/users"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-5 py-3 text-sm rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    >
+                      <FiUsers className="h-4 w-4" />
+                      User Management
+                    </NavLink>
 
                     <NavLink
                       to="/settings"

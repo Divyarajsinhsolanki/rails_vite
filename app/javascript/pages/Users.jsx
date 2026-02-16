@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 import { 
   Search, Edit2, Trash2, X, Check, Upload, PencilLine,
   Mail, Calendar, Users as UsersIcon 
@@ -14,6 +16,7 @@ import {
 } from "../components/api";
 
 const Users = () => {
+  const { user: currentUser } = React.useContext(AuthContext);
   // --- State Management ---
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
@@ -42,6 +45,10 @@ const Users = () => {
   // Modal State
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 8;
+
+  const canManageUsers = currentUser?.roles?.some((role) => role.name === "owner");
 
   // --- Helpers ---
   const formatRole = (role) =>
@@ -197,6 +204,22 @@ const Users = () => {
     `${u.first_name} ${u.last_name} ${u.email}`.toLowerCase().includes(search.toLowerCase())
   );
 
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / usersPerPage));
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * usersPerPage,
+    currentPage * usersPerPage
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   // --- Render Helpers ---
   const UserCard = ({ user }) => {
     const isEditing = editingId === user.id;
@@ -291,14 +314,16 @@ const Users = () => {
             {user.cover_photo && (
                 <img src={user.cover_photo} alt="cover" className="w-full h-full object-cover opacity-80" />
             )}
-            <button
-              type="button"
-              onClick={() => openPhotoModal(user)}
-              className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/70 text-gray-700 px-2.5 py-1 text-xs font-semibold shadow-sm transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            >
-              <PencilLine size={14} />
-              <span>Edit photos</span>
-            </button>
+            {canManageUsers && (
+              <button
+                type="button"
+                onClick={() => openPhotoModal(user)}
+                className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/70 text-gray-700 px-2.5 py-1 text-xs font-semibold shadow-sm transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              >
+                <PencilLine size={14} />
+                <span>Edit photos</span>
+              </button>
+            )}
         </div>
 
         {/* Profile Pic & Header */}
@@ -358,18 +383,28 @@ const Users = () => {
 
         {/* Footer Actions */}
         <div className="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-between items-center opacity-80 group-hover:opacity-100 transition-opacity">
-            <button 
-                onClick={() => handleEdit(user)}
-                className="text-gray-600 hover:text-indigo-600 font-medium text-sm flex items-center gap-2 transition-colors"
+            <Link
+              to={`/profile/${user.id}`}
+              className="text-[var(--theme-color)] hover:text-indigo-700 font-medium text-sm"
             >
-                <Edit2 size={16} /> Edit
-            </button>
-            <button 
-                onClick={() => initiateDelete(user)}
-                className="text-gray-400 hover:text-red-600 font-medium text-sm flex items-center gap-2 transition-colors"
-            >
-                <Trash2 size={16} /> Delete
-            </button>
+              View profile
+            </Link>
+            {canManageUsers ? (
+              <div className="flex items-center gap-4">
+                <button 
+                    onClick={() => handleEdit(user)}
+                    className="text-gray-600 hover:text-indigo-600 font-medium text-sm flex items-center gap-2 transition-colors"
+                >
+                    <Edit2 size={16} /> Edit
+                </button>
+                <button 
+                    onClick={() => initiateDelete(user)}
+                    className="text-gray-400 hover:text-red-600 font-medium text-sm flex items-center gap-2 transition-colors"
+                >
+                    <Trash2 size={16} /> Delete
+                </button>
+              </div>
+            ) : null}
         </div>
       </div>
     );
@@ -423,12 +458,52 @@ const Users = () => {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-20">
-                        {filteredUsers.map((user) => (
+                        {paginatedUsers.map((user) => (
                         <UserCard key={user.id} user={user} />
                         ))}
                     </div>
                 )}
             </>
+        )}
+
+        {!loading && filteredUsers.length > 0 && (
+          <div className="mt-4 flex flex-col items-center gap-3 pb-10">
+            <p className="text-sm text-slate-500">
+              Showing {(currentPage - 1) * usersPerPage + 1} to {Math.min(currentPage * usersPerPage, filteredUsers.length)} of {filteredUsers.length} users
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                className="px-3 py-2 rounded-lg border border-gray-200 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+              >
+                Previous
+              </button>
+              {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() => setCurrentPage(page)}
+                  className={`h-9 w-9 rounded-lg text-sm font-medium border transition-colors ${
+                    page === currentPage
+                      ? "bg-indigo-600 text-white border-indigo-600"
+                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-100"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                type="button"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                className="px-3 py-2 rounded-lg border border-gray-200 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+              >
+                Next
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
