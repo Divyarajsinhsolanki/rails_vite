@@ -1,5 +1,5 @@
 class EventReminder < ApplicationRecord
-  CHANNELS = %w[in_app email].freeze
+  CHANNELS = %w[in_app email slack].freeze
 
   belongs_to :calendar_event
 
