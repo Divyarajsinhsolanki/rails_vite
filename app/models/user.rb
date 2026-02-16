@@ -58,6 +58,7 @@ class User < ApplicationRecord
   validates :landing_page, inclusion: { in: LANDING_PAGES }
   validates :job_title, presence: true
   validates :availability_status, inclusion: { in: availability_statuses.keys }
+  validates :phone_number, length: { maximum: 30 }, allow_blank: true
 
   after_create :assign_default_role
 

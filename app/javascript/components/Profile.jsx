@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useContext } from "react";
-import { useNavigate } from "react-router-dom";
-import { fetchUserInfo, fetchPosts, SchedulerAPI, fetchTeams, saveKekaCredentials, refreshKekaProfile } from "../components/api";
+import { useNavigate, useParams } from "react-router-dom";
+import { fetchUserInfo, fetchUserProfile, fetchPosts, SchedulerAPI, fetchTeams, saveKekaCredentials, refreshKekaProfile } from "../components/api";
 import { getStatusClasses } from '/utils/taskUtils';
 import { Squares2X2Icon, FolderIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { AuthContext } from '../context/AuthContext';
@@ -37,6 +37,8 @@ const Avatar = ({ name, src, size = 'md' }) => {
 const Profile = () => {
   const navigate = useNavigate();
   const { setUser: setAuthUser } = useContext(AuthContext);
+  const { userId } = useParams();
+  const viewingOtherProfile = Boolean(userId);
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
   const [tasks, setTasks] = useState([]);
@@ -52,6 +54,14 @@ const Profile = () => {
     profile_picture: null,
     cover_photo: null,
     color_theme: "#3b82f6",
+    phone_number: "",
+    bio: "",
+    social_links: {
+      linkedin: "",
+      github: "",
+      twitter: "",
+      website: ""
+    }
   });
   const [keka, setKeka] = useState({
     connected: false,
@@ -74,11 +84,16 @@ const Profile = () => {
   const refreshUserInfo = async () => {
     setIsLoading(true);
     try {
-      const { data } = await fetchUserInfo();
-      const theme = COLOR_MAP[data.user.color_theme] || data.user.color_theme || '#3b82f6';
-      const updatedUser = { ...data.user, color_theme: theme };
+      const { data } = viewingOtherProfile
+        ? await fetchUserProfile(userId)
+        : await fetchUserInfo();
+      const userData = data.user || data;
+      const theme = COLOR_MAP[userData.color_theme] || userData.color_theme || '#3b82f6';
+      const updatedUser = { ...userData, color_theme: theme };
       setUser((prev) => ({ ...prev, ...updatedUser }));
-      setAuthUser((prev) => ({ ...(prev || {}), ...updatedUser }));
+      if (!viewingOtherProfile) {
+        setAuthUser((prev) => ({ ...(prev || {}), ...updatedUser }));
+      }
 
       const basicTeams = Array.isArray(data.teams) ? data.teams : [];
       try {
@@ -95,14 +110,22 @@ const Profile = () => {
 
       setProjects(Array.isArray(data.projects) ? data.projects : []);
       setFormData({
-        first_name: data.user.first_name,
-        last_name: data.user.last_name,
-        date_of_birth: data.user.date_of_birth,
-        profile_picture: data.user.profile_picture,
-        cover_photo: data.user.cover_photo,
+        first_name: userData.first_name,
+        last_name: userData.last_name,
+        date_of_birth: userData.date_of_birth,
+        profile_picture: userData.profile_picture,
+        cover_photo: userData.cover_photo,
         color_theme: theme,
+        phone_number: userData.phone_number || "",
+        bio: userData.bio || "",
+        social_links: {
+          linkedin: userData.social_links?.linkedin || "",
+          github: userData.social_links?.github || "",
+          twitter: userData.social_links?.twitter || "",
+          website: userData.social_links?.website || ""
+        }
       });
-      if (data.keka) {
+      if (data.keka && !viewingOtherProfile) {
         setKeka({
           connected: data.keka.connected,
           base_url: data.keka.base_url || "",
@@ -119,10 +142,10 @@ const Profile = () => {
         }));
       }
       
-      const postsResponse = await fetchPosts(data.user.id);
+      const postsResponse = await fetchPosts(userData.id);
       setPosts(postsResponse.data);
       
-      const tasksResponse = await SchedulerAPI.getTasks({ assigned_to_user: data.user.id });
+      const tasksResponse = await SchedulerAPI.getTasks({ assigned_to_user: userData.id });
       setTasks(tasksResponse.data);
     } catch (error) {
       console.error("Error fetching user info:", error);
@@ -133,10 +156,19 @@ const Profile = () => {
 
   useEffect(() => {
     refreshUserInfo();
-  }, []);
+  }, [userId]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    if (name.startsWith("social_links.")) {
+      const key = name.replace("social_links.", "");
+      setFormData((prevData) => ({
+        ...prevData,
+        social_links: { ...(prevData.social_links || {}), [key]: value }
+      }));
+      return;
+    }
+
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
@@ -215,6 +247,11 @@ const Profile = () => {
     payload.append("auth[last_name]", formData.last_name);
     payload.append("auth[date_of_birth]", formData.date_of_birth);
     payload.append("auth[color_theme]", formData.color_theme);
+    payload.append("auth[phone_number]", formData.phone_number || "");
+    payload.append("auth[bio]", formData.bio || "");
+    Object.entries(formData.social_links || {}).forEach(([key, value]) => {
+      payload.append(`auth[social_links][${key}]`, value || "");
+    });
 
     if (formData.profile_picture instanceof File) {
       payload.append("auth[profile_picture]", formData.profile_picture);
@@ -497,7 +534,7 @@ const Profile = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
             
             {/* Cover Photo Edit Button */}
-            {editMode && (
+            {editMode && !viewingOtherProfile && (
               <label className="absolute bottom-4 right-4 bg-white/90 p-2 rounded-full shadow-md cursor-pointer hover:bg-white transition-all hover:scale-110">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)]" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -523,7 +560,7 @@ const Profile = () => {
                     {initial}
                   </div>
                 )}
-                {editMode && (
+                {editMode && !viewingOtherProfile && (
                   <label className="absolute bottom-2 right-2 bg-white/90 p-2 rounded-full shadow-md cursor-pointer hover:bg-white transition-all hover:scale-110">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)]" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -539,6 +576,18 @@ const Profile = () => {
                   {user ? displayName : "Loading..."}
                 </h1>
                 <p className="text-[var(--theme-color)] mt-1 font-medium">{user?.email}</p>
+                {user?.phone_number && (
+                  <p className="text-gray-600 mt-1">{user.phone_number}</p>
+                )}
+                {user?.bio && (
+                  <p className="text-gray-600 mt-2 max-w-2xl">{user.bio}</p>
+                )}
+                <div className="mt-2 flex flex-wrap gap-3 text-sm">
+                  {user?.social_links?.linkedin && <a className="text-[var(--theme-color)] hover:underline" href={user.social_links.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>}
+                  {user?.social_links?.github && <a className="text-[var(--theme-color)] hover:underline" href={user.social_links.github} target="_blank" rel="noreferrer">GitHub</a>}
+                  {user?.social_links?.twitter && <a className="text-[var(--theme-color)] hover:underline" href={user.social_links.twitter} target="_blank" rel="noreferrer">Twitter</a>}
+                  {user?.social_links?.website && <a className="text-[var(--theme-color)] hover:underline" href={user.social_links.website} target="_blank" rel="noreferrer">Website</a>}
+                </div>
                 
                 {user?.date_of_birth && (
                   <p className="text-gray-500 mt-2 flex items-center justify-center md:justify-start">
@@ -572,7 +621,7 @@ const Profile = () => {
               </div>
 
               {/* Edit Button */}
-              {!editMode && (
+              {!editMode && !viewingOtherProfile && (
                 <button
                   onClick={() => setEditMode(true)}
                   className="flex items-center gap-2 px-6 py-3 bg-[var(--theme-color)] text-white font-semibold rounded-full hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 hover:shadow-[var(--theme-color)]/30"
@@ -1385,7 +1434,7 @@ const Profile = () => {
       </div>
 
       {/* Edit Profile Modal */}
-      {editMode && (
+      {editMode && !viewingOtherProfile && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-white/30">
             <div className="bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] p-6 text-white">
@@ -1429,6 +1478,36 @@ const Profile = () => {
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition"
                     required
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                  <input
+                    type="text"
+                    name="phone_number"
+                    value={formData.phone_number || ''}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                  <textarea
+                    name="bio"
+                    rows={3}
+                    value={formData.bio || ''}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-3">
+                  <label className="block text-sm font-medium text-gray-700">Social links</label>
+                  <input type="url" name="social_links.linkedin" placeholder="LinkedIn URL" value={formData.social_links?.linkedin || ''} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition" />
+                  <input type="url" name="social_links.github" placeholder="GitHub URL" value={formData.social_links?.github || ''} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition" />
+                  <input type="url" name="social_links.twitter" placeholder="Twitter URL" value={formData.social_links?.twitter || ''} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition" />
+                  <input type="url" name="social_links.website" placeholder="Website URL" value={formData.social_links?.website || ''} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition" />
                 </div>
                 
                 <div>

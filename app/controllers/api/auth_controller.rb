@@ -124,7 +124,7 @@ class Api::AuthController < Api::BaseController
     end
     render json: {
       user: current_user.as_json(include: { roles: { only: [:name] } })
-                      .merge(profile_picture: profile_picture_url, cover_photo: cover_photo_url),
+                      .merge(profile_picture: profile_picture_url, cover_photo: cover_photo_url, phone_number: current_user.phone_number, bio: current_user.bio, social_links: current_user.social_links || {}),
       teams: teams,
       projects: projects,
       keka: current_user.keka_payload
@@ -164,6 +164,9 @@ class Api::AuthController < Api::BaseController
       :color_theme,
       :dark_mode,
       :landing_page,
+      :phone_number,
+      :bio,
+      social_links: {},
       notification_preferences: {}
     )
     permitted.delete(:profile_picture) if permitted[:profile_picture] == "null"
@@ -177,7 +180,10 @@ class Api::AuthController < Api::BaseController
     user.as_json(include: { roles: { only: [:name] } }).merge(
       profile_picture: profile_picture_url,
       cover_photo: cover_photo_url,
-      landing_page: user.landing_page
+      landing_page: user.landing_page,
+      phone_number: user.phone_number,
+      bio: user.bio,
+      social_links: user.social_links || {}
     )
   end
 
