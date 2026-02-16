@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import PageLoader from "./ui/PageLoader";
 import AuthPage from "../pages/AuthPage";
+import AccessDeniedRedirect from "./AccessDeniedRedirect";
 
 const PrivateRoute = ({ children, ownerOnly = false, allowedRoles = [] }) => {
   const { isAuthenticated, initializing, user } = useContext(AuthContext);
@@ -12,10 +13,10 @@ const PrivateRoute = ({ children, ownerOnly = false, allowedRoles = [] }) => {
   if (initializing) return <PageLoader title="Authenticating" message="Checking your access…" />;
   if (!isAuthenticated) return <AuthPage mode={mode} />;
   if (ownerOnly && !user?.roles?.some((r) => r.name === "owner")) {
-    return <div className="p-4">Unauthorized</div>;
+    return <AccessDeniedRedirect />;
   }
   if (allowedRoles.length > 0 && !user?.roles?.some((r) => allowedRoles.includes(r.name))) {
-    return <div className="p-4">Unauthorized</div>;
+    return <AccessDeniedRedirect />;
   }
   return children;
 };

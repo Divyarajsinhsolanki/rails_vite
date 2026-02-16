@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 
 import { AuthProvider } from "../context/AuthContext";
 import PrivateRoute from "../components/PrivateRoute";
@@ -51,6 +52,7 @@ const App = () => {
   return (
     <Router>
       <AuthProvider> {/* ✅ Wrap the entire app with AuthProvider */}
+        <Toaster position="top-right" />
         <PageTitle />
         <div className="flex flex-col min-h-screen">
 
