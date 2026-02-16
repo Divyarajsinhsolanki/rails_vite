@@ -82,7 +82,7 @@ const App = () => {
               <Route path="/projects" element={<PrivateRoute><Projects /></PrivateRoute>} />
               <Route path="/teams" element={<PrivateRoute><Teams /></PrivateRoute>} />
               <Route path="/projects/:projectId/dashboard" element={<ProjectMemberRoute><SprintDashboard /></ProjectMemberRoute>} />
-              <Route path="/users" element={<PrivateRoute ownerOnly><Users /></PrivateRoute>} />
+              <Route path="/users" element={<PrivateRoute><Users /></PrivateRoute>} />
               <Route path="/admin" element={<PrivateRoute ownerOnly><Admin /></PrivateRoute>} />
               <Route path="/admin/login-as-user" element={<PrivateRoute ownerOnly><AdminImpersonation /></PrivateRoute>} />
               <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
