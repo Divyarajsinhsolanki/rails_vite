@@ -19,8 +19,6 @@ class Api::BaseController < ApplicationController
   private
 
   def handle_unauthorized
-    respond_to do |format|
-      format.json { render json: { error: "Unauthorized" }, status: :unauthorized }
-    end
+    render json: { error: "Unauthorized" }, status: :unauthorized
   end
 end
