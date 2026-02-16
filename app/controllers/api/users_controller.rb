@@ -1,12 +1,19 @@
 class Api::UsersController < Api::BaseController
   include Rails.application.routes.url_helpers
   before_action :authorize_owner!, only: [:update, :destroy]
-  before_action :set_user, only: [:update, :destroy]
+  before_action :set_user, only: [:show, :update, :destroy]
 
   # GET /api/users.json
   def index
     @users = User.order(created_at: :desc)
     render json: @users.map { |user| serialize_user(user) }
+  end
+
+
+
+  # GET /api/users/:id.json
+  def show
+    render json: serialize_user(@user)
   end
 
   # PATCH /api/users/:id.json
@@ -55,6 +62,9 @@ class Api::UsersController < Api::BaseController
       :dark_mode,
       :landing_page,
       :department_id,
+      :phone_number,
+      :bio,
+      social_links: {},
       notification_preferences: {}
     )
   end
@@ -68,12 +78,16 @@ class Api::UsersController < Api::BaseController
       date_of_birth: user.date_of_birth,
       department_id: user.department_id,
       department_name: user.department&.name,
+      job_title: user.job_title,
       profile_picture: user.profile_picture.attached? ?
         rails_blob_url(user.profile_picture, only_path: true) : nil,
       cover_photo: user.cover_photo.attached? ?
         rails_blob_url(user.cover_photo, only_path: true) : nil,
       roles: user.roles.pluck(:name),
-      landing_page: user.landing_page
+      landing_page: user.landing_page,
+      phone_number: user.phone_number,
+      bio: user.bio,
+      social_links: user.social_links || {}
     }
   end
 
