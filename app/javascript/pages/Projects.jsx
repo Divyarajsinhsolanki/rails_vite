@@ -75,7 +75,9 @@ const AvatarStack = ({ members, max = 4 }) => {
 
 const MemberProfileHoverCard = ({ member, compact = false }) => {
     const socials = member.social_links || {};
-    const wrapperClass = compact ? "group relative inline-flex" : "group relative";
+    const wrapperClass = compact
+        ? "group relative inline-flex z-10 hover:z-[1200] focus-within:z-[1200]"
+        : "group relative z-10 hover:z-[1200] focus-within:z-[1200]";
 
     return (
         <div className={wrapperClass}>
@@ -95,7 +97,9 @@ const MemberProfileHoverCard = ({ member, compact = false }) => {
                 </a>
             )}
 
-            <div className={`pointer-events-none absolute z-20 hidden w-96 rounded-xl border border-slate-200 bg-white p-4 shadow-xl group-hover:block ${compact ? 'left-1/2 top-full mt-2 -translate-x-1/2' : 'left-0 top-full mt-2'}`}>
+            <div
+                className={`absolute z-[1300] w-96 rounded-xl border border-slate-200 bg-white p-4 shadow-xl transition-all duration-150 group-hover:visible group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:visible group-focus-within:pointer-events-auto group-focus-within:opacity-100 ${compact ? 'left-1/2 top-full -translate-x-1/2' : 'left-0 top-full'} invisible pointer-events-none opacity-0`}
+            >
                 <div className="flex items-center gap-3">
                     <Avatar name={member.name} src={member.profile_picture} size="md" />
                     <div>
@@ -130,6 +134,8 @@ const MemberProfileHoverCard = ({ member, compact = false }) => {
                     View profile <FiExternalLink className="h-4 w-4" />
                 </a>
             </div>
+
+            <div className="absolute left-0 top-full h-3 w-full" aria-hidden="true" />
         </div>
     );
 };
