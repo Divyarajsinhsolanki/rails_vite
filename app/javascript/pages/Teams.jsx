@@ -183,30 +183,91 @@ const StatCard = ({ icon: Icon, label, value, accent = false }) => (
     </div>
 );
 
-const TeamCard = ({ team, isSelected, onClick }) => (
-    <motion.button
-        onClick={onClick}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${isSelected
-                ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800 shadow-md'
-                : 'bg-white dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-700/50 hover:border-zinc-200 dark:hover:border-zinc-600 hover:shadow-md'
-            }`}
-    >
-        <div className="flex items-center justify-between mb-3">
-            <h3 className={`font-semibold ${isSelected ? 'text-blue-700 dark:text-blue-300' : 'text-zinc-800 dark:text-white'}`}>
-                {team.name}
-            </h3>
-            <FiChevronRight className={`w-4 h-4 transition-transform ${isSelected ? 'text-blue-500 translate-x-1' : 'text-zinc-400'}`} />
+const ProfileStyleStatCard = ({ icon: Icon, label, value, detail, tone = "blue" }) => {
+    const tones = {
+        blue: {
+            wrapper: "bg-gradient-to-br from-blue-50 to-blue-100 border-blue-100",
+            label: "text-blue-600",
+            value: "text-blue-800",
+            iconBg: "bg-blue-100",
+            icon: "text-blue-600",
+            detail: "text-blue-600",
+        },
+        purple: {
+            wrapper: "bg-gradient-to-br from-purple-50 to-purple-100 border-purple-100",
+            label: "text-purple-600",
+            value: "text-purple-800",
+            iconBg: "bg-purple-100",
+            icon: "text-purple-600",
+            detail: "text-purple-600",
+        },
+        green: {
+            wrapper: "bg-gradient-to-br from-green-50 to-green-100 border-green-100",
+            label: "text-green-600",
+            value: "text-green-800",
+            iconBg: "bg-green-100",
+            icon: "text-green-600",
+            detail: "text-green-600",
+        },
+    };
+
+    const selectedTone = tones[tone] || tones.blue;
+
+    return (
+        <div className={`rounded-xl border p-6 ${selectedTone.wrapper}`}>
+            <div className="flex items-center justify-between">
+                <div>
+                    <p className={`text-sm font-medium ${selectedTone.label}`}>{label}</p>
+                    <h3 className={`mt-1 text-2xl font-bold ${selectedTone.value}`}>{value}</h3>
+                </div>
+                <div className={`rounded-lg p-3 ${selectedTone.iconBg}`}>
+                    <Icon className={`h-6 w-6 ${selectedTone.icon}`} />
+                </div>
+            </div>
+            {detail && (
+                <p className={`mt-4 text-sm ${selectedTone.detail}`}>{detail}</p>
+            )}
         </div>
-        <div className="flex items-center justify-between">
-            <AvatarStack members={team.users} max={3} />
-            <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                {team.users.length} member{team.users.length !== 1 ? 's' : ''}
-            </span>
-        </div>
-    </motion.button>
-);
+    );
+};
+
+const TeamCard = ({ team, isSelected, onClick }) => {
+    const activeMembers = team.users.filter((member) => member.status === "active").length;
+    const leads = team.users.filter((member) => member.role === "team_leader").length;
+
+    return (
+        <motion.button
+            onClick={onClick}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${isSelected
+                    ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800 shadow-md'
+                    : 'bg-white dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-700/50 hover:border-zinc-200 dark:hover:border-zinc-600 hover:shadow-md'
+                }`}
+        >
+            <div className="mb-2 flex items-center justify-between">
+                <h3 className={`font-semibold ${isSelected ? 'text-blue-700 dark:text-blue-300' : 'text-zinc-800 dark:text-white'}`}>
+                    {team.name}
+                </h3>
+                <FiChevronRight className={`w-4 h-4 transition-transform ${isSelected ? 'text-blue-500 translate-x-1' : 'text-zinc-400'}`} />
+            </div>
+            <p className="mb-3 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">
+                {team.description?.trim() || "No team details added yet."}
+            </p>
+            <div className="flex items-center justify-between mb-2">
+                <AvatarStack members={team.users} max={3} />
+                <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                    {team.users.length} member{team.users.length !== 1 ? 's' : ''}
+                </span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                <span>{activeMembers} active</span>
+                <span>•</span>
+                <span>{leads} leads</span>
+            </div>
+        </motion.button>
+    );
+};
 
 const MemberRow = ({ member, canManage, isEditing, onEdit, onSave, onCancel, onRemove, editRole, setEditRole, isSaving, isCurrentUser }) => (
     <motion.div
@@ -907,11 +968,28 @@ const Teams = () => {
                                 </div>
 
                                 {/* Quick Stats */}
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                                    <StatCard icon={FiUsers} label="Members" value={selectedTeam.users.length} accent />
-                                    <StatCard icon={FiTarget} label="Skills Tracked" value={teamInsights?.skills?.length || 0} />
-                                    <StatCard icon={FiAward} label="Experts" value={teamInsights?.team_experts?.length || 0} />
-                                    <StatCard icon={FiZap} label="Learning Goals" value={teamInsights?.current_user_learning_goals?.length || 0} />
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                                    <ProfileStyleStatCard
+                                        icon={FiUsers}
+                                        label="Active Members"
+                                        value={selectedTeam.users.filter((member) => member.status === 'active').length}
+                                        detail={`${selectedTeam.users.length} total members`}
+                                        tone="blue"
+                                    />
+                                    <ProfileStyleStatCard
+                                        icon={FiAward}
+                                        label="Team Leaders"
+                                        value={selectedTeam.users.filter((member) => member.role === 'team_leader').length}
+                                        detail={`${teamInsights?.team_experts?.length || 0} recognized experts`}
+                                        tone="purple"
+                                    />
+                                    <ProfileStyleStatCard
+                                        icon={FiTarget}
+                                        label="Skills Tracked"
+                                        value={teamInsights?.skills?.length || 0}
+                                        detail={`${teamInsights?.current_user_learning_goals?.length || 0} active learning goals`}
+                                        tone="green"
+                                    />
                                 </div>
                             </div>
 
