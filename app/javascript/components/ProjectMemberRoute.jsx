@@ -4,6 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 import { fetchProjects } from "./api";
 import AuthPage from "../pages/AuthPage";
 import PageLoader from "./ui/PageLoader";
+import AccessDeniedRedirect from "./AccessDeniedRedirect";
 
 const ProjectMemberRoute = ({ children }) => {
   const { projectId } = useParams();
@@ -30,7 +31,7 @@ const ProjectMemberRoute = ({ children }) => {
 
   if (initializing || isMember === null) return <PageLoader title="Project access" message="Verifying project permissions…" />;
   if (!isAuthenticated) return <AuthPage mode={mode} />;
-  if (!isMember) return <div className="p-4">Unauthorized</div>;
+  if (!isMember) return <AccessDeniedRedirect />;
   return children;
 };
 
