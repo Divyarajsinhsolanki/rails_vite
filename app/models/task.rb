@@ -17,8 +17,8 @@ class Task < ApplicationRecord
   validates :type, presence: true
   validates :title, presence: true, if: :general?
 
-  after_create :notify_assigned_user
-  after_update :notify_assigned_user_change
+  after_commit :notify_assigned_user, on: :create
+  after_commit :notify_assigned_user_change, on: :update
 
   private
 
@@ -42,13 +42,18 @@ class Task < ApplicationRecord
   end
 
   def notify_assigned_user_change
-    return unless saved_change_to_assigned_to_user? && assigned_user
+    previous_assigned_to_user, current_assigned_to_user = previous_changes['assigned_to_user']
+    return if previous_assigned_to_user == current_assigned_to_user
+    return if current_assigned_to_user.blank?
+
+    recipient = User.find_by(id: current_assigned_to_user)
+    return unless recipient
 
     actor_id = notification_actor_id(updated_by)
     return unless actor_id
 
     Notification.create(
-      recipient: assigned_user,
+      recipient: recipient,
       actor_id: actor_id,
       action: 'assigned',
       notifiable: self,
