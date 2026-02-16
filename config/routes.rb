@@ -63,7 +63,7 @@ Rails.application.routes.draw do
     get 'keka/profile', to: 'keka#profile'
     post 'keka/refresh', to: 'keka#refresh'
 
-    resources :users, only: [:index, :update, :destroy]
+    resources :users, only: [:index, :show, :update, :destroy]
     resources :posts, only: [:index, :create, :update, :destroy] do
       resources :comments, only: [:index, :create, :destroy]
       member do

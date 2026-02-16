@@ -7,7 +7,7 @@ import {
     FiPlus, FiEdit2, FiTrash2, FiUsers, FiSearch, FiUserPlus,
     FiChevronRight, FiX, FiCheck, FiInfo, FiLoader, FiCalendar,
     FiLink, FiFolder, FiAlertTriangle, FiTrendingUp, FiActivity,
-    FiCheckCircle, FiXCircle
+    FiCheckCircle, FiXCircle, FiPhone, FiExternalLink, FiMail, FiBriefcase
 } from 'react-icons/fi';
 
 // --- Premium UI Components ---
@@ -68,6 +68,74 @@ const AvatarStack = ({ members, max = 4 }) => {
                     +{remaining}
                 </div>
             )}
+        </div>
+    );
+};
+
+
+const MemberProfileHoverCard = ({ member, compact = false }) => {
+    const socials = member.social_links || {};
+    const wrapperClass = compact
+        ? "group relative inline-flex z-10 hover:z-[1200] focus-within:z-[1200]"
+        : "group relative z-10 hover:z-[1200] focus-within:z-[1200]";
+
+    return (
+        <div className={wrapperClass}>
+            {compact ? (
+                <a href={`/profile/${member.id}`} className="inline-flex" onClick={(event) => event.stopPropagation()}>
+                    <Avatar name={member.name} src={member.profile_picture} size="md" className="hover:scale-105 transition-transform" />
+                </a>
+            ) : (
+                <a href={`/profile/${member.id}`} className="inline-flex items-start gap-4">
+                    <Avatar name={member.name} src={member.profile_picture} size="lg" />
+                    <div className="space-y-1">
+                        <p className="text-lg font-medium text-gray-900 hover:text-[var(--theme-color)]">{member.name || 'Invited User'}</p>
+                        <p className="text-sm capitalize text-gray-500">{member.role}</p>
+                        {member.email && <p className="text-sm text-gray-500">{member.email}</p>}
+                        <p className="text-sm text-gray-500">Allocation: {member.allocation_percentage}% ({member.workload_status})</p>
+                    </div>
+                </a>
+            )}
+
+            <div
+                className={`absolute z-[1300] w-96 rounded-xl border border-slate-200 bg-white p-4 shadow-xl transition-all duration-150 group-hover:visible group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:visible group-focus-within:pointer-events-auto group-focus-within:opacity-100 ${compact ? 'left-1/2 top-full -translate-x-1/2' : 'left-0 top-full'} invisible pointer-events-none opacity-0`}
+            >
+                <div className="flex items-center gap-3">
+                    <Avatar name={member.name} src={member.profile_picture} size="md" />
+                    <div>
+                        <p className="font-semibold text-slate-900">{member.name || 'User'}</p>
+                        <p className="text-sm text-slate-500">{member.job_title || 'Team member'}</p>
+                        {member.department_name && <p className="text-xs text-slate-400">{member.department_name}</p>}
+                    </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-1 gap-2 text-sm text-slate-600">
+                    {member.email && (
+                        <p className="flex items-center gap-2"><FiMail className="h-4 w-4" /> {member.email}</p>
+                    )}
+                    {member.phone_number && (
+                        <p className="flex items-center gap-2"><FiPhone className="h-4 w-4" /> {member.phone_number}</p>
+                    )}
+                    <p className="flex items-center gap-2"><FiBriefcase className="h-4 w-4" /> {member.role || 'Member'} • {member.workload_status || 'active'}</p>
+                    {typeof member.allocation_percentage === 'number' && (
+                        <p className="text-xs text-slate-500">Allocation: {member.allocation_percentage}%</p>
+                    )}
+                </div>
+
+                {member.bio && <p className="mt-2 line-clamp-3 text-sm text-slate-600">{member.bio}</p>}
+
+                <div className="mt-3 flex flex-wrap gap-3 text-sm">
+                    {socials.linkedin && <a className="pointer-events-auto text-[var(--theme-color)] hover:underline" href={socials.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>}
+                    {socials.github && <a className="pointer-events-auto text-[var(--theme-color)] hover:underline" href={socials.github} target="_blank" rel="noreferrer">GitHub</a>}
+                    {socials.twitter && <a className="pointer-events-auto text-[var(--theme-color)] hover:underline" href={socials.twitter} target="_blank" rel="noreferrer">Twitter</a>}
+                    {socials.website && <a className="pointer-events-auto text-[var(--theme-color)] hover:underline" href={socials.website} target="_blank" rel="noreferrer">Website</a>}
+                </div>
+                <a href={`/profile/${member.id}`} className="pointer-events-auto mt-3 inline-flex items-center gap-1 text-sm font-medium text-[var(--theme-color)] hover:underline">
+                    View profile <FiExternalLink className="h-4 w-4" />
+                </a>
+            </div>
+
+            <div className="absolute left-0 top-full h-3 w-full" aria-hidden="true" />
         </div>
     );
 };
@@ -1148,13 +1216,7 @@ const Projects = () => {
                                                         ) : (
                                                             <>
                                                                 <div className="flex flex-1 items-start gap-4">
-                                                                    <Avatar name={member.name} src={member.profile_picture} size="lg" />
-                                                                    <div className="space-y-1">
-                                                                        <p className="text-lg font-medium text-gray-900">{member.name || 'Invited User'}</p>
-                                                                        <p className="text-sm capitalize text-gray-500">{member.role}</p>
-                                                                        {member.email && <p className="text-sm text-gray-500">{member.email}</p>}
-                                                                        <p className="text-sm text-gray-500">Allocation: {member.allocation_percentage}% ({member.workload_status})</p>
-                                                                    </div>
+                                                                    <MemberProfileHoverCard member={member} />
                                                                 </div>
                                                                 <div className="flex shrink-0 items-center gap-2">
                                                                     {(canManageMembers || member.id === user.id) && (
@@ -1326,8 +1388,8 @@ const Projects = () => {
                                                 </div>
                                             </div>
                                             <div className="flex items-center -space-x-2 mb-4">
-                                                {project.users.slice(0, 4).map((member) => ( // Show up to 4 avatars
-                                                    <Avatar key={member.id} name={member.name} src={member.profile_picture} size="md" />
+                                                {project.users.slice(0, 4).map((member) => (
+                                                    <MemberProfileHoverCard key={member.id} member={member} compact />
                                                 ))}
                                                 {project.users.length > 4 && (
                                                     <span className="text-sm text-gray-500 ml-4 font-medium">+{project.users.length - 4} more</span>
