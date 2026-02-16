@@ -95,6 +95,7 @@ export const updateUser = (id, data) =>
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 export const fetchDepartments = () => api.get('/departments.json');
+export const adminImpersonate = (userId) => api.post('/admin/impersonate', { user_id: userId });
 
 // ISSUE TRACKER
 const buildIssuePayload = (raw) => {
