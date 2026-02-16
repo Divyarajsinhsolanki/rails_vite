@@ -72,6 +72,7 @@ const App = () => {
               <Route path="/posts" element={<PrivateRoute><PostPage /></PrivateRoute>} />
               <Route path="/vault" element={<PrivateRoute><Vault /></PrivateRoute>} />
               <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+              <Route path="/profile/:userId" element={<PrivateRoute><Profile /></PrivateRoute>} />
               <Route path="/knowledge" element={<PrivateRoute><KnowledgeDashboard /></PrivateRoute>} />
               <Route path="/worklog" element={<PrivateRoute><WorkLog /></PrivateRoute>} />
               <Route path="/calendar" element={<PrivateRoute><Calendar /></PrivateRoute>} />

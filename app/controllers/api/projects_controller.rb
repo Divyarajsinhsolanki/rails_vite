@@ -72,6 +72,10 @@ class Api::ProjectsController < Api::BaseController
           name: [pu.user.first_name, pu.user.last_name].compact.join(' '),
           profile_picture: pu.user.profile_picture.attached? ?
             rails_blob_url(pu.user.profile_picture, only_path: true) : nil,
+          phone_number: pu.user.phone_number,
+          job_title: pu.user.job_title,
+          bio: pu.user.bio,
+          social_links: pu.user.social_links || {},
           role: pu.role,
           status: pu.status,
           allocation_percentage: pu.allocation_percentage,
