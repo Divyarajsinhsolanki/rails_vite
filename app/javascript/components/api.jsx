@@ -229,6 +229,10 @@ export const markAllNotificationsRead = () => api.post('/notifications/mark_all_
 export const fetchCalendarEvents = (params = {}) => api.get('/calendar_events', { params });
 export const createCalendarEvent = (data) => api.post('/calendar_events', { calendar_event: data });
 export const updateCalendarEvent = (id, data) => api.patch(`/calendar_events/${id}`, { calendar_event: data });
+export const rescheduleCalendarEvent = (id, data) => api.patch(`/calendar_events/${id}/reschedule`, data);
+export const exportCalendarIcs = () => api.get('/calendar_events/export_ics', { responseType: 'text' });
+export const importCalendarIcs = (ics) => api.post('/calendar_events/import_ics', { ics });
+export const getCalendarGoogleLink = (id) => api.get(`/calendar_events/${id}/google_link`);
 export const deleteCalendarEvent = (id) => api.delete(`/calendar_events/${id}`);
 export const createEventReminder = (calendarEventId, data) => api.post(`/calendar_events/${calendarEventId}/event_reminders`, { event_reminder: data });
 export const updateEventReminder = (id, data) => api.patch(`/event_reminders/${id}`, { event_reminder: data });

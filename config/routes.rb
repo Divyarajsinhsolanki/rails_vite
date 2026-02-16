@@ -119,6 +119,14 @@ Rails.application.routes.draw do
 
     resources :calendar_events, only: [:index, :create, :update, :destroy] do
       resources :event_reminders, only: [:create]
+      member do
+        patch :reschedule
+        get :google_link
+      end
+      collection do
+        get :export_ics
+        post :import_ics
+      end
     end
     resources :event_reminders, only: [:update, :destroy]
 
