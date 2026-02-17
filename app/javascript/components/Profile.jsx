@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { fetchUserInfo, fetchUserProfile, fetchPosts, SchedulerAPI, fetchTeams, saveKekaCredentials, refreshKekaProfile } from "../components/api";
+import { fetchUserInfo, fetchUserProfile, fetchPosts, SchedulerAPI, fetchTeams, saveKekaCredentials, refreshKekaProfile, startDirectConversation } from "../components/api";
 import { getStatusClasses } from '/utils/taskUtils';
 import { Squares2X2Icon, FolderIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { AuthContext } from '../context/AuthContext';
@@ -482,6 +482,18 @@ const Profile = () => {
     return sections;
   }, [otherTasks]);
 
+
+  const handleStartDirectChat = async () => {
+    if (!userId) return;
+
+    try {
+      const { data } = await startDirectConversation(userId);
+      navigate(`/chat/${data.id}`);
+    } catch (error) {
+      console.error("Unable to start direct chat", error);
+    }
+  };
+
   const getProjectName = (projectId) => {
     const project = projects.find((p) => p.id === projectId);
     return project ? project.name : `Project ${projectId}`;
@@ -630,6 +642,15 @@ const Profile = () => {
                     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                   </svg>
                   Edit Profile
+                </button>
+              )}
+
+              {!editMode && viewingOtherProfile && (
+                <button
+                  onClick={handleStartDirectChat}
+                  className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700 transition"
+                >
+                  Text
                 </button>
               )}
             </div>

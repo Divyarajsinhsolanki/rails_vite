@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { 
   Search, Edit2, Trash2, X, Check, Upload, PencilLine,
-  Mail, Calendar, Users as UsersIcon 
+  Mail, Calendar, Users as UsersIcon, MessageSquare 
 } from "lucide-react";
 import {
   getUsers,
@@ -13,10 +13,12 @@ import {
   fetchProjects,
   fetchRoles,
   fetchDepartments,
+  startDirectConversation,
 } from "../components/api";
 
 const Users = () => {
   const { user: currentUser } = React.useContext(AuthContext);
+  const navigate = useNavigate();
   // --- State Management ---
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
@@ -197,6 +199,16 @@ const Users = () => {
       closePhotoModal();
     } catch (error) {
       console.error("Photo update failed", error);
+    }
+  };
+
+
+  const handleStartChat = async (userId) => {
+    try {
+      const { data } = await startDirectConversation(userId);
+      navigate(`/chat/${data.id}`);
+    } catch (error) {
+      console.error("Failed to start chat", error);
     }
   };
 
@@ -383,12 +395,19 @@ const Users = () => {
 
         {/* Footer Actions */}
         <div className="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-between items-center opacity-80 group-hover:opacity-100 transition-opacity">
-            <Link
-              to={`/profile/${user.id}`}
-              className="text-[var(--theme-color)] hover:text-indigo-700 font-medium text-sm"
-            >
-              View profile
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                to={`/profile/${user.id}`}
+                className="text-[var(--theme-color)] hover:text-indigo-700 font-medium text-sm"
+              >
+                View profile
+              </Link>
+              {currentUser?.id !== user.id && (
+                <button type="button" onClick={() => handleStartChat(user.id)} className="text-sm font-medium text-blue-600 hover:text-blue-800 inline-flex items-center gap-1">
+                  <MessageSquare size={14} /> Text
+                </button>
+              )}
+            </div>
             {canManageUsers ? (
               <div className="flex items-center gap-4">
                 <button 

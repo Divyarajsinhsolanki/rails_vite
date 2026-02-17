@@ -212,6 +212,7 @@ const Navbar = () => {
     { to: "/knowledge", label: "Knowledge", icon: FiBook, visible: !!user },
     { to: "/vault", label: "Vault", icon: FiMenu, visible: !!user },
     { to: "/worklog", label: "Work Log", icon: FiClock, visible: !!user },
+    { to: "/chat", label: "Chat", icon: FiMessageSquare, visible: !!user },
     { to: "/calendar", label: "Calendar", icon: FiCalendar, visible: !!user },
     {
       to: "/teams",

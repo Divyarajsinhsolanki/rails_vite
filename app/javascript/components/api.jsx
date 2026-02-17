@@ -226,6 +226,15 @@ export const sendContact = (data) => api.post('/contacts', { contact: data });
 
 export const fetchSheetData = (params) => api.get('/sheet', { params });
 
+
+// CHAT ENDPOINTS
+export const fetchConversations = () => api.get('/conversations.json');
+export const fetchConversation = (id) => api.get(`/conversations/${id}.json`);
+export const createConversation = (data) => api.post('/conversations.json', { conversation: data, participant_ids: data.participant_ids || [] });
+export const startDirectConversation = (userId) => api.post('/conversations/start_direct', { user_id: userId });
+export const sendMessage = (conversationId, formData) =>
+  api.post(`/conversations/${conversationId}/messages`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+
 // NOTIFICATION ENDPOINTS
 export const fetchNotifications = (params = {}) => api.get('/notifications.json', { params });
 export const markNotificationRead = (id) => api.post(`/notifications/${id}/mark_read`);
