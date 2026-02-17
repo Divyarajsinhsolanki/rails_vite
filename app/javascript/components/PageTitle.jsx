@@ -22,6 +22,7 @@ const PageTitle = () => {
       "/projects": "Projects",
       "/teams": "Teams",
       "/users": "Users",
+      "/departments": "Departments",
       "/admin": "Admin",
       "/settings": "Settings",
     };

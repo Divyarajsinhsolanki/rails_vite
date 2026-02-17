@@ -109,7 +109,12 @@ Rails.application.routes.draw do
 
     resources :items, only: [:index, :create, :update, :destroy]
     resources :issues, only: [:index, :create, :update, :destroy]
-    resources :departments, only: [:index]
+    resources :departments do
+      member do
+        get :members
+        patch :update_members
+      end
+    end
 
     resources :knowledge_bookmarks, only: [:index, :create, :update, :destroy] do
       member do
