@@ -10,6 +10,7 @@ import {
   FiUserPlus,
   FiX,
   FiCheck,
+  FiArrowRight,
 } from "react-icons/fi";
 import {
   createDepartment,
@@ -33,6 +34,7 @@ const Departments = () => {
 
   const [memberModal, setMemberModal] = useState({ open: false, department: null });
   const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [memberSearch, setMemberSearch] = useState("");
   const [savingMembers, setSavingMembers] = useState(false);
 
   const loadData = async () => {
@@ -114,6 +116,7 @@ const Departments = () => {
   const closeMembersModal = () => {
     setMemberModal({ open: false, department: null });
     setSelectedUserIds([]);
+    setMemberSearch("");
   };
 
   const toggleUser = (userId) => {
@@ -137,6 +140,37 @@ const Departments = () => {
     }
   };
 
+  const usersForMemberModal = useMemo(() => {
+    const activeDepartmentId = memberModal.department?.id;
+    const term = memberSearch.trim().toLowerCase();
+
+    return users
+      .map((user) => {
+        const fullName = `${user.first_name || ""} ${user.last_name || ""}`.trim();
+        const belongsToAnotherDepartment =
+          !!user.department_id && user.department_id !== activeDepartmentId;
+
+        return {
+          ...user,
+          fullName,
+          belongsToAnotherDepartment,
+        };
+      })
+      .filter((user) => {
+        if (!term) return true;
+        return [user.fullName, user.email, user.department_name]
+          .join(" ")
+          .toLowerCase()
+          .includes(term);
+      })
+      .sort((a, b) => {
+        const aSelected = selectedUserIds.includes(a.id) ? 0 : 1;
+        const bSelected = selectedUserIds.includes(b.id) ? 0 : 1;
+        if (aSelected !== bSelected) return aSelected - bSelected;
+        return a.fullName.localeCompare(b.fullName);
+      });
+  }, [memberModal.department?.id, memberSearch, selectedUserIds, users]);
+
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-8 sm:px-8">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -150,33 +184,41 @@ const Departments = () => {
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          <form onSubmit={handleSubmit} className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100 space-y-4">
+        <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-800">
               <FiBriefcase /> {editingId ? "Edit Department" : "Create Department"}
             </h2>
+            {editingId && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingId(null);
+                  setForm(emptyForm);
+                }}
+                className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100"
+              >
+                Cancel editing
+              </button>
+            )}
+          </div>
+          <form onSubmit={handleSubmit} className="grid gap-3 md:grid-cols-[1fr_auto]">
             <div>
               <label className="text-xs font-semibold uppercase text-gray-500">Department Name</label>
               <input
                 value={form.name}
                 onChange={(e) => setForm({ name: e.target.value })}
                 placeholder="e.g., Engineering"
-                className="mt-1 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
-            <div className="flex gap-2">
-              <button disabled={saving} className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60">
-                <FiPlus /> {saving ? "Saving..." : editingId ? "Update" : "Create"}
-              </button>
-              {editingId && (
-                <button type="button" onClick={() => { setEditingId(null); setForm(emptyForm); }} className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-100">
-                  Cancel
-                </button>
-              )}
-            </div>
+            <button disabled={saving} className="mt-5 inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60">
+              <FiPlus /> {saving ? "Saving..." : editingId ? "Update" : "Create"}
+            </button>
           </form>
+        </div>
 
-          <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100 lg:col-span-2">
+        <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
             <div className="mb-4 flex items-center justify-between gap-3">
               <h2 className="text-lg font-semibold text-gray-800">Department Directory</h2>
               <div className="relative w-full max-w-xs">
@@ -190,14 +232,14 @@ const Departments = () => {
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {loading ? (
                 <p className="text-sm text-gray-500">Loading departments...</p>
               ) : filteredDepartments.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">No departments found.</p>
+                <p className="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 sm:col-span-2 xl:col-span-3">No departments found.</p>
               ) : (
                 filteredDepartments.map((department) => (
-                  <div key={department.id} className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                  <div key={department.id} className="flex flex-col justify-between gap-4 rounded-xl border border-gray-200 bg-gradient-to-b from-white to-gray-50 p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <p className="font-semibold text-gray-800">{department.name}</p>
@@ -225,20 +267,39 @@ const Departments = () => {
 
       {memberModal.open && memberModal.department && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-2xl rounded-2xl bg-white p-5 shadow-xl">
+          <div className="w-full max-w-3xl rounded-2xl bg-white p-5 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold">Manage Members · {memberModal.department.name}</h3>
               <button onClick={closeMembersModal} className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100"><FiX /></button>
             </div>
 
+            <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+              A user can belong to only one department. Selecting a user already assigned elsewhere will move them to <span className="font-semibold">{memberModal.department.name}</span>.
+            </div>
+
+            <div className="mb-4 relative">
+              <FiSearch className="absolute left-3 top-2.5 text-gray-400" />
+              <input
+                value={memberSearch}
+                onChange={(e) => setMemberSearch(e.target.value)}
+                placeholder="Search by name, email, or department"
+                className="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
             <div className="max-h-[55vh] space-y-2 overflow-y-auto pr-1">
-              {users.map((user) => {
+              {usersForMemberModal.map((user) => {
                 const checked = selectedUserIds.includes(user.id);
                 return (
                   <label key={user.id} className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 ${checked ? "border-indigo-300 bg-indigo-50" : "border-gray-200"}`}>
                     <div>
-                      <p className="text-sm font-medium text-gray-800">{user.first_name} {user.last_name}</p>
+                      <p className="text-sm font-medium text-gray-800">{user.fullName}</p>
                       <p className="text-xs text-gray-500">{user.email}</p>
+                      {user.belongsToAnotherDepartment && (
+                        <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+                          {user.department_name} <FiArrowRight /> {memberModal.department.name}
+                        </p>
+                      )}
                     </div>
                     <button type="button" onClick={() => toggleUser(user.id)} className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${checked ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-500"}`}>
                       <FiCheck className="text-sm" />
@@ -246,6 +307,9 @@ const Departments = () => {
                   </label>
                 );
               })}
+              {usersForMemberModal.length === 0 && (
+                <p className="rounded-lg border border-dashed border-gray-300 p-4 text-center text-sm text-gray-500">No users match your search.</p>
+              )}
             </div>
 
             <div className="mt-4 flex justify-end gap-2">
