@@ -28,6 +28,7 @@ import Settings from "../pages/Settings";
 import PageTitle from "./PageTitle";
 import Calendar from "../pages/Calendar";
 import AdminImpersonation from "../pages/AdminImpersonation";
+import Departments from "../pages/Departments";
 import PageLoader from "./ui/PageLoader";
 
 const RouteTransitionLoader = ({ children }) => {
@@ -83,6 +84,7 @@ const App = () => {
               <Route path="/teams" element={<PrivateRoute><Teams /></PrivateRoute>} />
               <Route path="/projects/:projectId/dashboard" element={<ProjectMemberRoute><SprintDashboard /></ProjectMemberRoute>} />
               <Route path="/users" element={<PrivateRoute><Users /></PrivateRoute>} />
+              <Route path="/departments" element={<PrivateRoute><Departments /></PrivateRoute>} />
               <Route path="/admin" element={<PrivateRoute ownerOnly><Admin /></PrivateRoute>} />
               <Route path="/admin/login-as-user" element={<PrivateRoute ownerOnly><AdminImpersonation /></PrivateRoute>} />
               <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />

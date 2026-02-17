@@ -8,7 +8,7 @@ import NotificationCenter from "./NotificationCenter";
 // Icons
 import {
   FiChevronDown, FiMenu, FiX, FiLogOut, FiUser,
-  FiUsers, FiBriefcase, FiLayers, FiBook,
+  FiUsers, FiBriefcase, FiLayers, FiBook, FiGrid,
   FiMessageSquare, FiSettings, FiZap, FiAward, FiFileText,
   FiClock, FiCalendar
 } from "react-icons/fi";
@@ -345,6 +345,15 @@ const Navbar = () => {
                         User Management
                       </NavLink>
 
+                      <NavLink
+                        to="/departments"
+                        onClick={() => setIsProfileOpen(false)}
+                        className="flex items-center gap-3 w-full px-3 py-2.5 text-sm rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                      >
+                        <FiGrid className="h-4 w-4 text-blue-500" />
+                        Departments
+                      </NavLink>
+
                       {isOwner && (
                         <NavLink
                           to="/admin/login-as-user"
@@ -553,6 +562,15 @@ const Navbar = () => {
                     >
                       <FiUsers className="h-4 w-4" />
                       User Management
+                    </NavLink>
+
+                    <NavLink
+                      to="/departments"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-5 py-3 text-sm rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    >
+                      <FiGrid className="h-4 w-4" />
+                      Departments
                     </NavLink>
 
                     <NavLink
