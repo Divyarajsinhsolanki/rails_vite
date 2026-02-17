@@ -1,5 +1,5 @@
 class Conversation < ApplicationRecord
-  enum conversation_type: { direct: "direct", group: "group" }
+  enum conversation_type: { direct: "direct", group: "group" }, _prefix: :conversation
 
   belongs_to :creator, class_name: "User"
   has_many :conversation_participants, dependent: :destroy
@@ -10,6 +10,14 @@ class Conversation < ApplicationRecord
   validates :title, presence: true, if: :group?
 
   scope :for_user, ->(user) { joins(:conversation_participants).where(conversation_participants: { user_id: user.id }).distinct }
+
+  def direct?
+    conversation_type == "direct"
+  end
+
+  def group?
+    conversation_type == "group"
+  end
 
   def display_name(for_user)
     return title if group?
