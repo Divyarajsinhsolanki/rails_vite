@@ -1,22 +1,40 @@
 const subscriptions = new Map();
 let socket;
+let reconnectTimer;
 
 const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
 const socketUrl = `${wsProtocol}://${window.location.host}/cable`;
+const cableProtocols = ["actioncable-v1-json", "actioncable-unsupported"];
+
+const sendWhenOpen = (payload) => {
+  if (!socket || socket.readyState !== WebSocket.OPEN) return;
+  socket.send(JSON.stringify(payload));
+};
+
+const resubscribeAll = () => {
+  subscriptions.forEach((_handlers, identifier) => {
+    sendWhenOpen({ command: "subscribe", identifier });
+  });
+};
 
 const connect = () => {
   if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) return;
 
-  socket = new WebSocket(socketUrl);
+  socket = new WebSocket(socketUrl, cableProtocols);
 
   socket.onopen = () => {
-    subscriptions.forEach((_handlers, identifier) => {
-      socket.send(JSON.stringify({ command: "subscribe", identifier }));
-    });
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    }
+
+    resubscribeAll();
   };
 
   socket.onmessage = (event) => {
     const data = JSON.parse(event.data);
+
+    // Ignore framework-level ActionCable messages.
     if (!data.identifier || !data.message) return;
 
     const handlers = subscriptions.get(data.identifier) || [];
@@ -24,20 +42,25 @@ const connect = () => {
   };
 
   socket.onclose = () => {
-    setTimeout(connect, 1000);
+    reconnectTimer = setTimeout(connect, 1000);
+  };
+
+  socket.onerror = () => {
+    socket.close();
   };
 };
 
 const subscribe = (params, received) => {
   const identifier = JSON.stringify(params);
   const handlers = subscriptions.get(identifier) || [];
-  subscriptions.set(identifier, [...handlers, received]);
+
+  if (!handlers.includes(received)) {
+    subscriptions.set(identifier, [...handlers, received]);
+  }
 
   connect();
 
-  if (socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ command: "subscribe", identifier }));
-  }
+  sendWhenOpen({ command: "subscribe", identifier });
 
   return {
     unsubscribe: () => {
@@ -46,9 +69,7 @@ const subscribe = (params, received) => {
 
       if (remainingHandlers.length === 0) {
         subscriptions.delete(identifier);
-        if (socket.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify({ command: "unsubscribe", identifier }));
-        }
+        sendWhenOpen({ command: "unsubscribe", identifier });
       } else {
         subscriptions.set(identifier, remainingHandlers);
       }
