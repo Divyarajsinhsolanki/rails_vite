@@ -1436,14 +1436,14 @@ const Profile = () => {
       {/* Edit Profile Modal */}
       {editMode && !viewingOtherProfile && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-white/30">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-white/30">
             <div className="bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] p-6 text-white">
               <h3 className="text-2xl font-bold">Edit Profile</h3>
               <p className="opacity-90">Update your personal information</p>
             </div>
             
             <form onSubmit={handleSubmit} className="p-6" encType="multipart/form-data">
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 required-label">First Name</label>
                   <input
@@ -1502,12 +1502,14 @@ const Profile = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 gap-3">
+                <div className="grid grid-cols-1 gap-3 md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700">Social links</label>
-                  <input type="url" name="social_links.linkedin" placeholder="LinkedIn URL" value={formData.social_links?.linkedin || ''} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition" />
-                  <input type="url" name="social_links.github" placeholder="GitHub URL" value={formData.social_links?.github || ''} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition" />
-                  <input type="url" name="social_links.twitter" placeholder="Twitter URL" value={formData.social_links?.twitter || ''} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition" />
-                  <input type="url" name="social_links.website" placeholder="Website URL" value={formData.social_links?.website || ''} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input type="url" name="social_links.linkedin" placeholder="LinkedIn URL" value={formData.social_links?.linkedin || ''} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition" />
+                    <input type="url" name="social_links.github" placeholder="GitHub URL" value={formData.social_links?.github || ''} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition" />
+                    <input type="url" name="social_links.twitter" placeholder="Twitter URL" value={formData.social_links?.twitter || ''} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition" />
+                    <input type="url" name="social_links.website" placeholder="Website URL" value={formData.social_links?.website || ''} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition" />
+                  </div>
                 </div>
                 
                 <div>
@@ -1554,7 +1556,7 @@ const Profile = () => {
                   </div>
                 </div>
 
-                <div>
+                <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Theme Color</label>
                   <div className="flex items-center gap-4">
                     <input
@@ -1580,7 +1582,7 @@ const Profile = () => {
                 </div>
               </div>
               
-              <div className="mt-8 flex justify-end space-x-3">
+              <div className="mt-8 flex justify-end space-x-3 md:col-span-2">
                 <button
                   type="button"
                   onClick={() => setEditMode(false)}
