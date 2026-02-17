@@ -9,6 +9,7 @@ class Message < ApplicationRecord
   validate :body_or_attachment_present
   validate :attachment_types
 
+  after_create_commit :broadcast_message
   after_create_commit :notify_participants
 
   private
@@ -27,6 +28,10 @@ class Message < ApplicationRecord
 
       errors.add(:attachments, "must be an image or video")
     end
+  end
+
+  def broadcast_message
+    Chat::Broadcaster.broadcast_message_created(self)
   end
 
   def notify_participants

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { MessageCircle } from "lucide-react";
 import { fetchConversations } from "./api";
+import { subscribeToUserChat } from "../lib/chatCable";
 
 const ChatLauncher = () => {
   const [conversations, setConversations] = useState([]);
@@ -17,8 +18,14 @@ const ChatLauncher = () => {
     };
 
     load();
-    const interval = setInterval(load, 5000);
-    return () => clearInterval(interval);
+
+    const subscription = subscribeToUserChat((payload) => {
+      if (payload?.type === "conversation_refresh") {
+        load();
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const unreadCount = useMemo(() => conversations.reduce((count, conversation) => count + (conversation.unread_count || 0), 0), [conversations]);

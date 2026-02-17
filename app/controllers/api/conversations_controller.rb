@@ -26,6 +26,7 @@ class Api::ConversationsController < Api::BaseController
       participant_ids.each do |user_id|
         conversation.conversation_participants.create!(user_id: user_id)
       end
+      Chat::Broadcaster.broadcast_conversation_refresh(conversation)
       render json: serialize_conversation(conversation), status: :created
     else
       render json: { errors: conversation.errors.full_messages }, status: :unprocessable_entity
@@ -62,6 +63,7 @@ class Api::ConversationsController < Api::BaseController
     conversation = Conversation.create!(conversation_type: :direct, creator: current_user)
     conversation.conversation_participants.create!(user: current_user)
     conversation.conversation_participants.create!(user: other_user)
+    Chat::Broadcaster.broadcast_conversation_refresh(conversation)
     conversation
   end
 

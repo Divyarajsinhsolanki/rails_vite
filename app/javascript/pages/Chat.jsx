@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { createConversation, fetchConversation, fetchConversations, getUsers, sendMessage } from "../components/api";
+import { subscribeToConversationChat, subscribeToUserChat } from "../lib/chatCable";
 
 const Chat = () => {
   const { conversationId } = useParams();
@@ -18,34 +19,64 @@ const Chat = () => {
     group: conversations.filter((conversation) => conversation.conversation_type === "group")
   }), [conversations]);
 
-  const loadConversations = async () => {
+  const loadConversations = useCallback(async () => {
     const { data } = await fetchConversations();
     setConversations(Array.isArray(data) ? data : []);
-  };
+  }, []);
 
-  const loadConversation = async (id) => {
+  const loadConversation = useCallback(async (id) => {
     if (!id) return;
     const { data } = await fetchConversation(id);
     setActiveConversation(data);
-  };
+  }, []);
 
   useEffect(() => {
     loadConversations();
     getUsers().then(({ data }) => setUsers(Array.isArray(data) ? data : []));
-
-    const interval = setInterval(() => {
-      loadConversations();
-      if (conversationId) loadConversation(conversationId);
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [conversationId]);
+  }, [loadConversations]);
 
   useEffect(() => {
     if (conversationId) {
       loadConversation(conversationId);
+    } else {
+      setActiveConversation(null);
     }
-  }, [conversationId]);
+  }, [conversationId, loadConversation]);
+
+  useEffect(() => {
+    const userSubscription = subscribeToUserChat((payload) => {
+      if (payload?.type === "conversation_refresh") {
+        loadConversations();
+        if (conversationId) loadConversation(conversationId);
+      }
+    });
+
+    return () => userSubscription.unsubscribe();
+  }, [conversationId, loadConversation, loadConversations]);
+
+  useEffect(() => {
+    if (!conversationId) return undefined;
+
+    const conversationSubscription = subscribeToConversationChat(conversationId, (payload) => {
+      if (payload?.type !== "message_created" || payload.conversation_id?.toString() !== conversationId.toString()) return;
+
+      setActiveConversation((previousConversation) => {
+        if (!previousConversation) return previousConversation;
+
+        const alreadyExists = previousConversation.messages?.some((message) => message.id === payload.message.id);
+        if (alreadyExists) return previousConversation;
+
+        return {
+          ...previousConversation,
+          messages: [...(previousConversation.messages || []), payload.message]
+        };
+      });
+
+      loadConversations();
+    });
+
+    return () => conversationSubscription.unsubscribe();
+  }, [conversationId, loadConversations]);
 
   const handleCreateGroup = async (event) => {
     event.preventDefault();
@@ -74,8 +105,6 @@ const Chat = () => {
     await sendMessage(conversationId, formData);
     setMessageBody("");
     setAttachments([]);
-    await loadConversation(conversationId);
-    await loadConversations();
   };
 
   return (
