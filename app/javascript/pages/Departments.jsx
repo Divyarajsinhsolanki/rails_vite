@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import {
-  FiBuilding,
+  FiBriefcase,
   FiEdit2,
   FiPlus,
   FiSearch,
@@ -153,7 +153,7 @@ const Departments = () => {
         <div className="grid gap-6 lg:grid-cols-3">
           <form onSubmit={handleSubmit} className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100 space-y-4">
             <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-800">
-              <FiBuilding /> {editingId ? "Edit Department" : "Create Department"}
+              <FiBriefcase /> {editingId ? "Edit Department" : "Create Department"}
             </h2>
             <div>
               <label className="text-xs font-semibold uppercase text-gray-500">Department Name</label>
