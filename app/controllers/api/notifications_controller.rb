@@ -48,6 +48,9 @@ class Api::NotificationsController < ApplicationController
       "#{notification.actor.full_name} commented on your post"
     when 'update'
       "#{notification.actor.full_name} updated a task"
+    when 'chat_message'
+      conversation_name = notification.metadata&.dig('conversation_name') || 'a conversation'
+      "#{notification.actor.full_name} sent a message in #{conversation_name}"
     else
       "New notification"
     end

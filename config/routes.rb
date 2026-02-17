@@ -136,6 +136,13 @@ Rails.application.routes.draw do
     end
     resources :event_reminders, only: [:update, :destroy]
 
+    resources :conversations, only: [:index, :show, :create] do
+      collection do
+        post :start_direct
+      end
+      resources :messages, only: [:create]
+    end
+
     resources :notifications, only: [:index] do
       collection do
         post :mark_all_read

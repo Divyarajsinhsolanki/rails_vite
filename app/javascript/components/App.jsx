@@ -30,6 +30,8 @@ import Calendar from "../pages/Calendar";
 import AdminImpersonation from "../pages/AdminImpersonation";
 import Departments from "../pages/Departments";
 import PageLoader from "./ui/PageLoader";
+import Chat from "../pages/Chat";
+import ChatLauncher from "./ChatLauncher";
 
 const RouteTransitionLoader = ({ children }) => {
   const location = useLocation();
@@ -88,9 +90,12 @@ const App = () => {
               <Route path="/admin" element={<PrivateRoute ownerOnly><Admin /></PrivateRoute>} />
               <Route path="/admin/login-as-user" element={<PrivateRoute ownerOnly><AdminImpersonation /></PrivateRoute>} />
               <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
+              <Route path="/chat" element={<PrivateRoute><Chat /></PrivateRoute>} />
+              <Route path="/chat/:conversationId" element={<PrivateRoute><Chat /></PrivateRoute>} />
             </Routes>
           </RouteTransitionLoader>
 
+          <ChatLauncher />
           {/* ✅ Footer */}
           <Footer />
 
