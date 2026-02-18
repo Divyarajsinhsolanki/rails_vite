@@ -66,7 +66,7 @@ class Api::DepartmentsController < Api::BaseController
   end
 
   def department_params
-    params.require(:department).permit(:name)
+    params.require(:department).permit(:name, :description, :manager_id)
   end
 
   def serialize_department(department, include_members: false)
@@ -74,9 +74,14 @@ class Api::DepartmentsController < Api::BaseController
       id: department.id,
       name: department.name,
       users_count: department.users.size,
-      updated_at: department.updated_at
+      users_count: department.users.size,
+      updated_at: department.updated_at,
+      description: department.description,
+      manager_id: department.manager_id,
+      manager: department.manager ? { id: department.manager.id, full_name: department.manager.full_name, profile_picture_url: department.manager.profile_picture.attached? ? Rails.application.routes.url_helpers.rails_blob_url(department.manager.profile_picture, only_path: true) : nil } : nil,
+      members_preview: serialized_users(department.users.order(:first_name, :last_name).limit(5))
     }
-
+    
     payload[:members] = serialized_users(department.users.order(:first_name, :last_name, :email)) if include_members
     payload
   end
@@ -90,7 +95,9 @@ class Api::DepartmentsController < Api::BaseController
         email: user.email,
         job_title: user.job_title,
         department_id: user.department_id,
-        full_name: user.full_name
+        full_name: user.full_name,
+        phone: user.phone_number,
+        profile_picture_url: user.profile_picture.attached? ? Rails.application.routes.url_helpers.rails_blob_url(user.profile_picture, only_path: true) : nil
       }
     end
   end

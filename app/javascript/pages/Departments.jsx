@@ -1,50 +1,116 @@
-import React, { useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
+import React, { useEffect, useState, useContext, useMemo } from 'react';
+import toast from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import {
-  FiBriefcase,
-  FiEdit2,
+  FiUsers,
   FiPlus,
   FiSearch,
+  FiSettings,
   FiTrash2,
-  FiUsers,
-  FiUserPlus,
-  FiX,
-  FiCheck,
+  FiEdit2,
+  FiInfo,
+  FiMoreVertical,
+  FiBriefcase,
   FiArrowRight,
-} from "react-icons/fi";
+  FiGrid,
+  FiList
+} from 'react-icons/fi';
 import {
-  createDepartment,
-  deleteDepartment,
   fetchDepartments,
-  getUsers,
+  createDepartment,
   updateDepartment,
-  updateDepartmentMembers,
-} from "../components/api";
+  deleteDepartment,
+  getUsers
+} from '../components/api';
+import { AuthContext } from '../context/AuthContext';
+import PageLoader from '../components/ui/PageLoader';
 
-const emptyForm = { name: "" };
+// --- Improved UI Components (Copied/Adapted from Projects.jsx) ---
+
+const Avatar = ({ name, src, size = 'md', className = '' }) => {
+  const sizeClasses = {
+    sm: "w-7 h-7 text-xs",
+    md: "w-9 h-9 text-sm",
+    lg: "w-11 h-11 text-base",
+    xl: "w-14 h-14 text-lg",
+  };
+  const currentSizeClass = sizeClasses[size] || sizeClasses.md;
+
+  if (src && src !== 'null') {
+    return (
+      <img
+        src={src}
+        alt={`${name}'s avatar`}
+        className={`rounded-full object-cover ring-2 ring-white dark:ring-zinc-800 shadow-sm ${currentSizeClass} ${className}`}
+      />
+    );
+  }
+  const initial = name ? name.charAt(0).toUpperCase() : "?";
+  // Deterministic color based on name
+  const colors = [
+    'bg-gradient-to-br from-violet-400 to-violet-600',
+    'bg-gradient-to-br from-blue-400 to-blue-600',
+    'bg-gradient-to-br from-emerald-400 to-emerald-600',
+    'bg-gradient-to-br from-amber-400 to-amber-600',
+    'bg-gradient-to-br from-rose-400 to-rose-600',
+  ];
+  const colorIndex = name ? name.charCodeAt(0) % colors.length : 0;
+
+  return (
+    <div className={`rounded-full ${colors[colorIndex]} text-white flex items-center justify-center font-bold ring-2 ring-white dark:ring-zinc-800 shadow-sm ${currentSizeClass} ${className}`}>
+      {initial}
+    </div>
+  );
+};
+
+const AvatarStack = ({ members, max = 4, size = 'sm' }) => {
+  const visible = members.slice(0, max);
+  const remaining = members.length - max;
+  return (
+    <div className="flex items-center -space-x-2">
+      {visible.map((member, i) => (
+        <div key={member.id || i} className="relative z-0 hover:z-10 transition-transform hover:scale-105">
+          <Avatar name={member.full_name} src={member.profile_picture_url} size={size} />
+        </div>
+      ))}
+      {remaining > 0 && (
+        <div className={`w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-xs font-medium ring-2 ring-white`}>
+          +{remaining}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const Departments = () => {
+  const { user } = useContext(AuthContext);
   const [departments, setDepartments] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState([]); // Needed for total/unassigned
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [form, setForm] = useState(emptyForm);
-  const [editingId, setEditingId] = useState(null);
-  const [saving, setSaving] = useState(false);
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
 
-  const [memberModal, setMemberModal] = useState({ open: false, department: null });
-  const [selectedUserIds, setSelectedUserIds] = useState([]);
-  const [memberSearch, setMemberSearch] = useState("");
-  const [savingMembers, setSavingMembers] = useState(false);
+  // Permissions
+  const canManage = useMemo(() => {
+    return user?.roles?.some(r => ['admin', 'owner'].includes(r.name));
+  }, [user]);
+
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingDepartment, setEditingDepartment] = useState(null);
+  const [formName, setFormName] = useState("");
+  const [formDesc, setFormDesc] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
     try {
       const [deptRes, usersRes] = await Promise.all([fetchDepartments(), getUsers()]);
-      setDepartments(Array.isArray(deptRes.data) ? deptRes.data : []);
-      setUsers(Array.isArray(usersRes.data) ? usersRes.data : []);
+      setDepartments(deptRes.data || []);
+      setUsers(usersRes.data || []);
     } catch (error) {
-      toast.error(error?.response?.data?.error || "Failed to load departments.");
+      toast.error("Failed to load departments.");
     } finally {
       setLoading(false);
     }
@@ -55,270 +121,349 @@ const Departments = () => {
   }, []);
 
   const filteredDepartments = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return departments;
-    return departments.filter((department) => department.name.toLowerCase().includes(term));
+    const term = search.toLowerCase();
+    return departments.filter(d =>
+      d.name.toLowerCase().includes(term) ||
+      (d.description && d.description.toLowerCase().includes(term))
+    );
   }, [departments, search]);
 
-  const unassignedUsersCount = useMemo(
-    () => users.filter((user) => !user.department_id).length,
-    [users]
-  );
+  const unassignedCount = useMemo(() => users.filter(u => !u.department_id).length, [users]);
+
+  // Handlers
+  const handleOpenModal = (dept = null) => {
+    if (dept) {
+      setEditingDepartment(dept);
+      setFormName(dept.name);
+      setFormDesc(dept.description || "");
+    } else {
+      setEditingDepartment(null);
+      setFormName("");
+      setFormDesc("");
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingDepartment(null);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name.trim()) return toast.error("Department name is required.");
+    if (!formName.trim()) return toast.error("Name is required");
 
-    setSaving(true);
+    setIsSaving(true);
     try {
-      if (editingId) {
-        await updateDepartment(editingId, { name: form.name.trim() });
-        toast.success("Department updated.");
+      const payload = { name: formName, description: formDesc };
+      if (editingDepartment) {
+        await updateDepartment(editingDepartment.id, payload);
+        toast.success("Department updated");
       } else {
-        await createDepartment({ name: form.name.trim() });
-        toast.success("Department created.");
+        await createDepartment(payload);
+        toast.success("Department created");
       }
-      setForm(emptyForm);
-      setEditingId(null);
+      handleCloseModal();
       loadData();
     } catch (error) {
-      toast.error(error?.response?.data?.errors?.[0] || "Unable to save department.");
+      toast.error("Failed to save department");
     } finally {
-      setSaving(false);
+      setIsSaving(false);
     }
   };
 
-  const onEdit = (department) => {
-    setEditingId(department.id);
-    setForm({ name: department.name });
-  };
-
-  const onDelete = async (department) => {
-    if (!window.confirm(`Delete ${department.name}? Users will become unassigned.`)) return;
+  const handleDelete = async (id, name) => {
+    if (!window.confirm(`Delete ${name}? Members will be unassigned.`)) return;
     try {
-      await deleteDepartment(department.id);
-      toast.success("Department deleted.");
-      if (editingId === department.id) {
-        setEditingId(null);
-        setForm(emptyForm);
-      }
+      await deleteDepartment(id);
+      toast.success("Department deleted");
       loadData();
     } catch (error) {
-      toast.error(error?.response?.data?.errors?.[0] || "Unable to delete department.");
+      toast.error("Failed to delete department");
     }
   };
 
-  const openMembersModal = (department) => {
-    setMemberModal({ open: true, department });
-    setSelectedUserIds(users.filter((u) => u.department_id === department.id).map((u) => u.id));
-  };
-
-  const closeMembersModal = () => {
-    setMemberModal({ open: false, department: null });
-    setSelectedUserIds([]);
-    setMemberSearch("");
-  };
-
-  const toggleUser = (userId) => {
-    setSelectedUserIds((prev) =>
-      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
-    );
-  };
-
-  const saveMembers = async () => {
-    if (!memberModal.department) return;
-    setSavingMembers(true);
-    try {
-      await updateDepartmentMembers(memberModal.department.id, selectedUserIds);
-      toast.success("Department members saved.");
-      closeMembersModal();
-      loadData();
-    } catch (error) {
-      toast.error(error?.response?.data?.errors?.[0] || "Unable to update members.");
-    } finally {
-      setSavingMembers(false);
-    }
-  };
-
-  const usersForMemberModal = useMemo(() => {
-    const activeDepartmentId = memberModal.department?.id;
-    const term = memberSearch.trim().toLowerCase();
-
-    return users
-      .map((user) => {
-        const fullName = `${user.first_name || ""} ${user.last_name || ""}`.trim();
-        const belongsToAnotherDepartment =
-          !!user.department_id && user.department_id !== activeDepartmentId;
-
-        return {
-          ...user,
-          fullName,
-          belongsToAnotherDepartment,
-        };
-      })
-      .filter((user) => {
-        if (!term) return true;
-        return [user.fullName, user.email, user.department_name]
-          .join(" ")
-          .toLowerCase()
-          .includes(term);
-      })
-      .sort((a, b) => {
-        const aSelected = selectedUserIds.includes(a.id) ? 0 : 1;
-        const bSelected = selectedUserIds.includes(b.id) ? 0 : 1;
-        if (aSelected !== bSelected) return aSelected - bSelected;
-        return a.fullName.localeCompare(b.fullName);
-      });
-  }, [memberModal.department?.id, memberSearch, selectedUserIds, users]);
+  if (loading) return <PageLoader />;
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8 sm:px-8">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <div className="rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 p-6 text-white shadow">
-          <h1 className="text-2xl font-bold">Department Management</h1>
-          <p className="mt-1 text-sm text-blue-100">Create teams by department and bulk-assign users in one place.</p>
-          <div className="mt-4 flex flex-wrap gap-3 text-sm">
-            <span className="rounded-full bg-white/20 px-3 py-1">{departments.length} Departments</span>
-            <span className="rounded-full bg-white/20 px-3 py-1">{users.length} Total Users</span>
-            <span className="rounded-full bg-white/20 px-3 py-1">{unassignedUsersCount} Unassigned</span>
+    <div className="min-h-screen bg-slate-50 dark:bg-zinc-900 pb-20">
+      {/* Header Section similar to Projects */}
+      <div className="bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 px-6 py-8">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Departments</h1>
+            <p className="mt-1 text-slate-500 dark:text-slate-400">Manage your organization's structure and teams.</p>
           </div>
-        </div>
 
-        <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-800">
-              <FiBriefcase /> {editingId ? "Edit Department" : "Create Department"}
-            </h2>
-            {editingId && (
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingId(null);
-                  setForm(emptyForm);
-                }}
-                className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100"
-              >
-                Cancel editing
-              </button>
-            )}
-          </div>
-          <form onSubmit={handleSubmit} className="grid gap-3 md:grid-cols-[1fr_auto]">
-            <div>
-              <label className="text-xs font-semibold uppercase text-gray-500">Department Name</label>
-              <input
-                value={form.name}
-                onChange={(e) => setForm({ name: e.target.value })}
-                placeholder="e.g., Engineering"
-                className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-            <button disabled={saving} className="mt-5 inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60">
-              <FiPlus /> {saving ? "Saving..." : editingId ? "Update" : "Create"}
-            </button>
-          </form>
-        </div>
-
-        <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold text-gray-800">Department Directory</h2>
-              <div className="relative w-full max-w-xs">
-                <FiSearch className="absolute left-3 top-2.5 text-gray-400" />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search department"
-                  className="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-                />
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 dark:bg-zinc-800 rounded-lg border border-slate-200 dark:border-zinc-700">
+              <div className="text-center">
+                <p className="text-xs text-slate-500 uppercase font-semibold">Total</p>
+                <p className="text-lg font-bold text-slate-800 dark:text-white">{departments.length}</p>
+              </div>
+              <div className="w-px h-8 bg-slate-200 dark:bg-zinc-700"></div>
+              <div className="text-center">
+                <p className="text-xs text-slate-500 uppercase font-semibold">Members</p>
+                <p className="text-lg font-bold text-slate-800 dark:text-white">{users.length}</p>
+              </div>
+              <div className="w-px h-8 bg-slate-200 dark:bg-zinc-700"></div>
+              <div className="text-center">
+                <p className="text-xs text-amber-500 uppercase font-semibold">Unassigned</p>
+                <p className="text-lg font-bold text-amber-600">{unassignedCount}</p>
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {loading ? (
-                <p className="text-sm text-gray-500">Loading departments...</p>
-              ) : filteredDepartments.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 sm:col-span-2 xl:col-span-3">No departments found.</p>
-              ) : (
-                filteredDepartments.map((department) => (
-                  <div key={department.id} className="flex flex-col justify-between gap-4 rounded-xl border border-gray-200 bg-gradient-to-b from-white to-gray-50 p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="font-semibold text-gray-800">{department.name}</p>
-                        <p className="text-xs text-gray-500 flex items-center gap-1 mt-1"><FiUsers /> {department.users_count || 0} members</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => openMembersModal(department)} className="inline-flex items-center gap-1 rounded-lg bg-blue-100 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-200">
-                          <FiUserPlus /> Members
-                        </button>
-                        <button onClick={() => onEdit(department)} className="inline-flex items-center gap-1 rounded-lg bg-amber-100 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-200">
-                          <FiEdit2 /> Edit
-                        </button>
-                        <button onClick={() => onDelete(department)} className="inline-flex items-center gap-1 rounded-lg bg-red-100 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-200">
-                          <FiTrash2 /> Delete
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+            {canManage && (
+              <button
+                onClick={() => handleOpenModal()}
+                className="flex items-center gap-2 bg-[var(--theme-color)] text-white px-4 py-2.5 rounded-lg hover:brightness-110 transition shadow-sm font-medium"
+              >
+                <FiPlus /> New Department
+              </button>
+            )}
           </div>
         </div>
-      {memberModal.open && memberModal.department && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-3xl rounded-2xl bg-white p-5 shadow-xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Manage Members · {memberModal.department.name}</h3>
-              <button onClick={closeMembersModal} className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100"><FiX /></button>
-            </div>
+      </div>
 
-            <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700">
-              A user can belong to only one department. Selecting a user already assigned elsewhere will move them to <span className="font-semibold">{memberModal.department.name}</span>.
-            </div>
+      {/* Content Area */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
 
-            <div className="mb-4 relative">
-              <FiSearch className="absolute left-3 top-2.5 text-gray-400" />
-              <input
-                value={memberSearch}
-                onChange={(e) => setMemberSearch(e.target.value)}
-                placeholder="Search by name, email, or department"
-                className="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+        {/* Search & Filter Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div className="relative flex-1 max-w-md">
+            <FiSearch className="absolute left-3 top-3 text-slate-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search departments..."
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-[var(--theme-color)] outline-none transition"
+            />
+          </div>
+          <div className="flex items-center bg-white dark:bg-zinc-800 rounded-lg border border-slate-200 dark:border-zinc-700 p-1">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-md transition ${viewMode === 'grid' ? 'bg-slate-100 dark:bg-zinc-700 text-[var(--theme-color)]' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              <FiGrid />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded-md transition ${viewMode === 'list' ? 'bg-slate-100 dark:bg-zinc-700 text-[var(--theme-color)]' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              <FiList />
+            </button>
+          </div>
+        </div>
+
+        {filteredDepartments.length === 0 ? (
+          <div className="text-center py-20 bg-white dark:bg-zinc-800 rounded-2xl border border-dashed border-slate-200 dark:border-zinc-700">
+            <div className="w-16 h-16 bg-slate-50 dark:bg-zinc-700 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FiBriefcase className="text-2xl text-slate-400" />
+            </div>
+            <h3 className="text-lg font-medium text-slate-900 dark:text-white">No departments found</h3>
+            <p className="text-slate-500 mt-1">Try adjusting your search or add a new department.</p>
+            {canManage && (
+              <button onClick={() => handleOpenModal()} className="mt-4 text-[var(--theme-color)] font-medium hover:underline">
+                Create Department
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className={viewMode === 'grid' ? "grid gap-6 sm:grid-cols-2 lg:grid-cols-3" : "flex flex-col gap-4"}>
+            {filteredDepartments.map(dept => (
+              <DepartmentCard
+                key={dept.id}
+                department={dept}
+                viewMode={viewMode}
+                canManage={canManage}
+                onEdit={() => handleOpenModal(dept)}
+                onDelete={() => handleDelete(dept.id, dept.name)}
               />
-            </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-            <div className="max-h-[55vh] space-y-2 overflow-y-auto pr-1">
-              {usersForMemberModal.map((user) => {
-                const checked = selectedUserIds.includes(user.id);
-                return (
-                  <label key={user.id} className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 ${checked ? "border-indigo-300 bg-indigo-50" : "border-gray-200"}`}>
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">{user.fullName}</p>
-                      <p className="text-xs text-gray-500">{user.email}</p>
-                      {user.belongsToAnotherDepartment && (
-                        <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">
-                          {user.department_name} <FiArrowRight /> {memberModal.department.name}
-                        </p>
-                      )}
-                    </div>
-                    <button type="button" onClick={() => toggleUser(user.id)} className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${checked ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-500"}`}>
-                      <FiCheck className="text-sm" />
-                    </button>
-                  </label>
-                );
-              })}
-              {usersForMemberModal.length === 0 && (
-                <p className="rounded-lg border border-dashed border-gray-300 p-4 text-center text-sm text-gray-500">No users match your search.</p>
-              )}
-            </div>
+      {/* Create/Edit Modal */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              onClick={handleCloseModal}
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-lg bg-white dark:bg-zinc-900 rounded-2xl shadow-xl overflow-hidden"
+            >
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  {editingDepartment ? 'Edit Department' : 'Create Department'}
+                </h3>
+                <button onClick={handleCloseModal} className="text-slate-400 hover:text-slate-600"><FiTrash2 className="rotate-45" /></button>
+              </div>
+              <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
+                  <input
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg outline-none focus:ring-2 focus:ring-[var(--theme-color)] dark:bg-zinc-800"
+                    placeholder="Engineering, Marketing, etc."
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
+                  <textarea
+                    value={formDesc}
+                    onChange={(e) => setFormDesc(e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-lg outline-none focus:ring-2 focus:ring-[var(--theme-color)] dark:bg-zinc-800 resize-none"
+                    placeholder="Briefly describe what this department does..."
+                  />
+                </div>
+                <div className="mt-6 flex justify-end gap-3">
+                  <button type="button" onClick={handleCloseModal} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+                  <button
+                    disabled={isSaving}
+                    className="px-6 py-2 bg-[var(--theme-color)] text-white rounded-lg hover:brightness-110 disabled:opacity-70 font-medium"
+                  >
+                    {isSaving ? 'Saving...' : 'Save Department'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
-            <div className="mt-4 flex justify-end gap-2">
-              <button onClick={closeMembersModal} className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-100">Cancel</button>
-              <button disabled={savingMembers} onClick={saveMembers} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60">
-                {savingMembers ? "Saving..." : "Save Members"}
+const DepartmentCard = ({ department, viewMode, canManage, onEdit, onDelete }) => {
+  // If we have members_preview from backend, use it. Otherwise empty.
+  const members = department.members_preview || [];
+
+  if (viewMode === 'list') {
+    return (
+      <div className="group flex items-center justify-between p-4 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl hover:shadow-md transition">
+        <div className="flex items-center gap-4 flex-1">
+          <div className="h-10 w-10 rounded-lg bg-[var(--theme-color-light)] flex items-center justify-center text-[var(--theme-color)]">
+            <FiBriefcase className="text-xl" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-slate-900 dark:text-white">{department.name}</h3>
+            <p className="text-sm text-slate-500 line-clamp-1">{department.description || "No description"}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-6">
+          <div className="hidden sm:block text-right">
+            <p className="text-xs text-slate-400 uppercase">Members</p>
+            <p className="font-medium text-slate-700 dark:text-slate-300">{department.users_count || 0}</p>
+          </div>
+
+          {department.manager ? (
+            <div className="hidden md:flex items-center gap-2">
+              <Avatar name={department.manager.full_name} src={department.manager.profile_picture_url} size="sm" />
+              <div className="text-xs">
+                <p className="font-medium text-slate-700 dark:text-slate-300">{department.manager.full_name}</p>
+                <p className="text-slate-400">Lead</p>
+              </div>
+            </div>
+          ) : (
+            <div className="hidden md:block text-xs text-slate-400 italic">No Lead</div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <Link to={`/departments/${department.id}`} className="p-2 text-slate-400 hover:text-[var(--theme-color)] hover:bg-slate-50 rounded-lg transition">
+              <FiArrowRight />
+            </Link>
+            {canManage && (
+              <div className="relative group/menu">
+                <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg">
+                  <FiMoreVertical />
+                </button>
+                <div className="absolute right-0 top-8 w-32 bg-white dark:bg-zinc-800 shadow-xl border border-slate-100 dark:border-zinc-700 rounded-lg overflow-hidden invisible group-hover/menu:visible z-10">
+                  <button onClick={onEdit} className="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-zinc-700 flex items-center gap-2">
+                    <FiEdit2 className="w-3 h-3" /> Edit
+                  </button>
+                  <button onClick={onDelete} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-slate-50 dark:hover:bg-zinc-700 flex items-center gap-2">
+                    <FiTrash2 className="w-3 h-3" /> Delete
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="group relative bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-2xl p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-200">
+      <div className="flex justify-between items-start mb-4">
+        <div className="h-12 w-12 rounded-xl bg-[var(--theme-color-light)]/20 flex items-center justify-center text-[var(--theme-color)]">
+          <FiBriefcase className="text-2xl" />
+        </div>
+        {canManage && (
+          <div className="relative group/menu">
+            <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg">
+              <FiMoreVertical />
+            </button>
+            <div className="absolute right-0 top-full mt-1 w-32 bg-white dark:bg-zinc-800 shadow-xl border border-slate-100 dark:border-zinc-700 rounded-lg overflow-hidden invisible group-hover/menu:visible z-10 transition-all opacity-0 group-hover/menu:opacity-100">
+              <button onClick={onEdit} className="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-zinc-700 flex items-center gap-2">
+                <FiEdit2 className="w-3 h-3" /> Edit
+              </button>
+              <button onClick={onDelete} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2">
+                <FiTrash2 className="w-3 h-3" /> Delete
               </button>
             </div>
           </div>
+        )}
+      </div>
+
+      <Link to={`/departments/${department.id}`} className="block mb-4">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-[var(--theme-color)] transition-colors">
+          {department.name}
+        </h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 min-h-[2.5em]">
+          {department.description || "No description provided."}
+        </p>
+      </Link>
+
+      <div className="mt-auto pt-4 border-t border-slate-100 dark:border-zinc-700 flex items-center justify-between">
+        <div>
+          <p className="text-xs text-slate-400 uppercase mb-1 font-semibold">Team</p>
+          {members.length > 0 ? (
+            <AvatarStack members={members} max={3} />
+          ) : (
+            <p className="text-xs text-slate-400 italic">No members</p>
+          )}
         </div>
-      )}
+
+        {department.manager && (
+          <div className="text-right">
+            <p className="text-xs text-slate-400 uppercase mb-1 font-semibold">Lead</p>
+            <Link to={`/profile/${department.manager.id}`} className="block">
+              <Avatar name={department.manager.full_name} src={department.manager.profile_picture_url} size="sm" className="ml-auto" />
+            </Link>
+          </div>
+        )}
+      </div>
+
+      <Link
+        to={`/departments/${department.id}`}
+        className="absolute inset-0 z-0"
+        aria-label={`View ${department.name}`}
+      />
+      {/* Interactions handled by z-10 elements */}
     </div>
   );
 };

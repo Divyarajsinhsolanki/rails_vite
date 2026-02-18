@@ -29,6 +29,7 @@ import PageTitle from "./PageTitle";
 import Calendar from "../pages/Calendar";
 import AdminImpersonation from "../pages/AdminImpersonation";
 import Departments from "../pages/Departments";
+import DepartmentDetails from "../pages/DepartmentDetails";
 import PageLoader from "./ui/PageLoader";
 import Chat from "../pages/Chat";
 import ChatLauncher from "./ChatLauncher";
@@ -87,6 +88,7 @@ const App = () => {
               <Route path="/projects/:projectId/dashboard" element={<ProjectMemberRoute><SprintDashboard /></ProjectMemberRoute>} />
               <Route path="/users" element={<PrivateRoute><Users /></PrivateRoute>} />
               <Route path="/departments" element={<PrivateRoute><Departments /></PrivateRoute>} />
+              <Route path="/departments/:id" element={<PrivateRoute><DepartmentDetails /></PrivateRoute>} />
               <Route path="/admin" element={<PrivateRoute ownerOnly><Admin /></PrivateRoute>} />
               <Route path="/admin/login-as-user" element={<PrivateRoute ownerOnly><AdminImpersonation /></PrivateRoute>} />
               <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />

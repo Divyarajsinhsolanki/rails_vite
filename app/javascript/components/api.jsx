@@ -99,6 +99,7 @@ export const createDepartment = (data) => api.post('/departments.json', { depart
 export const updateDepartment = (id, data) => api.patch(`/departments/${id}.json`, { department: data });
 export const deleteDepartment = (id) => api.delete(`/departments/${id}.json`);
 export const fetchDepartmentMembers = (id) => api.get(`/departments/${id}/members.json`);
+export const fetchDepartment = (id) => api.get(`/departments/${id}.json`);
 export const updateDepartmentMembers = (id, userIds) => api.patch(`/departments/${id}/update_members.json`, { user_ids: userIds });
 export const adminImpersonate = (userId) => api.post('/admin/impersonate', { user_id: userId });
 

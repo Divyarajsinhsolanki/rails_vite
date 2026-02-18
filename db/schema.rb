@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2027_02_10_000001) do
+ActiveRecord::Schema[7.1].define(version: 2027_02_15_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -58,8 +58,15 @@ ActiveRecord::Schema[7.1].define(version: 2027_02_10_000001) do
     t.string "location_or_meet_link"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "recurrence_rule", default: "none", null: false
+    t.datetime "recurrence_until"
+    t.bigint "recurrence_parent_id"
+    t.string "external_source"
+    t.string "external_id"
     t.index ["event_type"], name: "index_calendar_events_on_event_type"
+    t.index ["external_source", "external_id"], name: "index_calendar_events_on_external_source_and_external_id"
     t.index ["project_id"], name: "index_calendar_events_on_project_id"
+    t.index ["recurrence_parent_id"], name: "index_calendar_events_on_recurrence_parent_id"
     t.index ["sprint_id"], name: "index_calendar_events_on_sprint_id"
     t.index ["task_id"], name: "index_calendar_events_on_task_id"
     t.index ["user_id", "start_at"], name: "index_calendar_events_on_user_id_and_start_at"
@@ -86,10 +93,34 @@ ActiveRecord::Schema[7.1].define(version: 2027_02_10_000001) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "conversation_participants", force: :cascade do |t|
+    t.bigint "conversation_id", null: false
+    t.bigint "user_id", null: false
+    t.datetime "last_read_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["conversation_id", "user_id"], name: "idx_unique_conversation_participant", unique: true
+    t.index ["conversation_id"], name: "index_conversation_participants_on_conversation_id"
+    t.index ["user_id"], name: "index_conversation_participants_on_user_id"
+  end
+
+  create_table "conversations", force: :cascade do |t|
+    t.string "title"
+    t.string "conversation_type", default: "direct", null: false
+    t.bigint "creator_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["conversation_type"], name: "index_conversations_on_conversation_type"
+    t.index ["creator_id"], name: "index_conversations_on_creator_id"
+  end
+
   create_table "departments", force: :cascade do |t|
     t.string "name", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "description"
+    t.bigint "manager_id"
+    t.index ["manager_id"], name: "index_departments_on_manager_id"
     t.index ["name"], name: "index_departments_on_name", unique: true
   end
 
@@ -224,6 +255,17 @@ ActiveRecord::Schema[7.1].define(version: 2027_02_10_000001) do
     t.datetime "updated_at", null: false
     t.index ["team_id"], name: "index_learning_goals_on_team_id"
     t.index ["user_id"], name: "index_learning_goals_on_user_id"
+  end
+
+  create_table "messages", force: :cascade do |t|
+    t.bigint "conversation_id", null: false
+    t.bigint "user_id", null: false
+    t.text "body"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["conversation_id", "created_at"], name: "index_messages_on_conversation_id_and_created_at"
+    t.index ["conversation_id"], name: "index_messages_on_conversation_id"
+    t.index ["user_id"], name: "index_messages_on_user_id"
   end
 
   create_table "notifications", force: :cascade do |t|
@@ -507,6 +549,9 @@ ActiveRecord::Schema[7.1].define(version: 2027_02_10_000001) do
     t.string "keka_employee_id"
     t.jsonb "keka_profile_data", default: {}, null: false
     t.datetime "keka_last_synced_at"
+    t.string "phone_number"
+    t.text "bio"
+    t.jsonb "social_links", default: {}, null: false
     t.index ["availability_status"], name: "index_users_on_availability_status"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["department_id"], name: "index_users_on_department_id"
@@ -592,6 +637,10 @@ ActiveRecord::Schema[7.1].define(version: 2027_02_10_000001) do
   add_foreign_key "calendar_events", "users"
   add_foreign_key "comments", "posts"
   add_foreign_key "comments", "users"
+  add_foreign_key "conversation_participants", "conversations"
+  add_foreign_key "conversation_participants", "users"
+  add_foreign_key "conversations", "users", column: "creator_id"
+  add_foreign_key "departments", "users", column: "manager_id"
   add_foreign_key "event_reminders", "calendar_events"
   add_foreign_key "friendships", "users", column: "followed_id"
   add_foreign_key "friendships", "users", column: "follower_id"
@@ -603,6 +652,8 @@ ActiveRecord::Schema[7.1].define(version: 2027_02_10_000001) do
   add_foreign_key "learning_checkpoints", "learning_goals"
   add_foreign_key "learning_goals", "teams"
   add_foreign_key "learning_goals", "users"
+  add_foreign_key "messages", "conversations"
+  add_foreign_key "messages", "users"
   add_foreign_key "notifications", "users", column: "actor_id"
   add_foreign_key "notifications", "users", column: "recipient_id"
   add_foreign_key "post_likes", "posts"
