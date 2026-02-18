@@ -37,6 +37,7 @@ module Chat
           body: message.body,
           user_id: message.user_id,
           user_name: message.user.full_name,
+          user_profile_picture: message.user.profile_picture.attached? ? Rails.application.routes.url_helpers.rails_blob_path(message.user.profile_picture, only_path: true) : nil,
           created_at: message.created_at,
           attachments: message.attachments.map do |attachment|
             {

@@ -51,7 +51,7 @@ class Api::ConversationsController < Api::BaseController
   end
 
   def find_or_create_direct_conversation(other_user)
-    candidate = Conversation.direct
+    candidate = Conversation.conversation_direct
       .joins(:conversation_participants)
       .where(conversation_participants: { user_id: [current_user.id, other_user.id] })
       .group("conversations.id")
@@ -87,12 +87,15 @@ class Api::ConversationsController < Api::BaseController
           body: message.body,
           user_id: message.user_id,
           user_name: message.user.full_name,
+          user_profile_picture: message.user.profile_picture.attached? ? rails_blob_url(message.user.profile_picture, only_path: true) : nil,
           created_at: message.created_at,
           attachments: message.attachments.map { |attachment| { id: attachment.id, url: rails_blob_url(attachment, only_path: true), content_type: attachment.content_type, filename: attachment.filename.to_s } }
         }
       end
     end
 
-    payload
-  end
+    last_message = conversation.messages.order(created_at: :desc).first
+    payload[:last_message] = last_message&.body.presence || (last_message&.attachments&.attached? ? "Sent an attachment" : nil)
+    
+    payload  end
 end
