@@ -1,11 +1,14 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { createConversation, fetchConversation, fetchConversations, getUsers, sendMessage } from "../components/api";
+import { AuthContext } from "../context/AuthContext";
 import { subscribeToConversationChat, subscribeToUserChat } from "../lib/chatCable";
 
 const Chat = () => {
   const { conversationId } = useParams();
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
+  const messageListRef = useRef(null);
   const [conversations, setConversations] = useState([]);
   const [activeConversation, setActiveConversation] = useState(null);
   const [users, setUsers] = useState([]);
@@ -42,6 +45,12 @@ const Chat = () => {
       setActiveConversation(null);
     }
   }, [conversationId, loadConversation]);
+
+  useEffect(() => {
+    if (!messageListRef.current) return;
+
+    messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+  }, [activeConversation?.messages?.length, conversationId]);
 
   useEffect(() => {
     const userSubscription = subscribeToUserChat((payload) => {
@@ -102,7 +111,21 @@ const Chat = () => {
     formData.append("message[body]", messageBody);
     attachments.forEach((file) => formData.append("message[attachments][]", file));
 
-    await sendMessage(conversationId, formData);
+    const { data: createdMessage } = await sendMessage(conversationId, formData);
+
+    setActiveConversation((previousConversation) => {
+      if (!previousConversation || !createdMessage) return previousConversation;
+
+      const alreadyExists = previousConversation.messages?.some((message) => message.id === createdMessage.id);
+      if (alreadyExists) return previousConversation;
+
+      return {
+        ...previousConversation,
+        messages: [...(previousConversation.messages || []), createdMessage]
+      };
+    });
+
+    loadConversations();
     setMessageBody("");
     setAttachments([]);
   };
@@ -152,15 +175,27 @@ const Chat = () => {
           {activeConversation && (
             <>
               <h2 className="mb-3 text-lg font-semibold">{activeConversation.title}</h2>
-              <div className="mb-4 h-[420px] overflow-y-auto rounded-lg border border-gray-100 bg-gray-50 p-3">
+              <div ref={messageListRef} className="mb-4 flex h-[420px] flex-col gap-2 overflow-y-auto rounded-lg border border-gray-100 bg-slate-100 p-3">
                 {activeConversation.messages?.map((message) => (
-                  <div key={message.id} className="mb-3 rounded-lg bg-white p-3 shadow-sm">
-                    <p className="text-xs font-semibold text-gray-500">{message.user_name}</p>
-                    {message.body && <p className="text-sm text-gray-800">{message.body}</p>}
-                    <div className="mt-2 space-y-1">
+                  <div key={message.id} className={`flex ${message.user_id === user?.id ? "justify-end" : "justify-start"}`}>
+                    <div className={`w-full max-w-[80%] rounded-2xl p-3 shadow-sm ${message.user_id === user?.id ? "bg-blue-600 text-white" : "bg-white text-gray-900"}`}>
+                      <p className={`text-xs font-semibold ${message.user_id === user?.id ? "text-blue-100" : "text-gray-500"}`}>
+                        {message.user_id === user?.id ? "You" : message.user_name}
+                      </p>
+                      {message.body && <p className="text-sm leading-relaxed">{message.body}</p>}
+                      <div className="mt-2 space-y-1">
                       {message.attachments?.map((attachment) => (
-                        <a key={attachment.id} href={attachment.url} target="_blank" rel="noreferrer" className="block text-xs text-blue-600 underline">{attachment.filename}</a>
+                        <a
+                          key={attachment.id}
+                          href={attachment.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={`block text-xs underline ${message.user_id === user?.id ? "text-blue-100" : "text-blue-600"}`}
+                        >
+                          {attachment.filename}
+                        </a>
                       ))}
+                      </div>
                     </div>
                   </div>
                 ))}
