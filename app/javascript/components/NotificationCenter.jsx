@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, Fragment } from 'react';
 import { Bell, Check, Clock, MessageSquare, Briefcase, FileText } from 'lucide-react';
 import { Popover, Transition } from '@headlessui/react';
 import { fetchNotifications, markNotificationRead, markAllNotificationsRead } from './api';
+import { subscribeToUserChat } from '../lib/chatCable';
 import { formatDistanceToNow } from 'date-fns';
 
 const NotificationCenter = () => {
@@ -12,8 +13,21 @@ const NotificationCenter = () => {
 
   useEffect(() => {
     loadNotifications();
-    const interval = setInterval(loadNotifications, 60000); // Poll every minute
-    return () => clearInterval(interval);
+
+    // Replace polling with real-time subscription
+    const sub = subscribeToUserChat((payload) => {
+      if (payload?.type === "notification_received") {
+        setNotifications(prev => [payload.notification, ...prev]);
+        setUnreadCount(prev => prev + 1);
+
+        // Show browser notification if permitted
+        if (Notification.permission === "granted") {
+          new window.Notification(payload.notification.message);
+        }
+      }
+    });
+
+    return () => sub.unsubscribe();
   }, []);
 
   const loadNotifications = async () => {

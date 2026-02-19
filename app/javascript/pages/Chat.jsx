@@ -19,7 +19,7 @@ import {
 } from "react-icons/fi";
 import { fetchConversation, fetchConversations, getUsers, sendMessage, createConversation, startDirectConversation, addMessageReaction, removeMessageReaction } from "../components/api";
 import { AuthContext } from "../context/AuthContext";
-import { subscribeToConversationChat, subscribeToUserChat } from "../lib/chatCable";
+import { subscribeToConversationChat, subscribeToUserChat, sendToConversation } from "../lib/chatCable";
 
 // --- Components ---
 
@@ -120,11 +120,18 @@ const ConversationItem = ({ conversation, isActive, user }) => {
 
 const REACTION_EMOJIS = ["👍", "❤️", "🎉"];
 
-const MessageBubble = ({ message, isMe, showAvatar, onToggleReaction }) => {
+const MessageBubble = ({ message, isMe, showAvatar, onToggleReaction, participants }) => {
   const time = new Date(message.created_at);
   const timeString = format(time, "h:mm a");
   const reactions = message.reactions || {};
   const reactedEmojis = message.reacted_emojis || [];
+
+  // Calculate seen status
+  const seenBy = participants?.filter(p =>
+    p.id !== message.user_id &&
+    p.last_read_at &&
+    new Date(p.last_read_at) >= new Date(message.created_at)
+  ) || [];
 
   return (
     <motion.div
@@ -193,9 +200,22 @@ const MessageBubble = ({ message, isMe, showAvatar, onToggleReaction }) => {
             })}
           </div>
 
-          <span className="text-[10px] text-slate-400 mt-1 px-1">
-            {timeString}
-          </span>
+          <div className="flex items-center gap-1 mt-1 px-1">
+            <span className="text-[10px] text-slate-400">
+              {timeString}
+            </span>
+            {isMe && (
+              <span className={`text-[10px] flex items-center ${seenBy.length > 0 ? "text-blue-500" : "text-slate-400"}`}>
+                <FiCheck className="w-3 h-3" />
+                {seenBy.length > 0 && <FiCheck className="w-3 h-3 -ml-1" />}
+                {seenBy.length > 0 && (
+                  <span className="ml-1 text-[8px] opacity-0 group-hover:opacity-100 transition-opacity">
+                    Seen by {seenBy.length === 1 ? seenBy[0].name : `${seenBy.length} people`}
+                  </span>
+                )}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </motion.div>
@@ -219,6 +239,10 @@ const Chat = () => {
   const [attachments, setAttachments] = useState([]);
   const [isSending, setIsSending] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [typingUsers, setTypingUsers] = useState({}); // { userId: { name, timeout } }
+  const [showInfo, setShowInfo] = useState(false);
+  const [sideSearchQuery, setSideSearchQuery] = useState("");
+  const typingTimeoutRef = useRef(null);
 
   // New Chat Modal
   const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
@@ -263,6 +287,7 @@ const Chat = () => {
   useEffect(() => {
     if (conversationId) {
       loadConversation(conversationId);
+      markConversationAsRead(conversationId);
     } else {
       setActiveConversation(null);
     }
@@ -341,11 +366,68 @@ const Chat = () => {
           };
         });
       }
+
+      if (payload?.type === "typing_indicator" && Number(payload.conversation_id) === Number(conversationId)) {
+        if (Number(payload.user_id) === Number(user?.id)) return;
+
+        setTypingUsers((prev) => {
+          const newTyping = { ...prev };
+          if (payload.is_typing) {
+            if (newTyping[payload.user_id]?.timeout) clearTimeout(newTyping[payload.user_id].timeout);
+            newTyping[payload.user_id] = {
+              name: payload.user_name,
+              timeout: setTimeout(() => {
+                setTypingUsers((current) => {
+                  const updated = { ...current };
+                  delete updated[payload.user_id];
+                  return updated;
+                });
+              }, 3000)
+            };
+          } else {
+            if (newTyping[payload.user_id]?.timeout) clearTimeout(newTyping[payload.user_id].timeout);
+            delete newTyping[payload.user_id];
+          }
+          return newTyping;
+        });
+      }
+
+      if (payload?.type === "message_read" && Number(payload.conversation_id) === Number(conversationId)) {
+        setActiveConversation((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            participants: prev.participants.map(p =>
+              p.id === payload.user_id ? { ...p, last_read_at: payload.read_at } : p
+            )
+          };
+        });
+      }
     });
 
     return () => convSub.unsubscribe();
   }, [conversationId, fetchAllData]);
 
+
+  // --- Real-time Actions ---
+
+  const sendTyping = (isTyping) => {
+    if (!conversationId) return;
+    sendToConversation(conversationId, {
+      command: "message",
+      action: "typing",
+      data: { conversation_id: conversationId, is_typing: isTyping }
+    });
+  };
+
+  const markConversationAsRead = (convId) => {
+    if (!convId) return;
+    sendToConversation(convId, {
+      command: "message",
+      action: "mark_as_read",
+      data: { conversation_id: convId }
+    });
+  };
 
   // --- Handlers ---
 
@@ -479,6 +561,21 @@ const Chat = () => {
     );
   }, [users, searchTerm]);
 
+  const filteredConversations = useMemo(() => {
+    if (!sideSearchQuery.trim()) return conversations;
+    const query = sideSearchQuery.toLowerCase();
+    const filterFn = c => {
+      const displayName = c.conversation_type === 'direct'
+        ? (c.participants?.find(p => p.id !== user?.id)?.name || c.title || "")
+        : (c.title || "");
+      return displayName.toLowerCase().includes(query);
+    };
+    return {
+      direct: conversations.direct.filter(filterFn),
+      group: conversations.group.filter(filterFn)
+    };
+  }, [conversations, sideSearchQuery, user]);
+
   return (
     <div className="flex h-[calc(100vh-64px)] w-full bg-white dark:bg-zinc-900 overflow-hidden">
 
@@ -500,6 +597,8 @@ const Chat = () => {
           <div className="relative">
             <FiSearch className="absolute left-3 top-3 text-slate-400" />
             <input
+              value={sideSearchQuery}
+              onChange={(e) => setSideSearchQuery(e.target.value)}
               placeholder="Search conversations..."
               className="w-full pl-10 pr-4 py-2 text-sm bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-[var(--theme-color)] outline-none"
             />
@@ -508,32 +607,48 @@ const Chat = () => {
 
         {/* List */}
         <div className="flex-1 overflow-y-auto p-3 space-y-6">
-          {/* Direct Messages */}
-          <div>
-            <h2 className="px-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Direct Messages</h2>
-            <div className="space-y-1">
-              {conversations.direct.length === 0 && <p className="px-2 text-sm text-slate-400 italic">No messages yet</p>}
-              {conversations.direct.map(c => (
-                <ConversationItem key={c.id} conversation={c} isActive={Number(conversationId) === c.id} user={user} />
-              ))}
-            </div>
-          </div>
-
-          {/* Groups */}
-          <div>
-            <h2 className="px-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex justify-between items-center">
-              Groups
-              <button onClick={() => { setIsNewChatModalOpen(true); setNewChatStep('details'); }} className="text-[var(--theme-color)] hover:underline text-[10px]">
-                + New
+          {sideSearchQuery && filteredConversations.direct.length === 0 && filteredConversations.group.length === 0 ? (
+            <div className="text-center py-10 px-4">
+              <p className="text-sm text-slate-500 mb-4">No conversations found for "{sideSearchQuery}"</p>
+              <button
+                onClick={() => { setIsNewChatModalOpen(true); setNewChatStep('select'); setSelectedUserIds([]); }}
+                className="w-full py-2 bg-[var(--theme-color)] text-white rounded-xl text-sm font-medium hover:brightness-110 transition shadow-sm"
+              >
+                Start New Chat
               </button>
-            </h2>
-            <div className="space-y-1">
-              {conversations.group.length === 0 && <p className="px-2 text-sm text-slate-400 italic">No groups yet</p>}
-              {conversations.group.map(c => (
-                <ConversationItem key={c.id} conversation={c} isActive={Number(conversationId) === c.id} user={user} />
-              ))}
             </div>
-          </div>
+          ) : (
+            <>
+              {/* Direct Messages */}
+              {filteredConversations.direct.length > 0 && (
+                <div>
+                  <h2 className="px-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Direct Messages</h2>
+                  <div className="space-y-1">
+                    {filteredConversations.direct.map(c => (
+                      <ConversationItem key={c.id} conversation={c} isActive={Number(conversationId) === c.id} user={user} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Groups */}
+              {filteredConversations.group.length > 0 && (
+                <div>
+                  <h2 className="px-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex justify-between items-center">
+                    Groups
+                    <button onClick={() => { setIsNewChatModalOpen(true); setNewChatStep('details'); }} className="text-[var(--theme-color)] hover:underline text-[10px]">
+                      + New
+                    </button>
+                  </h2>
+                  <div className="space-y-1">
+                    {filteredConversations.group.map(c => (
+                      <ConversationItem key={c.id} conversation={c} isActive={Number(conversationId) === c.id} user={user} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </aside>
 
@@ -591,95 +706,187 @@ const Chat = () => {
                 <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition">
                   <FiSearch />
                 </button>
-                <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition">
+                <button
+                  onClick={() => setShowInfo(!showInfo)}
+                  className={`p-2 rounded-full transition ${showInfo ? "bg-indigo-50 text-indigo-600" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"}`}
+                >
                   <FiMoreVertical />
                 </button>
               </div>
             </header>
 
-            {/* Messages */}
-            <div
-              className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-slate-50 dark:bg-zinc-900/50 scroll-smooth"
-              ref={messageListRef}
-            >
-              {/* Date separators concept: group messages by date, insert header. Simplified here just list. */}
-              {activeConversation.messages?.length === 0 && (
-                <div className="text-center py-20 opacity-50">
-                  <p className="text-sm">No messages yet. Say hello! 👋</p>
-                </div>
-              )}
+            <div className="flex-1 flex min-h-0 overflow-hidden relative">
+              <div className="flex-1 flex flex-col min-w-0 h-full">
 
-              {activeConversation.messages?.map((msg, i) => {
-                const prevMsg = activeConversation.messages[i - 1];
-                const showAvatar = !prevMsg || prevMsg.user_id !== msg.user_id; // Simple logic
-                return (
-                  <MessageBubble
-                    key={msg.id}
-                    message={msg}
-                    isMe={msg.user_id === user?.id}
-                    showAvatar={showAvatar}
-                    onToggleReaction={handleToggleReaction}
-                  />
-                );
-              })}
-            </div>
-
-            {/* Input Area */}
-            <div className="p-4 bg-white dark:bg-zinc-900 border-t border-slate-100 dark:border-zinc-800 shrink-0">
-              {attachments.length > 0 && (
-                <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
-                  {attachments.map((file, i) => (
-                    <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-200 shrink-0">
-                      <img src={URL.createObjectURL(file)} alt="preview" className="w-full h-full object-cover opacity-80" />
-                      <button
-                        onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))}
-                        className="absolute top-0.5 right-0.5 bg-black/50 text-white rounded-full p-0.5"
-                      >
-                        <FiX className="w-3 h-3" />
-                      </button>
+                {/* Messages */}
+                <div
+                  className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-slate-50 dark:bg-zinc-900/50 scroll-smooth"
+                  ref={messageListRef}
+                >
+                  {/* Date separators concept: group messages by date, insert header. Simplified here just list. */}
+                  {activeConversation.messages?.length === 0 && (
+                    <div className="text-center py-20 opacity-50">
+                      <p className="text-sm">No messages yet. Say hello! 👋</p>
                     </div>
-                  ))}
+                  )}
+
+                  {activeConversation.messages?.map((msg, i) => {
+                    const prevMsg = activeConversation.messages[i - 1];
+                    const showAvatar = !prevMsg || prevMsg.user_id !== msg.user_id; // Simple logic
+                    return (
+                      <MessageBubble
+                        key={msg.id}
+                        message={msg}
+                        isMe={msg.user_id === user?.id}
+                        showAvatar={showAvatar}
+                        onToggleReaction={handleToggleReaction}
+                        participants={activeConversation.participants}
+                      />
+                    );
+                  })}
+
+                  <AnimatePresence>
+                    {Object.keys(typingUsers).length > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 5 }}
+                        className="flex items-center gap-2 p-1 text-[10px] text-slate-400 italic"
+                      >
+                        <div className="flex gap-1">
+                          <span className="w-1 h-1 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <span className="w-1 h-1 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <span className="w-1 h-1 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
+                        {Object.values(typingUsers).map(u => u.name).join(", ")} {Object.keys(typingUsers).length === 1 ? "is" : "are"} typing...
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              )}
 
-              <form onSubmit={handleSendMessage} className="flex gap-3 items-end">
-                <input
-                  type="file"
-                  multiple
-                  className="hidden"
-                  ref={fileInputRef}
-                  onChange={(e) => setAttachments([...attachments, ...Array.from(e.target.files)])}
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="p-3 text-slate-400 hover:text-[var(--theme-color)] hover:bg-slate-50 rounded-xl transition"
-                >
-                  <FiPaperclip className="w-5 h-5" />
-                </button>
+                {/* Input Area */}
+                <div className="p-4 bg-white dark:bg-zinc-900 border-t border-slate-100 dark:border-zinc-800 shrink-0">
+                  {attachments.length > 0 && (
+                    <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
+                      {attachments.map((file, i) => (
+                        <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-200 shrink-0">
+                          <img src={URL.createObjectURL(file)} alt="preview" className="w-full h-full object-cover opacity-80" />
+                          <button
+                            onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))}
+                            className="absolute top-0.5 right-0.5 bg-black/50 text-white rounded-full p-0.5"
+                          >
+                            <FiX className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
-                <textarea
-                  value={messageBody}
-                  onChange={(e) => setMessageBody(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage(e);
-                    }
-                  }}
-                  placeholder="Type your message..."
-                  rows={1}
-                  className="flex-1 bg-slate-100 dark:bg-zinc-800 border-0 rounded-xl px-4 py-3 max-h-32 focus:ring-2 focus:ring-[var(--theme-color)]/20 outline-none resize-none overflow-hidden"
-                  style={{ minHeight: '44px' }}
-                />
+                  <form onSubmit={handleSendMessage} className="flex gap-3 items-end">
+                    <input
+                      type="file"
+                      multiple
+                      className="hidden"
+                      ref={fileInputRef}
+                      onChange={(e) => setAttachments([...attachments, ...Array.from(e.target.files)])}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="p-3 text-slate-400 hover:text-[var(--theme-color)] hover:bg-slate-50 rounded-xl transition"
+                    >
+                      <FiPaperclip className="w-5 h-5" />
+                    </button>
 
-                <button
-                  disabled={isSending || (!messageBody.trim() && attachments.length === 0)}
-                  className="p-3 bg-[var(--theme-color)] text-white rounded-xl shadow-lg shadow-[var(--theme-color)]/30 hover:brightness-110 disabled:opacity-50 disabled:shadow-none transition-all transform active:scale-95"
-                >
-                  <FiSend className={`w-5 h-5 ${isSending ? 'animate-pulse' : ''}`} />
-                </button>
-              </form>
+                    <textarea
+                      value={messageBody}
+                      onChange={(e) => {
+                        setMessageBody(e.target.value);
+                        sendTyping(true);
+                        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+                        typingTimeoutRef.current = setTimeout(() => {
+                          sendTyping(false);
+                        }, 2000);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage(e);
+                          if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+                          sendTyping(false);
+                        }
+                      }}
+                      placeholder="Type your message..."
+                      rows={1}
+                      className="flex-1 bg-slate-100 dark:bg-zinc-800 border-0 rounded-xl px-4 py-3 max-h-32 focus:ring-2 focus:ring-[var(--theme-color)]/20 outline-none resize-none overflow-hidden"
+                      style={{ minHeight: '44px' }}
+                    />
+
+                    <button
+                      disabled={isSending || (!messageBody.trim() && attachments.length === 0)}
+                      className="p-3 bg-[var(--theme-color)] text-white rounded-xl shadow-lg shadow-[var(--theme-color)]/30 hover:brightness-110 disabled:opacity-50 disabled:shadow-none transition-all transform active:scale-95"
+                    >
+                      <FiSend className={`w-5 h-5 ${isSending ? 'animate-pulse' : ''}`} />
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              {/* --- Conversation Info Sidebar --- */}
+              <AnimatePresence>
+                {showInfo && (
+                  <motion.aside
+                    initial={{ width: 0, opacity: 0 }}
+                    animate={{ width: 320, opacity: 1 }}
+                    exit={{ width: 0, opacity: 0 }}
+                    className="border-l border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-y-auto shrink-0 hidden lg:block"
+                  >
+                    <div className="p-6">
+                      <div className="flex flex-col items-center text-center mb-8">
+                        {activeConversation.conversation_type === 'direct' ? (
+                          <Avatar
+                            size="xl"
+                            name={activeConversation.participants.find(p => p.id !== user?.id)?.name || activeConversation.title}
+                            src={activeConversation.participants.find(p => p.id !== user?.id)?.profile_picture}
+                            className="mb-4"
+                          />
+                        ) : (
+                          <div className="w-20 h-20 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4 text-3xl">
+                            <FiUsers />
+                          </div>
+                        )}
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                          {activeConversation.conversation_type === 'direct'
+                            ? (activeConversation.participants.find(p => p.id !== user?.id)?.name || activeConversation.title)
+                            : activeConversation.title}
+                        </h3>
+                        <p className="text-sm text-slate-500">
+                          {activeConversation.conversation_type === 'group' ? 'Group Chat' : 'Direct Message'}
+                        </p>
+                      </div>
+
+                      <div className="space-y-6">
+                        <div>
+                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Members ({activeConversation.participants.length})</h4>
+                          <div className="space-y-3">
+                            {activeConversation.participants.map(p => (
+                              <div key={p.id} className="flex items-center gap-3">
+                                <Avatar name={p.name} src={p.profile_picture} size="sm" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{p.name}</p>
+                                  <p className="text-[10px] text-slate-500 truncate">
+                                    {p.id === user?.id ? "You" : p.last_read_at ? `Last seen ${format(new Date(p.last_read_at), "MMM d, h:mm a")}` : "Offline"}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.aside>
+                )}
+              </AnimatePresence>
             </div>
           </>
         )}
@@ -729,7 +936,7 @@ const Chat = () => {
                           className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition ${selected ? "bg-[var(--theme-color-light)]/10" : "hover:bg-slate-50 dark:hover:bg-zinc-800"}`}
                         >
                           <div className="relative">
-                            <Avatar name={u.full_name} src={u.profile_picture_url} />
+                            <Avatar name={`${u.first_name} ${u.last_name}`} src={u.profile_picture} />
                             {selected && (
                               <div className="absolute -bottom-1 -right-1 bg-[var(--theme-color)] text-white rounded-full p-0.5 border-2 border-white">
                                 <FiCheck className="w-3 h-3" />
@@ -737,7 +944,9 @@ const Chat = () => {
                             )}
                           </div>
                           <div>
-                            <p className={`font-medium ${selected ? "text-[var(--theme-color)]" : "text-slate-900 dark:text-white"}`}>{u.full_name}</p>
+                            <p className={`font-medium ${selected ? "text-[var(--theme-color)]" : "text-slate-900 dark:text-white"}`}>
+                              {u.first_name} {u.last_name}
+                            </p>
                             <p className="text-xs text-slate-500">{u.job_title || u.email}</p>
                           </div>
                         </div>

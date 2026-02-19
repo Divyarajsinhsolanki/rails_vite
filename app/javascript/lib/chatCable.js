@@ -82,3 +82,8 @@ export const subscribeToUserChat = (received) => subscribe({ channel: "ChatChann
 export const subscribeToConversationChat = (conversationId, received) => {
   return subscribe({ channel: "ChatChannel", conversation_id: conversationId }, received);
 };
+
+export const sendToConversation = (conversationId, payload) => {
+  const identifier = JSON.stringify({ channel: "ChatChannel", conversation_id: conversationId });
+  sendWhenOpen({ ...payload, identifier });
+};

@@ -12,7 +12,13 @@ class Notification < ApplicationRecord
     update!(read_at: Time.current)
   end
 
+  after_create_commit :broadcast_to_channel
+
   private
+
+  def broadcast_to_channel
+    Chat::Broadcaster.broadcast_notification(self)
+  end
 
   def respect_recipient_preferences
     return if recipient.blank?

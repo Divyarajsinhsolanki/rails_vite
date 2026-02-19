@@ -35,6 +35,44 @@ module Chat
         end
       end
 
+      def broadcast_typing_indicator(conversation_id, user, is_typing)
+        payload = {
+          type: "typing_indicator",
+          conversation_id: conversation_id,
+          user_id: user.id,
+          user_name: user.full_name,
+          is_typing: is_typing
+        }
+
+        ActionCable.server.broadcast(conversation_stream(conversation_id), payload)
+      end
+
+      def broadcast_message_read(conversation_id, user_id)
+        payload = {
+          type: "message_read",
+          conversation_id: conversation_id,
+          user_id: user_id,
+          read_at: Time.current
+        }
+
+        ActionCable.server.broadcast(conversation_stream(conversation_id), payload)
+      end
+
+      def broadcast_notification(notification)
+        payload = {
+          type: "notification_received",
+          notification: {
+            id: notification.id,
+            action: notification.action,
+            message: notification.metadata[:conversation_name].present? ? "New message in #{notification.metadata[:conversation_name]}" : "You have a new notification",
+            actor_avatar: notification.actor.profile_picture.attached? ? Rails.application.routes.url_helpers.rails_blob_path(notification.actor.profile_picture, only_path: true) : nil,
+            created_at: notification.created_at
+          }
+        }
+
+        ActionCable.server.broadcast(user_stream(notification.recipient_id), payload)
+      end
+
       def user_stream(user_id)
         "chat_user_#{user_id}"
       end

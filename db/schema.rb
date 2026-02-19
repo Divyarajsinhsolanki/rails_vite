@@ -257,18 +257,6 @@ ActiveRecord::Schema[7.1].define(version: 2027_02_16_000000) do
     t.index ["user_id"], name: "index_learning_goals_on_user_id"
   end
 
-  create_table "messages", force: :cascade do |t|
-    t.bigint "conversation_id", null: false
-    t.bigint "user_id", null: false
-    t.text "body"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["conversation_id", "created_at"], name: "index_messages_on_conversation_id_and_created_at"
-    t.index ["conversation_id"], name: "index_messages_on_conversation_id"
-    t.index ["user_id"], name: "index_messages_on_user_id"
-  end
-
-
   create_table "message_reactions", force: :cascade do |t|
     t.bigint "message_id", null: false
     t.bigint "user_id", null: false
@@ -278,6 +266,17 @@ ActiveRecord::Schema[7.1].define(version: 2027_02_16_000000) do
     t.index ["message_id", "user_id", "emoji"], name: "idx_unique_message_reaction", unique: true
     t.index ["message_id"], name: "index_message_reactions_on_message_id"
     t.index ["user_id"], name: "index_message_reactions_on_user_id"
+  end
+
+  create_table "messages", force: :cascade do |t|
+    t.bigint "conversation_id", null: false
+    t.bigint "user_id", null: false
+    t.text "body"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["conversation_id", "created_at"], name: "index_messages_on_conversation_id_and_created_at"
+    t.index ["conversation_id"], name: "index_messages_on_conversation_id"
+    t.index ["user_id"], name: "index_messages_on_user_id"
   end
 
   create_table "notifications", force: :cascade do |t|
@@ -664,10 +663,10 @@ ActiveRecord::Schema[7.1].define(version: 2027_02_16_000000) do
   add_foreign_key "learning_checkpoints", "learning_goals"
   add_foreign_key "learning_goals", "teams"
   add_foreign_key "learning_goals", "users"
-  add_foreign_key "messages", "conversations"
-  add_foreign_key "messages", "users"
   add_foreign_key "message_reactions", "messages"
   add_foreign_key "message_reactions", "users"
+  add_foreign_key "messages", "conversations"
+  add_foreign_key "messages", "users"
   add_foreign_key "notifications", "users", column: "actor_id"
   add_foreign_key "notifications", "users", column: "recipient_id"
   add_foreign_key "post_likes", "posts"
