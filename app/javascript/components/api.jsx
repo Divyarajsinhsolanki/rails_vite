@@ -235,6 +235,10 @@ export const createConversation = (data) => api.post('/conversations.json', { co
 export const startDirectConversation = (userId) => api.post('/conversations/start_direct', { user_id: userId });
 export const sendMessage = (conversationId, formData) =>
   api.post(`/conversations/${conversationId}/messages`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+export const addMessageReaction = (conversationId, messageId, emoji) =>
+  api.post(`/conversations/${conversationId}/messages/${messageId}/reactions`, { message_reaction: { emoji } });
+export const removeMessageReaction = (conversationId, messageId, emoji) =>
+  api.delete(`/conversations/${conversationId}/messages/${messageId}/reactions`, { params: { emoji } });
 
 // NOTIFICATION ENDPOINTS
 export const fetchNotifications = (params = {}) => api.get('/notifications.json', { params });
