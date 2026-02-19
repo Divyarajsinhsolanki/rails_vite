@@ -59,12 +59,20 @@ module Chat
       end
 
       def broadcast_notification(notification)
+        message = if notification.action == "reacted"
+                    "#{notification.actor.full_name} reacted with #{notification.metadata['emoji']} to your message"
+                  elsif notification.metadata[:conversation_name].present?
+                    "New message in #{notification.metadata[:conversation_name]}"
+                  else
+                    "You have a new notification"
+                  end
+
         payload = {
           type: "notification_received",
           notification: {
             id: notification.id,
             action: notification.action,
-            message: notification.metadata[:conversation_name].present? ? "New message in #{notification.metadata[:conversation_name]}" : "You have a new notification",
+            message: message,
             actor_avatar: notification.actor.profile_picture.attached? ? Rails.application.routes.url_helpers.rails_blob_path(notification.actor.profile_picture, only_path: true) : nil,
             created_at: notification.created_at
           }

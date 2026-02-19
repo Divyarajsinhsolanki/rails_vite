@@ -137,7 +137,7 @@ const MessageBubble = ({ message, isMe, showAvatar, onToggleReaction, participan
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`flex w-full mb-4 ${isMe ? "justify-end" : "justify-start"}`}
+      className={`flex w-full mb-4 group/bubble ${isMe ? "justify-end" : "justify-start"}`}
     >
       <div className={`flex max-w-[85%] md:max-w-[70%] gap-2 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
         {!isMe && (
@@ -178,26 +178,47 @@ const MessageBubble = ({ message, isMe, showAvatar, onToggleReaction, participan
             )}
           </div>
 
+          {/* Existing Reactions (Visible) */}
           <div className="flex flex-wrap gap-1 mt-1.5 px-1">
             {REACTION_EMOJIS.map((emoji) => {
               const count = reactions[emoji] || 0;
               const isActive = reactedEmojis.includes(emoji);
+              if (count === 0) return null;
 
               return (
                 <button
                   key={`${message.id}-${emoji}`}
                   type="button"
                   onClick={() => onToggleReaction(message.id, emoji, isActive)}
-                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs border transition ${isActive
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] border transition ${isActive
                     ? "bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900/40 dark:text-indigo-200"
-                    : "bg-white/70 text-slate-600 border-slate-200 hover:border-slate-300 dark:bg-zinc-800 dark:text-slate-300 dark:border-zinc-700"
+                    : "bg-white/70 text-slate-600 border-slate-200 hover:border-slate-300 dark:bg-zinc-800/80 dark:text-slate-300 dark:border-zinc-700"
                     }`}
                 >
                   <span>{emoji}</span>
-                  {count > 0 && <span>{count}</span>}
+                  <span>{count}</span>
                 </button>
               );
             })}
+          </div>
+
+          {/* New Reaction Picker (Absolute on Hover) */}
+          <div className={`absolute -top-8 ${isMe ? "right-0" : "left-0"} opacity-0 group-hover/bubble:opacity-100 transition-all pointer-events-none group-hover/bubble:pointer-events-auto z-20`}>
+            <div className="flex bg-white dark:bg-zinc-800 shadow-xl border border-slate-100 dark:border-zinc-700 rounded-full p-1 gap-1">
+              {REACTION_EMOJIS.map((emoji) => {
+                const isActive = reactedEmojis.includes(emoji);
+                return (
+                  <button
+                    key={`${message.id}-picker-${emoji}`}
+                    type="button"
+                    onClick={() => onToggleReaction(message.id, emoji, isActive)}
+                    className={`w-7 h-7 flex items-center justify-center rounded-full hover:scale-125 transition-transform ${isActive ? "bg-indigo-50" : "hover:bg-slate-50"}`}
+                  >
+                    <span className="text-sm">{emoji}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="flex items-center gap-1 mt-1 px-1">
@@ -720,7 +741,11 @@ const Chat = () => {
 
                 {/* Messages */}
                 <div
-                  className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-slate-50 dark:bg-zinc-900/50 scroll-smooth"
+                  className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-slate-50 dark:bg-zinc-900/50 scroll-smooth relative"
+                  style={{
+                    backgroundImage: `radial-gradient(circle at 2px 2px, rgba(0,0,0,0.05) 1px, transparent 0)`,
+                    backgroundSize: '24px 24px'
+                  }}
                   ref={messageListRef}
                 >
                   {/* Date separators concept: group messages by date, insert header. Simplified here just list. */}
