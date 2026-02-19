@@ -141,7 +141,10 @@ Rails.application.routes.draw do
       collection do
         post :start_direct
       end
-      resources :messages, only: [:create]
+      resources :messages, only: [:create] do
+        resources :reactions, controller: "message_reactions", only: [:create]
+        delete "reactions", to: "message_reactions#destroy"
+      end
     end
 
     resources :notifications, only: [:index] do

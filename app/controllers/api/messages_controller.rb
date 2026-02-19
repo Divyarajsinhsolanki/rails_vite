@@ -8,15 +8,7 @@ class Api::MessagesController < Api::BaseController
     if message.save
       @conversation.touch
       @conversation.conversation_participants.where(user_id: current_user.id).update_all(last_read_at: Time.current)
-      render json: {
-        id: message.id,
-        body: message.body,
-        user_id: message.user_id,
-        user_name: message.user.full_name,
-        user_profile_picture: message.user.profile_picture.attached? ? rails_blob_url(message.user.profile_picture, only_path: true) : nil,
-        created_at: message.created_at,
-        attachments: message.attachments.map { |attachment| { id: attachment.id, url: rails_blob_url(attachment, only_path: true), content_type: attachment.content_type, filename: attachment.filename.to_s } }
-      }, status: :created
+      render json: serialize_message(message), status: :created
     else
       render json: { errors: message.errors.full_messages }, status: :unprocessable_entity
     end
@@ -30,5 +22,19 @@ class Api::MessagesController < Api::BaseController
 
   def message_params
     params.require(:message).permit(:body, attachments: [])
+  end
+
+  def serialize_message(message)
+    {
+      id: message.id,
+      body: message.body,
+      user_id: message.user_id,
+      user_name: message.user.full_name,
+      user_profile_picture: message.user.profile_picture.attached? ? rails_blob_url(message.user.profile_picture, only_path: true) : nil,
+      created_at: message.created_at,
+      attachments: message.attachments.map { |attachment| { id: attachment.id, url: rails_blob_url(attachment, only_path: true), content_type: attachment.content_type, filename: attachment.filename.to_s } },
+      reactions: message.reaction_counts,
+      reacted_emojis: message.reacted_emojis_for(current_user)
+    }
   end
 end

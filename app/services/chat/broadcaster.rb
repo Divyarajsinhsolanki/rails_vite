@@ -12,6 +12,20 @@ module Chat
         broadcast_conversation_refresh(message.conversation)
       end
 
+      def broadcast_message_reactions_updated(message, last_actor_id: nil, last_actor_emoji: nil, last_actor_action: nil)
+        payload = {
+          type: "message_reactions_updated",
+          conversation_id: message.conversation_id,
+          message_id: message.id,
+          reactions: message.reaction_counts,
+          last_actor_id: last_actor_id,
+          last_actor_emoji: last_actor_emoji,
+          last_actor_action: last_actor_action
+        }
+
+        ActionCable.server.broadcast(conversation_stream(message.conversation_id), payload)
+      end
+
       def broadcast_conversation_refresh(conversation)
         conversation.participant_ids.each do |participant_id|
           ActionCable.server.broadcast(user_stream(participant_id), {
@@ -46,7 +60,9 @@ module Chat
               content_type: attachment.content_type,
               filename: attachment.filename.to_s
             }
-          end
+          end,
+          reactions: message.reaction_counts,
+          reacted_emojis: []
         }
       end
     end

@@ -5,6 +5,7 @@ class Message < ApplicationRecord
   belongs_to :conversation
   belongs_to :user
   has_many_attached :attachments
+  has_many :message_reactions, dependent: :destroy
 
   validate :body_or_attachment_present
   validate :attachment_types
@@ -32,6 +33,18 @@ class Message < ApplicationRecord
 
   def broadcast_message
     Chat::Broadcaster.broadcast_message_created(self)
+  end
+
+  public
+
+  def reaction_counts
+    message_reactions.group(:emoji).count
+  end
+
+  def reacted_emojis_for(user)
+    return [] unless user
+
+    message_reactions.where(user_id: user.id).pluck(:emoji)
   end
 
   def notify_participants

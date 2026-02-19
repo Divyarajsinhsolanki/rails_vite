@@ -17,7 +17,7 @@ import {
   FiEdit,
   FiMessageSquare
 } from "react-icons/fi";
-import { fetchConversation, fetchConversations, getUsers, sendMessage, createConversation, startDirectConversation } from "../components/api";
+import { fetchConversation, fetchConversations, getUsers, sendMessage, createConversation, startDirectConversation, addMessageReaction, removeMessageReaction } from "../components/api";
 import { AuthContext } from "../context/AuthContext";
 import { subscribeToConversationChat, subscribeToUserChat } from "../lib/chatCable";
 
@@ -118,9 +118,13 @@ const ConversationItem = ({ conversation, isActive, user }) => {
   );
 };
 
-const MessageBubble = ({ message, isMe, showAvatar }) => {
+const REACTION_EMOJIS = ["👍", "❤️", "🎉"];
+
+const MessageBubble = ({ message, isMe, showAvatar, onToggleReaction }) => {
   const time = new Date(message.created_at);
   const timeString = format(time, "h:mm a");
+  const reactions = message.reactions || {};
+  const reactedEmojis = message.reacted_emojis || [];
 
   return (
     <motion.div
@@ -165,6 +169,28 @@ const MessageBubble = ({ message, isMe, showAvatar }) => {
                 ))}
               </div>
             )}
+          </div>
+
+          <div className="flex flex-wrap gap-1 mt-1.5 px-1">
+            {REACTION_EMOJIS.map((emoji) => {
+              const count = reactions[emoji] || 0;
+              const isActive = reactedEmojis.includes(emoji);
+
+              return (
+                <button
+                  key={`${message.id}-${emoji}`}
+                  type="button"
+                  onClick={() => onToggleReaction(message.id, emoji, isActive)}
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs border transition ${isActive
+                    ? "bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900/40 dark:text-indigo-200"
+                    : "bg-white/70 text-slate-600 border-slate-200 hover:border-slate-300 dark:bg-zinc-800 dark:text-slate-300 dark:border-zinc-700"
+                    }`}
+                >
+                  <span>{emoji}</span>
+                  {count > 0 && <span>{count}</span>}
+                </button>
+              );
+            })}
           </div>
 
           <span className="text-[10px] text-slate-400 mt-1 px-1">
@@ -285,6 +311,36 @@ const Chat = () => {
         });
         fetchAllData(); // Update sidebar "last message"
       }
+
+      if (payload?.type === "message_reactions_updated" && Number(payload.conversation_id) === Number(conversationId)) {
+        setActiveConversation((prev) => {
+          if (!prev) return prev;
+
+          return {
+            ...prev,
+            messages: (prev.messages || []).map((message) => {
+              if (message.id !== payload.message_id) return message;
+
+              const currentCount = message.reactions?.[payload.last_actor_emoji] || 0;
+              const reactedEmojis = new Set(message.reacted_emojis || []);
+
+              if (payload.last_actor_id && Number(payload.last_actor_id) === Number(user?.id) && payload.last_actor_emoji) {
+                if (payload.last_actor_action === "added") {
+                  reactedEmojis.add(payload.last_actor_emoji);
+                } else if (payload.last_actor_action === "removed" && currentCount <= 1) {
+                  reactedEmojis.delete(payload.last_actor_emoji);
+                }
+              }
+
+              return {
+                ...message,
+                reactions: payload.reactions || {},
+                reacted_emojis: Array.from(reactedEmojis)
+              };
+            })
+          };
+        });
+      }
     });
 
     return () => convSub.unsubscribe();
@@ -292,6 +348,21 @@ const Chat = () => {
 
 
   // --- Handlers ---
+
+  const handleToggleReaction = async (messageId, emoji, isActive) => {
+    if (!conversationId) return;
+
+    try {
+      if (isActive) {
+        await removeMessageReaction(conversationId, messageId, emoji);
+      } else {
+        await addMessageReaction(conversationId, messageId, emoji);
+      }
+    } catch (error) {
+      console.error("Failed to update reaction", error);
+    }
+  };
+
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -547,6 +618,7 @@ const Chat = () => {
                     message={msg}
                     isMe={msg.user_id === user?.id}
                     showAvatar={showAvatar}
+                    onToggleReaction={handleToggleReaction}
                   />
                 );
               })}

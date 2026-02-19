@@ -47,6 +47,7 @@ class User < ApplicationRecord
   has_many :conversation_participants, dependent: :destroy
   has_many :conversations, through: :conversation_participants
   has_many :messages, dependent: :destroy
+  has_many :message_reactions, dependent: :destroy
   has_many :calendar_events, dependent: :destroy
   belongs_to :department, optional: true
 

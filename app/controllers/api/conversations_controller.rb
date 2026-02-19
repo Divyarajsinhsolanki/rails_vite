@@ -3,7 +3,7 @@ class Api::ConversationsController < Api::BaseController
 
   def index
     conversations = Conversation.for_user(current_user)
-      .includes(:participants, :messages)
+      .includes(:participants, messages: [:user, :message_reactions])
       .order(updated_at: :desc)
 
     render json: conversations.map { |conversation| serialize_conversation(conversation) }
@@ -82,20 +82,27 @@ class Api::ConversationsController < Api::BaseController
 
     if include_messages
       payload[:messages] = conversation.messages.order(created_at: :asc).map do |message|
-        {
-          id: message.id,
-          body: message.body,
-          user_id: message.user_id,
-          user_name: message.user.full_name,
-          user_profile_picture: message.user.profile_picture.attached? ? rails_blob_url(message.user.profile_picture, only_path: true) : nil,
-          created_at: message.created_at,
-          attachments: message.attachments.map { |attachment| { id: attachment.id, url: rails_blob_url(attachment, only_path: true), content_type: attachment.content_type, filename: attachment.filename.to_s } }
-        }
+        serialize_message(message)
       end
     end
 
     last_message = conversation.messages.order(created_at: :desc).first
     payload[:last_message] = last_message&.body.presence || (last_message&.attachments&.attached? ? "Sent an attachment" : nil)
-    
-    payload  end
+
+    payload
+  end
+
+  def serialize_message(message)
+    {
+      id: message.id,
+      body: message.body,
+      user_id: message.user_id,
+      user_name: message.user.full_name,
+      user_profile_picture: message.user.profile_picture.attached? ? rails_blob_url(message.user.profile_picture, only_path: true) : nil,
+      created_at: message.created_at,
+      attachments: message.attachments.map { |attachment| { id: attachment.id, url: rails_blob_url(attachment, only_path: true), content_type: attachment.content_type, filename: attachment.filename.to_s } },
+      reactions: message.reaction_counts,
+      reacted_emojis: message.reacted_emojis_for(current_user)
+    }
+  end
 end
