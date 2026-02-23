@@ -60,6 +60,22 @@ const Avatar = ({ name, src, size = "md", className = "" }) => {
   );
 };
 
+const getUserDisplayName = (participant) => {
+  if (!participant) return "Unknown User";
+
+  if (participant.full_name?.trim()) return participant.full_name.trim();
+
+  const joinedName = [participant.first_name, participant.last_name].filter(Boolean).join(" ").trim();
+  if (joinedName) return joinedName;
+
+  return participant.name || participant.email || "Unknown User";
+};
+
+const getUserProfilePicture = (participant) => {
+  if (!participant) return null;
+  return participant.profile_picture_url || participant.profile_picture || participant.avatar_url || null;
+};
+
 const ConversationItem = ({ conversation, isActive, user }) => {
   const isUnread = conversation.unread_count > 0;
   const isDirect = conversation.conversation_type === "direct";
@@ -69,8 +85,8 @@ const ConversationItem = ({ conversation, isActive, user }) => {
     ? conversation.participants?.find(p => p.id !== user?.id)
     : null;
 
-  const displayName = isDirect && otherParticipant ? otherParticipant.name : conversation.title;
-  const displayImage = isDirect && otherParticipant ? otherParticipant.profile_picture : null; // Use null for group avatar fallback
+  const displayName = isDirect && otherParticipant ? getUserDisplayName(otherParticipant) : conversation.title;
+  const displayImage = isDirect && otherParticipant ? getUserProfilePicture(otherParticipant) : null; // Use null for group avatar fallback
 
   const lastMessageTime = conversation.updated_at ? new Date(conversation.updated_at) : null;
   const timeString = lastMessageTime ? (isToday(lastMessageTime) ? format(lastMessageTime, "h:mm a") : isYesterday(lastMessageTime) ? "Yesterday" : format(lastMessageTime, "d MMM")) : "";
@@ -219,6 +235,7 @@ const Chat = () => {
   const [attachments, setAttachments] = useState([]);
   const [isSending, setIsSending] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [conversationSearch, setConversationSearch] = useState("");
 
   // New Chat Modal
   const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
@@ -473,11 +490,38 @@ const Chat = () => {
   // Filtered Users for Modal
   const filteredUsers = useMemo(() => {
     if (!searchTerm) return users;
-    return users.filter(u =>
-      u.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.last_name?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const normalizedTerm = searchTerm.toLowerCase();
+
+    return users.filter((u) => {
+      const displayName = getUserDisplayName(u).toLowerCase();
+      return displayName.includes(normalizedTerm) || u.email?.toLowerCase().includes(normalizedTerm);
+    });
   }, [users, searchTerm]);
+
+  const filteredConversations = useMemo(() => {
+    const normalizedSearch = conversationSearch.trim().toLowerCase();
+
+    if (!normalizedSearch) {
+      return conversations;
+    }
+
+    const matchesConversation = (conversation) => {
+      const isDirect = conversation.conversation_type === "direct";
+      const otherParticipant = isDirect ? conversation.participants?.find((p) => p.id !== user?.id) : null;
+
+      const title = (isDirect ? getUserDisplayName(otherParticipant) : conversation.title || "").toLowerCase();
+      const lastMessage = (conversation.last_message || "").toLowerCase();
+
+      return title.includes(normalizedSearch) || lastMessage.includes(normalizedSearch);
+    };
+
+    return {
+      direct: conversations.direct.filter(matchesConversation),
+      group: conversations.group.filter(matchesConversation),
+    };
+  }, [conversations, conversationSearch, user?.id]);
+
+  const hasConversationMatches = filteredConversations.direct.length > 0 || filteredConversations.group.length > 0;
 
   return (
     <div className="flex h-[calc(100vh-64px)] w-full bg-white dark:bg-zinc-900 overflow-hidden">
@@ -500,11 +544,28 @@ const Chat = () => {
           <div className="relative">
             <FiSearch className="absolute left-3 top-3 text-slate-400" />
             <input
+              value={conversationSearch}
+              onChange={(e) => setConversationSearch(e.target.value)}
               placeholder="Search conversations..."
               className="w-full pl-10 pr-4 py-2 text-sm bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-[var(--theme-color)] outline-none"
             />
           </div>
         </div>
+
+        {conversationSearch.trim() && !hasConversationMatches && (
+          <div className="px-3 pb-2">
+            <button
+              onClick={() => {
+                setIsNewChatModalOpen(true);
+                setNewChatStep("select");
+                setSearchTerm(conversationSearch.trim());
+              }}
+              className="w-full rounded-xl border border-dashed border-slate-300 dark:border-zinc-700 px-3 py-2 text-left text-sm text-[var(--theme-color)] hover:bg-white dark:hover:bg-zinc-800"
+            >
+              Start conversation with “{conversationSearch.trim()}”
+            </button>
+          </div>
+        )}
 
         {/* List */}
         <div className="flex-1 overflow-y-auto p-3 space-y-6">
@@ -512,8 +573,8 @@ const Chat = () => {
           <div>
             <h2 className="px-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Direct Messages</h2>
             <div className="space-y-1">
-              {conversations.direct.length === 0 && <p className="px-2 text-sm text-slate-400 italic">No messages yet</p>}
-              {conversations.direct.map(c => (
+              {filteredConversations.direct.length === 0 && <p className="px-2 text-sm text-slate-400 italic">No messages yet</p>}
+              {filteredConversations.direct.map(c => (
                 <ConversationItem key={c.id} conversation={c} isActive={Number(conversationId) === c.id} user={user} />
               ))}
             </div>
@@ -528,8 +589,8 @@ const Chat = () => {
               </button>
             </h2>
             <div className="space-y-1">
-              {conversations.group.length === 0 && <p className="px-2 text-sm text-slate-400 italic">No groups yet</p>}
-              {conversations.group.map(c => (
+              {filteredConversations.group.length === 0 && <p className="px-2 text-sm text-slate-400 italic">No groups yet</p>}
+              {filteredConversations.group.map(c => (
                 <ConversationItem key={c.id} conversation={c} isActive={Number(conversationId) === c.id} user={user} />
               ))}
             </div>
@@ -729,7 +790,7 @@ const Chat = () => {
                           className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition ${selected ? "bg-[var(--theme-color-light)]/10" : "hover:bg-slate-50 dark:hover:bg-zinc-800"}`}
                         >
                           <div className="relative">
-                            <Avatar name={u.full_name} src={u.profile_picture_url} />
+                            <Avatar name={getUserDisplayName(u)} src={getUserProfilePicture(u)} />
                             {selected && (
                               <div className="absolute -bottom-1 -right-1 bg-[var(--theme-color)] text-white rounded-full p-0.5 border-2 border-white">
                                 <FiCheck className="w-3 h-3" />
@@ -737,7 +798,7 @@ const Chat = () => {
                             )}
                           </div>
                           <div>
-                            <p className={`font-medium ${selected ? "text-[var(--theme-color)]" : "text-slate-900 dark:text-white"}`}>{u.full_name}</p>
+                            <p className={`font-medium ${selected ? "text-[var(--theme-color)]" : "text-slate-900 dark:text-white"}`}>{getUserDisplayName(u)}</p>
                             <p className="text-xs text-slate-500">{u.job_title || u.email}</p>
                           </div>
                         </div>
