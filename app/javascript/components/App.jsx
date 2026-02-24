@@ -32,6 +32,7 @@ import Departments from "../pages/Departments";
 import DepartmentDetails from "../pages/DepartmentDetails";
 import PageLoader from "./ui/PageLoader";
 import Chat from "../pages/Chat";
+import Notifications from "../pages/Notifications";
 import ChatLauncher from "./ChatLauncher";
 
 const RouteTransitionLoader = ({ children }) => {
@@ -94,6 +95,7 @@ const App = () => {
               <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
               <Route path="/chat" element={<PrivateRoute><Chat /></PrivateRoute>} />
               <Route path="/chat/:conversationId" element={<PrivateRoute><Chat /></PrivateRoute>} />
+              <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
             </Routes>
           </RouteTransitionLoader>
 
