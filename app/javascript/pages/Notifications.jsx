@@ -7,15 +7,22 @@ const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [actionFilter, setActionFilter] = useState('all');
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
     loadNotifications();
-  }, []);
+  }, [statusFilter, actionFilter]);
 
   const loadNotifications = async () => {
     setLoading(true);
     try {
-      const response = await fetchNotifications({ page: 1 });
+      const response = await fetchNotifications({
+        page: 1,
+        status: statusFilter,
+        action_type: actionFilter === 'all' ? undefined : actionFilter
+      });
       setNotifications(response.data.notifications || []);
       setUnreadCount(response.data.meta?.unread_count || 0);
     } catch (error) {
@@ -30,8 +37,11 @@ const Notifications = () => {
   const handleMarkRead = async (id) => {
     try {
       await markNotificationRead(id);
-      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n)));
-      setUnreadCount((prev) => Math.max(0, prev - 1));
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n))
+      );
+      const justMarkedUnread = notifications.find((n) => n.id === id && !n.read_at);
+      if (justMarkedUnread) setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (error) {
       console.error('Failed to mark read', error);
     }
@@ -62,6 +72,29 @@ const Notifications = () => {
     }
   };
 
+  const groupedNotifications = notifications
+    .filter((notification) => {
+      if (!query.trim()) return true;
+      return notification.message?.toLowerCase().includes(query.toLowerCase());
+    })
+    .reduce((acc, notification) => {
+      const notificationDate = notification.created_at ? new Date(notification.created_at) : new Date();
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const startOfYesterday = new Date(startOfToday);
+      startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+
+      let groupTitle = 'Earlier';
+      if (notificationDate >= startOfToday) groupTitle = 'Today';
+      else if (notificationDate >= startOfYesterday) groupTitle = 'Yesterday';
+
+      if (!acc[groupTitle]) acc[groupTitle] = [];
+      acc[groupTitle].push(notification);
+      return acc;
+    }, {});
+
+  const groupOrder = ['Today', 'Yesterday', 'Earlier'];
+
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
@@ -80,45 +113,101 @@ const Notifications = () => {
         )}
       </div>
 
+      <div className="mb-4 flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="inline-flex rounded-md border border-gray-200 bg-gray-50 p-1">
+          {[
+            { value: 'all', label: 'All' },
+            { value: 'unread', label: 'Unread' },
+            { value: 'read', label: 'Read' }
+          ].map((option) => (
+            <button
+              key={option.value}
+              onClick={() => setStatusFilter(option.value)}
+              className={`rounded-md px-3 py-1.5 text-sm ${
+                statusFilter === option.value ? 'bg-white font-medium text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <select
+            value={actionFilter}
+            onChange={(e) => setActionFilter(e.target.value)}
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700"
+          >
+            <option value="all">All types</option>
+            <option value="assigned">Assignments</option>
+            <option value="commented">Comments</option>
+            <option value="update">Updates</option>
+            <option value="chat_message">Chat messages</option>
+          </select>
+
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search notifications..."
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+          />
+        </div>
+      </div>
+
       <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
         {loading ? (
           <div className="p-8 text-center text-sm text-gray-500">Loading notifications...</div>
         ) : notifications.length === 0 ? (
           <div className="p-8 text-center text-sm text-gray-500">No notifications yet</div>
+        ) : Object.keys(groupedNotifications).length === 0 ? (
+          <div className="p-8 text-center text-sm text-gray-500">No notifications match your filters</div>
         ) : (
-          <ul className="divide-y divide-gray-100">
-            {notifications.map((notification) => (
-              <li key={notification.id} className={`flex items-start gap-3 p-4 ${notification.read_at ? 'bg-white' : 'bg-blue-50'}`}>
-                <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-200">
-                  {notification.actor_avatar ? (
-                    <img src={notification.actor_avatar} alt="" className="h-8 w-8 rounded-full object-cover" />
-                  ) : (
-                    getIcon(notification.action)
-                  )}
-                </div>
+          <div>
+            {groupOrder.map((group) => {
+              const entries = groupedNotifications[group];
+              if (!entries?.length) return null;
+              return (
+                <div key={group}>
+                  <div className="border-y border-gray-100 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    {group}
+                  </div>
+                  <ul className="divide-y divide-gray-100">
+                    {entries.map((notification) => (
+                      <li key={notification.id} className={`flex items-start gap-3 p-4 ${notification.read_at ? 'bg-white' : 'bg-blue-50'}`}>
+                        <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-200">
+                          {notification.actor_avatar ? (
+                            <img src={notification.actor_avatar} alt="" className="h-8 w-8 rounded-full object-cover" />
+                          ) : (
+                            getIcon(notification.action)
+                          )}
+                        </div>
 
-                <div className="min-w-0 flex-1">
-                  <p className={`text-sm ${notification.read_at ? 'text-gray-600' : 'font-medium text-gray-900'}`}>
-                    {notification.message}
-                  </p>
-                  <p className="mt-1 flex items-center text-xs text-gray-500">
-                    <Clock className="mr-1 h-3 w-3" />
-                    {notification.created_at ? formatDistanceToNow(new Date(notification.created_at), { addSuffix: true }) : 'Just now'}
-                  </p>
-                </div>
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-sm ${notification.read_at ? 'text-gray-600' : 'font-medium text-gray-900'}`}>
+                            {notification.message}
+                          </p>
+                          <p className="mt-1 flex items-center text-xs text-gray-500">
+                            <Clock className="mr-1 h-3 w-3" />
+                            {notification.created_at ? formatDistanceToNow(new Date(notification.created_at), { addSuffix: true }) : 'Just now'}
+                          </p>
+                        </div>
 
-                {!notification.read_at && (
-                  <button
-                    onClick={() => handleMarkRead(notification.id)}
-                    className="rounded p-1 text-blue-600 hover:bg-blue-100"
-                    title="Mark as read"
-                  >
-                    <Check className="h-4 w-4" />
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
+                        {!notification.read_at && (
+                          <button
+                            onClick={() => handleMarkRead(notification.id)}
+                            className="rounded p-1 text-blue-600 hover:bg-blue-100"
+                            title="Mark as read"
+                          >
+                            <Check className="h-4 w-4" />
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>
