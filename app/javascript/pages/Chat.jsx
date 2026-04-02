@@ -1,17 +1,14 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { format, isToday, isYesterday } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiSend,
   FiPaperclip,
-  FiImage,
   FiMoreVertical,
   FiSearch,
-  FiPlus,
   FiArrowLeft,
   FiUsers,
-  FiHash,
   FiCheck,
   FiX,
   FiEdit,
@@ -270,6 +267,13 @@ const Chat = () => {
   const [newChatStep, setNewChatStep] = useState("select"); // 'select' | 'details'
   const [selectedUserIds, setSelectedUserIds] = useState([]);
   const [newGroupTitle, setNewGroupTitle] = useState("");
+  const activeConversationName = useMemo(() => {
+    if (!activeConversation) return "";
+    if (activeConversation.conversation_type === "direct") {
+      return activeConversation.participants.find(p => p.id !== user?.id)?.name || activeConversation.title;
+    }
+    return activeConversation.title;
+  }, [activeConversation, user?.id]);
 
   const fetchAllData = useCallback(async () => {
     try {
@@ -498,59 +502,8 @@ const Chat = () => {
     }
   };
 
-  const startDirectChat = async (userId) => {
-    try {
-      // Find existing or create new
-      // Ideally API handles this "find or create" logic
-      // For now let's assume createConversation handles it or we filter manually.
-      // Actually, createConversation (POST /conversations) creates generic ones. 
-      // We need a specific "Start Direct" endpoint or logic.
-      // Looking at backend, there IS a `start_direct` endpoint!
-
-      // Wait, I need to check api.js if I exported it. I did: `startDirectConversation`
-      // Let's import it.
-      // Oh wait, I didn't import `startDirectConversation` at top of file. I should.
-
-      // Fallback: Use standard create for now if I forget import, but `startDirectConversation` is better.
-      // Let's optimize: I will use `createConversation` with type 'direct' which backend might handle, 
-      // BUT my backend `create` action just creates a NEW one every time.
-      // `start_direct` action in controller handles "find or create".
-      // I will use `startDirectConversation` but I need to import it properly.
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  // Since I can't easily change imports in this single file write without context of what I imported,
-  // I will check if I imported `startDirectConversation`. 
-  // I imported: `createConversation, fetchConversation, fetchConversations, getUsers, sendMessage`.
-  // I missed `startDirectConversation`.
-  // I'll implement a helper using `api.post('/conversations/start_direct', ...)` manually if needed or just use `createConversation` and handle duplicates? 
-  // No, `create` in backend always creates clean new one.
-  // I will just add `startDirectConversation` to the imports list in the file content I am writing.
-
   const handleCreateNew = async () => {
     if (selectedUserIds.length === 0) return;
-
-    if (newChatStep === 'select' && selectedUserIds.length === 1) {
-      // Direct Chat
-      const targetUserId = selectedUserIds[0];
-      // Use the API to find/create direct chat
-      // To be safe, I'll use the generic api structure here since I might not have imported the specific function
-      // But wait, I am WRITING the file, so I CAN add the import.
-      // Yes, I added `createConversation`. I will also add `startDirectConversation` to imports.
-      // ...
-
-      // Actually, for simplicity in "Select Users" -> if 1 user, go to direct. If multiple, ask for group name.
-      if (selectedUserIds.length === 1) {
-        // Direct
-        // I'll use a direct API call here to ensure it works
-        // I will add the import to the top of the file I'm generating.
-      } else {
-        setNewChatStep('details');
-        return;
-      }
-    }
 
     // Group Create
     if (selectedUserIds.length > 1 && !newGroupTitle.trim()) return;
@@ -598,19 +551,20 @@ const Chat = () => {
   }, [conversations, sideSearchQuery, user]);
 
   return (
-    <div className="flex h-[calc(100vh-64px)] w-full bg-white dark:bg-zinc-900 overflow-hidden">
+    <div className="flex h-[calc(100vh-64px)] w-full bg-gradient-to-br from-slate-50 via-white to-indigo-50/40 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-950 overflow-hidden">
 
       {/* --- Sidebar --- */}
-      <aside className={`flex flex-col w-full md:w-80 border-r border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 ${conversationId ? 'hidden md:flex' : 'flex'}`}>
+      <aside className={`flex flex-col w-full md:w-80 border-r border-slate-200/80 dark:border-zinc-800 bg-white/90 dark:bg-zinc-900/70 backdrop-blur ${conversationId ? 'hidden md:flex' : 'flex'}`}>
         {/* Header */}
         <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-slate-800 dark:text-white">Messages</h1>
-          <button
-            onClick={() => { setIsNewChatModalOpen(true); setNewChatStep('select'); setSelectedUserIds([]); }}
-            className="p-2 bg-[var(--theme-color)] text-white rounded-lg shadow-sm hover:brightness-110 transition"
-          >
-            <FiEdit className="w-5 h-5" />
-          </button>
+            <h1 className="text-xl font-bold text-slate-800 dark:text-white">Messages</h1>
+            <button
+              onClick={() => { setIsNewChatModalOpen(true); setNewChatStep('select'); setSelectedUserIds([]); }}
+              className="p-2 bg-[var(--theme-color)] text-white rounded-lg shadow-sm hover:brightness-110 transition"
+              title="Start a new conversation"
+            >
+              <FiEdit className="w-5 h-5" />
+            </button>
         </div>
 
         {/* Search */}
@@ -674,7 +628,7 @@ const Chat = () => {
       </aside>
 
       {/* --- Main Chat Area --- */}
-      <main className={`flex-1 flex flex-col min-w-0 bg-white dark:bg-zinc-900 ${!conversationId ? 'hidden md:flex' : 'flex'}`}>
+      <main className={`flex-1 flex flex-col min-w-0 bg-transparent ${!conversationId ? 'hidden md:flex' : 'flex'}`}>
         {!activeConversation ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8 text-center bg-slate-50/30 dark:bg-zinc-900/30">
             <div className="w-24 h-24 bg-slate-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-6">
@@ -692,7 +646,7 @@ const Chat = () => {
         ) : (
           <>
             {/* Header */}
-            <header className="h-16 px-6 border-b border-slate-100 dark:border-zinc-800 flex items-center justify-between shrink-0 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm z-10 sticky top-0">
+            <header className="h-16 px-6 border-b border-slate-200/70 dark:border-zinc-800 flex items-center justify-between shrink-0 bg-white/85 dark:bg-zinc-900/80 backdrop-blur-sm z-10 sticky top-0">
               <div className="flex items-center gap-3">
                 <Link to="/chat" className="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-full">
                   <FiArrowLeft />
@@ -711,9 +665,7 @@ const Chat = () => {
 
                 <div>
                   <h2 className="font-bold text-slate-900 dark:text-white leading-tight">
-                    {activeConversation.conversation_type === 'direct'
-                      ? (activeConversation.participants.find(p => p.id !== user?.id)?.name || activeConversation.title)
-                      : activeConversation.title}
+                    {activeConversationName}
                   </h2>
                   <p className="text-xs text-slate-500 flex items-center gap-2">
                     {activeConversation.conversation_type === 'group'
@@ -741,7 +693,7 @@ const Chat = () => {
 
                 {/* Messages */}
                 <div
-                  className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-slate-50 dark:bg-zinc-900/50 scroll-smooth relative"
+                  className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-white/50 dark:bg-zinc-900/40 scroll-smooth relative"
                   style={{
                     backgroundImage: `radial-gradient(circle at 2px 2px, rgba(0,0,0,0.05) 1px, transparent 0)`,
                     backgroundSize: '24px 24px'
@@ -749,9 +701,15 @@ const Chat = () => {
                   ref={messageListRef}
                 >
                   {/* Date separators concept: group messages by date, insert header. Simplified here just list. */}
+                  <div className="sticky top-0 z-10 flex justify-center pointer-events-none">
+                    <span className="text-[11px] px-3 py-1 rounded-full bg-white/90 dark:bg-zinc-800/90 border border-slate-200 dark:border-zinc-700 text-slate-500 shadow-sm">
+                      {activeConversationName}
+                    </span>
+                  </div>
+
                   {activeConversation.messages?.length === 0 && (
                     <div className="text-center py-20 opacity-50">
-                      <p className="text-sm">No messages yet. Say hello! 👋</p>
+                      <p className="text-sm">No messages yet. Start with a clear, friendly opener.</p>
                     </div>
                   )}
 
@@ -790,7 +748,7 @@ const Chat = () => {
                 </div>
 
                 {/* Input Area */}
-                <div className="p-4 bg-white dark:bg-zinc-900 border-t border-slate-100 dark:border-zinc-800 shrink-0">
+                <div className="p-4 bg-white/90 dark:bg-zinc-900 border-t border-slate-200/70 dark:border-zinc-800 shrink-0 backdrop-blur-sm">
                   {attachments.length > 0 && (
                     <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
                       {attachments.map((file, i) => (
@@ -841,7 +799,7 @@ const Chat = () => {
                           sendTyping(false);
                         }
                       }}
-                      placeholder="Type your message..."
+                      placeholder="Write a message..."
                       rows={1}
                       className="flex-1 bg-slate-100 dark:bg-zinc-800 border-0 rounded-xl px-4 py-3 max-h-32 focus:ring-2 focus:ring-[var(--theme-color)]/20 outline-none resize-none overflow-hidden"
                       style={{ minHeight: '44px' }}
@@ -850,6 +808,7 @@ const Chat = () => {
                     <button
                       disabled={isSending || (!messageBody.trim() && attachments.length === 0)}
                       className="p-3 bg-[var(--theme-color)] text-white rounded-xl shadow-lg shadow-[var(--theme-color)]/30 hover:brightness-110 disabled:opacity-50 disabled:shadow-none transition-all transform active:scale-95"
+                      title="Send message"
                     >
                       <FiSend className={`w-5 h-5 ${isSending ? 'animate-pulse' : ''}`} />
                     </button>
