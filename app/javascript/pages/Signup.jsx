@@ -54,7 +54,7 @@ const Signup = ({ switchToLogin }) => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
+    <div className="flex min-h-full items-center justify-center bg-gray-100">
       <Toaster position="top-right" />
       {loading && <SpinnerOverlay />}
       <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl transition-transform transform hover:scale-[1.01] border border-gray-100">
