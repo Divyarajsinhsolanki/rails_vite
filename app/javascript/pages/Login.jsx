@@ -62,7 +62,7 @@ const Login = ({ switchToSignup }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+    <div className="min-h-full bg-gradient-to-br from-slate-50 via-white to-blue-50">
       <Toaster position="top-right" />
       {loading && <SpinnerOverlay />}
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12 lg:flex-row lg:items-center lg:gap-14">
