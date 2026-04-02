@@ -2,7 +2,11 @@ class Api::NotificationsController < ApplicationController
   before_action :authenticate_user!
 
   def index
-    notifications = current_user.notifications.recent.page(params[:page]).per(20)
+    notifications_scope = current_user.notifications.recent
+    notifications_scope = apply_status_filter(notifications_scope)
+    notifications_scope = apply_action_filter(notifications_scope)
+    notifications_scope = apply_notifiable_type_filter(notifications_scope)
+    notifications = notifications_scope.page(params[:page]).per(20)
     
     render json: {
       notifications: notifications.map do |n| 
@@ -54,5 +58,28 @@ class Api::NotificationsController < ApplicationController
     else
       "New notification"
     end
+  end
+
+  def apply_status_filter(scope)
+    case params[:status]
+    when "read"
+      scope.where.not(read_at: nil)
+    when "unread"
+      scope.unread
+    else
+      scope
+    end
+  end
+
+  def apply_action_filter(scope)
+    return scope if params[:action_type].blank?
+
+    scope.where(action: params[:action_type])
+  end
+
+  def apply_notifiable_type_filter(scope)
+    return scope if params[:notifiable_type].blank?
+
+    scope.where(notifiable_type: params[:notifiable_type])
   end
 end
