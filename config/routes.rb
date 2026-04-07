@@ -109,7 +109,11 @@ Rails.application.routes.draw do
     resources :task_logs, only: [:index, :create, :update, :destroy]
 
     resources :items, only: [:index, :create, :update, :destroy]
-    resources :issues, only: [:index, :create, :update, :destroy]
+    resources :issues, only: [:index, :create, :update, :destroy] do
+      collection do
+        post :import_from_sheet
+      end
+    end
     resources :departments do
       member do
         get :members

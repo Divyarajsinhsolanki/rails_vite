@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { SchedulerAPI, getIssues, createIssue, updateIssue, deleteIssue } from "../components/api";
+import { SchedulerAPI, getIssues, createIssue, updateIssue, deleteIssue, importIssuesFromSheet } from "../components/api";
 import { Toaster, toast } from "react-hot-toast";
 import { SparklesIcon, ClipboardDocumentListIcon, LinkIcon, ShieldExclamationIcon, ExclamationTriangleIcon, CheckCircleIcon, ListBulletIcon, Squares2X2Icon, VideoCameraIcon, BellIcon, ClockIcon, BoltIcon, FireIcon, TrashIcon, UserGroupIcon, FunnelIcon } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
@@ -1197,6 +1197,7 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
   const [selectedIssues, setSelectedIssues] = useState([]);
   const [smartFilter, setSmartFilter] = useState("all");
   const [isActivityOpen, setIsActivityOpen] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [mockActivities, setMockActivities] = useState([
     { user: "Sarah J.", text: "moved ISS-9922 to In Progress", time: "2m ago", type: "update" },
     { user: "System", text: "auto-assigned ISS-1234 to Dev Alpha", time: "15m ago", type: "system" },
@@ -1400,6 +1401,26 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
     }
   };
 
+  const handleImportFromSheet = async () => {
+    if (!projectId || isImporting) return;
+    const suggestedName = sprint?.name || "Issues";
+    const sheetName = window.prompt("Sheet tab name to import from:", suggestedName);
+    if (!sheetName) return;
+
+    setIsImporting(true);
+    try {
+      const { data } = await importIssuesFromSheet(projectId, sheetName);
+      const issuesRes = await getIssues(projectId);
+      setIssues(Array.isArray(issuesRes.data) ? issuesRes.data : []);
+      toast.success(`Imported ${data.created} new and updated ${data.updated} issues from "${sheetName}".`);
+      handleManualAction(`imported issues from sheet ${sheetName}`, "update");
+    } catch (error) {
+      toast.error(error?.response?.data?.error || "Failed to import issues from sheet");
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50/50 p-6">
       <Toaster position="top-right" />
@@ -1428,6 +1449,14 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
             >
               <SparklesIcon className="h-4 w-4" />
               <span>Log New Issue</span>
+            </button>
+            <button
+              onClick={handleImportFromSheet}
+              disabled={!projectId || isImporting}
+              className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white rounded-xl transition-all font-semibold shadow-lg shadow-emerald-500/25 active:scale-95 transform"
+            >
+              <LinkIcon className="h-4 w-4" />
+              <span>{isImporting ? "Importing..." : "Import from Sheet"}</span>
             </button>
 
             <button
