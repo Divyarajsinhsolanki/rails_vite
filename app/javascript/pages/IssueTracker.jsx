@@ -1299,9 +1299,27 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
 
   const pageSliceStart = (page - 1) * pageSize;
   const paginatedIssues = filteredIssues.slice(pageSliceStart, pageSliceStart + pageSize);
+  const filteredIssueIds = useMemo(() => filteredIssues.map((issue) => issue.id), [filteredIssues]);
+  const selectedFilteredCount = useMemo(
+    () => filteredIssueIds.filter((id) => selectedIssues.includes(id)).length,
+    [filteredIssueIds, selectedIssues]
+  );
+  const allFilteredSelected = filteredIssueIds.length > 0 && selectedFilteredCount === filteredIssueIds.length;
 
   const handleSelectIssue = (id) => {
     setSelectedIssues(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const handleToggleSelectAllFiltered = () => {
+    if (allFilteredSelected) {
+      setSelectedIssues((prev) => prev.filter((id) => !filteredIssueIds.includes(id)));
+      return;
+    }
+
+    setSelectedIssues((prev) => {
+      const merged = new Set([...prev, ...filteredIssueIds]);
+      return Array.from(merged);
+    });
   };
 
   const handleBulkUpdate = async (field, value) => {
@@ -1625,6 +1643,17 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
                   Kanban
                 </button>
               </div>
+              <button
+                type="button"
+                onClick={handleToggleSelectAllFiltered}
+                disabled={!filteredIssueIds.length}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:border-indigo-300 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {allFilteredSelected ? "Unselect All" : "Select All"}
+              </button>
+              <span className="text-xs font-semibold text-slate-500">
+                {selectedFilteredCount}/{filteredIssueIds.length} selected
+              </span>
             </div>
           </div>
           {!projectId && (

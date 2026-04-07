@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { fetchProjects } from '../components/api';
+import { fetchProjects, updateProject } from '../components/api';
 import { CalendarDaysIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import SprintOverview from './SprintOverview';
 import Scheduler from '../components/Scheduler/Scheduler';
@@ -55,6 +55,19 @@ export default function SprintDashboard() {
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(false);
   const [qaMode, setQaMode] = useState(false);
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(true);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [settingsMessage, setSettingsMessage] = useState('');
+  const [projectSettings, setProjectSettings] = useState({
+    name: '',
+    description: '',
+    start_date: '',
+    end_date: '',
+    qa_mode_enabled: false,
+    sheet_integration_enabled: false,
+    sheet_id: '',
+    issue_sheet_id: '',
+    issue_sheet_name: 'Issue Tracker',
+  });
   const sheetEnabled = !!(project?.sheet_integration_enabled && project?.sheet_id);
 
   useEffect(() => {
@@ -65,6 +78,21 @@ export default function SprintDashboard() {
       setProject(found || null);
     });
   }, [projectId]);
+
+  useEffect(() => {
+    if (!project) return;
+    setProjectSettings({
+      name: project.name || '',
+      description: project.description || '',
+      start_date: project.start_date || '',
+      end_date: project.end_date || '',
+      qa_mode_enabled: !!project.qa_mode_enabled,
+      sheet_integration_enabled: !!project.sheet_integration_enabled,
+      sheet_id: project.sheet_id || '',
+      issue_sheet_id: project.issue_sheet_id || '',
+      issue_sheet_name: project.issue_sheet_name || 'Issue Tracker',
+    });
+  }, [project]);
 
   // If sheet tab is active but integration is off, bounce back to overview.
   useEffect(() => {
@@ -152,6 +180,35 @@ export default function SprintDashboard() {
       setSprintId(s?.id || null);
     }
     setIsHeaderExpanded(false);
+  };
+
+  const handleProjectSettingsChange = (event) => {
+    const { name, value, type, checked } = event.target;
+    setProjectSettings((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
+
+  const handleProjectSettingsSubmit = async (event) => {
+    event.preventDefault();
+    if (!project?.id) return;
+
+    setIsSavingSettings(true);
+    setSettingsMessage('');
+    try {
+      const payload = {
+        ...projectSettings,
+        issue_sheet_name: projectSettings.issue_sheet_name || 'Issue Tracker',
+      };
+      const { data } = await updateProject(project.id, payload);
+      setProject(data);
+      setSettingsMessage('Project settings updated successfully.');
+    } catch (error) {
+      setSettingsMessage(error?.response?.data?.errors?.join(', ') || 'Failed to update project settings.');
+    } finally {
+      setIsSavingSettings(false);
+    }
   };
 
 
@@ -258,6 +315,16 @@ export default function SprintDashboard() {
               >
                 Vault
               </button>
+              <button
+                className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
+                  ${activeTab === 'settings'
+                    ? 'bg-[var(--theme-color)] text-white shadow-lg'
+                    : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
+                  }`}
+                onClick={() => setActiveTab('settings')}
+              >
+                Settings
+              </button>
             </div>
             {project?.qa_mode_enabled && (
               <div className="ml-3 flex items-center gap-3 rounded-full border border-purple-200 bg-purple-50 px-3 py-1">
@@ -341,6 +408,76 @@ export default function SprintDashboard() {
       )}
       {activeTab === 'vault' && (
         <ProjectVault projectId={projectId} />
+      )}
+      {activeTab === 'settings' && (
+        <div className="mx-auto mt-6 w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-bold text-slate-900">Project Settings</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Update the same project settings available in the Projects edit page.
+          </p>
+
+          <form onSubmit={handleProjectSettingsSubmit} className="mt-6 space-y-5">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
+              <input id="name" name="name" value={projectSettings.name} onChange={handleProjectSettingsChange} required className="w-full rounded-lg border border-gray-300 p-3" />
+            </div>
+
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <textarea id="description" name="description" value={projectSettings.description} onChange={handleProjectSettingsChange} className="w-full rounded-lg border border-gray-300 p-3 h-28 resize-y" />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label htmlFor="start_date" className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                <input type="date" id="start_date" name="start_date" value={projectSettings.start_date} onChange={handleProjectSettingsChange} className="w-full rounded-lg border border-gray-300 p-3" />
+              </div>
+              <div>
+                <label htmlFor="end_date" className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                <input type="date" id="end_date" name="end_date" value={projectSettings.end_date} onChange={handleProjectSettingsChange} className="w-full rounded-lg border border-gray-300 p-3" />
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+              <input type="checkbox" name="qa_mode_enabled" checked={projectSettings.qa_mode_enabled} onChange={handleProjectSettingsChange} className="h-4 w-4" />
+              Enable QA Mode
+            </label>
+
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+              <input type="checkbox" name="sheet_integration_enabled" checked={projectSettings.sheet_integration_enabled} onChange={handleProjectSettingsChange} className="h-4 w-4" />
+              Enable Sheet Integration
+            </label>
+
+            {projectSettings.sheet_integration_enabled && (
+              <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div>
+                  <label htmlFor="sheet_id" className="block text-sm font-medium text-gray-700 mb-1">Task Sheet ID</label>
+                  <input id="sheet_id" name="sheet_id" value={projectSettings.sheet_id} onChange={handleProjectSettingsChange} className="w-full rounded-lg border border-gray-300 p-3" />
+                </div>
+                <div>
+                  <label htmlFor="issue_sheet_id" className="block text-sm font-medium text-gray-700 mb-1">Issue Tracker Sheet ID</label>
+                  <input id="issue_sheet_id" name="issue_sheet_id" value={projectSettings.issue_sheet_id} onChange={handleProjectSettingsChange} className="w-full rounded-lg border border-gray-300 p-3" />
+                </div>
+                <div>
+                  <label htmlFor="issue_sheet_name" className="block text-sm font-medium text-gray-700 mb-1">Issue Tracker Sheet Name</label>
+                  <input id="issue_sheet_name" name="issue_sheet_name" value={projectSettings.issue_sheet_name} onChange={handleProjectSettingsChange} className="w-full rounded-lg border border-gray-300 p-3" />
+                </div>
+              </div>
+            )}
+
+            {settingsMessage && (
+              <p className={`text-sm font-medium ${settingsMessage.includes('successfully') ? 'text-emerald-600' : 'text-rose-600'}`}>
+                {settingsMessage}
+              </p>
+            )}
+
+            <div className="flex justify-end">
+              <button type="submit" disabled={isSavingSettings} className="rounded-lg bg-[var(--theme-color)] px-5 py-2 text-white font-semibold disabled:opacity-60">
+                {isSavingSettings ? 'Saving...' : 'Save Settings'}
+              </button>
+            </div>
+          </form>
+        </div>
       )}
     </div>
   );
