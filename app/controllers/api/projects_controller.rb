@@ -45,6 +45,8 @@ class Api::ProjectsController < Api::BaseController
       :end_date,
       :sheet_integration_enabled,
       :sheet_id,
+      :issue_sheet_id,
+      :issue_sheet_name,
       :qa_mode_enabled
     )
   end
@@ -64,6 +66,8 @@ class Api::ProjectsController < Api::BaseController
       status: project.status,
       sheet_integration_enabled: project.sheet_integration_enabled,
       sheet_id: project.sheet_id,
+      issue_sheet_id: project.issue_sheet_id,
+      issue_sheet_name: project.issue_sheet_name,
       qa_mode_enabled: project.try(:qa_mode_enabled) || false,
       users: project.project_users.map do |pu|
         {

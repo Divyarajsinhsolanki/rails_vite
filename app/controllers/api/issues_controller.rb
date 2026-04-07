@@ -39,14 +39,18 @@ class Api::IssuesController < Api::BaseController
   def import_from_sheet
     project = Project.find(@project_id)
     return render json: { error: "Sheet integration is disabled for this project" }, status: :unprocessable_entity unless project.sheet_integration_enabled?
-    return render json: { error: "Google Sheet ID missing for this project" }, status: :unprocessable_entity if project.sheet_id.blank?
+
+    spreadsheet_id = project.issue_sheet_id.presence || project.sheet_id
+    sheet_name = params[:sheet].presence || project.issue_sheet_name.presence || "Issue Tracker"
+    return render json: { error: "Issue tracker Sheet ID missing for this project" }, status: :unprocessable_entity if spreadsheet_id.blank?
 
     summary = IssueSheetImportService.new(
       project: project,
-      sheet_name: params[:sheet].presence || "Issues"
+      sheet_name: sheet_name,
+      spreadsheet_id: spreadsheet_id
     ).call
 
-    render json: summary
+    render json: summary.merge(sheet_name: sheet_name)
   rescue StandardError => e
     render json: { error: e.message }, status: :unprocessable_entity
   end
