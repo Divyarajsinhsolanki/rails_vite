@@ -135,6 +135,8 @@ export const updateIssue = (id, data) => {
   return api.patch(`/issues/${id}.json`, payload, payload instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {});
 };
 export const deleteIssue = (id, projectId) => api.delete(`/issues/${id}.json`, { params: { project_id: projectId } });
+export const importIssuesFromSheet = (projectId, sheet) =>
+  api.post('/issues/import_from_sheet.json', { project_id: projectId, sheet });
 
 // POST ENDPOINTS (existing)
 export const fetchPosts = (id) => api.get(id ? `/posts?user_id=${id}` : "/posts");

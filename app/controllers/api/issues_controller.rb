@@ -1,6 +1,6 @@
 class Api::IssuesController < Api::BaseController
   include Rails.application.routes.url_helpers
-  before_action :require_project_id!, only: [:create, :update, :destroy]
+  before_action :require_project_id!, only: [:create, :update, :destroy, :import_from_sheet]
   before_action :set_issue, only: [:update, :destroy]
 
   def index
@@ -34,6 +34,21 @@ class Api::IssuesController < Api::BaseController
   def destroy
     @issue.destroy
     head :no_content
+  end
+
+  def import_from_sheet
+    project = Project.find(@project_id)
+    return render json: { error: "Sheet integration is disabled for this project" }, status: :unprocessable_entity unless project.sheet_integration_enabled?
+    return render json: { error: "Google Sheet ID missing for this project" }, status: :unprocessable_entity if project.sheet_id.blank?
+
+    summary = IssueSheetImportService.new(
+      project: project,
+      sheet_name: params[:sheet].presence || "Issues"
+    ).call
+
+    render json: summary
+  rescue StandardError => e
+    render json: { error: e.message }, status: :unprocessable_entity
   end
 
   private
@@ -81,4 +96,3 @@ class Api::IssuesController < Api::BaseController
     )
   end
 end
-
