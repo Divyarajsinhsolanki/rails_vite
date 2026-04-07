@@ -403,6 +403,8 @@ const Projects = () => {
         end_date: "",
         sheet_integration_enabled: false,
         sheet_id: "",
+        issue_sheet_id: "",
+        issue_sheet_name: "Issue Tracker",
         qa_mode_enabled: false,
     });
     const [editingId, setEditingId] = useState(null);
@@ -583,6 +585,8 @@ const Projects = () => {
             end_date: "",
             sheet_integration_enabled: false,
             sheet_id: "",
+            issue_sheet_id: "",
+            issue_sheet_name: "Issue Tracker",
             qa_mode_enabled: false,
         });
         setNotification(null); // Clear any form-related notifications
@@ -622,6 +626,8 @@ const Projects = () => {
             end_date: project.end_date || "",
             sheet_integration_enabled: project.sheet_integration_enabled || false,
             sheet_id: project.sheet_id || "",
+            issue_sheet_id: project.issue_sheet_id || "",
+            issue_sheet_name: project.issue_sheet_name || "Issue Tracker",
             qa_mode_enabled: project.qa_mode_enabled || false,
         });
         setSelectedProjectId(project.id); // Ensure the project is selected in the sidebar
@@ -639,6 +645,8 @@ const Projects = () => {
             end_date: "",
             sheet_integration_enabled: false,
             sheet_id: "",
+            issue_sheet_id: "",
+            issue_sheet_name: "Issue Tracker",
             qa_mode_enabled: false,
         });
         setNotification(null);
@@ -981,17 +989,41 @@ const Projects = () => {
                                     <label htmlFor="sheet_integration_enabled" className="text-sm font-medium text-gray-700">Enable Sheet Integration</label>
                                 </div>
                                 {projectForm.sheet_integration_enabled && (
-                                    <div>
-                                        <label htmlFor="sheet_id" className="block text-sm font-medium text-gray-700 mb-1">Google Sheet ID</label>
-                                        <input
-                                            id="sheet_id"
-                                            name="sheet_id"
-                                            value={projectForm.sheet_id}
-                                            onChange={handleFormChange}
-                                            placeholder="Enter Google Sheet ID (e.g., 1AB2C3D4E5F6G7H8I9J0K)"
-                                            className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none"
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1">This ID is found in the URL of your Google Sheet.</p>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label htmlFor="sheet_id" className="block text-sm font-medium text-gray-700 mb-1">Task Sheet ID</label>
+                                            <input
+                                                id="sheet_id"
+                                                name="sheet_id"
+                                                value={projectForm.sheet_id}
+                                                onChange={handleFormChange}
+                                                placeholder="Enter Google Sheet ID for task import/export"
+                                                className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label htmlFor="issue_sheet_id" className="block text-sm font-medium text-gray-700 mb-1">Issue Tracker Sheet ID</label>
+                                            <input
+                                                id="issue_sheet_id"
+                                                name="issue_sheet_id"
+                                                value={projectForm.issue_sheet_id}
+                                                onChange={handleFormChange}
+                                                placeholder="Enter Google Sheet ID for issue tracker import"
+                                                className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label htmlFor="issue_sheet_name" className="block text-sm font-medium text-gray-700 mb-1">Issue Tracker Sheet Name</label>
+                                            <input
+                                                id="issue_sheet_name"
+                                                name="issue_sheet_name"
+                                                value={projectForm.issue_sheet_name}
+                                                onChange={handleFormChange}
+                                                placeholder="Issue Tracker"
+                                                className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none"
+                                            />
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-1">Use a separate sheet for Issue Tracker so import does not ask for sheet ID/name each time.</p>
                                     </div>
                                 )}
                                 <div className="flex items-center gap-4 justify-end">
@@ -1089,6 +1121,16 @@ const Projects = () => {
                                                 className="inline-flex items-center gap-2 text-sm font-medium text-[var(--theme-color)] hover:underline"
                                             >
                                                 <FiLink className="h-5 w-5" /> Integrated Google Sheet
+                                            </a>
+                                        )}
+                                        {selectedProject.sheet_integration_enabled && selectedProject.issue_sheet_id && (
+                                            <a
+                                                href={`https://docs.google.com/spreadsheets/d/${selectedProject.issue_sheet_id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="ml-4 inline-flex items-center gap-2 text-sm font-medium text-emerald-600 hover:underline"
+                                            >
+                                                <FiLink className="h-5 w-5" /> Issue Tracker Sheet ({selectedProject.issue_sheet_name || "Issue Tracker"})
                                             </a>
                                         )}
                                     </div>

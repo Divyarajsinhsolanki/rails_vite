@@ -17,13 +17,14 @@ class IssueSheetImportService
     "qacomment" => :comment_qa
   }.freeze
 
-  def initialize(project:, sheet_name:)
+  def initialize(project:, sheet_name:, spreadsheet_id:)
     @project = project
     @sheet_name = sheet_name
+    @spreadsheet_id = spreadsheet_id
   end
 
   def call
-    rows = GoogleSheetsReader.new(@sheet_name, @project.sheet_id).read_data
+    rows = GoogleSheetsReader.new(@sheet_name, @spreadsheet_id).read_data
     return { created: 0, updated: 0, skipped: 0, total: 0 } if rows.blank?
 
     headers = Array(rows.first).map { |h| normalize_header(h) }

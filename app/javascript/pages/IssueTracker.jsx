@@ -1403,15 +1403,13 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
 
   const handleImportFromSheet = async () => {
     if (!projectId || isImporting) return;
-    const suggestedName = sprint?.name || "Issues";
-    const sheetName = window.prompt("Sheet tab name to import from:", suggestedName);
-    if (!sheetName) return;
 
     setIsImporting(true);
     try {
-      const { data } = await importIssuesFromSheet(projectId, sheetName);
+      const { data } = await importIssuesFromSheet(projectId);
       const issuesRes = await getIssues(projectId);
       setIssues(Array.isArray(issuesRes.data) ? issuesRes.data : []);
+      const sheetName = data?.sheet_name || "Issue Tracker";
       toast.success(`Imported ${data.created} new and updated ${data.updated} issues from "${sheetName}".`);
       handleManualAction(`imported issues from sheet ${sheetName}`, "update");
     } catch (error) {
