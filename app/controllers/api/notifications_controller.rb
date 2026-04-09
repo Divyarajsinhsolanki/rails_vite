@@ -1,6 +1,4 @@
-class Api::NotificationsController < ApplicationController
-  before_action :authenticate_user!
-
+class Api::NotificationsController < Api::BaseController
   def index
     notifications_scope = current_user.notifications.recent
     notifications_scope = apply_status_filter(notifications_scope)

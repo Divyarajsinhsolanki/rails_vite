@@ -83,7 +83,11 @@ export const subscribeToConversationChat = (conversationId, received) => {
   return subscribe({ channel: "ChatChannel", conversation_id: conversationId }, received);
 };
 
-export const sendToConversation = (conversationId, payload) => {
+export const sendToConversation = (conversationId, action, data = {}) => {
   const identifier = JSON.stringify({ channel: "ChatChannel", conversation_id: conversationId });
-  sendWhenOpen({ ...payload, identifier });
+  sendWhenOpen({
+    command: "message",
+    identifier,
+    data: JSON.stringify({ action, ...data })
+  });
 };

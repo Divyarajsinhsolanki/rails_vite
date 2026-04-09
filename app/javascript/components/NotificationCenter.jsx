@@ -22,7 +22,7 @@ const NotificationCenter = () => {
         setUnreadCount(prev => prev + 1);
 
         // Show browser notification if permitted
-        if (Notification.permission === "granted") {
+        if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
           new window.Notification(payload.notification.message);
         }
       }
@@ -35,10 +35,16 @@ const NotificationCenter = () => {
     setLoadError(null);
     try {
       const response = await fetchNotifications({ page: 1 });
-      setNotifications(response.data.notifications);
-      setUnreadCount(response.data.meta.unread_count);
+      setNotifications(response.data.notifications || []);
+      setUnreadCount(response.data.meta?.unread_count || 0);
     } catch (error) {
-      // Silently ignore 401 errors (user not authenticated) to avoid console spam
+      if (error?.response?.status === 401) {
+        setNotifications([]);
+        setUnreadCount(0);
+        setLoadError(null);
+        return;
+      }
+
       console.error("Failed to load notifications", error);
       setLoadError("Unable to load notifications right now.");
     }
@@ -52,6 +58,7 @@ const NotificationCenter = () => {
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
+      if (error?.response?.status === 401) return;
       console.error("Failed to mark read", error);
     }
   };
@@ -63,6 +70,7 @@ const NotificationCenter = () => {
       setNotifications(prev => prev.map(n => ({ ...n, read_at: new Date().toISOString() })));
       setUnreadCount(0);
     } catch (error) {
+      if (error?.response?.status === 401) return;
       console.error("Failed to mark all read", error);
     } finally {
       setLoading(false);
