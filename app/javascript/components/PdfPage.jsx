@@ -289,6 +289,7 @@ const PdfPage = () => {
             <div className="flex-1 overflow-y-auto p-4 content-container">
               <PdfEditor
                 setPdfUpdated={setPdfUpdated}
+                setPdfUrl={setPdfUrl}
                 pdfPath={pdfUrl}
                 activeForm={activeForm}
                 setActiveForm={setActiveForm}

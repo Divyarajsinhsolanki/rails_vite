@@ -43,10 +43,12 @@ const FormComponent = ({ setActiveForm, setPdfUpdated, setPdfUrl, formFields = [
       if (data.pdf_url && setPdfUrl) {
         setPdfUrl(data.pdf_url);
         localStorage.setItem("pdfUrl", data.pdf_url);
-      } else {
-        // Otherwise just trigger a reload of the current URL (e.g. if name didn't change but content did)
-        setPdfUpdated((prev) => prev + 1);
       }
+
+      // Always bust the viewer cache after a successful mutation.
+      // Some backend actions overwrite the same file path, so relying only on
+      // a URL change can miss refreshes (e.g. add/remove/duplicate page).
+      setPdfUpdated((prev) => prev + 1);
 
       setActiveForm(null);
     } catch (error) {

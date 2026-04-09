@@ -21,7 +21,7 @@ import {
   ArrowLeft,     // For the back button
 } from "lucide-react";
 
-const PdfEditor = ({ setPdfUpdated, pdfPath, activeForm, setActiveForm, droppedCoordinates }) => {
+const PdfEditor = ({ setPdfUpdated, setPdfUrl, pdfPath, activeForm, setActiveForm, droppedCoordinates }) => {
   // PdfEditor now acts solely as the container for the FormRenderer in the right panel.
   // The tool selection is handled by SidebarToolbar in the parent PdfPage.
 
@@ -39,6 +39,7 @@ const PdfEditor = ({ setPdfUpdated, pdfPath, activeForm, setActiveForm, droppedC
         activeForm={activeForm}
         setActiveForm={setActiveForm}
         setPdfUpdated={setPdfUpdated}
+        setPdfUrl={setPdfUrl}
         pdfPath={pdfPath}
         droppedCoordinates={droppedCoordinates}
       />
