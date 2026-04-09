@@ -551,16 +551,21 @@ const Chat = () => {
   }, [conversations, sideSearchQuery, user]);
 
   return (
-    <div className="flex h-[calc(100vh-64px)] w-full bg-gradient-to-br from-slate-50 via-white to-indigo-50/40 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-950 overflow-hidden">
+    <div className="flex h-[calc(100vh-64px)] w-full bg-gradient-to-br from-slate-100 via-white to-indigo-100/40 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 overflow-hidden">
 
       {/* --- Sidebar --- */}
-      <aside className={`flex flex-col w-full md:w-80 border-r border-slate-200/80 dark:border-zinc-800 bg-white/90 dark:bg-zinc-900/70 backdrop-blur ${conversationId ? 'hidden md:flex' : 'flex'}`}>
+      <aside className={`flex flex-col w-full md:w-80 lg:w-96 border-r border-slate-200/80 dark:border-zinc-800 bg-white/90 dark:bg-zinc-900/70 backdrop-blur-xl ${conversationId ? 'hidden md:flex' : 'flex'}`}>
         {/* Header */}
-        <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between">
+        <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between bg-gradient-to-r from-white to-slate-50 dark:from-zinc-900 dark:to-zinc-900/70">
+          <div>
             <h1 className="text-xl font-bold text-slate-800 dark:text-white">Messages</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              {conversations.direct.length + conversations.group.length} conversations
+            </p>
+          </div>
             <button
               onClick={() => { setIsNewChatModalOpen(true); setNewChatStep('select'); setSelectedUserIds([]); }}
-              className="p-2 bg-[var(--theme-color)] text-white rounded-lg shadow-sm hover:brightness-110 transition"
+              className="p-2.5 bg-[var(--theme-color)] text-white rounded-xl shadow-sm hover:brightness-110 transition"
               title="Start a new conversation"
             >
               <FiEdit className="w-5 h-5" />
@@ -597,7 +602,10 @@ const Chat = () => {
               {/* Direct Messages */}
               {filteredConversations.direct.length > 0 && (
                 <div>
-                  <h2 className="px-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Direct Messages</h2>
+                  <h2 className="px-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                    <span>Direct Messages</span>
+                    <span className="text-[10px] font-semibold text-slate-400">{filteredConversations.direct.length}</span>
+                  </h2>
                   <div className="space-y-1">
                     {filteredConversations.direct.map(c => (
                       <ConversationItem key={c.id} conversation={c} isActive={Number(conversationId) === c.id} user={user} />
@@ -646,7 +654,7 @@ const Chat = () => {
         ) : (
           <>
             {/* Header */}
-            <header className="h-16 px-6 border-b border-slate-200/70 dark:border-zinc-800 flex items-center justify-between shrink-0 bg-white/85 dark:bg-zinc-900/80 backdrop-blur-sm z-10 sticky top-0">
+            <header className="h-16 px-6 border-b border-slate-200/70 dark:border-zinc-800 flex items-center justify-between shrink-0 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm z-10 sticky top-0">
               <div className="flex items-center gap-3">
                 <Link to="/chat" className="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-full">
                   <FiArrowLeft />
@@ -693,7 +701,7 @@ const Chat = () => {
 
                 {/* Messages */}
                 <div
-                  className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-white/50 dark:bg-zinc-900/40 scroll-smooth relative"
+                  className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-white/40 dark:bg-zinc-900/40 scroll-smooth relative"
                   style={{
                     backgroundImage: `radial-gradient(circle at 2px 2px, rgba(0,0,0,0.05) 1px, transparent 0)`,
                     backgroundSize: '24px 24px'
@@ -748,7 +756,7 @@ const Chat = () => {
                 </div>
 
                 {/* Input Area */}
-                <div className="p-4 bg-white/90 dark:bg-zinc-900 border-t border-slate-200/70 dark:border-zinc-800 shrink-0 backdrop-blur-sm">
+                <div className="p-4 bg-white/95 dark:bg-zinc-900 border-t border-slate-200/70 dark:border-zinc-800 shrink-0 backdrop-blur-sm">
                   {attachments.length > 0 && (
                     <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
                       {attachments.map((file, i) => (
@@ -765,7 +773,7 @@ const Chat = () => {
                     </div>
                   )}
 
-                  <form onSubmit={handleSendMessage} className="flex gap-3 items-end">
+                  <form onSubmit={handleSendMessage} className="flex gap-3 items-end rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-2 shadow-sm">
                     <input
                       type="file"
                       multiple
@@ -776,7 +784,7 @@ const Chat = () => {
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="p-3 text-slate-400 hover:text-[var(--theme-color)] hover:bg-slate-50 rounded-xl transition"
+                      className="p-3 text-slate-400 hover:text-[var(--theme-color)] hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl transition"
                     >
                       <FiPaperclip className="w-5 h-5" />
                     </button>
@@ -801,7 +809,7 @@ const Chat = () => {
                       }}
                       placeholder="Write a message..."
                       rows={1}
-                      className="flex-1 bg-slate-100 dark:bg-zinc-800 border-0 rounded-xl px-4 py-3 max-h-32 focus:ring-2 focus:ring-[var(--theme-color)]/20 outline-none resize-none overflow-hidden"
+                      className="flex-1 bg-slate-50 dark:bg-zinc-800 border-0 rounded-xl px-4 py-3 max-h-32 focus:ring-2 focus:ring-[var(--theme-color)]/20 outline-none resize-none overflow-hidden"
                       style={{ minHeight: '44px' }}
                     />
 
