@@ -23,6 +23,16 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onCancelTool }) => {
     setPageHeight(height);
   }
 
+  useEffect(() => {
+    setNumPages(null);
+    setPageNumber(1);
+  }, [pdfUrl]);
+
+  useEffect(() => {
+    if (!numPages) return;
+    setPageNumber((prev) => Math.min(prev, numPages));
+  }, [numPages]);
+
   if (!pdfUrl) return null;
 
   return (
@@ -56,6 +66,7 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onCancelTool }) => {
 
       <div className="relative border shadow-lg bg-white overflow-auto max-h-full max-w-full flex justify-center">
         <Document
+          key={pdfUrl}
           file={pdfUrl}
           onLoadSuccess={onDocumentLoadSuccess}
           className="flex justify-center"
