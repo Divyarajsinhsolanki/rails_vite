@@ -10,6 +10,7 @@ const Notifications = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [actionFilter, setActionFilter] = useState('all');
   const [query, setQuery] = useState('');
+  const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
     loadNotifications();
@@ -17,6 +18,7 @@ const Notifications = () => {
 
   const loadNotifications = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const response = await fetchNotifications({
         page: 1,
@@ -26,9 +28,8 @@ const Notifications = () => {
       setNotifications(response.data.notifications || []);
       setUnreadCount(response.data.meta?.unread_count || 0);
     } catch (error) {
-      if (error?.response?.status !== 401) {
-        console.error('Failed to load notifications', error);
-      }
+      console.error('Failed to load notifications', error);
+      setLoadError('Unable to load notifications right now. Please refresh and try again.');
     } finally {
       setLoading(false);
     }
@@ -157,6 +158,8 @@ const Notifications = () => {
       <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
         {loading ? (
           <div className="p-8 text-center text-sm text-gray-500">Loading notifications...</div>
+        ) : loadError ? (
+          <div className="p-8 text-center text-sm text-red-600">{loadError}</div>
         ) : notifications.length === 0 ? (
           <div className="p-8 text-center text-sm text-gray-500">No notifications yet</div>
         ) : Object.keys(groupedNotifications).length === 0 ? (
