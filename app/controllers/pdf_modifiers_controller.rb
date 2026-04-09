@@ -8,7 +8,7 @@ class PdfModifiersController < ApplicationController
       PdfMaster.add_text(path, params[:text], params[:x].to_i, params[:y].to_i, params[:page_number].to_i)
       render json: { message: "Text added successfully." }, status: :ok
     rescue => e
-      render json: { error: e.message }, status: :unprocessable_entity
+      render json: { error: e.message }, status: :unprocessable_content
     end
   end
 
@@ -16,10 +16,10 @@ class PdfModifiersController < ApplicationController
     begin
       path = safe_pdf_path(params[:pdf_path])
       new_path = PdfMaster.add_page(path, params[:position].to_i)
-      web_path = new_path.sub(Rails.root.join("public").to_s, "")
+      web_path = resolve_web_pdf_path(new_path, fallback_path: path)
       render json: { message: "Page added successfully.", pdf_url: web_path }, status: :ok
     rescue => e
-      render json: { error: e.message }, status: :unprocessable_entity
+      render json: { error: e.message }, status: :unprocessable_content
     end
   end
 
@@ -27,10 +27,10 @@ class PdfModifiersController < ApplicationController
     begin
       path = safe_pdf_path(params[:pdf_path])
       new_path = PdfMaster.remove_page(path, params[:position].to_i)
-      web_path = new_path.sub(Rails.root.join("public").to_s, "")
+      web_path = resolve_web_pdf_path(new_path, fallback_path: path)
       render json: { message: "Page removed successfully.", pdf_url: web_path }, status: :ok
     rescue => e
-      render json: { error: e.message }, status: :unprocessable_entity
+      render json: { error: e.message }, status: :unprocessable_content
     end
   end
 
@@ -38,10 +38,10 @@ class PdfModifiersController < ApplicationController
     begin
       path = safe_pdf_path(params[:pdf_path])
       new_path = PdfMaster.duplicate_pages(path, params[:page_number].to_i)
-      web_path = new_path.sub(Rails.root.join("public").to_s, "")
+      web_path = resolve_web_pdf_path(new_path, fallback_path: path)
       render json: { message: "Page duplicated successfully.", pdf_url: web_path }, status: :ok
     rescue => e
-      render json: { error: e.message }, status: :unprocessable_entity
+      render json: { error: e.message }, status: :unprocessable_content
     end
   end
 
@@ -49,10 +49,10 @@ class PdfModifiersController < ApplicationController
     begin
       path = safe_pdf_path(params[:pdf_path])
       new_path = PdfMaster.replace_text(path, params[:old_text], params[:new_text])
-      web_path = new_path.sub(Rails.root.join("public").to_s, "")
+      web_path = resolve_web_pdf_path(new_path, fallback_path: path)
       render json: { message: "Text replaced successfully.", pdf_url: web_path }, status: :ok
     rescue => e
-      render json: { error: e.message }, status: :unprocessable_entity
+      render json: { error: e.message }, status: :unprocessable_content
     end
   end
 
@@ -68,10 +68,10 @@ class PdfModifiersController < ApplicationController
                        end
 
       new_path = PdfMaster.add_signature(path, signature_path, params[:x].to_i, params[:y].to_i, params[:page_number].to_i)
-      web_path = new_path.sub(Rails.root.join("public").to_s, "")
+      web_path = resolve_web_pdf_path(new_path, fallback_path: path)
       render json: { message: "Signature added successfully.", pdf_url: web_path }, status: :ok
     rescue => e
-      render json: { error: e.message }, status: :unprocessable_entity
+      render json: { error: e.message }, status: :unprocessable_content
     end
   end
 
@@ -79,10 +79,10 @@ class PdfModifiersController < ApplicationController
     begin
       path = safe_pdf_path(params[:pdf_path])
       new_path = PdfMaster.add_watermark(path, params[:watermark_text])
-      web_path = new_path.sub(Rails.root.join("public").to_s, "")
+      web_path = resolve_web_pdf_path(new_path, fallback_path: path)
       render json: { message: "Watermark added successfully.", pdf_url: web_path }, status: :ok
     rescue => e
-      render json: { error: e.message }, status: :unprocessable_entity
+      render json: { error: e.message }, status: :unprocessable_content
     end
   end
 
@@ -98,10 +98,10 @@ class PdfModifiersController < ApplicationController
                    end
 
       new_path = PdfMaster.add_stamp(path, stamp_path, params[:x].to_i, params[:y].to_i, params[:page_number].to_i)
-      web_path = new_path.sub(Rails.root.join("public").to_s, "")
+      web_path = resolve_web_pdf_path(new_path, fallback_path: path)
       render json: { message: "Stamp added successfully.", pdf_url: web_path }, status: :ok
     rescue => e
-      render json: { error: e.message }, status: :unprocessable_entity
+      render json: { error: e.message }, status: :unprocessable_content
     end
   end
 
@@ -109,10 +109,10 @@ class PdfModifiersController < ApplicationController
     begin
       path = safe_pdf_path(params[:pdf_path])
       new_path = PdfMaster.rotate_page(path, 270, params[:page_number].to_i)
-      web_path = new_path.sub(Rails.root.join("public").to_s, "")
+      web_path = resolve_web_pdf_path(new_path, fallback_path: path)
       render json: { message: "Page rotated left successfully.", pdf_url: web_path }, status: :ok
     rescue => e
-      render json: { error: e.message }, status: :unprocessable_entity
+      render json: { error: e.message }, status: :unprocessable_content
     end
   end
 
@@ -120,10 +120,10 @@ class PdfModifiersController < ApplicationController
     begin
       path = safe_pdf_path(params[:pdf_path])
       new_path = PdfMaster.rotate_page(path, 90, params[:page_number].to_i)
-      web_path = new_path.sub(Rails.root.join("public").to_s, "")
+      web_path = resolve_web_pdf_path(new_path, fallback_path: path)
       render json: { message: "Page rotated right successfully.", pdf_url: web_path }, status: :ok
     rescue => e
-      render json: { error: e.message }, status: :unprocessable_entity
+      render json: { error: e.message }, status: :unprocessable_content
     end
   end
 
@@ -132,7 +132,7 @@ class PdfModifiersController < ApplicationController
       # Handle file uploads for merge
       files = [params[:pdf1], params[:pdf2]].compact
       if files.empty?
-        return render json: { error: "No files provided for merge." }, status: :unprocessable_entity
+        return render json: { error: "No files provided for merge." }, status: :unprocessable_content
       end
 
       # Save uploads to temp files so PdfMaster can read them
@@ -147,7 +147,7 @@ class PdfModifiersController < ApplicationController
 
       render json: { message: "PDFs merged successfully.", pdf_url: "/documents/#{output_filename}" }, status: :ok
     rescue => e
-      render json: { error: e.message }, status: :unprocessable_entity
+      render json: { error: e.message }, status: :unprocessable_content
     end
   end
 
@@ -158,7 +158,7 @@ class PdfModifiersController < ApplicationController
       end_page = params[:end_page].to_i
       
       if start_page < 1 || end_page < start_page
-        return render json: { error: "Invalid page range." }, status: :unprocessable_entity
+        return render json: { error: "Invalid page range." }, status: :unprocessable_content
       end
 
       output_filename = "extracted_#{SecureRandom.hex(4)}.pdf"
@@ -170,7 +170,7 @@ class PdfModifiersController < ApplicationController
       
       render json: { message: "PDF pages extracted successfully.", pdf_url: "/documents/#{output_filename}" }, status: :ok
     rescue => e
-      render json: { error: e.message }, status: :unprocessable_entity
+      render json: { error: e.message }, status: :unprocessable_content
     end
   end
 
@@ -183,10 +183,10 @@ class PdfModifiersController < ApplicationController
       # Actually PdfMaster.secure_pdf usually returns the output path.
       
       # If new_path is nil (failed), let's fallback? No, it raises error.
-      web_path = new_path.sub(Rails.root.join("public").to_s, "")
+      web_path = resolve_web_pdf_path(new_path, fallback_path: path)
       render json: { message: "PDF encrypted successfully.", pdf_url: web_path }, status: :ok
     rescue => e
-      render json: { error: e.message }, status: :unprocessable_entity
+      render json: { error: e.message }, status: :unprocessable_content
     end
   end
 
@@ -200,7 +200,7 @@ class PdfModifiersController < ApplicationController
     file_path = safe_pdf_path(params[:pdfUrl])
 
     unless text_boxes.is_a?(Hash)
-      return render json: { error: "Invalid text box data." }, status: :unprocessable_entity
+      return render json: { error: "Invalid text box data." }, status: :unprocessable_content
     end
     
     text_boxes.each do |page_number, boxes|
@@ -258,5 +258,10 @@ class PdfModifiersController < ApplicationController
     end
     
     path.to_s
+  end
+
+  def resolve_web_pdf_path(result_path, fallback_path:)
+    candidate_path = result_path.is_a?(String) && result_path.present? ? result_path : fallback_path
+    candidate_path.sub(Rails.root.join("public").to_s, "")
   end
 end
