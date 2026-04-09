@@ -10,6 +10,7 @@ const NotificationCenter = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
     loadNotifications();
@@ -31,15 +32,15 @@ const NotificationCenter = () => {
   }, []);
 
   const loadNotifications = async () => {
+    setLoadError(null);
     try {
       const response = await fetchNotifications({ page: 1 });
       setNotifications(response.data.notifications);
       setUnreadCount(response.data.meta.unread_count);
     } catch (error) {
       // Silently ignore 401 errors (user not authenticated) to avoid console spam
-      if (error?.response?.status !== 401) {
-        console.error("Failed to load notifications", error);
-      }
+      console.error("Failed to load notifications", error);
+      setLoadError("Unable to load notifications right now.");
     }
   };
 
@@ -123,7 +124,9 @@ const NotificationCenter = () => {
                   </div>
 
                   <div className="space-y-4 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
-                    {notifications.length === 0 ? (
+                    {loadError ? (
+                      <p className="text-center text-red-600 py-8 text-sm">{loadError}</p>
+                    ) : notifications.length === 0 ? (
                       <p className="text-center text-gray-500 py-8 text-sm">No notifications yet</p>
                     ) : (
                       notifications.map((notification) => (
