@@ -223,16 +223,16 @@ export default function SprintDashboard() {
             )}
           </div>
         )} */}
-        <div className="flex justify-between items-center">
-          <h1 className="text-xl font-bold text-gray-800 flex items-center">
-            <CalendarDaysIcon className="h-7 w-7 mr-2 text-[var(--theme-color)]" />
+        <div className="flex justify-between items-center gap-4">
+          <h1 className="text-lg font-semibold text-gray-800 flex items-center">
+            <CalendarDaysIcon className="h-6 w-6 mr-2 text-[var(--theme-color)]" />
             {sprint ? (
               <span className="flex flex-col sm:flex-row sm:items-center">
                 <span className="truncate">Sprint: {sprint.name}</span>
-                <span className="sm:ml-4 text-xl font-medium text-gray-600">
+                <span className="sm:ml-3 text-base font-medium text-gray-600">
                   ({formatDateRange(sprint.start_date, sprint.end_date)})
                 </span>
-                <span className="sm:ml-4 text-xl font-medium text-gray-600">
+                <span className="sm:ml-3 text-base font-medium text-gray-600">
                   Working Days: {calculateWorkingDays(sprint.start_date, sprint.end_date)}
                 </span>
               </span>
@@ -244,7 +244,7 @@ export default function SprintDashboard() {
           <div className="flex justify-between items-center">
             <div className="flex bg-white rounded-full p-1 shadow-md border border-gray-100">
               <button
-                className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out
                   ${activeTab === 'overview'
                     ? 'bg-[var(--theme-color)] text-white shadow-lg'
                     : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
@@ -254,7 +254,7 @@ export default function SprintDashboard() {
                 Overview
               </button>
               <button
-                className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ml-1.5
                   ${activeTab === 'scheduler'
                     ? 'bg-[var(--theme-color)] text-white shadow-lg'
                     : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
@@ -264,7 +264,7 @@ export default function SprintDashboard() {
                 Scheduler
               </button>
               <button
-                className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ml-1.5
                   ${activeTab === 'todo'
                     ? 'bg-[var(--theme-color)] text-white shadow-lg'
                     : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
@@ -274,7 +274,7 @@ export default function SprintDashboard() {
                 Todo
               </button>
               <button
-                className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ml-1.5
                   ${activeTab === 'statistics'
                     ? 'bg-[var(--theme-color)] text-white shadow-lg'
                     : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
@@ -284,7 +284,7 @@ export default function SprintDashboard() {
                 Statistics
               </button>
               <button
-                className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ml-1.5
                   ${activeTab === 'issues'
                     ? 'bg-[var(--theme-color)] text-white shadow-lg'
                     : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
@@ -295,7 +295,7 @@ export default function SprintDashboard() {
               </button>
               {sheetEnabled && (
                 <button
-                  className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ml-1.5
                     ${activeTab === 'sheet'
                       ? 'bg-[var(--theme-color)] text-white shadow-lg'
                       : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
@@ -306,7 +306,7 @@ export default function SprintDashboard() {
                 </button>
               )}
               <button
-                className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ml-1.5
                   ${activeTab === 'vault'
                     ? 'bg-[var(--theme-color)] text-white shadow-lg'
                     : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
@@ -316,7 +316,7 @@ export default function SprintDashboard() {
                 Vault
               </button>
               <button
-                className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 ease-in-out ml-2
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ml-1.5
                   ${activeTab === 'settings'
                     ? 'bg-[var(--theme-color)] text-white shadow-lg'
                     : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
