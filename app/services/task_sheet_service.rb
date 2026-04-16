@@ -62,7 +62,7 @@ class TaskSheetService
       status = map_status(row[8])
       order = row[0].to_i
 
-      developer = Developer.find_by(name: developer_name)
+      assignee = Assignee.find_by(name: developer_name)
       user = User.find_by(first_name: user_name)
 
       task = Task.find_or_initialize_by(task_id: task_id)
@@ -72,7 +72,7 @@ class TaskSheetService
         type: 'Code',
         estimated_hours: estimated_hours,
         sprint_id: sprint_id,
-        developer_id: developer&.id,
+        developer_id: assignee&.id,
         assigned_to_user: user&.id,
         created_by: created_by_id,
         updated_by: created_by_id,
@@ -94,7 +94,7 @@ class TaskSheetService
 
     values = [[
       'Order', 'Task ID', 'Task Title', 'Est. Hours',
-      'Assigned To Developer', 'Assigned User', 'Start Date', 'End Date', 'Status'
+      'Assigned To Assignee', 'Assigned User', 'Start Date', 'End Date', 'Status'
     ]]
 
     tasks.each_with_index do |task, index|
