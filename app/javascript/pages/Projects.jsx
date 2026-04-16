@@ -1319,6 +1319,11 @@ const Projects = () => {
                                                         <option value="owner">Owner</option>
                                                         <option value="manager">Manager</option>
                                                         <option value="collaborator">Collaborator</option>
+                                                        <option value="developer">Developer</option>
+                                                        <option value="qa">QA</option>
+                                                        <option value="devops">DevOps</option>
+                                                        <option value="designer">Designer</option>
+                                                        <option value="analyst">Analyst</option>
                                                         <option value="viewer">Viewer</option>
                                                     </select>
                                                 </div>

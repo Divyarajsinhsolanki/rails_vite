@@ -45,7 +45,7 @@ sample_videos = [
 
 # Get random users for reporter/assignee
 all_users = User.all.to_a
-all_developers = Developer.all.to_a
+all_assignees = Assignee.all.to_a
 
 # Seed starter issues for the first project to make the Issue Tracker feel alive
 first_project = Project.order(:id).first || Project.create!(name: 'Demo Project')

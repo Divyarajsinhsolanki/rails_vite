@@ -1,6 +1,6 @@
 class Api::DevelopersController < Api::BaseController
   def index
-    @developers = Developer.order(:name)
-    render json: @developers
+    assignees = Assignee.order(:name)
+    render json: assignees
   end
 end

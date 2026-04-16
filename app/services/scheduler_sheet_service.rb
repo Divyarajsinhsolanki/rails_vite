@@ -11,7 +11,7 @@ class SchedulerSheetService
   end
 
   def export_logs(logs)
-    developers = logs.map(&:developer).uniq.sort_by(&:name)
+    assignees = logs.map(&:developer).uniq.sort_by(&:name)
     dates = logs.map(&:log_date).uniq.sort
 
     matrix = {}
@@ -21,10 +21,10 @@ class SchedulerSheetService
       matrix[log.log_date][log.developer.name] << log
     end
 
-    values = [['Date'] + developers.map(&:name)]
+    values = [['Date'] + assignees.map(&:name)]
     dates.each do |date|
       row = [date.to_s]
-      developers.each do |dev|
+      assignees.each do |dev|
         cell_logs = matrix[date][dev.name]
         row << cell_logs.map { |l| "#{l.task.task_id} (#{l.hours_logged}h) - #{l.type}" }.join("\n")
       end
@@ -32,7 +32,7 @@ class SchedulerSheetService
     end
 
     write_sheet(values)
-    strike_completed_cells(matrix, developers, dates)
+    strike_completed_cells(matrix, assignees, dates)
   end
 
   private
@@ -60,11 +60,11 @@ class SchedulerSheetService
     @service.clear_values(@spreadsheet_id, "#{@sheet_name}!A1:Z")
   end
 
-  def strike_completed_cells(matrix, developers, dates)
+  def strike_completed_cells(matrix, assignees, dates)
     requests = []
 
     dates.each_with_index do |date, r_idx|
-      developers.each_with_index do |dev, c_idx|
+      assignees.each_with_index do |dev, c_idx|
         logs = matrix[date][dev.name]
         next unless logs.any? { |l| l.status.to_s.downcase == 'completed' }
 
