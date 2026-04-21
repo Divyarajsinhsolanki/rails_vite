@@ -11,19 +11,12 @@ class Api::ProjectsController < Api::BaseController
   def create
     project = Project.new(project_params)
     project.owner ||= current_user
-    if project.save
-      render json: serialize_project(project), status: :created
-    else
-      render json: { errors: project.errors.full_messages }, status: :unprocessable_entity
-    end
+    save_project_with_members(project, status: :created)
   end
 
   def update
-    if @project.update(project_params)
-      render json: serialize_project(@project)
-    else
-      render json: { errors: @project.errors.full_messages }, status: :unprocessable_entity
-    end
+    @project.assign_attributes(project_params)
+    save_project_with_members(@project)
   end
 
   def destroy
@@ -51,6 +44,56 @@ class Api::ProjectsController < Api::BaseController
     )
   end
 
+  def member_assignments_param
+    raw_assignments = params.dig(:project, :member_assignments)
+    return nil unless raw_assignments
+
+    Array(raw_assignments).filter_map do |assignment|
+      permitted = assignment.respond_to?(:permit) ? assignment.permit(:user_id, :role, :allocation_percentage, :workload_status) : assignment
+      next if permitted[:user_id].blank?
+
+      {
+        user_id: permitted[:user_id].to_i,
+        role: permitted[:role].presence || 'collaborator',
+        allocation_percentage: permitted[:allocation_percentage].presence || 0,
+        workload_status: permitted[:workload_status].presence || 'partial'
+      }
+    end.uniq { |assignment| assignment[:user_id] }
+  end
+
+  def save_project_with_members(project, status: :ok)
+    Project.transaction do
+      project.save!
+      sync_project_members!(project)
+    end
+
+    render json: serialize_project(project.reload), status: status
+  rescue ActiveRecord::RecordInvalid => e
+    errors = project.errors.full_messages.presence || [e.record.errors.full_messages.presence || e.message].flatten
+    render json: { errors: errors.flatten.uniq }, status: :unprocessable_entity
+  end
+
+  def sync_project_members!(project)
+    assignments = member_assignments_param
+    return if assignments.nil?
+
+    existing_project_users = project.project_users.index_by(&:user_id)
+    incoming_user_ids = assignments.map { |assignment| assignment[:user_id] }
+
+    assignments.each do |assignment|
+      project_user = existing_project_users.delete(assignment[:user_id]) || project.project_users.build(user_id: assignment[:user_id])
+      project_user.assign_attributes(
+        role: assignment[:role],
+        allocation_percentage: assignment[:allocation_percentage],
+        workload_status: assignment[:workload_status],
+        status: project_user.status.presence || 'active'
+      )
+      project_user.save!
+    end
+
+    project.project_users.where.not(user_id: incoming_user_ids).destroy_all
+  end
+
   def authorize_manager!
     allowed = current_user&.owner? || current_user&.project_manager?
     head :forbidden unless allowed
@@ -69,7 +112,7 @@ class Api::ProjectsController < Api::BaseController
       issue_sheet_id: project.issue_sheet_id,
       issue_sheet_name: project.issue_sheet_name,
       qa_mode_enabled: project.try(:qa_mode_enabled) || false,
-      users: project.project_users.map do |pu|
+      users: project.project_users.includes(:user).sort_by { |pu| [pu.role.to_s, pu.user&.full_name.to_s] }.map do |pu|
         {
           id: pu.user_id,
           project_user_id: pu.id,

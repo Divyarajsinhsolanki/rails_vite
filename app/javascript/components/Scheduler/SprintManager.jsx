@@ -7,10 +7,18 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
   const [currentSprint, setCurrentSprint] = useState(null);
   const [loading, setLoading] = useState(true);
   const [formVisible, setFormVisible] = useState(false);
-  const [formData, setFormData] = useState({ id: null, name: '', start_date: '', end_date: '' });
+  const [formData, setFormData] = useState({ id: null, name: '', start_date: '', end_date: '', working_days_mask: 62 });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteCandidate, setDeleteCandidate] = useState(null);
   const timelineRef = useRef(null);
+
+  // Bitmask for working days:
+  // 0 => Sunday, 1 => Monday, ..., 6 => Saturday
+  const isWorkingDay = (mask, dayIndex) => (Number(mask) & (1 << dayIndex)) !== 0;
+  const toggleWorkingDay = (mask, dayIndex) => {
+    const numericMask = Number(mask) || 0;
+    return isWorkingDay(numericMask, dayIndex) ? (numericMask & ~(1 << dayIndex)) : (numericMask | (1 << dayIndex));
+  };
 
   // Load all sprints when component mounts or project changes
   useEffect(() => {
@@ -93,7 +101,15 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
     setIsSubmitting(true);
     const method = formData.id ? 'PATCH' : 'POST';
     const url = formData.id ? `/api/sprints/${formData.id}.json` : '/api/sprints.json';
-    const payload = { sprint: { name: formData.name, start_date: formData.start_date, end_date: formData.end_date, project_id: projectId } };
+    const payload = {
+      sprint: {
+        name: formData.name,
+        start_date: formData.start_date,
+        end_date: formData.end_date,
+        project_id: projectId,
+        working_days_mask: Number(formData.working_days_mask) || 62,
+      }
+    };
 
     fetch(url, {
       method,
@@ -150,8 +166,9 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
       id: sprint.id,
       name: sprint.name,
       start_date: formatDate(sprint.start_date),
-      end_date: formatDate(sprint.end_date)
-    } : { id: null, name: '', start_date: '', end_date: '' });
+      end_date: formatDate(sprint.end_date),
+      working_days_mask: typeof sprint.working_days_mask === 'number' ? sprint.working_days_mask : 62
+    } : { id: null, name: '', start_date: '', end_date: '', working_days_mask: 62 });
     setFormVisible(true);
   };
   
@@ -166,14 +183,14 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
   const formatDate = (dateString, options = { month: 'short', day: 'numeric' }) => 
     new Date(dateString).toLocaleDateString('en-US', options);
 
-  const calculateWorkingDays = (startDate, endDate) => {
+  const calculateWorkingDays = (startDate, endDate, workingDaysMask = 62) => {
     let start = new Date(startDate);
     let end = new Date(endDate);
     let workingDays = 0;
     
     while (start <= end) {
       const dayOfWeek = start.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Not Sunday and Not Saturday
+      if (isWorkingDay(workingDaysMask, dayOfWeek)) {
         workingDays++;
       }
       start.setDate(start.getDate() + 1);
@@ -215,7 +232,11 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
         <div ref={timelineRef} className="flex items-center space-x-4 overflow-x-auto pb-4 scrollbar-hide">
           {sprints.map((s, index) => {
             const isActive = s.id === currentSprint?.id;
-            const workingDays = calculateWorkingDays(s.start_date, s.end_date);
+            const workingDays = calculateWorkingDays(
+              s.start_date,
+              s.end_date,
+              typeof s.working_days_mask === 'number' ? s.working_days_mask : 62
+            );
             return (
               <motion.div
                 layout
@@ -296,11 +317,47 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
                         <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} required className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] transition"/>
                       </div>
                     </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-600 mb-2 required-label">Working Days</label>
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          { label: 'Sun', idx: 0 },
+                          { label: 'Mon', idx: 1 },
+                          { label: 'Tue', idx: 2 },
+                          { label: 'Wed', idx: 3 },
+                          { label: 'Thu', idx: 4 },
+                          { label: 'Fri', idx: 5 },
+                          { label: 'Sat', idx: 6 },
+                        ].map((d) => (
+                          <label key={d.idx} className="flex items-center gap-2 text-sm text-slate-700">
+                            <input
+                              type="checkbox"
+                              checked={isWorkingDay(formData.working_days_mask, d.idx)}
+                              onChange={() =>
+                                setFormData(prev => ({
+                                  ...prev,
+                                  working_days_mask: toggleWorkingDay(prev.working_days_mask, d.idx),
+                                }))
+                              }
+                              className="h-4 w-4 rounded border-slate-300 text-[var(--theme-color)] focus:ring-[var(--theme-color)]"
+                            />
+                            <span>{d.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                      <p className="text-xs text-slate-500 mt-2">Select which days are counted as working days for this sprint.</p>
+                    </div>
                   </div>
                 </div>
                 <div className="bg-slate-50 px-6 py-4 flex justify-end gap-3 rounded-b-xl border-t border-slate-200">
                   <motion.button type="button" onClick={() => setFormVisible(false)} className="px-4 py-2 bg-white text-slate-700 rounded-md border border-slate-300 hover:bg-slate-100 transition" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>Cancel</motion.button>
-                  <motion.button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-[var(--theme-color)] text-white rounded-md shadow-sm hover:brightness-110 transition disabled:bg-blue-300" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <motion.button
+                    type="submit"
+                    disabled={isSubmitting || Number(formData.working_days_mask) === 0}
+                    className="px-4 py-2 bg-[var(--theme-color)] text-white rounded-md shadow-sm hover:brightness-110 transition disabled:bg-blue-300"
+                    whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                  >
                     {isSubmitting ? 'Saving...' : (formData.id ? 'Update Sprint' : 'Create Sprint')}
                   </motion.button>
                 </div>

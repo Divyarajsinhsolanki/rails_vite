@@ -299,7 +299,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
       });
   }, [sprintId, projectId, qaMode]);
 
-  const getWeekdaysInRange = useCallback((start, end) => {
+  const getWeekdaysInRange = useCallback((start, end, workingDaysMask = 62) => {
     const datesArr = [];
     if (!start || !end) return datesArr;
     let current = new Date(new Date(start).toISOString().slice(0, 10) + 'T00:00:00Z');
@@ -307,7 +307,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
 
     while (current <= endDate) {
       const day = current.getUTCDay();
-      if (day !== 0 && day !== 6) {
+      if ((Number(workingDaysMask) & (1 << day)) !== 0) {
         datesArr.push(current.toISOString().split('T')[0]);
       }
       current.setUTCDate(current.getUTCDate() + 1);
@@ -315,7 +315,16 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
     return datesArr;
   }, []);
 
-  const dates = useMemo(() => sprint ? getWeekdaysInRange(sprint.start_date, sprint.end_date) : [], [sprint, getWeekdaysInRange]);
+  const dates = useMemo(
+    () => (sprint
+      ? getWeekdaysInRange(
+        sprint.start_date,
+        sprint.end_date,
+        typeof sprint.working_days_mask === 'number' ? sprint.working_days_mask : 62
+      )
+      : []),
+    [sprint, getWeekdaysInRange]
+  );
 
   const tasksByDateDev = useMemo(() => {
     const structuredTasks = {};

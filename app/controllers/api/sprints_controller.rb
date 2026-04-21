@@ -80,6 +80,6 @@ class Api::SprintsController < Api::BaseController
 
   private
   def sprint_params
-    params.require(:sprint).permit(:name, :start_date, :end_date, :project_id)
+    params.require(:sprint).permit(:name, :start_date, :end_date, :project_id, :working_days_mask)
   end
 end

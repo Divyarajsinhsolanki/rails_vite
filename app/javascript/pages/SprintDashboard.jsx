@@ -12,13 +12,13 @@ import IssueTracker from './IssueTracker';
 import ProjectVault from './ProjectVault';
 import PageLoader from '../components/ui/PageLoader';
 
-const calculateWorkingDays = (start, end) => {
+const calculateWorkingDays = (start, end, workingDaysMask = 62) => {
   let count = 0;
   const current = new Date(start);
   const last = new Date(end);
   while (current <= last) {
     const day = current.getDay();
-    if (day !== 0 && day !== 6) count += 1;
+    if ((Number(workingDaysMask) & (1 << day)) !== 0) count += 1;
     current.setDate(current.getDate() + 1);
   }
   return count;
@@ -233,7 +233,11 @@ export default function SprintDashboard() {
                   ({formatDateRange(sprint.start_date, sprint.end_date)})
                 </span>
                 <span className="sm:ml-3 text-base font-medium text-gray-600">
-                  Working Days: {calculateWorkingDays(sprint.start_date, sprint.end_date)}
+                  Working Days: {calculateWorkingDays(
+                    sprint.start_date,
+                    sprint.end_date,
+                    typeof sprint.working_days_mask === 'number' ? sprint.working_days_mask : 62
+                  )}
                 </span>
               </span>
             ) : (

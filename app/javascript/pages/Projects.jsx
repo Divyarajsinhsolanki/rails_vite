@@ -377,11 +377,17 @@ const ProjectHealthCard = ({ stats, loading, error }) => {
 // --- Main Projects Component ---
 
 const WORKLOAD_STATUSES = ["free", "partial", "full", "overloaded"];
+const PROJECT_MEMBER_ROLES = ["owner", "manager", "collaborator", "developer", "qa", "devops", "designer", "analyst", "viewer"];
+const DEFAULT_MEMBER_FORM = {
+    role: "collaborator",
+    allocation_percentage: 0,
+    workload_status: "partial",
+};
 
 const Projects = () => {
     const { user } = useContext(AuthContext);
     const canEdit = user?.roles?.some((r) => ["owner", "project_manager"].includes(r.name));
-    const canManageMembers = user?.roles?.some((r) => r.name === "admin");
+    const canManageMembers = user?.roles?.some((r) => ["owner", "project_manager", "admin"].includes(r.name));
 
     // State Management
     const [projects, setProjects] = useState([]);
@@ -411,15 +417,14 @@ const Projects = () => {
     const [isCreatingNewProject, setIsCreatingNewProject] = useState(false); // Flag for creating a new project
 
     // Form States (for Add/Remove Members)
-    const [memberForm, setMemberForm] = useState({
-        role: "collaborator",
-        allocation_percentage: 0,
-        workload_status: "partial",
-    });
+    const [memberForm, setMemberForm] = useState(DEFAULT_MEMBER_FORM);
     const [selectedUsersToAdd, setSelectedUsersToAdd] = useState([]);
+    const [projectMemberFormUsers, setProjectMemberFormUsers] = useState([]);
+    const [projectMembersForm, setProjectMembersForm] = useState([]);
 
     const [editingMemberId, setEditingMemberId] = useState(null);
     const [editingMemberData, setEditingMemberData] = useState({
+        role: "collaborator",
         allocation_percentage: 0,
         workload_status: "partial",
     });
@@ -574,10 +579,56 @@ const Projects = () => {
         });
     };
 
+    const addUsersToProjectForm = () => {
+        if (projectMemberFormUsers.length === 0) {
+            setNotification({ message: "Select at least one user for the project team.", type: "info" });
+            return;
+        }
+
+        setProjectMembersForm((prev) => {
+            const existingUserIds = new Set(prev.map((member) => member.user_id));
+            const newMembers = projectMemberFormUsers
+                .filter((selectedUser) => !existingUserIds.has(selectedUser.id))
+                .map((selectedUser) => ({
+                    user_id: selectedUser.id,
+                    name: `${selectedUser.first_name || ""} ${selectedUser.last_name || ""}`.trim() || selectedUser.email,
+                    email: selectedUser.email,
+                    role: memberForm.role,
+                    allocation_percentage: memberForm.allocation_percentage,
+                    workload_status: memberForm.workload_status,
+                }));
+
+            return [...prev, ...newMembers];
+        });
+
+        setProjectMemberFormUsers([]);
+    };
+
+    const updateProjectMemberFormEntry = (userId, field, value) => {
+        setProjectMembersForm((prev) =>
+            prev.map((member) =>
+                member.user_id === userId
+                    ? {
+                        ...member,
+                        [field]: field === "allocation_percentage" ? parseInt(value || 0, 10) : value,
+                    }
+                    : member
+            )
+        );
+    };
+
+    const removeProjectMemberFormEntry = (userId) => {
+        setProjectMembersForm((prev) => prev.filter((member) => member.user_id !== userId));
+    };
+
     const resetAndCloseForms = () => {
         setEditingId(null);
         setIsCreatingNewProject(false);
         setEditingMemberId(null);
+        setSelectedUsersToAdd([]);
+        setProjectMemberFormUsers([]);
+        setProjectMembersForm([]);
+        setMemberForm(DEFAULT_MEMBER_FORM);
         setProjectForm({
             name: "",
             description: "",
@@ -602,15 +653,26 @@ const Projects = () => {
         setIsSaving(true);
         setNotification(null); // Clear previous notifications
 
-        const action = editingId ? updateProject(editingId, projectForm) : createProject(projectForm);
+        const payload = {
+            ...projectForm,
+            member_assignments: projectMembersForm.map((member) => ({
+                user_id: member.user_id,
+                role: member.role,
+                allocation_percentage: member.allocation_percentage,
+                workload_status: member.workload_status,
+            })),
+        };
+        const action = editingId ? updateProject(editingId, payload) : createProject(payload);
         try {
-            await action;
+            const { data } = await action;
+            setSelectedProjectId(data.id);
             resetAndCloseForms();
             await loadProjects(); // Reload to get the latest data
             setNotification({ message: `Project ${editingId ? 'updated' : 'created'} successfully!`, type: "success" });
         } catch (err) {
             console.error("Failed to save project:", err);
-            setNotification({ message: `Failed to save project: ${err.message || 'An error occurred.'}`, type: "error" });
+            const errorMessage = err.response?.data?.errors?.join(", ") || err.message || "An error occurred.";
+            setNotification({ message: `Failed to save project: ${errorMessage}`, type: "error" });
         } finally {
             setIsSaving(false);
         }
@@ -630,6 +692,18 @@ const Projects = () => {
             issue_sheet_name: project.issue_sheet_name || "Issue Tracker",
             qa_mode_enabled: project.qa_mode_enabled || false,
         });
+        setProjectMembersForm(
+            (project.users || []).map((member) => ({
+                user_id: member.id,
+                name: member.name,
+                email: member.email,
+                role: member.role || "collaborator",
+                allocation_percentage: member.allocation_percentage || 0,
+                workload_status: member.workload_status || "partial",
+            }))
+        );
+        setProjectMemberFormUsers([]);
+        setMemberForm(DEFAULT_MEMBER_FORM);
         setSelectedProjectId(project.id); // Ensure the project is selected in the sidebar
         setNotification(null);
     };
@@ -649,6 +723,9 @@ const Projects = () => {
             issue_sheet_name: "Issue Tracker",
             qa_mode_enabled: false,
         });
+        setProjectMembersForm([]);
+        setProjectMemberFormUsers([]);
+        setMemberForm(DEFAULT_MEMBER_FORM);
         setNotification(null);
     }
 
@@ -700,7 +777,7 @@ const Projects = () => {
                 )
             );
             setSelectedUsersToAdd([]);
-            setMemberForm({ role: "collaborator", allocation_percentage: 0, workload_status: "partial" });
+            setMemberForm(DEFAULT_MEMBER_FORM);
             await loadProjects();
             setNotification({ message: "Member(s) added successfully!", type: "success" });
         } catch (err) {
@@ -714,6 +791,7 @@ const Projects = () => {
     const startEditingMember = (member) => {
         setEditingMemberId(member.project_user_id);
         setEditingMemberData({
+            role: member.role || "collaborator",
             allocation_percentage: member.allocation_percentage || 0,
             workload_status: member.workload_status || "partial",
         });
@@ -737,7 +815,8 @@ const Projects = () => {
             setEditingMemberId(null);
         } catch (err) {
             console.error("Failed to update member:", err);
-            setNotification({ message: `Failed to update member: ${err.message || 'An error occurred.'}`, type: "error" });
+            const errorMessage = err.response?.data?.errors?.join(", ") || err.message || "An error occurred.";
+            setNotification({ message: `Failed to update member: ${errorMessage}`, type: "error" });
         } finally {
             setIsSaving(false);
         }
@@ -961,6 +1040,136 @@ const Projects = () => {
                                             onChange={handleFormChange}
                                             className="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] outline-none"
                                         />
+                                    </div>
+                                </div>
+                                <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
+                                    <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+                                        <div>
+                                            <h2 className="text-lg font-semibold text-slate-900">Project Team</h2>
+                                            <p className="text-sm text-slate-500">
+                                                Add the people working on this project and choose their role like developer, QA, DevOps, designer, or analyst.
+                                            </p>
+                                        </div>
+                                        <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm">
+                                            {projectMembersForm.length} selected
+                                        </span>
+                                    </div>
+                                    <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-6">
+                                        <div className="md:col-span-2">
+                                            <label className="mb-1 block text-sm font-medium text-gray-700">Select users</label>
+                                            <UserMultiSelect
+                                                selectedUsers={projectMemberFormUsers}
+                                                setSelectedUsers={setProjectMemberFormUsers}
+                                                excludedIds={projectMembersForm.map((member) => member.user_id)}
+                                                placeholder="Search and pick project users..."
+                                            />
+                                        </div>
+                                        <div>
+                                            <label htmlFor="project_member_role" className="mb-1 block text-sm font-medium text-gray-700">Role</label>
+                                            <select
+                                                id="project_member_role"
+                                                name="role"
+                                                value={memberForm.role}
+                                                onChange={handleMemberFormChange}
+                                                className="w-full rounded-lg border border-gray-300 bg-white p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)]"
+                                            >
+                                                {PROJECT_MEMBER_ROLES.map((role) => (
+                                                    <option key={role} value={role}>
+                                                        {role === "qa" ? "QA" : role.charAt(0).toUpperCase() + role.slice(1)}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label htmlFor="project_member_allocation" className="mb-1 block text-sm font-medium text-gray-700">Allocation %</label>
+                                            <input
+                                                type="number"
+                                                id="project_member_allocation"
+                                                name="allocation_percentage"
+                                                min="0"
+                                                max="100"
+                                                value={memberForm.allocation_percentage}
+                                                onChange={handleMemberFormChange}
+                                                className="w-full rounded-lg border border-gray-300 p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)]"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label htmlFor="project_member_status" className="mb-1 block text-sm font-medium text-gray-700">Workload</label>
+                                            <select
+                                                id="project_member_status"
+                                                name="workload_status"
+                                                value={memberForm.workload_status}
+                                                onChange={handleMemberFormChange}
+                                                className="w-full rounded-lg border border-gray-300 bg-white p-3 text-base capitalize focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)]"
+                                            >
+                                                {WORKLOAD_STATUSES.map((status) => (
+                                                    <option key={status} value={status} className="capitalize">
+                                                        {status}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={addUsersToProjectForm}
+                                            className="flex items-center justify-center gap-2 rounded-lg bg-[var(--theme-color)] px-5 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:brightness-110"
+                                        >
+                                            <FiUserPlus className="h-4 w-4" />
+                                            Add to project
+                                        </button>
+                                    </div>
+                                    <div className="mt-5 space-y-3">
+                                        {projectMembersForm.length > 0 ? (
+                                            projectMembersForm.map((member) => (
+                                                <div key={member.user_id} className="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-[minmax(0,1.5fr)_160px_140px_160px_auto] md:items-center">
+                                                    <div>
+                                                        <p className="font-medium text-slate-900">{member.name || member.email}</p>
+                                                        {member.email && <p className="text-sm text-slate-500">{member.email}</p>}
+                                                    </div>
+                                                    <select
+                                                        value={member.role}
+                                                        onChange={(e) => updateProjectMemberFormEntry(member.user_id, "role", e.target.value)}
+                                                        className="rounded-lg border border-gray-300 bg-white p-2 text-sm focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)]"
+                                                    >
+                                                        {PROJECT_MEMBER_ROLES.map((role) => (
+                                                            <option key={role} value={role}>
+                                                                {role === "qa" ? "QA" : role.charAt(0).toUpperCase() + role.slice(1)}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        max="100"
+                                                        value={member.allocation_percentage}
+                                                        onChange={(e) => updateProjectMemberFormEntry(member.user_id, "allocation_percentage", e.target.value)}
+                                                        className="rounded-lg border border-gray-300 p-2 text-sm focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)]"
+                                                    />
+                                                    <select
+                                                        value={member.workload_status}
+                                                        onChange={(e) => updateProjectMemberFormEntry(member.user_id, "workload_status", e.target.value)}
+                                                        className="rounded-lg border border-gray-300 bg-white p-2 text-sm capitalize focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)]"
+                                                    >
+                                                        {WORKLOAD_STATUSES.map((status) => (
+                                                            <option key={status} value={status} className="capitalize">
+                                                                {status}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeProjectMemberFormEntry(member.user_id)}
+                                                        className="rounded-lg px-3 py-2 text-sm font-medium text-red-500 transition-colors hover:bg-red-50"
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="rounded-xl border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">
+                                                No users selected yet. Add project members here while creating or editing the project.
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-2">
@@ -1216,6 +1425,18 @@ const Projects = () => {
                                                                     <div className="space-y-3">
                                                                         <p className="text-lg font-medium text-gray-900">{member.name || 'Invited User'}</p>
                                                                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                                                                            <select
+                                                                                name="role"
+                                                                                value={editingMemberData.role}
+                                                                                onChange={handleEditingMemberChange}
+                                                                                className="w-full rounded-lg border border-gray-300 p-2 text-sm capitalize focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] sm:w-40"
+                                                                            >
+                                                                                {PROJECT_MEMBER_ROLES.map((role) => (
+                                                                                    <option key={role} value={role}>
+                                                                                        {role === "qa" ? "QA" : role.charAt(0).toUpperCase() + role.slice(1)}
+                                                                                    </option>
+                                                                                ))}
+                                                                            </select>
                                                                             <input
                                                                                 type="number"
                                                                                 name="allocation_percentage"
@@ -1316,15 +1537,11 @@ const Projects = () => {
                                                         onChange={handleMemberFormChange}
                                                         className="w-full rounded-lg border border-gray-300 bg-white p-3 text-base focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)]"
                                                     >
-                                                        <option value="owner">Owner</option>
-                                                        <option value="manager">Manager</option>
-                                                        <option value="collaborator">Collaborator</option>
-                                                        <option value="developer">Developer</option>
-                                                        <option value="qa">QA</option>
-                                                        <option value="devops">DevOps</option>
-                                                        <option value="designer">Designer</option>
-                                                        <option value="analyst">Analyst</option>
-                                                        <option value="viewer">Viewer</option>
+                                                        {PROJECT_MEMBER_ROLES.map((role) => (
+                                                            <option key={role} value={role}>
+                                                                {role === "qa" ? "QA" : role.charAt(0).toUpperCase() + role.slice(1)}
+                                                            </option>
+                                                        ))}
                                                     </select>
                                                 </div>
                                                 <div>

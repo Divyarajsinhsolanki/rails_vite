@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2027_02_16_000000) do
+ActiveRecord::Schema[7.1].define(version: 2027_04_17_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -40,6 +40,15 @@ ActiveRecord::Schema[7.1].define(version: 2027_02_16_000000) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "assignees", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "role_type", default: "developer", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_assignees_on_name", unique: true
+    t.index ["role_type"], name: "index_assignees_on_role_type"
   end
 
   create_table "calendar_events", force: :cascade do |t|
@@ -122,13 +131,6 @@ ActiveRecord::Schema[7.1].define(version: 2027_02_16_000000) do
     t.bigint "manager_id"
     t.index ["manager_id"], name: "index_departments_on_manager_id"
     t.index ["name"], name: "index_departments_on_name", unique: true
-  end
-
-  create_table "developers", force: :cascade do |t|
-    t.string "name", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["name"], name: "index_developers_on_name", unique: true
   end
 
   create_table "event_reminders", force: :cascade do |t|
@@ -366,6 +368,8 @@ ActiveRecord::Schema[7.1].define(version: 2027_02_16_000000) do
     t.boolean "sheet_integration_enabled", default: false
     t.string "sheet_id"
     t.boolean "qa_mode_enabled", default: false, null: false
+    t.string "issue_sheet_id"
+    t.string "issue_sheet_name", default: "Issue Tracker", null: false
     t.index ["owner_id"], name: "index_projects_on_owner_id"
   end
 
@@ -408,9 +412,11 @@ ActiveRecord::Schema[7.1].define(version: 2027_02_16_000000) do
     t.integer "created_by"
     t.integer "updated_by"
     t.bigint "project_id", null: false
+    t.integer "working_days_mask", default: 62, null: false
     t.index ["end_date"], name: "index_sprints_on_end_date"
     t.index ["project_id"], name: "index_sprints_on_project_id"
     t.index ["start_date"], name: "index_sprints_on_start_date"
+    t.index ["working_days_mask"], name: "index_sprints_on_working_days_mask"
   end
 
   create_table "task_logs", force: :cascade do |t|
@@ -682,9 +688,9 @@ ActiveRecord::Schema[7.1].define(version: 2027_02_16_000000) do
   add_foreign_key "skill_endorsements", "user_skills"
   add_foreign_key "skill_endorsements", "users", column: "endorser_id"
   add_foreign_key "sprints", "projects"
-  add_foreign_key "task_logs", "developers"
+  add_foreign_key "task_logs", "assignees", column: "developer_id"
   add_foreign_key "task_logs", "tasks"
-  add_foreign_key "tasks", "developers"
+  add_foreign_key "tasks", "assignees", column: "developer_id"
   add_foreign_key "tasks", "projects"
   add_foreign_key "tasks", "sprints"
   add_foreign_key "team_users", "teams"
