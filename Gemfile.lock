@@ -1,7 +1,7 @@
 PATH
   remote: /home/divyarajs/rails_project/newgems/PdfMaster
   specs:
-    PdfMaster (0.2.0)
+    PdfMaster (0.2.1)
       combine_pdf (= 1.0.25)
       hexapdf (~> 0.16)
       mini_magick (~> 4.11)
@@ -488,7 +488,7 @@ DEPENDENCIES
   web-console
 
 CHECKSUMS
-  PdfMaster (0.2.0)
+  PdfMaster (0.2.1)
   actioncable (7.1.6) sha256=ad428d5f0a810452160820ae3cf3d9d68d8f59e7c76de3bd1f1de2a5ad03c3da
   actionmailbox (7.1.6) sha256=ded958ad8ec147a5f14555833541f07063af188777b09b50cfeeaa623bc2f731
   actionmailer (7.1.6) sha256=b07f6420ec66bd299a9da5a35c075849fbd5504e82793301b0c275fa4211d273

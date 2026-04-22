@@ -29,7 +29,6 @@ const SidebarToolbar = ({ activeTool, setActiveTool }) => {
       items: [
         { id: "addText", label: "Add Text", icon: Type },
         { id: "replaceText", label: "Replace Text", icon: FileText }, // Changed icon slightly
-        { id: "rotateRight", label: "Rotate", icon: RotateCw },
       ],
     },
     {
@@ -43,9 +42,6 @@ const SidebarToolbar = ({ activeTool, setActiveTool }) => {
     {
       category: "Pages",
       items: [
-        { id: "addPage", label: "Add Page", icon: Plus },
-        { id: "removePage", label: "Remove Page", icon: Minus },
-        { id: "duplicatePage", label: "Duplicate", icon: FilePlus }, // Changed icon
         { id: "extractPages", label: "Extract", icon: FileSliders },
       ],
     },
