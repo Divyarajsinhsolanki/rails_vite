@@ -862,7 +862,6 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
     };
 
     useEffect(() => {
-        SchedulerAPI.getDevelopers().then(res => setDevelopers(res.data));
         if (projectId) {
             fetchProjects().then(({ data }) => {
                 const list = Array.isArray(data) ? data : [];
@@ -870,12 +869,19 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                 const members = (project ? project.users : []).map(u => ({
                     id: u.id,
                     first_name: u.name,
-                    email: u.name,
+                    email: u.email || u.name,
                     profile_picture: u.profile_picture
                 }));
                 setUsers(members);
+                setDevelopers(
+                    members.map(member => ({
+                        id: member.id,
+                        name: member.first_name || member.email
+                    }))
+                );
             });
         } else {
+            SchedulerAPI.getDevelopers().then(res => setDevelopers(res.data));
             getUsers().then(res => setUsers(Array.isArray(res.data) ? res.data : []));
         }
         const query = projectId ? `?project_id=${projectId}` : '';
