@@ -36,11 +36,12 @@ class ProjectUser < ApplicationRecord
   private
 
   def notify_user
-    return unless created_by && created_by != user_id
+    actor_id = Current.user&.id
+    return unless actor_id && actor_id != user_id
 
     Notification.create(
       recipient: user,
-      actor_id: created_by,
+      actor_id: actor_id,
       action: 'assigned',
       notifiable: self,
       metadata: { project_name: project.name, role: role }
