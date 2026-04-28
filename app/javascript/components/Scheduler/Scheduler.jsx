@@ -283,7 +283,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
     if (qaMode) params.type = 'qa';
 
     Promise.all([
-      SchedulerAPI.getDevelopers(),
+      SchedulerAPI.getDevelopers(projectId ? { project_id: projectId } : {}),
       SchedulerAPI.getTaskLogs(params),
       SchedulerAPI.getTasks(params)
     ])

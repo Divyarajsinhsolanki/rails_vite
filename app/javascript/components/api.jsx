@@ -54,7 +54,7 @@ export const SchedulerAPI = {
   updateSprint: (id, data) => api.put(`/sprints/${id}.json`, { sprint: data }),
 
   // Developers
-  getDevelopers: () => api.get("/developers.json"),
+  getDevelopers: (params = {}) => api.get("/developers.json", { params }),
 
   // Tasks
   getTasks: (params = {}) => api.get("/tasks.json", { params }),
