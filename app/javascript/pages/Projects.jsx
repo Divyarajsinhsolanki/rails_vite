@@ -378,6 +378,7 @@ const ProjectHealthCard = ({ stats, loading, error }) => {
 
 const WORKLOAD_STATUSES = ["free", "partial", "full", "overloaded"];
 const PROJECT_MEMBER_ROLES = ["owner", "manager", "collaborator", "developer", "qa", "devops", "designer", "analyst", "viewer"];
+const VIEW_MODES = ["dev", "qa", "combined"];
 const DEFAULT_MEMBER_FORM = {
     role: "collaborator",
     allocation_percentage: 0,
@@ -399,7 +400,7 @@ const Projects = () => {
     const [projectTaskStats, setProjectTaskStats] = useState(() => ({ ...INITIAL_TASK_STATS }));
     const [isProjectTasksLoading, setIsProjectTasksLoading] = useState(false);
     const [projectTasksError, setProjectTasksError] = useState(false);
-    const [qaViewActive, setQaViewActive] = useState(false);
+    const [projectViewMode, setProjectViewMode] = useState("dev");
 
     // Form States (for Create/Edit Project)
     const [projectForm, setProjectForm] = useState({
@@ -460,15 +461,15 @@ const Projects = () => {
 
     useEffect(() => {
         if (!selectedProjectId) {
-            setQaViewActive(false);
+            setProjectViewMode("dev");
             return;
         }
 
         const currentProject = projects.find((proj) => proj.id === selectedProjectId);
-        if (!currentProject?.qa_mode_enabled && qaViewActive) {
-            setQaViewActive(false);
+        if (!currentProject?.qa_mode_enabled && projectViewMode !== "dev") {
+            setProjectViewMode("dev");
         }
-    }, [projects, selectedProjectId, qaViewActive]);
+    }, [projects, selectedProjectId, projectViewMode]);
 
     useEffect(() => {
         const resetTaskState = () => {
@@ -537,8 +538,12 @@ const Projects = () => {
             setProjectTaskStats({ ...INITIAL_TASK_STATS });
             try {
                 const params = { project_id: selectedProjectId };
-                if (qaViewActive && currentProject?.qa_mode_enabled) {
-                    params.type = "qa";
+                if (currentProject?.qa_mode_enabled) {
+                    if (projectViewMode === "qa") {
+                        params.type = "qa";
+                    } else if (projectViewMode === "dev") {
+                        params.type = "general";
+                    }
                 }
                 const { data } = await SchedulerAPI.getTasks(params);
                 if (!isMounted) return;
@@ -563,7 +568,7 @@ const Projects = () => {
         return () => {
             isMounted = false;
         };
-    }, [selectedProjectId, qaViewActive, projects]);
+    }, [selectedProjectId, projectViewMode, projects]);
 
     // Event Handlers
     const handleFormChange = (e) =>
@@ -878,7 +883,16 @@ const Projects = () => {
     const projectStatuses = ['running', 'upcoming', 'completed']; // Define order for display
 
     const selectedProject = projects.find((p) => p.id === selectedProjectId);
-    const taskScopeLabel = qaViewActive ? "QA tasks" : "project tasks";
+    const viewModeLabel = projectViewMode === "qa" ? "QA mode" : projectViewMode === "combined" ? "Combined mode" : "Dev mode";
+    const taskScopeLabel = projectViewMode === "qa" ? "QA tasks" : projectViewMode === "dev" ? "dev tasks" : "project tasks";
+    const cycleProjectViewMode = () => {
+        setProjectViewMode((prev) => VIEW_MODES[(VIEW_MODES.indexOf(prev) + 1) % VIEW_MODES.length]);
+    };
+    const modeKnobPositionClass = projectViewMode === "qa"
+        ? "translate-x-[2.625rem]"
+        : projectViewMode === "combined"
+            ? "translate-x-[4.875rem]"
+            : "translate-x-1";
     const activeTaskCount = projectTaskStats.todo + projectTaskStats.inProgress;
     const completionRate = projectTaskStats.total
         ? Math.round((projectTaskStats.completed / projectTaskStats.total) * 100)
@@ -1298,27 +1312,33 @@ const Projects = () => {
                                             <div className="flex flex-wrap items-center gap-3 text-sm text-gray-700">
                                                 <button
                                                     type="button"
-                                                    role="switch"
-                                                    aria-checked={qaViewActive}
-                                                    onClick={() => setQaViewActive((prev) => !prev)}
-                                                    className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors duration-200 shadow-sm ${qaViewActive ? 'bg-purple-600' : 'bg-slate-300'
+                                                    onClick={cycleProjectViewMode}
+                                                    className={`relative inline-flex h-8 w-28 items-center rounded-full transition-colors duration-200 shadow-sm ${projectViewMode === "qa"
+                                                        ? "bg-purple-600"
+                                                        : projectViewMode === "combined"
+                                                            ? "bg-indigo-600"
+                                                            : "bg-slate-300"
                                                         }`}
+                                                    aria-label={`Project view mode: ${viewModeLabel}. Click to cycle dev, QA, combined.`}
                                                 >
                                                     <span
-                                                        className={`inline-block h-6 w-6 transform rounded-full bg-white shadow transition ${qaViewActive ? 'translate-x-8' : 'translate-x-1'
-                                                            }`}
+                                                        className={`inline-block h-6 w-6 transform rounded-full bg-white shadow transition ${modeKnobPositionClass}`}
                                                     />
                                                 </button>
-                                                <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${qaViewActive
+                                                <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${projectViewMode === "qa"
                                                     ? 'border-purple-200 bg-purple-50 text-purple-700'
+                                                    : projectViewMode === "combined"
+                                                        ? "border-indigo-200 bg-indigo-50 text-indigo-700"
                                                     : 'border-slate-200 bg-slate-50 text-slate-700'
                                                     }`}>
-                                                    QA mode {qaViewActive ? 'enabled' : 'available'}
+                                                    {viewModeLabel}
                                                 </span>
                                                 <span className="text-sm text-gray-500">
-                                                    {qaViewActive
-                                                        ? 'Showing QA-assigned tasks, scheduler items, and statistics.'
-                                                        : 'Switch on to focus on QA ownership and progress.'}
+                                                    {projectViewMode === "qa"
+                                                        ? "Showing only QA tasks, scheduler items, and statistics."
+                                                        : projectViewMode === "combined"
+                                                            ? "Showing both Dev and QA tasks, scheduler items, and statistics."
+                                                            : "Showing only Dev tasks. Click toggle to switch mode."}
                                                 </span>
                                             </div>
                                         )}
@@ -1372,7 +1392,7 @@ const Projects = () => {
                                     </div>
                                     <div className="rounded-xl border border-slate-200 bg-white/80 p-4 shadow-sm">
                                         <p className="text-xs uppercase tracking-wide text-slate-500">
-                                            {qaViewActive ? 'Active QA tasks' : 'Active tasks'}
+                                            {projectViewMode === "qa" ? "Active QA tasks" : projectViewMode === "combined" ? "Active project tasks" : "Active Dev tasks"}
                                         </p>
                                         <div className="mt-2 flex items-center justify-between">
                                             <span className="text-2xl font-semibold text-slate-900">{activeTaskDisplay}</span>
@@ -1381,14 +1401,16 @@ const Projects = () => {
                                         <p className="text-xs text-slate-500">
                                             {isProjectTasksLoading
                                                 ? 'Refreshing task data…'
-                                                : qaViewActive
-                                                    ? 'Across QA to-do and in-progress states.'
-                                                    : 'Across to-do and in-progress states.'}
+                                                : projectViewMode === "qa"
+                                                    ? "Across QA to-do and in-progress states."
+                                                    : projectViewMode === "combined"
+                                                        ? "Across Dev and QA to-do and in-progress states."
+                                                        : "Across Dev to-do and in-progress states."}
                                         </p>
                                     </div>
                                     <div className="rounded-xl border border-slate-200 bg-white/80 p-4 shadow-sm">
                                         <p className="text-xs uppercase tracking-wide text-slate-500">
-                                            {qaViewActive ? 'QA completion' : 'Completion'}
+                                            {projectViewMode === "qa" ? "QA completion" : projectViewMode === "combined" ? "Project completion" : "Dev completion"}
                                         </p>
                                         <div className="mt-2 flex items-center justify-between">
                                             <span className="text-2xl font-semibold text-slate-900">{completionDisplay}</span>
@@ -1595,13 +1617,15 @@ const Projects = () => {
                                 <div className="space-y-6 xl:sticky xl:top-8">
                                     {selectedProject.qa_mode_enabled && (
                                         <div
-                                            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold ${qaViewActive
+                                            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold ${projectViewMode === "qa"
                                                 ? 'border-purple-200 bg-purple-50 text-purple-700'
+                                                : projectViewMode === "combined"
+                                                    ? "border-indigo-200 bg-indigo-50 text-indigo-700"
                                                 : 'border-slate-200 bg-slate-50 text-slate-700'
                                                 }`}
                                         >
-                                            <FiActivity className={qaViewActive ? 'text-purple-600' : 'text-slate-500'} />
-                                            <span>{qaViewActive ? 'QA mode metrics' : 'Delivery metrics'}</span>
+                                            <FiActivity className={projectViewMode === "qa" ? "text-purple-600" : projectViewMode === "combined" ? "text-indigo-600" : "text-slate-500"} />
+                                            <span>{projectViewMode === "qa" ? "QA mode metrics" : projectViewMode === "combined" ? "Combined mode metrics" : "Dev mode metrics"}</span>
                                         </div>
                                     )}
                                     <ProjectHealthCard
