@@ -15,7 +15,8 @@ import {
   FiSave,
   FiBriefcase,
   FiCpu,
-  FiUser
+  FiUser,
+  FiArrowRight
 } from "react-icons/fi";
 import {
   fetchDepartment,
