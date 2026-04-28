@@ -105,7 +105,11 @@ const PdfPage = () => {
         <div className="flex items-center space-x-4">
           <button onClick={() => { setPdfUrl(null); localStorage.removeItem("pdfUrl"); }} className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors">Close</button>
           <button 
-            onClick={() => window.open("/download_pdf", "_blank")} 
+            onClick={() => {
+              const cleanPath = (pdfUrl || "").split("?")[0].replace(/^\//, "");
+              const downloadUrl = cleanPath ? `/download_pdf?pdf_path=${encodeURIComponent(cleanPath)}` : "/download_pdf";
+              window.open(downloadUrl, "_blank");
+            }}
             className="flex items-center px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-lg shadow-indigo-100 active:scale-95"
           >
             <Download className="h-3.5 w-3.5 mr-2" />
