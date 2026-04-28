@@ -93,9 +93,9 @@ const PdfPage = () => {
   }
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-white overflow-hidden font-inter select-none">
+    <div className="h-full w-full flex min-h-0 flex-col bg-white overflow-hidden font-inter select-none">
       {/* 🚀 Header */}
-      <header className="h-14 border-b border-gray-100 flex items-center justify-between px-6 bg-white shrink-0 z-50">
+      <header className="h-14 border-b border-gray-100 flex items-center justify-between px-6 bg-white shrink-0 z-30">
         <div className="flex items-center space-x-4">
           <div className="bg-indigo-600 text-white p-1.5 rounded-lg shadow-lg shadow-indigo-200">
             <Plus className="h-4 w-4" />
