@@ -1,0 +1,10 @@
+# Logfile created on 2026-04-23 17:08:54 +0530 by logger.rb/v1.7.0
+I, [2026-04-23T17:08:54.718002 #21960]  INFO -- : Calling: duplicate_pages with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 2]
+I, [2026-04-23T17:08:54.725378 #21960]  INFO -- : Duplicating pages [2] in /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-23T17:08:54.818134 #21960]  INFO -- : Pages duplicated successfully.
+I, [2026-04-23T17:09:14.468495 #21960]  INFO -- : Calling: rotate_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/uploads/94249e34-a159-427b-adfb-1d805e5a38ad_working.pdf", 270, 1]
+I, [2026-04-23T17:09:14.483583 #21960]  INFO -- : Rotating pages [1] of /home/divyarajs/react_projects/rails_vite/public/uploads/94249e34-a159-427b-adfb-1d805e5a38ad_working.pdf by 270 degrees
+I, [2026-04-23T17:09:14.493756 #21960]  INFO -- : Pages rotated successfully.
+I, [2026-04-23T17:09:15.483203 #21960]  INFO -- : Calling: duplicate_pages with arguments: ["/home/divyarajs/react_projects/rails_vite/public/uploads/94249e34-a159-427b-adfb-1d805e5a38ad_working.pdf", 1]
+I, [2026-04-23T17:09:15.501589 #21960]  INFO -- : Duplicating pages [1] in /home/divyarajs/react_projects/rails_vite/public/uploads/94249e34-a159-427b-adfb-1d805e5a38ad_working.pdf
+I, [2026-04-23T17:09:15.550175 #21960]  INFO -- : Pages duplicated successfully.

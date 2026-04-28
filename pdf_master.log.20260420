@@ -1,0 +1,71 @@
+# Logfile created on 2026-04-09 20:01:02 +0530 by logger.rb/v1.7.0
+I, [2026-04-09T20:01:02.950420 #7523]  INFO -- : Calling: add_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-09T20:01:02.954803 #7523]  INFO -- : Adding blank pages to /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf at positions [1]
+I, [2026-04-09T20:01:02.971069 #7523]  INFO -- : Blank pages added successfully.
+I, [2026-04-09T20:01:04.080877 #7523]  INFO -- : Calling: add_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-09T20:01:04.090201 #7523]  INFO -- : Adding blank pages to /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf at positions [1]
+I, [2026-04-09T20:01:04.101993 #7523]  INFO -- : Blank pages added successfully.
+I, [2026-04-09T20:01:13.040571 #7523]  INFO -- : Calling: add_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-09T20:01:13.054319 #7523]  INFO -- : Adding blank pages to /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf at positions [1]
+I, [2026-04-09T20:01:13.068144 #7523]  INFO -- : Blank pages added successfully.
+I, [2026-04-09T20:04:49.339092 #7523]  INFO -- : Calling: add_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-09T20:04:49.343605 #7523]  INFO -- : Adding blank pages to /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf at positions [1]
+I, [2026-04-09T20:04:49.356352 #7523]  INFO -- : Blank pages added successfully.
+I, [2026-04-09T20:04:51.328193 #7523]  INFO -- : Calling: add_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-09T20:04:51.344623 #7523]  INFO -- : Adding blank pages to /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf at positions [1]
+I, [2026-04-09T20:04:51.358934 #7523]  INFO -- : Blank pages added successfully.
+I, [2026-04-09T20:05:46.095498 #7517]  INFO -- : Calling: add_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-09T20:05:46.104670 #7517]  INFO -- : Adding blank pages to /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf at positions [1]
+I, [2026-04-09T20:05:46.118406 #7517]  INFO -- : Blank pages added successfully.
+I, [2026-04-09T20:05:47.489374 #7517]  INFO -- : Calling: add_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-09T20:05:47.501859 #7517]  INFO -- : Adding blank pages to /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf at positions [1]
+I, [2026-04-09T20:05:47.514529 #7517]  INFO -- : Blank pages added successfully.
+I, [2026-04-09T20:13:56.924440 #7517]  INFO -- : Calling: add_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-09T20:13:56.934062 #7517]  INFO -- : Adding blank pages to /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf at positions [1]
+I, [2026-04-09T20:13:56.959664 #7517]  INFO -- : Blank pages added successfully.
+I, [2026-04-09T20:13:58.932146 #7517]  INFO -- : Calling: add_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-09T20:13:58.941601 #7517]  INFO -- : Adding blank pages to /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf at positions [1]
+I, [2026-04-09T20:13:58.965875 #7517]  INFO -- : Blank pages added successfully.
+I, [2026-04-09T20:13:59.806049 #7517]  INFO -- : Calling: add_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-09T20:13:59.820241 #7517]  INFO -- : Adding blank pages to /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf at positions [1]
+I, [2026-04-09T20:13:59.853292 #7517]  INFO -- : Blank pages added successfully.
+I, [2026-04-09T20:13:59.994441 #7517]  INFO -- : Calling: add_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-09T20:14:00.002915 #7517]  INFO -- : Adding blank pages to /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf at positions [1]
+I, [2026-04-09T20:14:00.022435 #7517]  INFO -- : Blank pages added successfully.
+I, [2026-04-09T20:15:59.626092 #7523]  INFO -- : Calling: add_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 0]
+I, [2026-04-09T20:15:59.642949 #7523]  INFO -- : Adding blank pages to /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf at positions [0]
+I, [2026-04-09T20:15:59.659747 #7523]  INFO -- : Blank pages added successfully.
+I, [2026-04-09T20:16:02.296175 #7523]  INFO -- : Calling: add_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-09T20:16:02.302775 #7523]  INFO -- : Adding blank pages to /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf at positions [1]
+I, [2026-04-09T20:16:02.315379 #7523]  INFO -- : Blank pages added successfully.
+I, [2026-04-09T20:16:03.583986 #7523]  INFO -- : Calling: add_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-09T20:16:03.603735 #7523]  INFO -- : Adding blank pages to /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf at positions [1]
+I, [2026-04-09T20:16:03.618300 #7523]  INFO -- : Blank pages added successfully.
+I, [2026-04-09T20:17:11.477593 #7517]  INFO -- : Calling: add_stamp with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", "", 11, 11, 1]
+I, [2026-04-09T20:17:19.346588 #7517]  INFO -- : Calling: add_watermark with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", nil]
+I, [2026-04-09T20:17:19.365034 #7517]  INFO -- : Adding watermark to /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf on page 1
+I, [2026-04-09T20:17:19.391813 #7517]  INFO -- : Error adding watermark: undefined method `encode' for nil
+I, [2026-04-09T20:17:37.952131 #7517]  INFO -- : Calling: add_watermark with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", nil]
+I, [2026-04-09T20:17:37.972025 #7517]  INFO -- : Adding watermark to /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf on page 1
+I, [2026-04-09T20:17:37.982558 #7517]  INFO -- : Error adding watermark: undefined method `encode' for nil
+I, [2026-04-09T20:19:09.373872 #7523]  INFO -- : Calling: add_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-09T20:19:09.386178 #7523]  INFO -- : Adding blank pages to /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf at positions [1]
+I, [2026-04-09T20:19:09.399714 #7523]  INFO -- : Blank pages added successfully.
+I, [2026-04-09T20:19:13.265426 #7523]  INFO -- : Calling: remove_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-09T20:19:13.288385 #7523]  INFO -- : Removing pages [1] from /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-09T20:19:13.300846 #7523]  INFO -- : Pages [1] removed successfully.
+I, [2026-04-09T20:19:16.656660 #7523]  INFO -- : Calling: remove_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-09T20:19:16.671328 #7523]  INFO -- : Removing pages [1] from /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-09T20:19:16.685471 #7523]  INFO -- : Pages [1] removed successfully.
+I, [2026-04-09T20:19:19.075226 #7523]  INFO -- : Calling: remove_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-09T20:19:19.084272 #7523]  INFO -- : Removing pages [1] from /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-09T20:19:19.100570 #7523]  INFO -- : Pages [1] removed successfully.
+I, [2026-04-09T20:19:22.552728 #7523]  INFO -- : Calling: remove_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-09T20:19:22.563005 #7523]  INFO -- : Removing pages [1] from /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-09T20:19:22.576309 #7523]  INFO -- : Pages [1] removed successfully.
+I, [2026-04-09T20:19:24.723777 #7523]  INFO -- : Calling: remove_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-09T20:19:24.737254 #7523]  INFO -- : Removing pages [1] from /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-09T20:19:24.749027 #7523]  INFO -- : Pages [1] removed successfully.
+I, [2026-04-09T20:19:27.160458 #7523]  INFO -- : Calling: remove_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-09T20:19:27.169660 #7523]  INFO -- : Removing pages [1] from /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-09T20:19:27.181149 #7523]  INFO -- : Pages [1] removed successfully.

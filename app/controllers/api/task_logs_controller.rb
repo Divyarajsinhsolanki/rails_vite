@@ -13,13 +13,13 @@ class Api::TaskLogsController < Api::BaseController
     task_logs = task_logs.where(sprints: { project_id: params[:project_id] }) if params[:project_id].present?
     task_logs = task_logs.where(tasks: { type: params[:type] }) if params[:type].present?
 
-    render json: task_logs.as_json(include: { task: {}, developer: {} })
+    render json: serialize_task_logs(task_logs)
   end
 
   def create
     task_log = TaskLog.new(task_log_params)
     if task_log.save
-      render json: task_log.as_json(include: { task: {}, developer: {} }), status: :created
+      render json: serialize_task_log(task_log), status: :created
     else
       render json: { errors: task_log.errors.full_messages }, status: :unprocessable_entity
     end
@@ -27,7 +27,7 @@ class Api::TaskLogsController < Api::BaseController
 
   def update
     if @task_log.update(task_log_params)
-      render json: @task_log.as_json(include: { task: {}, developer: {} })
+      render json: serialize_task_log(@task_log)
     else
       render json: { errors: @task_log.errors.full_messages }, status: :unprocessable_entity
     end
@@ -46,5 +46,20 @@ class Api::TaskLogsController < Api::BaseController
 
   def task_log_params
     params.require(:task_log).permit(:task_id, :developer_id, :log_date, :type, :hours_logged, :status, :created_by, :updated_by)
+  end
+
+  def serialize_task_logs(task_logs)
+    task_logs.as_json(include: serialization_includes)
+  end
+
+  def serialize_task_log(task_log)
+    task_log.as_json(include: serialization_includes)
+  end
+
+  def serialization_includes
+    {
+      task: {},
+      developer: { only: [:id, :first_name, :last_name, :email], methods: [:name] }
+    }
   end
 end

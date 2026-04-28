@@ -15,6 +15,98 @@ import {
 } from 'lucide-react';
 import { getMeta, getRecords, createRecord, updateRecord, deleteRecord } from '../api';
 
+const isJsonColumn = (type) => type === 'json' || type === 'jsonb';
+const isNumericColumn = (type) => typeof type === 'string' && (type.includes('int') || type === 'decimal' || type === 'float');
+const isDateColumn = (type) => type === 'date';
+const isDateTimeColumn = (type) => typeof type === 'string' && type.includes('datetime');
+
+const formatJsonValue = (value) => {
+  if (value === null || value === undefined || value === '') return '';
+  if (typeof value === 'string') return value;
+
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+};
+
+const formatDateInputValue = (value, type) => {
+  if (!value) return '';
+
+  const stringValue = String(value);
+  if (isDateColumn(type)) return stringValue.slice(0, 10);
+  if (isDateTimeColumn(type)) return stringValue.replace(' ', 'T').replace('Z', '').slice(0, 16);
+
+  return stringValue;
+};
+
+const formatCellValue = (value) => {
+  if (value === null || value === undefined || value === '') return '—';
+  if (Array.isArray(value)) {
+    return value.length ? value.map((entry) => formatCellValue(entry)).join(', ') : '[]';
+  }
+  if (typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+
+  return String(value);
+};
+
+const buildDefaultRecord = (cols) => {
+  const defaults = {};
+
+  cols.forEach((col) => {
+    if (col.name === 'id') return;
+
+    if (isNumericColumn(col.type)) defaults[col.name] = 0;
+    else if (col.type === 'boolean') defaults[col.name] = false;
+    else if (isJsonColumn(col.type)) defaults[col.name] = '{}';
+    else defaults[col.name] = '';
+  });
+
+  return defaults;
+};
+
+const normalizeRecordForForm = (record, cols) => {
+  const normalized = { ...record };
+
+  cols.forEach((col) => {
+    const value = record?.[col.name];
+
+    if (isJsonColumn(col.type)) normalized[col.name] = formatJsonValue(value);
+    else if (isDateColumn(col.type) || isDateTimeColumn(col.type)) normalized[col.name] = formatDateInputValue(value, col.type);
+  });
+
+  return normalized;
+};
+
+const buildPayloadFromRecord = (record, cols) => {
+  const payload = { ...record };
+
+  cols.forEach((col) => {
+    const value = record[col.name];
+
+    if (isJsonColumn(col.type)) {
+      if (value === null || value === undefined || value === '') {
+        payload[col.name] = {};
+      } else if (typeof value === 'string') {
+        try {
+          payload[col.name] = JSON.parse(value);
+        } catch {
+          throw new Error(`Invalid JSON for ${col.name}`);
+        }
+      }
+    } else if (isNumericColumn(col.type)) {
+      payload[col.name] = value === '' || value === null || value === undefined ? null : Number(value);
+    } else if (isDateColumn(col.type) || isDateTimeColumn(col.type)) {
+      payload[col.name] = value || null;
+    }
+  });
+
+  return payload;
+};
+
 function DynamicAdminTable({ table }) {
   const [columns, setColumns] = useState([]);
   const [records, setRecords] = useState([]);
@@ -77,21 +169,13 @@ function DynamicAdminTable({ table }) {
   // Modal Handlers
   const openCreateModal = () => {
     setModalMode('create');
-    const defaults = {};
-    columns.forEach(col => {
-      if (col.name !== 'id') {
-        if (col.type.includes('int') || col.type === 'decimal') defaults[col.name] = 0;
-        else if (col.type === 'boolean') defaults[col.name] = false;
-        else defaults[col.name] = '';
-      }
-    });
-    setCurrentRecord(defaults);
+    setCurrentRecord(buildDefaultRecord(columns));
     setIsModalOpen(true);
   };
 
   const openEditModal = (record) => {
     setModalMode('edit');
-    setCurrentRecord({ ...record });
+    setCurrentRecord(normalizeRecordForForm(record, columns));
     setIsModalOpen(true);
   };
 
@@ -109,11 +193,13 @@ function DynamicAdminTable({ table }) {
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      const payload = buildPayloadFromRecord(currentRecord, columns);
+
       if (modalMode === 'create') {
-        await createRecord(table, currentRecord);
+        await createRecord(table, payload);
         toast.success('Record created successfully');
       } else {
-        await updateRecord(table, currentRecord.id, currentRecord);
+        await updateRecord(table, currentRecord.id, payload);
         toast.success('Record updated successfully');
       }
       closeModal();
@@ -209,7 +295,9 @@ function DynamicAdminTable({ table }) {
                           {rec[col.name] ? 'True' : 'False'}
                         </span>
                       ) : (
-                        rec[col.name]
+                        <span className="block truncate" title={formatCellValue(rec[col.name])}>
+                          {formatCellValue(rec[col.name])}
+                        </span>
                       )}
                     </td>
                   ))}
@@ -307,7 +395,7 @@ function DynamicAdminTable({ table }) {
                         if (col.name === 'id' || col.name === 'created_at' || col.name === 'updated_at') return null;
 
                         return (
-                          <div key={col.name} className={col.type === 'text' || col.type === 'varchar' ? 'md:col-span-2' : ''}>
+                          <div key={col.name} className={col.type === 'text' || col.type === 'string' || isJsonColumn(col.type) ? 'md:col-span-2' : ''}>
                             <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
                               {col.name.replace(/_/g, ' ')}
                             </label>
@@ -316,9 +404,17 @@ function DynamicAdminTable({ table }) {
                                 checked={currentRecord[col.name] || false}
                                 onChange={(val) => setCurrentRecord(prev => ({ ...prev, [col.name]: val }))}
                               />
+                            ) : isJsonColumn(col.type) || col.type === 'text' ? (
+                              <textarea
+                                value={currentRecord[col.name] || ''}
+                                onChange={(e) => handleInputChange(e, col)}
+                                rows={isJsonColumn(col.type) ? 6 : 4}
+                                className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm text-sm font-mono"
+                                placeholder={isJsonColumn(col.type) ? `Enter valid JSON for ${col.name}` : `Enter ${col.name}`}
+                              />
                             ) : (
                               <input
-                                type={col.type.includes('int') || col.type === 'decimal' ? 'number' : col.type.includes('date') ? 'date' : 'text'}
+                                type={isNumericColumn(col.type) ? 'number' : isDateTimeColumn(col.type) ? 'datetime-local' : isDateColumn(col.type) ? 'date' : 'text'}
                                 value={currentRecord[col.name] || ''}
                                 onChange={(e) => handleInputChange(e, col)}
                                 className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm text-sm"

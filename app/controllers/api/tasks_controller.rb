@@ -1,9 +1,10 @@
 class Api::TasksController < Api::BaseController
   before_action :set_task, only: [:update, :destroy]
+  around_action :log_project_dashboard_exceptions
 
   # GET /tasks.json
   def index
-    @tasks = Task.includes(:assigned_user, :sprint)
+    @tasks = Task.includes(:developer, :assigned_user, :sprint)
                  .where('type != ? OR created_by = ?', 'general', current_user.id)
                  .order(end_date: :asc)
 
@@ -12,22 +13,20 @@ class Api::TasksController < Api::BaseController
     @tasks = @tasks.where('project_id = ? OR type = ?', params[:project_id], 'general') if params[:project_id].present?
     @tasks = @tasks.where(type: params[:type]) if params[:type].present?
 
-    render json: @tasks.as_json(include: {
-      assigned_user: { only: [:id, :first_name, :email] },
-      sprint: { only: [:id, :project_id] }
-    })
+    render json: serialize_tasks(@tasks)
   end
 
   # POST /tasks.json
   def create
     @task = Task.new(task_params)
     if @task.save
-      render json: @task.as_json(include: {
-        developer: {},
-        assigned_user: { only: [:id, :first_name, :email] },
-        sprint: { only: [:id, :project_id] }
-      }), status: :created
+      render json: serialize_task(@task), status: :created
     else
+      log_project_event(
+        :error,
+        'Task creation failed',
+        payload: { task_id: @task.task_id, sprint_id: @task.sprint_id, project_id: @task.project_id, errors: @task.errors.full_messages }
+      )
       render json: { errors: @task.errors.full_messages }, status: :unprocessable_entity
     end
   end
@@ -63,12 +62,13 @@ class Api::TasksController < Api::BaseController
     end
 
     if updated
-      render json: @task.as_json(include: {
-        developer: {},
-        assigned_user: { only: [:id, :first_name, :email] },
-        sprint: { only: [:id, :project_id] }
-      })
+      render json: serialize_task(@task)
     else
+      log_project_event(
+        :error,
+        'Task update failed',
+        payload: { task_id: @task.task_id, sprint_id: @task.sprint_id, project_id: @task.project_id, errors: @task.errors.full_messages }
+      )
       render json: { errors: @task.errors.full_messages }, status: :unprocessable_entity
     end
   end
@@ -81,10 +81,26 @@ class Api::TasksController < Api::BaseController
 
   def import_backlog
     project = Project.find(params[:project_id]) if params[:project_id].present?
+    log_sheet_event(
+      :info,
+      'Backlog sheet import started',
+      payload: { project_id: project&.id, sheet_name: 'Backlog', spreadsheet_id: project&.sheet_id }
+    )
     service = TaskSheetService.new('Backlog', project&.sheet_id)
     service.import_tasks(sprint_id: nil, project_id: project&.id, created_by_id: current_user.id)
+    log_sheet_event(
+      :info,
+      'Backlog sheet import completed',
+      payload: { project_id: project&.id, sheet_name: 'Backlog', spreadsheet_id: project&.sheet_id }
+    )
     head :no_content
   rescue StandardError => e
+    log_sheet_event(
+      :error,
+      'Backlog sheet import failed',
+      exception: e,
+      payload: { project_id: project&.id || params[:project_id], sheet_name: 'Backlog', spreadsheet_id: project&.sheet_id }
+    )
     render json: { error: e.message }, status: :unprocessable_entity
   end
 
@@ -116,6 +132,22 @@ class Api::TasksController < Api::BaseController
     end
 
     permitted
+  end
+
+  def serialize_tasks(tasks)
+    tasks.as_json(include: serialization_includes)
+  end
+
+  def serialize_task(task)
+    task.as_json(include: serialization_includes)
+  end
+
+  def serialization_includes
+    {
+      developer: { only: [:id, :first_name, :last_name, :email], methods: [:name] },
+      assigned_user: { only: [:id, :first_name, :last_name, :email], methods: [:name] },
+      sprint: { only: [:id, :project_id] }
+    }
   end
 
   def adjust_manual_order(task, permitted)

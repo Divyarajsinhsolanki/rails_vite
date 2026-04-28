@@ -2,6 +2,7 @@ class Api::ProjectVaultItemsController < Api::BaseController
   before_action :set_project
   before_action :set_vault_item, only: [:update, :destroy]
   before_action :authorize_project_member
+  around_action :log_project_dashboard_exceptions
 
   def index
     scope = @project.project_vault_items.includes(:project_environment)
@@ -21,6 +22,11 @@ class Api::ProjectVaultItemsController < Api::BaseController
     if vault_item.save
       render json: vault_item.as_json(include: { project_environment: { only: [:id, :name] } }), status: :created
     else
+      log_project_event(
+        :error,
+        'Project vault item creation failed',
+        payload: { project_id: @project.id, title: vault_item.title, category: vault_item.category, errors: vault_item.errors.full_messages }
+      )
       render json: { errors: vault_item.errors.full_messages }, status: :unprocessable_entity
     end
   end
@@ -29,6 +35,11 @@ class Api::ProjectVaultItemsController < Api::BaseController
     if @vault_item.update(vault_item_params)
       render json: @vault_item.as_json(include: { project_environment: { only: [:id, :name] } })
     else
+      log_project_event(
+        :error,
+        'Project vault item update failed',
+        payload: { project_id: @project.id, vault_item_id: @vault_item.id, title: @vault_item.title, errors: @vault_item.errors.full_messages }
+      )
       render json: { errors: @vault_item.errors.full_messages }, status: :unprocessable_entity
     end
   end
@@ -49,9 +60,10 @@ class Api::ProjectVaultItemsController < Api::BaseController
   end
 
   def authorize_project_member
-    unless @project.users.include?(current_user)
-      render json: { error: 'Not authorized' }, status: :forbidden
-    end
+    return if @project.users.include?(current_user)
+
+    log_project_event(:warn, 'Project vault authorization failed', payload: { project_id: @project.id })
+    render json: { error: 'Not authorized' }, status: :forbidden
   end
 
   def vault_item_params

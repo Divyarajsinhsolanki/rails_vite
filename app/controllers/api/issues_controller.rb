@@ -2,6 +2,7 @@ class Api::IssuesController < Api::BaseController
   include Rails.application.routes.url_helpers
   before_action :require_project_id!, only: [:create, :update, :destroy, :import_from_sheet]
   before_action :set_issue, only: [:update, :destroy]
+  around_action :log_project_dashboard_exceptions
 
   def index
     return render json: { error: "project_id required" }, status: :unprocessable_entity unless params[:project_id].present?
@@ -18,6 +19,11 @@ class Api::IssuesController < Api::BaseController
     if issue.save
       render json: serialize_issue(issue), status: :created
     else
+      log_project_event(
+        :error,
+        'Issue creation failed',
+        payload: { project_id: @project_id, issue_key: issue.issue_key, title: issue.title, errors: issue.errors.full_messages }
+      )
       render json: { errors: issue.errors.full_messages }, status: :unprocessable_entity
     end
   end
@@ -27,6 +33,11 @@ class Api::IssuesController < Api::BaseController
     if @issue.update(issue_params.merge(project_id: @project_id))
       render json: serialize_issue(@issue)
     else
+      log_project_event(
+        :error,
+        'Issue update failed',
+        payload: { project_id: @project_id, issue_id: @issue.id, issue_key: @issue.issue_key, errors: @issue.errors.full_messages }
+      )
       render json: { errors: @issue.errors.full_messages }, status: :unprocessable_entity
     end
   end
@@ -38,11 +49,23 @@ class Api::IssuesController < Api::BaseController
 
   def import_from_sheet
     project = Project.find(@project_id)
-    return render json: { error: "Sheet integration is disabled for this project" }, status: :unprocessable_entity unless project.sheet_integration_enabled?
+    unless project.sheet_integration_enabled?
+      log_sheet_event(:warn, 'Issue sheet import blocked: integration disabled', payload: { project_id: project.id })
+      return render json: { error: "Sheet integration is disabled for this project" }, status: :unprocessable_entity
+    end
 
     spreadsheet_id = project.issue_sheet_id.presence || project.sheet_id
     sheet_name = params[:sheet].presence || project.issue_sheet_name.presence || "Issue Tracker"
-    return render json: { error: "Issue tracker Sheet ID missing for this project" }, status: :unprocessable_entity if spreadsheet_id.blank?
+    if spreadsheet_id.blank?
+      log_sheet_event(:error, 'Issue sheet import blocked: spreadsheet ID missing', payload: { project_id: project.id, sheet_name: sheet_name })
+      return render json: { error: "Issue tracker Sheet ID missing for this project" }, status: :unprocessable_entity
+    end
+
+    log_sheet_event(
+      :info,
+      'Issue sheet import started',
+      payload: { project_id: project.id, sheet_name: sheet_name, spreadsheet_id: spreadsheet_id }
+    )
 
     summary = IssueSheetImportService.new(
       project: project,
@@ -50,8 +73,20 @@ class Api::IssuesController < Api::BaseController
       spreadsheet_id: spreadsheet_id
     ).call
 
+    log_sheet_event(
+      :info,
+      'Issue sheet import completed',
+      payload: { project_id: project.id, sheet_name: sheet_name, spreadsheet_id: spreadsheet_id, summary: summary }
+    )
+
     render json: summary.merge(sheet_name: sheet_name)
   rescue StandardError => e
+    log_sheet_event(
+      :error,
+      'Issue sheet import failed',
+      exception: e,
+      payload: { project_id: @project_id, sheet_name: sheet_name, spreadsheet_id: spreadsheet_id }
+    )
     render json: { error: e.message }, status: :unprocessable_entity
   end
 

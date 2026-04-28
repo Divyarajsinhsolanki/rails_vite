@@ -55,7 +55,6 @@ export const SchedulerAPI = {
 
   // Developers
   getDevelopers: () => api.get("/developers.json"),
-  createDeveloper: (data) => api.post("/developers.json", { developer: data }),
 
   // Tasks
   getTasks: (params = {}) => api.get("/tasks.json", { params }),
@@ -89,6 +88,7 @@ export const refreshKekaProfile = () => api.post("/keka/refresh");
 export const requestPasswordReset = (email) => api.post("/password/forgot", { password: { email } });
 export const resetPassword = (payload) => api.post("/password/reset", { password: payload });
 export const getUsers = () => api.get('/users.json');
+export const createUser = (data) => api.post('/users.json', { user: data });
 export const deleteUser = (id) => api.delete(`/users/${id}.json`);
 export const updateUser = (id, data) =>
   api.patch(`/users/${id}.json`, data, {

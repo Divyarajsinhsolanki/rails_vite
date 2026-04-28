@@ -1,13 +1,20 @@
 class Api::RolesController < Api::BaseController
-  before_action :authorize_owner!
+  before_action :authorize_role_access!
 
   def index
-    render json: Role.order(:name).pluck(:name)
+    render json: available_role_names
   end
 
   private
 
-  def authorize_owner!
-    head :forbidden unless current_user&.owner?
+  def available_role_names
+    names = Role.order(:name).pluck(:name)
+    return names if current_user&.owner?
+
+    names - ['owner']
+  end
+
+  def authorize_role_access!
+    head :forbidden unless current_user&.owner? || current_user&.admin?
   end
 end

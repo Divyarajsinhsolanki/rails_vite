@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { toast } from "react-hot-toast";
 import { 
   Search, Edit2, Trash2, X, Check, Upload, PencilLine,
-  Mail, Calendar, Users as UsersIcon, MessageSquare 
+  Mail, Calendar, Users as UsersIcon, MessageSquare, UserPlus
 } from "lucide-react";
 import {
   getUsers,
+  createUser,
   deleteUser,
   updateUser,
   fetchTeams,
@@ -15,6 +17,18 @@ import {
   fetchDepartments,
   startDirectConversation,
 } from "../components/api";
+
+const DEFAULT_CREATE_FORM = {
+  first_name: "",
+  last_name: "",
+  email: "",
+  password: "",
+  password_confirmation: "",
+  job_title: "Team Member",
+  department_id: "",
+  role_names: ["member"],
+  project_ids: [],
+};
 
 const Users = () => {
   const { user: currentUser } = React.useContext(AuthContext);
@@ -35,6 +49,9 @@ const Users = () => {
   const [projects, setProjects] = useState([]);
   const [roles, setRoles] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({ ...DEFAULT_CREATE_FORM, role_names: [...DEFAULT_CREATE_FORM.role_names], project_ids: [] });
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
 
   // Edit State
   const [editingId, setEditingId] = useState(null);
@@ -50,7 +67,8 @@ const Users = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 8;
 
-  const canManageUsers = currentUser?.roles?.some((role) => role.name === "owner");
+  const canCreateUsers = currentUser?.roles?.some((role) => ["owner", "admin"].includes(role.name));
+  const canEditUsers = currentUser?.roles?.some((role) => role.name === "owner");
 
   // --- Helpers ---
   const formatRole = (role) =>
@@ -60,8 +78,9 @@ const Users = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
+      const rolesRequest = canCreateUsers ? fetchRoles() : Promise.resolve({ data: [] });
       const [uData, tData, pData, rData, dData] = await Promise.all([
-        getUsers(), fetchTeams(), fetchProjects(), fetchRoles(), fetchDepartments()
+        getUsers(), fetchTeams(), fetchProjects(), rolesRequest, fetchDepartments()
       ]);
       
       setUsers(Array.isArray(uData.data) ? uData.data : []);
@@ -78,7 +97,7 @@ const Users = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [canCreateUsers]);
 
   // --- Handlers ---
   const handleEdit = (user) => {
@@ -110,6 +129,79 @@ const Users = () => {
         : [...prev.roles, role];
       return { ...prev, roles: newRoles };
     });
+  };
+
+  const resetCreateForm = () => {
+    setCreateForm({ ...DEFAULT_CREATE_FORM, role_names: [...DEFAULT_CREATE_FORM.role_names], project_ids: [] });
+  };
+
+  const closeCreateModal = () => {
+    setCreateModalOpen(false);
+    resetCreateForm();
+  };
+
+  const handleCreateChange = (e) => {
+    const { name, value } = e.target;
+    setCreateForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleCreateRoleToggle = (role) => {
+    setCreateForm((prev) => ({
+      ...prev,
+      role_names: prev.role_names.includes(role)
+        ? prev.role_names.filter((existingRole) => existingRole !== role)
+        : [...prev.role_names, role],
+    }));
+  };
+
+  const handleCreateProjectToggle = (projectId) => {
+    setCreateForm((prev) => {
+      const nextProjectIds = prev.project_ids.includes(projectId)
+        ? prev.project_ids.filter((id) => id !== projectId)
+        : [...prev.project_ids, projectId];
+
+      return {
+        ...prev,
+        project_ids: nextProjectIds,
+      };
+    });
+  };
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+
+    if (createForm.password !== createForm.password_confirmation) {
+      toast.error("Password confirmation does not match.");
+      return;
+    }
+
+    setIsCreatingUser(true);
+
+    try {
+      await createUser({
+        first_name: createForm.first_name,
+        last_name: createForm.last_name,
+        email: createForm.email,
+        password: createForm.password,
+        password_confirmation: createForm.password_confirmation,
+        job_title: createForm.job_title,
+        department_id: createForm.department_id || null,
+        role_names: createForm.role_names,
+        project_ids: createForm.project_ids,
+      });
+      toast.success("User created successfully.");
+      closeCreateModal();
+      await fetchData();
+    } catch (error) {
+      console.error("Create user failed", error);
+      const message = error.response?.data?.errors?.join(", ") || "User creation failed.";
+      toast.error(message);
+    } finally {
+      setIsCreatingUser(false);
+    }
   };
 
   const handleUpdate = async (e) => {
@@ -326,7 +418,7 @@ const Users = () => {
             {user.cover_photo && (
                 <img src={user.cover_photo} alt="cover" className="w-full h-full object-cover opacity-80" />
             )}
-            {canManageUsers && (
+            {canEditUsers && (
               <button
                 type="button"
                 onClick={() => openPhotoModal(user)}
@@ -408,7 +500,7 @@ const Users = () => {
                 </button>
               )}
             </div>
-            {canManageUsers ? (
+            {canEditUsers ? (
               <div className="flex items-center gap-4">
                 <button 
                     onClick={() => handleEdit(user)}
@@ -442,19 +534,32 @@ const Users = () => {
             </h1>
             <p className="text-slate-500 mt-1 text-lg">Manage your team members, roles, and assignments.</p>
           </div>
-          
-          {/* Search Bar */}
-          <div className="relative w-full md:w-96 group">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+
+          <div className="w-full md:w-auto flex flex-col md:flex-row items-stretch md:items-center gap-3">
+            {canCreateUsers && (
+              <button
+                type="button"
+                onClick={() => setCreateModalOpen(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700"
+              >
+                <UserPlus size={16} />
+                Add user
+              </button>
+            )}
+
+            {/* Search Bar */}
+            <div className="relative w-full md:w-96 group">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search people..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm transition-all"
+              />
             </div>
-            <input
-              type="text"
-              placeholder="Search people..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm transition-all"
-            />
           </div>
         </div>
 
@@ -525,6 +630,202 @@ const Users = () => {
           </div>
         )}
       </div>
+
+      {createModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <form
+            onSubmit={handleCreateUser}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 relative max-h-[90vh] overflow-y-auto"
+          >
+            <button
+              type="button"
+              onClick={closeCreateModal}
+              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+              disabled={isCreatingUser}
+            >
+              <X size={18} />
+            </button>
+
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <UserPlus size={18} />
+              </div>
+              <div>
+                <p className="text-xs uppercase text-gray-500 font-semibold tracking-wide">
+                  User Management
+                </p>
+                <h3 className="text-lg font-bold text-gray-900">Create user</h3>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase">First Name</label>
+                <input
+                  type="text"
+                  name="first_name"
+                  value={createForm.first_name}
+                  onChange={handleCreateChange}
+                  className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase">Last Name</label>
+                <input
+                  type="text"
+                  name="last_name"
+                  value={createForm.last_name}
+                  onChange={handleCreateChange}
+                  className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={createForm.email}
+                  onChange={handleCreateChange}
+                  className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase">Job Title</label>
+                <input
+                  type="text"
+                  name="job_title"
+                  value={createForm.job_title}
+                  onChange={handleCreateChange}
+                  className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase">Password</label>
+                <input
+                  type="password"
+                  name="password"
+                  value={createForm.password}
+                  onChange={handleCreateChange}
+                  className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase">Confirm Password</label>
+                <input
+                  type="password"
+                  name="password_confirmation"
+                  value={createForm.password_confirmation}
+                  onChange={handleCreateChange}
+                  className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                  required
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-xs font-semibold text-gray-500 uppercase">Department</label>
+                <select
+                  name="department_id"
+                  value={createForm.department_id}
+                  onChange={handleCreateChange}
+                  className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                >
+                  <option value="">None</option>
+                  {departments.map((department) => (
+                    <option key={department.id} value={department.id}>
+                      {department.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <label className="text-xs font-semibold text-gray-500 uppercase mb-2 block">Roles</label>
+              <div className="flex flex-wrap gap-2">
+                {roles.map((role) => (
+                  <button
+                    key={role}
+                    type="button"
+                    onClick={() => handleCreateRoleToggle(role)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                      createForm.role_names.includes(role)
+                        ? "bg-indigo-600 text-white border-indigo-600"
+                        : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"
+                    }`}
+                  >
+                    {formatRole(role)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <label className="text-xs font-semibold text-gray-500 uppercase block">Projects</label>
+                <span className="text-xs text-gray-500">
+                  {createForm.project_ids.length} selected
+                </span>
+              </div>
+
+              <div className="max-h-56 overflow-y-auto rounded-xl border border-gray-200 bg-gray-50 p-3">
+                {projects.length === 0 ? (
+                  <p className="text-sm text-gray-500">No projects available.</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {projects.map((project) => {
+                      const checked = createForm.project_ids.includes(project.id);
+
+                      return (
+                        <label
+                          key={project.id}
+                          className={`flex items-start gap-3 rounded-lg border px-3 py-2 cursor-pointer transition-colors ${
+                            checked ? "border-indigo-300 bg-white" : "border-transparent bg-white/70 hover:border-gray-200"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => handleCreateProjectToggle(project.id)}
+                            className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                          />
+                          <span className="min-w-0">
+                            <span className="block text-sm font-medium text-gray-800">{project.name}</span>
+                            {project.description && (
+                              <span className="block text-xs text-gray-500 truncate">{project.description}</span>
+                            )}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={closeCreateModal}
+                disabled={isCreatingUser}
+                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isCreatingUser}
+                className="px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-colors disabled:opacity-60"
+              >
+                {isCreatingUser ? "Creating..." : "Create user"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Photo Update Modal */}
       {photoModalOpen && photoModalUser && (

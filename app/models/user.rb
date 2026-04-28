@@ -23,10 +23,12 @@ class User < ApplicationRecord
   has_one_attached :cover_photo
   has_many :posts, dependent: :destroy, inverse_of: :user
   has_many :tasks, foreign_key: :assigned_to_user, inverse_of: :assigned_user
+  has_many :developed_tasks, class_name: 'Task', foreign_key: :developer_id, inverse_of: :developer
   has_many :items, inverse_of: :user
   has_many :comments, dependent: :destroy, inverse_of: :user
   has_many :work_logs, dependent: :destroy, inverse_of: :user
   has_many :work_notes, dependent: :destroy, inverse_of: :user
+  has_many :developed_task_logs, class_name: 'TaskLog', foreign_key: :developer_id, inverse_of: :developer
   has_many :post_likes, dependent: :destroy, inverse_of: :user
   has_many :liked_posts, through: :post_likes, source: :post
   has_many :team_users, dependent: :destroy, inverse_of: :user
@@ -92,6 +94,10 @@ class User < ApplicationRecord
 
   def full_name
     [first_name, last_name].compact_blank.join(' ')
+  end
+
+  def name
+    full_name.presence || email
   end
 
   def availability_label

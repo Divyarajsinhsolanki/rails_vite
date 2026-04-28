@@ -2,6 +2,8 @@ require 'google/apis/sheets_v4'
 require 'googleauth'
 
 class SchedulerSheetService
+  include SheetOperationLogging
+
   def initialize(sheet_name, spreadsheet_id)
     @sheet_name = sheet_name
     @spreadsheet_id = spreadsheet_id
@@ -11,7 +13,8 @@ class SchedulerSheetService
   end
 
   def export_logs(logs)
-    assignees = logs.map(&:developer).uniq.sort_by(&:name)
+    log_sheet_info('Scheduler sheet export started', log_count: logs.size)
+    developers = logs.map(&:developer).uniq.sort_by(&:name)
     dates = logs.map(&:log_date).uniq.sort
 
     matrix = {}
@@ -21,10 +24,10 @@ class SchedulerSheetService
       matrix[log.log_date][log.developer.name] << log
     end
 
-    values = [['Date'] + assignees.map(&:name)]
+    values = [['Date'] + developers.map(&:name)]
     dates.each do |date|
       row = [date.to_s]
-      assignees.each do |dev|
+      developers.each do |dev|
         cell_logs = matrix[date][dev.name]
         row << cell_logs.map { |l| "#{l.task.task_id} (#{l.hours_logged}h) - #{l.type}" }.join("\n")
       end
@@ -32,7 +35,11 @@ class SchedulerSheetService
     end
 
     write_sheet(values)
-    strike_completed_cells(matrix, assignees, dates)
+    strike_completed_cells(matrix, developers, dates)
+    log_sheet_info('Scheduler sheet export completed', log_count: logs.size, developer_count: developers.size, date_count: dates.size)
+  rescue StandardError => e
+    log_sheet_error('Scheduler sheet export failed', exception: e, payload: { log_count: logs.size })
+    raise
   end
 
   private
@@ -43,9 +50,13 @@ class SchedulerSheetService
       json_key_io: File.open(Rails.root.join('config/google_service_account.json')),
       scope: scopes
     ).tap(&:fetch_access_token!)
+  rescue StandardError => e
+    log_sheet_error('Scheduler sheet authorization failed', exception: e)
+    raise
   end
 
   def write_sheet(values)
+    ensure_spreadsheet_id!
     clear_sheet
     value_range = Google::Apis::SheetsV4::ValueRange.new(values: values)
     @service.update_spreadsheet_value(
@@ -57,14 +68,15 @@ class SchedulerSheetService
   end
 
   def clear_sheet
+    ensure_spreadsheet_id!
     @service.clear_values(@spreadsheet_id, "#{@sheet_name}!A1:Z")
   end
 
-  def strike_completed_cells(matrix, assignees, dates)
+  def strike_completed_cells(matrix, developers, dates)
     requests = []
 
     dates.each_with_index do |date, r_idx|
-      assignees.each_with_index do |dev, c_idx|
+      developers.each_with_index do |dev, c_idx|
         logs = matrix[date][dev.name]
         next unless logs.any? { |l| l.status.to_s.downcase == 'completed' }
 
@@ -96,11 +108,16 @@ class SchedulerSheetService
 
   def sheet_id
     @sheet_id ||= begin
+      ensure_spreadsheet_id!
       spreadsheet = @service.get_spreadsheet(@spreadsheet_id)
       sheet = spreadsheet.sheets.find { |s| s.properties.title == @sheet_name }
       return sheet.properties.sheet_id if sheet
 
       raise StandardError, "Sheet not found: #{@sheet_name}"
     end
+  end
+
+  def ensure_spreadsheet_id!
+    raise ArgumentError, 'Spreadsheet ID is missing' if @spreadsheet_id.blank?
   end
 end

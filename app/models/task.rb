@@ -2,7 +2,7 @@ class Task < ApplicationRecord
   include UserStampable
 
   belongs_to :sprint, optional: true, inverse_of: :tasks
-  belongs_to :developer, optional: true, inverse_of: :tasks
+  belongs_to :developer, class_name: 'User', optional: true, inverse_of: :developed_tasks
   belongs_to :project, optional: true, inverse_of: :tasks
   belongs_to :assigned_user, class_name: 'User', foreign_key: :assigned_to_user, optional: true, inverse_of: :tasks
 

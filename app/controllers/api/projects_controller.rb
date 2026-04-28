@@ -2,6 +2,7 @@ class Api::ProjectsController < Api::BaseController
   include Rails.application.routes.url_helpers
   before_action :set_project, only: [:update, :destroy]
   before_action :authorize_manager!, only: [:create, :update, :destroy]
+  around_action :log_project_dashboard_exceptions
 
   def index
     projects = Project.includes(project_users: :user).order(:name)
@@ -70,6 +71,16 @@ class Api::ProjectsController < Api::BaseController
     render json: serialize_project(project.reload), status: status
   rescue ActiveRecord::RecordInvalid => e
     errors = project.errors.full_messages.presence || [e.record.errors.full_messages.presence || e.message].flatten
+    log_project_event(
+      :error,
+      'Project save failed',
+      payload: {
+        project_id: project.id,
+        project_name: project.name,
+        errors: errors.flatten.uniq,
+        member_assignments_count: Array(member_assignments_param).size
+      }
+    )
     render json: { errors: errors.flatten.uniq }, status: :unprocessable_entity
   end
 
@@ -96,7 +107,10 @@ class Api::ProjectsController < Api::BaseController
 
   def authorize_manager!
     allowed = current_user&.owner? || current_user&.project_manager?
-    head :forbidden unless allowed
+    return if allowed
+
+    log_project_event(:warn, 'Project management authorization failed')
+    head :forbidden
   end
 
   def serialize_project(project)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2027_04_17_000000) do
+ActiveRecord::Schema[7.1].define(version: 2027_04_18_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -40,15 +40,6 @@ ActiveRecord::Schema[7.1].define(version: 2027_04_17_000000) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
-  end
-
-  create_table "assignees", force: :cascade do |t|
-    t.string "name", null: false
-    t.string "role_type", default: "developer", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["name"], name: "index_assignees_on_name", unique: true
-    t.index ["role_type"], name: "index_assignees_on_role_type"
   end
 
   create_table "calendar_events", force: :cascade do |t|
@@ -688,11 +679,11 @@ ActiveRecord::Schema[7.1].define(version: 2027_04_17_000000) do
   add_foreign_key "skill_endorsements", "user_skills"
   add_foreign_key "skill_endorsements", "users", column: "endorser_id"
   add_foreign_key "sprints", "projects"
-  add_foreign_key "task_logs", "assignees", column: "developer_id"
   add_foreign_key "task_logs", "tasks"
-  add_foreign_key "tasks", "assignees", column: "developer_id"
+  add_foreign_key "task_logs", "users", column: "developer_id"
   add_foreign_key "tasks", "projects"
   add_foreign_key "tasks", "sprints"
+  add_foreign_key "tasks", "users", column: "developer_id"
   add_foreign_key "team_users", "teams"
   add_foreign_key "team_users", "users"
   add_foreign_key "teams", "users", column: "owner_id"

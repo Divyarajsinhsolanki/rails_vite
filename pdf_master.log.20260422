@@ -1,0 +1,71 @@
+# Logfile created on 2026-04-21 17:04:17 +0530 by logger.rb/v1.7.0
+I, [2026-04-21T17:04:17.299513 #12295]  INFO -- : Calling: add_text with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", "AAA", 100, 100, 1]
+I, [2026-04-21T17:04:17.306365 #12295]  INFO -- : Adding text to /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf on page 1
+I, [2026-04-21T17:04:17.494181 #12295]  INFO -- : Text added successfully.
+I, [2026-04-21T17:04:41.436318 #12295]  INFO -- : Calling: remove_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-21T17:04:41.450519 #12295]  INFO -- : Removing pages [1] from /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-21T17:04:41.466802 #12295]  INFO -- : Pages [1] removed successfully.
+I, [2026-04-21T17:10:06.944069 #12302]  INFO -- : Calling: add_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 2]
+I, [2026-04-21T17:10:06.953902 #12302]  INFO -- : Adding blank pages to /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf at positions [2]
+I, [2026-04-21T17:10:06.972749 #12302]  INFO -- : Blank pages added successfully.
+I, [2026-04-21T17:10:08.042904 #12302]  INFO -- : Calling: add_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 2]
+I, [2026-04-21T17:10:08.055050 #12302]  INFO -- : Adding blank pages to /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf at positions [2]
+I, [2026-04-21T17:10:08.071935 #12302]  INFO -- : Blank pages added successfully.
+I, [2026-04-21T17:10:09.416962 #12302]  INFO -- : Calling: remove_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-21T17:10:09.443358 #12302]  INFO -- : Removing pages [1] from /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-21T17:10:09.464350 #12302]  INFO -- : Pages [1] removed successfully.
+I, [2026-04-21T17:10:09.875200 #12302]  INFO -- : Calling: remove_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-21T17:10:09.894316 #12302]  INFO -- : Removing pages [1] from /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-21T17:10:09.910896 #12302]  INFO -- : Pages [1] removed successfully.
+I, [2026-04-21T17:10:10.346733 #12302]  INFO -- : Calling: remove_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-21T17:10:10.361731 #12302]  INFO -- : Removing pages [1] from /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-21T17:10:10.374983 #12302]  INFO -- : Pages [1] removed successfully.
+I, [2026-04-21T17:10:10.747043 #12302]  INFO -- : Calling: remove_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-21T17:10:10.758540 #12302]  INFO -- : Removing pages [1] from /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-21T17:10:10.770433 #12302]  INFO -- : Pages [1] removed successfully.
+I, [2026-04-21T17:10:11.170566 #12302]  INFO -- : Calling: remove_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-21T17:10:11.175544 #12302]  INFO -- : Removing pages [1] from /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-21T17:10:11.185466 #12302]  INFO -- : Pages [1] removed successfully.
+I, [2026-04-21T17:10:11.610464 #12302]  INFO -- : Calling: remove_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-21T17:10:11.625472 #12302]  INFO -- : Removing pages [1] from /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-21T17:10:11.636276 #12302]  INFO -- : Pages [1] removed successfully.
+I, [2026-04-21T17:10:12.050170 #12302]  INFO -- : Calling: remove_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-21T17:10:12.054284 #12302]  INFO -- : Removing pages [1] from /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-21T17:10:12.064157 #12302]  INFO -- : Pages [1] removed successfully.
+I, [2026-04-21T17:10:14.049587 #12302]  INFO -- : Calling: remove_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-21T17:10:14.059968 #12302]  INFO -- : Removing pages [1] from /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-21T17:10:14.071357 #12302]  INFO -- : Pages [1] removed successfully.
+I, [2026-04-21T17:10:17.473607 #12302]  INFO -- : Calling: duplicate_pages with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-21T17:10:17.485657 #12302]  INFO -- : Duplicating pages [1] in /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-21T17:10:17.531637 #12302]  INFO -- : Pages duplicated successfully.
+I, [2026-04-21T17:12:23.210176 #12302]  INFO -- : Calling: rotate_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 90, 1]
+I, [2026-04-21T17:12:23.221050 #12302]  INFO -- : Rotating pages [1] of /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf by 90 degrees
+I, [2026-04-21T17:12:23.232345 #12302]  INFO -- : Pages rotated successfully.
+I, [2026-04-21T17:12:30.329649 #12302]  INFO -- : Calling: remove_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-21T17:12:30.343552 #12302]  INFO -- : Removing pages [1] from /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-21T17:12:30.369383 #12302]  INFO -- : Pages [1] removed successfully.
+I, [2026-04-21T17:12:30.904075 #12302]  INFO -- : Calling: remove_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-21T17:12:30.906750 #12302]  INFO -- : Removing pages [1] from /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-21T17:12:30.912499 #12302]  INFO -- : Pages [1] removed successfully.
+I, [2026-04-21T17:18:31.631431 #12295]  INFO -- : Calling: remove_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-21T17:18:31.650478 #12295]  INFO -- : Removing pages [1] from /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-21T17:18:31.674696 #12295]  INFO -- : Pages [1] removed successfully.
+I, [2026-04-21T17:18:33.629862 #12295]  INFO -- : Calling: remove_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-21T17:18:33.639717 #12295]  INFO -- : Removing pages [1] from /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-21T17:18:33.649757 #12295]  INFO -- : Pages [1] removed successfully.
+I, [2026-04-21T17:18:51.696237 #12295]  INFO -- : Calling: duplicate_pages with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 2]
+I, [2026-04-21T17:18:51.706496 #12295]  INFO -- : Duplicating pages [2] in /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-21T17:18:51.758258 #12295]  INFO -- : Pages duplicated successfully.
+I, [2026-04-21T17:19:08.273379 #12295]  INFO -- : Calling: remove_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 1]
+I, [2026-04-21T17:19:08.283019 #12295]  INFO -- : Removing pages [1] from /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-21T17:19:08.292173 #12295]  INFO -- : Pages [1] removed successfully.
+I, [2026-04-21T18:42:59.029244 #12295]  INFO -- : Calling: duplicate_pages with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 10]
+I, [2026-04-21T18:42:59.037600 #12295]  INFO -- : Duplicating pages [10] in /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-21T18:43:12.074528 #12295]  INFO -- : Calling: duplicate_pages with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 14]
+I, [2026-04-21T18:43:12.082261 #12295]  INFO -- : Duplicating pages [14] in /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-21T18:43:13.767179 #12295]  INFO -- : Calling: duplicate_pages with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", 4]
+I, [2026-04-21T18:43:13.780026 #12295]  INFO -- : Duplicating pages [4] in /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf
+I, [2026-04-21T18:43:13.812028 #12295]  INFO -- : Pages duplicated successfully.
+I, [2026-04-21T18:43:44.069233 #12295]  INFO -- : Calling: add_text with arguments: ["/home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf", "wwwwwwwwwwwwww", 100, 100, 1]
+I, [2026-04-21T18:43:44.076530 #12295]  INFO -- : Adding text to /home/divyarajs/react_projects/rails_vite/public/documents/sample.pdf on page 1
+I, [2026-04-21T18:43:44.092431 #12295]  INFO -- : Text added successfully.

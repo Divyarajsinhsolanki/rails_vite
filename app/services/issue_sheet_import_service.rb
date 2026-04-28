@@ -1,4 +1,6 @@
 class IssueSheetImportService
+  include SheetOperationLogging
+
   HEADER_MAP = {
     "taskcreated" => :task_id,
     "issuefoundby" => :found_by,
@@ -24,18 +26,25 @@ class IssueSheetImportService
   end
 
   def call
+    log_sheet_info('Issue sheet import started')
     rows = GoogleSheetsReader.new(@sheet_name, @spreadsheet_id).read_data
-    return { created: 0, updated: 0, skipped: 0, total: 0 } if rows.blank?
+    if rows.blank?
+      summary = { created: 0, updated: 0, skipped: 0, total: 0 }
+      log_sheet_info('Issue sheet import completed', summary: summary)
+      return summary
+    end
 
     headers = Array(rows.first).map { |h| normalize_header(h) }
     created = 0
     updated = 0
     skipped = 0
 
-    rows.drop(1).each do |row|
+    rows.drop(1).each_with_index do |row, index|
+      row_number = index + 2
       attrs = build_attrs(headers, row)
       if attrs[:issue_description].blank?
         skipped += 1
+        log_sheet_warn('Issue import row skipped: missing issue description', row_number: row_number, row: summarize_sheet_row(row))
         next
       end
 
@@ -48,19 +57,47 @@ class IssueSheetImportService
           created += 1
         else
           skipped += 1
+          log_sheet_warn(
+            'Issue import create validation failed',
+            row_number: row_number,
+            issue_description: attrs[:issue_description],
+            errors: issue.errors.full_messages
+          )
         end
       elsif issue.changed?
         if issue.save
           updated += 1
         else
           skipped += 1
+          log_sheet_warn(
+            'Issue import update validation failed',
+            row_number: row_number,
+            issue_description: attrs[:issue_description],
+            errors: issue.errors.full_messages
+          )
         end
       else
         skipped += 1
       end
+    rescue StandardError => e
+      log_sheet_error(
+        'Issue import row failed',
+        exception: e,
+        payload: {
+          row_number: row_number,
+          issue_description: attrs[:issue_description],
+          row: summarize_sheet_row(row)
+        }
+      )
+      raise
     end
 
-    { created: created, updated: updated, skipped: skipped, total: rows.length - 1 }
+    summary = { created: created, updated: updated, skipped: skipped, total: rows.length - 1 }
+    log_sheet_info('Issue sheet import completed', summary: summary)
+    summary
+  rescue StandardError => e
+    log_sheet_error('Issue sheet import failed', exception: e)
+    raise
   end
 
   private
@@ -102,5 +139,9 @@ class IssueSheetImportService
 
   def normalize_header(value)
     value.to_s.downcase.gsub(/[^a-z0-9]/, "")
+  end
+
+  def sheet_logging_payload
+    super.merge(project_id: @project.id)
   end
 end

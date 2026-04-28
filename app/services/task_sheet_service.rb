@@ -3,6 +3,8 @@ require 'googleauth'
 require 'date'
 
 class TaskSheetService
+  include SheetOperationLogging
+
   def initialize(sheet_name, spreadsheet_id)
     @sheet_name = sheet_name
     @spreadsheet_id = spreadsheet_id
@@ -12,12 +14,34 @@ class TaskSheetService
   end
 
   def import_tasks(sprint_id:, created_by_id:, project_id: nil)
+    log_sheet_info('Task sheet import started', sprint_id: sprint_id, project_id: project_id, created_by_id: created_by_id)
     data = read_sheet
-    import_tasks_from_sheet(data, sprint_id: sprint_id, created_by_id: created_by_id, project_id: project_id)
+    imported_count = import_tasks_from_sheet(data, sprint_id: sprint_id, created_by_id: created_by_id, project_id: project_id)
+    log_sheet_info(
+      'Task sheet import completed',
+      sprint_id: sprint_id,
+      project_id: project_id,
+      created_by_id: created_by_id,
+      imported_count: imported_count,
+      source_row_count: data.size
+    )
+    imported_count
+  rescue StandardError => e
+    log_sheet_error(
+      'Task sheet import failed',
+      exception: e,
+      payload: { sprint_id: sprint_id, project_id: project_id, created_by_id: created_by_id }
+    )
+    raise
   end
 
   def export_tasks(tasks)
+    log_sheet_info('Task sheet export started', task_count: tasks.size)
     write_tasks_to_sheet(tasks)
+    log_sheet_info('Task sheet export completed', task_count: tasks.size)
+  rescue StandardError => e
+    log_sheet_error('Task sheet export failed', exception: e, payload: { task_count: tasks.size })
+    raise
   end
 
   private
@@ -28,12 +52,22 @@ class TaskSheetService
       json_key_io: File.open(Rails.root.join('config/google_service_account.json')),
       scope: scopes
     ).tap(&:fetch_access_token!)
+  rescue StandardError => e
+    log_sheet_error('Google Sheets read/write authorization failed', exception: e)
+    raise
   end
 
   def read_sheet
     range = "#{@sheet_name}!A1:Z"
+    ensure_spreadsheet_id!
+    log_sheet_info('Task sheet read started', range: range)
     response = @service.get_spreadsheet_values(@spreadsheet_id, range)
-    response.values || []
+    rows = response.values || []
+    log_sheet_info('Task sheet read completed', range: range, row_count: rows.size)
+    rows
+  rescue StandardError => e
+    log_sheet_error('Task sheet read failed', exception: e, payload: { range: range })
+    raise
   end
 
   def parse_date(value)
@@ -49,7 +83,10 @@ class TaskSheetService
   end
 
   def import_tasks_from_sheet(sheet_data, sprint_id:, created_by_id:, project_id: nil)
-    (sheet_data[1..] || []).each do |row|
+    imported_count = 0
+
+    (sheet_data[1..] || []).each_with_index do |row, index|
+      row_number = index + 2
       next if row.compact.empty?
 
       task_id = row[1]
@@ -62,8 +99,11 @@ class TaskSheetService
       status = map_status(row[8])
       order = row[0].to_i
 
-      assignee = Assignee.find_by(name: developer_name)
-      user = User.find_by(first_name: user_name)
+      developer = find_user_by_name(developer_name)
+      user = find_user_by_name(user_name)
+
+      log_sheet_warn('Task import developer not found', row_number: row_number, developer_name: developer_name, task_id: task_id) if developer_name.present? && developer.nil?
+      log_sheet_warn('Task import assigned user not found', row_number: row_number, user_name: user_name, task_id: task_id) if user_name.present? && user.nil?
 
       task = Task.find_or_initialize_by(task_id: task_id)
 
@@ -72,7 +112,7 @@ class TaskSheetService
         type: 'Code',
         estimated_hours: estimated_hours,
         sprint_id: sprint_id,
-        developer_id: assignee&.id,
+        developer_id: developer&.id,
         assigned_to_user: user&.id,
         created_by: created_by_id,
         updated_by: created_by_id,
@@ -86,7 +126,24 @@ class TaskSheetService
       )
 
       task.save!
+      imported_count += 1
+    rescue StandardError => e
+      log_sheet_error(
+        'Task import row failed',
+        exception: e,
+        payload: {
+          row_number: row_number,
+          task_id: task_id,
+          title: title,
+          developer_name: developer_name,
+          user_name: user_name,
+          row: summarize_sheet_row(row)
+        }
+      )
+      raise
     end
+
+    imported_count
   end
 
   def write_tasks_to_sheet(tasks)
@@ -94,7 +151,7 @@ class TaskSheetService
 
     values = [[
       'Order', 'Task ID', 'Task Title', 'Est. Hours',
-      'Assigned To Assignee', 'Assigned User', 'Start Date', 'End Date', 'Status'
+      'Assigned To Developer', 'Assigned User', 'Start Date', 'End Date', 'Status'
     ]]
 
     tasks.each_with_index do |task, index|
@@ -133,7 +190,26 @@ class TaskSheetService
   end
 
   def clear_sheet
+    ensure_spreadsheet_id!
     @service.clear_values(@spreadsheet_id, "#{@sheet_name}!A1:Z")
+  end
+
+  def find_user_by_name(value)
+    normalized = value.to_s.strip.downcase
+    return if normalized.blank?
+
+    user_lookup[normalized]
+  end
+
+  def user_lookup
+    @user_lookup ||= User.order(:id).each_with_object({}) do |user, lookup|
+      [user.first_name, user.last_name, user.full_name, user.name, user.email].compact.each do |entry|
+        normalized = entry.to_s.strip.downcase
+        next if normalized.blank?
+
+        lookup[normalized] ||= user
+      end
+    end
   end
 
   def highlight_completed_rows(tasks)
@@ -207,11 +283,16 @@ class TaskSheetService
 
   def sheet_id
     @sheet_id ||= begin
+      ensure_spreadsheet_id!
       spreadsheet = @service.get_spreadsheet(@spreadsheet_id)
       sheet = spreadsheet.sheets.find { |s| s.properties.title == @sheet_name }
       return sheet.properties.sheet_id if sheet
 
       raise StandardError, "Sheet not found: #{@sheet_name}"
     end
+  end
+
+  def ensure_spreadsheet_id!
+    raise ArgumentError, 'Spreadsheet ID is missing' if @spreadsheet_id.blank?
   end
 end

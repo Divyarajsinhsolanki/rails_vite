@@ -41,7 +41,7 @@ class Api::AdminController < Api::BaseController
 
     records = @model.order(id: :desc)
 
-    filters = params.permit(filters: @model.column_names.map(&:to_sym))[:filters]
+    filters = filter_params
     records = records.where(filters) if filters.present?
 
     total_count = records.count
@@ -105,7 +105,21 @@ class Api::AdminController < Api::BaseController
   end
 
   def record_params
-    params.require(:record).permit(@model.column_names.map(&:to_sym))
+    scalar_columns = @model.columns.reject { |column| json_column?(column) }.map { |column| column.name.to_sym }
+    json_columns = @model.columns.select { |column| json_column?(column) }.map { |column| { column.name.to_sym => {} } }
+
+    params.require(:record).permit(*scalar_columns, *json_columns)
+  end
+
+  def filter_params
+    raw_filters = params[:filters]
+    return unless raw_filters.is_a?(ActionController::Parameters)
+
+    raw_filters.permit(@model.column_names.map(&:to_sym))
+  end
+
+  def json_column?(column)
+    column.type.in?([:json, :jsonb])
   end
 
   def authorize_owner!
