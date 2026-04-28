@@ -360,11 +360,11 @@ const DepartmentDetails = () => {
                 <select
                   value={newManagerId}
                   onChange={(e) => setNewManagerId(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                  className="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg p-2.5 text-sm !text-slate-900 dark:!text-slate-100 outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                 >
-                  <option value="">No Lead Assigned</option>
+                  <option value="" style={{ color: "#0f172a", backgroundColor: "#ffffff" }}>No Lead Assigned</option>
                   {users.map(u => (
-                    <option key={u.id} value={u.id}>{u.full_name}</option>
+                    <option key={u.id} value={u.id} style={{ color: "#0f172a", backgroundColor: "#ffffff" }}>{u.full_name}</option>
                   ))}
                 </select>
                 <div className="flex justify-end gap-2">
