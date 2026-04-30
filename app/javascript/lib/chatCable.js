@@ -77,6 +77,8 @@ const subscribe = (params, received) => {
   };
 };
 
+export const subscribeToPresence = (received) => subscribe({ channel: "PresenceChannel" }, received);
+
 export const subscribeToUserChat = (received) => subscribe({ channel: "ChatChannel" }, received);
 
 export const subscribeToConversationChat = (conversationId, received) => {
