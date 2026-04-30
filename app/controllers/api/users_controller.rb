@@ -4,6 +4,8 @@ class Api::UsersController < Api::BaseController
   before_action :authorize_owner!, only: [:update, :destroy]
   before_action :set_user, only: [:show, :update, :destroy]
 
+  ONLINE_WINDOW = 2.minutes
+
   # GET /api/users.json
   def index
     @users = User.order(created_at: :desc)
@@ -60,6 +62,12 @@ class Api::UsersController < Api::BaseController
   def destroy
     @user.destroy
     head :no_content
+  end
+
+  # POST /api/users/presence
+  def presence
+    current_user.touch(:last_seen_at)
+    render json: { ok: true, last_seen_at: current_user.last_seen_at }
   end
 
   # POST /api/update_profile
@@ -191,7 +199,9 @@ class Api::UsersController < Api::BaseController
       phone_number: user.phone_number,
       bio: user.bio,
       social_links: user.social_links || {},
-      projects: user.projects.order(:name).map { |project| { id: project.id, name: project.name } }
+      projects: user.projects.order(:name).map { |project| { id: project.id, name: project.name } },
+      last_seen_at: user.last_seen_at,
+      online: user.last_seen_at.present? && user.last_seen_at >= ONLINE_WINDOW.ago
     }
   end
 

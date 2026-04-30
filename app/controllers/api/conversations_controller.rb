@@ -74,7 +74,7 @@ class Api::ConversationsController < Api::BaseController
       id: conversation.id,
       title: conversation.display_name(current_user),
       conversation_type: conversation.conversation_type,
-      participants: conversation.participants.map { |user| { id: user.id, name: user.full_name, profile_picture: (rails_blob_url(user.profile_picture, only_path: true) if user.profile_picture.attached?) } },
+      participants: conversation.participants.map { |user| { id: user.id, name: user.full_name, profile_picture: (rails_blob_url(user.profile_picture, only_path: true) if user.profile_picture.attached?), last_seen_at: user.last_seen_at, online: user.last_seen_at.present? && user.last_seen_at >= 2.minutes.ago } },
       unread_count: unread_count,
       last_message_at: conversation.messages.maximum(:created_at),
       updated_at: conversation.updated_at
