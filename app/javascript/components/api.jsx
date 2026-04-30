@@ -88,6 +88,7 @@ export const refreshKekaProfile = () => api.post("/keka/refresh");
 export const requestPasswordReset = (email) => api.post("/password/forgot", { password: { email } });
 export const resetPassword = (payload) => api.post("/password/reset", { password: payload });
 export const getUsers = () => api.get('/users.json');
+export const updatePresence = () => api.post('/users/presence');
 export const createUser = (data) => api.post('/users.json', { user: data });
 export const deleteUser = (id) => api.delete(`/users/${id}.json`);
 export const updateUser = (id, data) =>

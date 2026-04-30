@@ -29,7 +29,8 @@ import {
   getUsers,
   removeMessageReaction,
   sendMessage,
-  startDirectConversation
+  startDirectConversation,
+  updatePresence
 } from "../components/api";
 import { AuthContext } from "../context/AuthContext";
 import { sendToConversation, subscribeToConversationChat, subscribeToUserChat } from "../lib/chatCable";
@@ -89,6 +90,8 @@ const formatDayLabel = (value) => {
 
 const formatParticipantStatus = (participant, currentUserId) => {
   if (Number(participant?.id) === Number(currentUserId)) return "You";
+  if (participant?.online) return "Online";
+  if (participant?.last_seen_at) return `Last seen ${formatDistanceToNow(new Date(participant.last_seen_at), { addSuffix: true })}`;
   if (!participant?.last_read_at) return "No recent read receipt";
   return `Read ${formatDistanceToNow(new Date(participant.last_read_at), { addSuffix: true })}`;
 };

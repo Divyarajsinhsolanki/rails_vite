@@ -16,6 +16,7 @@ import {
   fetchRoles,
   fetchDepartments,
   startDirectConversation,
+  updatePresence,
 } from "../components/api";
 
 const DEFAULT_CREATE_FORM = {
@@ -98,6 +99,12 @@ const Users = () => {
   useEffect(() => {
     fetchData();
   }, [canCreateUsers]);
+
+  useEffect(() => {
+    updatePresence().catch(() => {});
+    const timer = setInterval(() => updatePresence().catch(() => {}), 30000);
+    return () => clearInterval(timer);
+  }, []);
 
   // --- Handlers ---
   const handleEdit = (user) => {
