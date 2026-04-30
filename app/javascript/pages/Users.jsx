@@ -136,6 +136,16 @@ const Users = () => {
     });
   };
 
+  const closeEditModal = () => {
+    setEditingId(null);
+    setFormData({
+      first_name: "", last_name: "", email: "",
+      date_of_birth: "", profile_picture: null,
+      cover_photo: null, roles: [], department_id: "",
+      job_title: "", phone_number: "", bio: "", landing_page: ""
+    });
+  };
+
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     setFormData((prev) => ({
@@ -348,7 +358,6 @@ const Users = () => {
 
   // --- Render Helpers ---
   const UserCard = ({ user }) => {
-    const isEditing = editingId === user.id;
     const userTeams = teams.filter(t => t.users?.some(u => u.id === user.id));
     
     // Default gradients for cover if none exists
@@ -360,110 +369,6 @@ const Users = () => {
     ];
     const randomGradient = gradients[user.id % gradients.length];
 
-    if (isEditing) {
-      return (
-        <div className="bg-white rounded-2xl shadow-xl ring-2 ring-indigo-500/20 p-6 relative overflow-hidden transition-all">
-          <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <Edit2 size={18} className="text-indigo-600" /> Edit Profile
-          </h3>
-          <form onSubmit={handleUpdate} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-1">
-                <label className="text-xs font-semibold text-gray-500 uppercase">First Name</label>
-                <input type="text" name="first_name" value={formData.first_name} onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm" required />
-              </div>
-              <div className="col-span-1">
-                <label className="text-xs font-semibold text-gray-500 uppercase">Last Name</label>
-                <input type="text" name="last_name" value={formData.last_name} onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm" required />
-              </div>
-            </div>
-            
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase">Email</label>
-              <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm" required />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase">Department</label>
-                <select name="department_id" value={formData.department_id} onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
-                  <option value="">None</option>
-                  {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase">Birth Date</label>
-                <input type="date" name="date_of_birth" value={formData.date_of_birth?.split('T')[0]} onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm" />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase">Job Title</label>
-              <input type="text" name="job_title" value={formData.job_title} onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm" />
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase">Phone Number</label>
-              <input type="text" name="phone_number" value={formData.phone_number} onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm" />
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase">Landing Page</label>
-              <input type="text" name="landing_page" value={formData.landing_page} onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm" />
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase">Bio</label>
-              <textarea name="bio" value={formData.bio} onChange={handleChange} rows={3} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm" />
-            </div>
-
-            <div className="grid grid-cols-1 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase">Profile Picture</label>
-                <input type="file" name="profile_picture" accept="image/*" onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg text-sm" />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase">Cover Photo</label>
-                <input type="file" name="cover_photo" accept="image/*" onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg text-sm" />
-              </div>
-            </div>
-
-            {/* Role Selection Chips */}
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase mb-2 block">Roles</label>
-              <div className="flex flex-wrap gap-2">
-                {roles.map((role) => (
-                  <button
-                    key={role}
-                    type="button"
-                    onClick={() => handleRoleChange(role)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                      formData.roles.includes(role)
-                        ? "bg-indigo-600 text-white border-indigo-600"
-                        : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"
-                    }`}
-                  >
-                    {formatRole(role)}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-3 pt-2">
-              <button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
-                <Check size={16} /> Save
-              </button>
-              <button type="button" onClick={() => setEditingId(null)} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
-                <X size={16} /> Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      );
-    }
-
-    // View Mode
     return (
       <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 overflow-hidden transition-all duration-300 flex flex-col h-full relative">
         {/* Banner */}
@@ -960,6 +865,40 @@ const Users = () => {
       )}
 
       {/* Custom Modal for Deletion */}
+      {editingId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <form onSubmit={handleUpdate} className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 relative max-h-[90vh] overflow-y-auto">
+            <button type="button" onClick={closeEditModal} className="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
+              <X size={18} />
+            </button>
+            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <Edit2 size={18} className="text-indigo-600" /> Edit User Profile
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div><label className="text-xs font-semibold text-gray-500 uppercase">First Name</label><input type="text" name="first_name" value={formData.first_name} onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm" required /></div>
+              <div><label className="text-xs font-semibold text-gray-500 uppercase">Last Name</label><input type="text" name="last_name" value={formData.last_name} onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm" required /></div>
+              <div className="md:col-span-2"><label className="text-xs font-semibold text-gray-500 uppercase">Email</label><input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm" required /></div>
+              <div><label className="text-xs font-semibold text-gray-500 uppercase">Department</label><select name="department_id" value={formData.department_id} onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"><option value="">None</option>{departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}</select></div>
+              <div><label className="text-xs font-semibold text-gray-500 uppercase">Birth Date</label><input type="date" name="date_of_birth" value={formData.date_of_birth?.split('T')[0]} onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm" /></div>
+              <div><label className="text-xs font-semibold text-gray-500 uppercase">Job Title</label><input type="text" name="job_title" value={formData.job_title} onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm" /></div>
+              <div><label className="text-xs font-semibold text-gray-500 uppercase">Phone Number</label><input type="text" name="phone_number" value={formData.phone_number} onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm" /></div>
+              <div className="md:col-span-2"><label className="text-xs font-semibold text-gray-500 uppercase">Landing Page</label><input type="text" name="landing_page" value={formData.landing_page} onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm" /></div>
+              <div className="md:col-span-2"><label className="text-xs font-semibold text-gray-500 uppercase">Bio</label><textarea name="bio" value={formData.bio} onChange={handleChange} rows={3} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm" /></div>
+              <div><label className="text-xs font-semibold text-gray-500 uppercase">Profile Picture</label><input type="file" name="profile_picture" accept="image/*" onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg text-sm" /></div>
+              <div><label className="text-xs font-semibold text-gray-500 uppercase">Cover Photo</label><input type="file" name="cover_photo" accept="image/*" onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg text-sm" /></div>
+            </div>
+            <div className="mt-4">
+              <label className="text-xs font-semibold text-gray-500 uppercase mb-2 block">Roles</label>
+              <div className="flex flex-wrap gap-2">{roles.map((role) => (<button key={role} type="button" onClick={() => handleRoleChange(role)} className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${formData.roles.includes(role) ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"}`}>{formatRole(role)}</button>))}</div>
+            </div>
+            <div className="mt-6 flex gap-3 justify-end">
+              <button type="button" onClick={closeEditModal} className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
+              <button type="submit" className="px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-colors inline-flex items-center gap-2"><Check size={16} /> Save changes</button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {deleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-opacity">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform transition-all scale-100">
