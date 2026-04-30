@@ -67,7 +67,15 @@ class Api::UsersController < Api::BaseController
   # POST /api/users/presence
   def presence
     current_user.touch(:last_seen_at)
-    render json: { ok: true, last_seen_at: current_user.last_seen_at }
+    online = current_user.last_seen_at.present? && current_user.last_seen_at >= ONLINE_WINDOW.ago
+
+    ActionCable.server.broadcast("presence", {
+      user_id: current_user.id,
+      last_seen_at: current_user.last_seen_at,
+      online: online
+    })
+
+    render json: { ok: true, last_seen_at: current_user.last_seen_at, online: online }
   end
 
   # POST /api/update_profile

@@ -18,6 +18,7 @@ import {
   startDirectConversation,
   updatePresence,
 } from "../components/api";
+import { subscribeToPresence } from "../lib/chatCable";
 
 const DEFAULT_CREATE_FORM = {
   first_name: "",
@@ -59,7 +60,8 @@ const Users = () => {
   const [formData, setFormData] = useState({
     first_name: "", last_name: "", email: "",
     date_of_birth: "", profile_picture: null,
-    cover_photo: null, roles: [], department_id: ""
+    cover_photo: null, roles: [], department_id: "",
+    job_title: "", phone_number: "", bio: "", landing_page: ""
   });
 
   // Modal State
@@ -106,6 +108,15 @@ const Users = () => {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    const subscription = subscribeToPresence((payload) => {
+      if (!payload?.user_id) return;
+      setUsers((prev) => prev.map((item) => item.id === payload.user_id ? { ...item, online: !!payload.online, last_seen_at: payload.last_seen_at } : item));
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   // --- Handlers ---
   const handleEdit = (user) => {
     setEditingId(user.id);
@@ -118,6 +129,10 @@ const Users = () => {
       profile_picture: null,
       cover_photo: null,
       roles: user.roles || [],
+      job_title: user.job_title || "",
+      phone_number: user.phone_number || "",
+      bio: user.bio || "",
+      landing_page: user.landing_page || "",
     });
   };
 
@@ -382,6 +397,37 @@ const Users = () => {
               </div>
             </div>
 
+            <div>
+              <label className="text-xs font-semibold text-gray-500 uppercase">Job Title</label>
+              <input type="text" name="job_title" value={formData.job_title} onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm" />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-500 uppercase">Phone Number</label>
+              <input type="text" name="phone_number" value={formData.phone_number} onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm" />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-500 uppercase">Landing Page</label>
+              <input type="text" name="landing_page" value={formData.landing_page} onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm" />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-500 uppercase">Bio</label>
+              <textarea name="bio" value={formData.bio} onChange={handleChange} rows={3} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm" />
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase">Profile Picture</label>
+                <input type="file" name="profile_picture" accept="image/*" onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase">Cover Photo</label>
+                <input type="file" name="cover_photo" accept="image/*" onChange={handleChange} className="w-full mt-1 p-2 bg-gray-50 border rounded-lg text-sm" />
+              </div>
+            </div>
+
             {/* Role Selection Chips */}
             <div>
               <label className="text-xs font-semibold text-gray-500 uppercase mb-2 block">Roles</label>
@@ -447,7 +493,7 @@ const Users = () => {
                 className="w-20 h-20 rounded-2xl object-cover border-4 border-white shadow-md bg-white"
                 onError={(e) => { e.target.src=`https://placehold.co/100x100?text=${user.first_name?.[0]}`; }}
               />
-              <span className="absolute bottom-0 right-0 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></span>
+              <span className={`absolute bottom-0 right-0 w-4 h-4 border-2 border-white rounded-full ${user.online ? "bg-green-400" : "bg-gray-300"}`} title={user.online ? "Online" : "Offline"}></span>
             </div>
           </div>
 
