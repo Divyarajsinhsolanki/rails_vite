@@ -54,11 +54,11 @@ const Signup = ({ switchToLogin }) => {
   };
 
   return (
-    <div className="flex min-h-full items-center justify-center bg-gray-100">
+    <div className="flex min-h-full items-center justify-center">
       <Toaster position="top-right" />
       {loading && <SpinnerOverlay />}
-      <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl transition-transform transform hover:scale-[1.01] border border-gray-100">
-        <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">Create Account</h2>
+      <div className="w-full max-w-md rounded-2xl border border-slate-100 bg-white p-8 shadow-2xl transition-transform hover:scale-[1.01]">
+        <h2 className="mb-8 text-center text-3xl font-bold text-slate-900">Create Account</h2>
 
         {/* Signup Form */}
         <form onSubmit={handleSubmit} className="space-y-5" encType="multipart/form-data">

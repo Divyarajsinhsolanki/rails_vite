@@ -62,11 +62,11 @@ const Login = ({ switchToSignup }) => {
   ];
 
   return (
-    <div className="min-h-full bg-gradient-to-br from-slate-50 via-white to-blue-50">
+    <div className="min-h-full">
       <Toaster position="top-right" />
       {loading && <SpinnerOverlay />}
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12 lg:flex-row lg:items-center lg:gap-14">
-        <div className="relative isolate overflow-hidden rounded-3xl border border-blue-100 bg-white/80 p-10 shadow-xl backdrop-blur lg:w-1/2">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 py-8 lg:flex-row lg:items-center lg:gap-14">
+        <div className="relative isolate overflow-hidden rounded-3xl border border-blue-100/80 bg-white/80 p-10 shadow-xl backdrop-blur-md lg:w-1/2">
           <div className="absolute -left-10 -top-10 h-40 w-40 rounded-full bg-blue-500/10 blur-3xl" aria-hidden />
           <div className="absolute -right-6 bottom-0 h-32 w-32 rounded-full bg-indigo-400/10 blur-2xl" aria-hidden />
           <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
@@ -101,7 +101,7 @@ const Login = ({ switchToSignup }) => {
         </div>
 
         <div className="lg:w-1/2">
-          <div className="w-full max-w-md rounded-2xl border border-slate-100 bg-white/90 p-8 shadow-2xl backdrop-blur transition-transform duration-200 hover:scale-[1.01]">
+          <div className="w-full max-w-md rounded-2xl border border-slate-100 bg-white p-8 shadow-2xl transition-transform duration-200 hover:scale-[1.01]">
             <h2 className="mb-1 text-center text-3xl font-bold text-slate-900">Welcome back</h2>
             <p className="mb-8 text-center text-sm text-slate-500">Sign in to continue where you left off.</p>
 
