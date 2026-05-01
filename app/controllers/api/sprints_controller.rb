@@ -98,7 +98,7 @@ class Api::SprintsController < Api::BaseController
       payload: { project_id: sprint.project_id, sprint_id: sprint.id, sheet_name: sprint.name, spreadsheet_id: sprint.project.sheet_id, task_count: tasks.size }
     )
     service = TaskSheetService.new(sprint.name, sprint.project.sheet_id)
-    service.export_tasks(tasks)
+    service.export_tasks(tasks, title: sprint_sheet_title(sprint))
     log_sheet_event(
       :info,
       'Sprint task export completed',
@@ -145,5 +145,12 @@ class Api::SprintsController < Api::BaseController
   private
   def sprint_params
     params.require(:sprint).permit(:name, :start_date, :end_date, :project_id, :working_days_mask)
+  end
+
+  def sprint_sheet_title(sprint)
+    return sprint.name if sprint.start_date.blank? || sprint.end_date.blank?
+
+    total_days = (sprint.end_date - sprint.start_date).to_i + 1
+    "#{sprint.name} : #{sprint.start_date.strftime('%m/%d/%Y')} - #{sprint.end_date.strftime('%m/%d/%Y')}  (#{total_days} Days)"
   end
 end

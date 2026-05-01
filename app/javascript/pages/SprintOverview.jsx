@@ -5,10 +5,12 @@ import SpinnerOverlay from '../components/ui/SpinnerOverlay';
 import { FiX } from 'react-icons/fi';
 import { CalendarDaysIcon, PlusCircleIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { buildAvatarStyle, getAvatarInitial } from '/utils/avatar';
 
 const mapTask = (t) => ({
     id: t.task_id,
     dbId: t.id,
+    type: t.type,
     sprintId: t.sprint_id,
     title: t.title || 'title not added',
     description: t.description || '',
@@ -34,6 +36,21 @@ const mapTask = (t) => ({
     total_hours: t.total_hours,
     priority: t.priority,
 });
+
+const getTaskTypeParam = (viewMode) => (
+    viewMode === 'qa' ? 'qa' : viewMode === 'dev' ? 'Code' : null
+);
+
+const isStructuredTask = (task) => ['Code', 'qa'].includes(task?.type);
+
+const selectEstimatedHours = (taskType, taskLike) => {
+    const preferredHours = taskType === 'qa' ? taskLike.qa_hours : taskLike.dev_hours;
+    if (preferredHours !== null && preferredHours !== undefined && preferredHours !== '') {
+        return preferredHours;
+    }
+
+    return taskLike.estimatedHours ?? taskLike.estimated_hours ?? '';
+};
 
 const formatHours = (hours) => {
     if (hours === null || hours === undefined || hours === '') {
@@ -61,11 +78,8 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
     };
 
     const handleDeveloperChange = (e) => {
-        const { options } = e.target;
-        const selectedDevIds = Array.from(options)
-            .filter(option => option.selected)
-            .map(option => option.value);
-        setEditedTask(prev => ({ ...prev, assignedTo: selectedDevIds }));
+        const selectedDevId = e.target.value;
+        setEditedTask(prev => ({ ...prev, assignedTo: selectedDevId ? [selectedDevId] : [] }));
     };
 
     const handleUserChange = (e) => {
@@ -175,17 +189,17 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
                             />
                         </div>
                         <div>
-                            <label htmlFor="assignedTo" className="block text-sm font-medium text-gray-700 mb-1 required-label">
-                                Assigned To Developer
+                            <label htmlFor="assignedTo" className="block text-sm font-medium text-gray-700 mb-1">
+                                Assigned To Developer/QA
                             </label>
                             <select
                                 id="assignedTo"
                                 name="assignedTo"
-                                value={editedTask.assignedTo}
+                                value={editedTask.assignedTo?.[0] || ''}
                                 onChange={handleDeveloperChange}
-                                required
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             >
+                                <option value="">Leave blank for QA task</option>
                                 {developers.map(dev => (
                                     <option key={dev.id} value={dev.id}>
                                         {dev.name}
@@ -437,7 +451,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
 };
 
 // Add Task Modal Component
-const AddTaskModal = ({ developers, users, onClose, onCreate, projectId }) => {
+const AddTaskModal = ({ developers, users, onClose, onCreate, projectId, viewMode }) => {
     const [newTask, setNewTask] = useState({
         task_id: '',
         task_url: '',
@@ -445,7 +459,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate, projectId }) => {
         title: '',
         description: '',
         estimated_hours: '',
-        developer_id: developers[0]?.id || '',
+        developer_id: viewMode === 'dev' ? (developers[0]?.id || '') : '',
         assigned_to_user: '',
         start_date: '',
         end_date: '',
@@ -467,8 +481,8 @@ const AddTaskModal = ({ developers, users, onClose, onCreate, projectId }) => {
     });
 
     useEffect(() => {
-        setNewTask(t => ({ ...t, developer_id: developers[0]?.id || '' }));
-    }, [developers]);
+        setNewTask(t => ({ ...t, developer_id: viewMode === 'dev' ? (developers[0]?.id || '') : '' }));
+    }, [developers, viewMode]);
 
     useEffect(() => {
         setNewTask(t => ({ ...t, project_id: projectId || '' }));
@@ -582,17 +596,17 @@ const AddTaskModal = ({ developers, users, onClose, onCreate, projectId }) => {
                             />
                         </div>
                         <div>
-                            <label htmlFor="developer_id" className="block text-sm font-medium text-gray-700 mb-1 required-label">
-                                Assigned To Developer
+                            <label htmlFor="developer_id" className="block text-sm font-medium text-gray-700 mb-1">
+                                Assigned To Developer/QA
                             </label>
                             <select
                                 id="developer_id"
                                 name="developer_id"
                                 value={newTask.developer_id}
                                 onChange={handleChange}
-                                required
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                             >
+                                <option value="">Leave blank for QA task</option>
                                 {developers.map(dev => (
                                     <option key={dev.id} value={dev.id}>
                                         {dev.name}
@@ -831,7 +845,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate, projectId }) => {
 };
 
 // Main Component
-const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationEnabled, qaMode = false }) => {
+const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationEnabled, viewMode = 'combined' }) => {
     const [sprints, setSprints] = useState([]);
     const [developers, setDevelopers] = useState([]);
     const [users, setUsers] = useState([]);
@@ -854,11 +868,59 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingBacklog, setEditingBacklog] = useState(false);
     const [addingToBacklog, setAddingToBacklog] = useState(false);
+    const taskTypeParam = getTaskTypeParam(viewMode);
 
     const toggleUserFilter = (id) => {
         setFilterUsers(prev =>
             prev.includes(id) ? prev.filter(u => u !== id) : [...prev, id]
         );
+    };
+
+    const getTaskAssignmentLabel = (task) => {
+        if (task.assignedTo?.length) {
+            return task.assignedTo
+                .map(id => developers.find(dev => String(dev.id) === String(id))?.name || 'Unknown')
+                .join(', ');
+        }
+
+        return task.qa_assigned || '-';
+    };
+
+    const buildTaskPayload = (taskLike, { backlog = false } = {}) => {
+        const developerId = Number(taskLike.developer_id ?? taskLike.assignedTo?.[0]) || null;
+        const qaAssigned = (taskLike.qa_assigned || '').trim();
+        const fallbackTaskType = taskLike.type === 'qa' ? 'qa' : (viewMode === 'qa' ? 'qa' : 'Code');
+        const taskType = developerId ? 'Code' : qaAssigned ? 'qa' : fallbackTaskType;
+
+        return {
+            task_id: taskLike.task_id || taskLike.id,
+            task_url: taskLike.task_url || taskLike.link,
+            type: taskType,
+            sprint_id: backlog ? null : (taskLike.sprintId ? Number(taskLike.sprintId) : selectedSprintId),
+            title: taskLike.title,
+            description: taskLike.description,
+            start_date: taskLike.start_date || taskLike.startDate,
+            end_date: taskLike.end_date || taskLike.endDate,
+            estimated_hours: selectEstimatedHours(taskType, taskLike),
+            developer_id: developerId,
+            assigned_to_user: taskLike.assigned_to_user || taskLike.assignedUser || null,
+            status: (taskLike.status?.toLowerCase().replace(' ', '')) || 'todo',
+            order: taskLike.order,
+            project_id: Number(taskLike.project_id || projectId) || null,
+            qa_assigned: qaAssigned,
+            internal_qa: taskLike.internal_qa,
+            blocker: !!taskLike.blocker,
+            demo: !!taskLike.demo,
+            swag_point: taskLike.swag_point,
+            story_point: taskLike.story_point,
+            dev_hours: taskLike.dev_hours,
+            code_review_hours: taskLike.code_review_hours,
+            dev_to_qa_hours: taskLike.dev_to_qa_hours,
+            qa_hours: taskLike.qa_hours,
+            automation_qa_hours: taskLike.automation_qa_hours,
+            total_hours: taskLike.total_hours,
+            priority: taskLike.priority
+        };
     };
 
     useEffect(() => {
@@ -870,13 +932,15 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                     id: u.id,
                     first_name: u.name,
                     email: u.email || u.name,
-                    profile_picture: u.profile_picture
+                    profile_picture: u.profile_picture,
+                    avatar_color: u.avatar_color
                 }));
                 setUsers(members);
                 setDevelopers(
                     members.map(member => ({
                         id: member.id,
-                        name: member.first_name || member.email
+                        name: member.first_name || member.email,
+                        avatar_color: member.avatar_color
                     }))
                 );
             });
@@ -921,21 +985,21 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
             return;
         }
         const params = { sprint_id: selectedSprintId, project_id: projectId };
-        if (qaMode) params.type = 'qa';
+        if (taskTypeParam) params.type = taskTypeParam;
         SchedulerAPI.getTasks(params).then(res => {
-            const mapped = res.data.map(mapTask);
+            const mapped = res.data.filter(isStructuredTask).map(mapTask);
             setTasks(mapped);
         });
-    }, [selectedSprintId, projectId, qaMode]);
+    }, [selectedSprintId, projectId, taskTypeParam]);
 
     useEffect(() => {
         const params = projectId ? { project_id: projectId } : {};
-        if (qaMode) params.type = 'qa';
+        if (taskTypeParam) params.type = taskTypeParam;
         SchedulerAPI.getTasks(params).then(res => {
-            const mapped = res.data.filter(t => !t.sprint_id).map(mapTask);
+            const mapped = res.data.filter(t => !t.sprint_id && isStructuredTask(t)).map(mapTask);
             setBacklogTasks(mapped);
         });
-    }, [projectId, qaMode]);
+    }, [projectId, taskTypeParam]);
 
     const filteredTasks = tasks.filter(task => {
         if (task.sprintId !== selectedSprintId) return false;
@@ -1002,8 +1066,6 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
             };
         });
 
-    const getDeveloperNames = (devIds) => devIds.map(id => developers.find(dev => String(dev.id) === String(id))?.name || 'Unknown').join(', ');
-
     const getUserName = (userId) => {
         const user = users.find(u => String(u.id) === String(userId));
         if (!user) return 'Unknown';
@@ -1011,6 +1073,8 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
     };
 
     const currentSprint = sprints.find(s => s.id === selectedSprintId);
+
+    const matchesActiveView = (taskLike) => !taskTypeParam || taskLike.type === taskTypeParam;
 
     const openTaskModal = (task, backlog = false) => {
         setCurrentTask(task);
@@ -1060,47 +1124,24 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
     const handleUpdateTask = async (updatedTask) => {
         try {
             const payload = {
-                task_id: updatedTask.id,
-                sprint_id: updatedTask.sprintId ? Number(updatedTask.sprintId) : null,
-                title: updatedTask.title,
-                description: updatedTask.description,
-                start_date: updatedTask.startDate,
-                end_date: updatedTask.endDate,
-                task_url: updatedTask.link,
-                estimated_hours: updatedTask.estimatedHours,
-                developer_id: Number(updatedTask.assignedTo?.[0]) || null,
-                assigned_to_user: updatedTask.assignedUser || null,
-                status: updatedTask.status?.toLowerCase().replace(" ", "") || "todo",
-                order: updatedTask.order,
-                qa_assigned: updatedTask.qa_assigned,
-                internal_qa: updatedTask.internal_qa,
-                blocker: !!updatedTask.blocker,
-                demo: !!updatedTask.demo,
-                swag_point: updatedTask.swag_point,
-                story_point: updatedTask.story_point,
-                dev_hours: updatedTask.dev_hours,
-                code_review_hours: updatedTask.code_review_hours,
-                dev_to_qa_hours: updatedTask.dev_to_qa_hours,
-                qa_hours: updatedTask.qa_hours,
-                automation_qa_hours: updatedTask.automation_qa_hours,
-                total_hours: updatedTask.total_hours,
-                priority: updatedTask.priority
+                ...buildTaskPayload(updatedTask),
+                sprint_id: updatedTask.sprintId ? Number(updatedTask.sprintId) : null
             };
-            await SchedulerAPI.updateTask(updatedTask.dbId, payload);
-
-            const mapped = { ...updatedTask, sprintId: payload.sprint_id, id: payload.task_id };
+            const { data } = await SchedulerAPI.updateTask(updatedTask.dbId, payload);
+            const mapped = mapTask(data);
+            const shouldDisplay = isStructuredTask(data) && matchesActiveView(data);
 
             if (payload.sprint_id === null) {
                 setTasks(tasks.filter(t => t.dbId !== updatedTask.dbId));
                 setBacklogTasks(prev => {
                     const others = prev.filter(t => t.dbId !== updatedTask.dbId);
-                    return [...others, mapped];
+                    return shouldDisplay ? [...others, mapped] : others;
                 });
             } else if (payload.sprint_id === selectedSprintId) {
                 setBacklogTasks(prev => prev.filter(t => t.dbId !== updatedTask.dbId));
                 setTasks(prev => {
                     const others = prev.filter(t => t.dbId !== updatedTask.dbId);
-                    return [...others, mapped];
+                    return shouldDisplay ? [...others, mapped] : others;
                 });
             } else {
                 setTasks(prev => prev.filter(t => t.dbId !== updatedTask.dbId));
@@ -1128,19 +1169,15 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
     const handleAddTask = async (newTask) => {
         try {
             const payload = {
-                ...newTask,
-                type: qaMode ? 'qa' : 'Code',
-                sprint_id: addingToBacklog ? null : selectedSprintId,
-                developer_id: Number(newTask.developer_id) || null,
-                assigned_to_user: newTask.assigned_to_user || null,
-                status: newTask.status,
-                date: newTask.start_date || new Date().toISOString().slice(0, 10),
-                project_id: Number(newTask.project_id || projectId) || null,
-                blocker: !!newTask.blocker,
-                demo: !!newTask.demo
+                ...buildTaskPayload(newTask, { backlog: addingToBacklog }),
+                date: newTask.start_date || new Date().toISOString().slice(0, 10)
             };
             const { data } = await SchedulerAPI.createTask(payload);
             const mapped = mapTask(data);
+            if (!isStructuredTask(data) || !matchesActiveView(data)) {
+                setShowAddModal(false);
+                return;
+            }
             if (addingToBacklog) {
                 setBacklogTasks([...backlogTasks, mapped]);
             } else {
@@ -1157,8 +1194,10 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
         try {
             setProcessing(true);
             await SchedulerAPI.importSprintTasks(selectedSprintId);
-            const res = await SchedulerAPI.getTasks({ sprint_id: selectedSprintId, project_id: projectId, ...(qaMode ? { type: 'qa' } : {}) });
-            const mapped = res.data.map(mapTask);
+            const params = { sprint_id: selectedSprintId, project_id: projectId };
+            if (taskTypeParam) params.type = taskTypeParam;
+            const res = await SchedulerAPI.getTasks(params);
+            const mapped = res.data.filter(isStructuredTask).map(mapTask);
             setTasks(mapped);
             toast.success('Imported tasks from sheet');
         } catch (e) {
@@ -1172,8 +1211,10 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
             setProcessing(true);
             await SchedulerAPI.importBacklogTasks(projectId);
             toast.success('Imported backlog from sheet');
-            const res = await SchedulerAPI.getTasks(projectId ? { project_id: projectId, ...(qaMode ? { type: 'qa' } : {}) } : {});
-            const mapped = res.data.filter(t => !t.sprint_id).map(mapTask);
+            const params = projectId ? { project_id: projectId } : {};
+            if (taskTypeParam) params.type = taskTypeParam;
+            const res = await SchedulerAPI.getTasks(params);
+            const mapped = res.data.filter(t => !t.sprint_id && isStructuredTask(t)).map(mapTask);
             setBacklogTasks(mapped);
         } catch (e) {
             toast.error('Import failed');
@@ -1209,13 +1250,17 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                                     key={u.id}
                                     onClick={() => toggleUserFilter(String(u.id))}
                                     className={`cursor-pointer w-8 h-8 rounded-full border-2 ${filterUsers.includes(String(u.id)) ? 'border-[var(--theme-color)]' : 'border-transparent'}`}
+                                    title={u.first_name || u.email}
                                 >
                                     {u.profile_picture && u.profile_picture !== 'null' ? (
                                         <img src={u.profile_picture} alt={u.first_name}
                                             className="w-8 h-8 rounded-full object-cover" />
                                     ) : (
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-[var(--theme-color)] text-white text-xs font-bold flex items-center justify-center">
-                                            {(u.first_name || u.email).charAt(0).toUpperCase()}
+                                        <div
+                                            className="w-8 h-8 rounded-full text-xs font-bold flex items-center justify-center"
+                                            style={buildAvatarStyle(u.avatar_color)}
+                                        >
+                                            {getAvatarInitial(u.first_name || u.email)}
                                         </div>
                                     )}
                                 </div>
@@ -1268,7 +1313,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                                         Est. Hours
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Assigned To Developer
+                                        Assigned To Developer/QA
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Assigned User
@@ -1313,7 +1358,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                                                                     {formatHours(task.estimatedHours)}
                                                                 </td>
                                                                 <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                                                                    {getDeveloperNames(task.assignedTo)}
+                                                                    {getTaskAssignmentLabel(task)}
                                                                 </td>
                                                                 <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
                                                                     {getUserName(task.assignedUser)}
@@ -1388,7 +1433,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task ID</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task Title</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Est. Hours</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To Developer</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To Developer/QA</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned User</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
@@ -1411,7 +1456,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                                             </td>
                                             <td className="px-6 py-3 whitespace-normal text-sm text-gray-900">{task.title}</td>
                                             <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{formatHours(task.estimatedHours)}</td>
-                                            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{getDeveloperNames(task.assignedTo)}</td>
+                                            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{getTaskAssignmentLabel(task)}</td>
                                             <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{getUserName(task.assignedUser)}</td>
                                             <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{task.startDate ? new Date(task.startDate).getDate() : '-'}</td>
                                             <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{task.endDate ? new Date(task.endDate).getDate() : '-'}</td>
@@ -1444,6 +1489,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                     onClose={() => setShowAddModal(false)}
                     onCreate={handleAddTask}
                     projectId={projectId}
+                    viewMode={viewMode}
                 />
             )}
 

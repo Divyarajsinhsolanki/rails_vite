@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2027_04_18_000000) do
+ActiveRecord::Schema[7.1].define(version: 2027_04_19_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -560,10 +560,13 @@ ActiveRecord::Schema[7.1].define(version: 2027_04_18_000000) do
     t.string "phone_number"
     t.text "bio"
     t.jsonb "social_links", default: {}, null: false
+    t.datetime "last_seen_at"
+    t.string "avatar_color"
     t.index ["availability_status"], name: "index_users_on_availability_status"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["department_id"], name: "index_users_on_department_id"
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["last_seen_at"], name: "index_users_on_last_seen_at"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 

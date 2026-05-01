@@ -120,6 +120,7 @@ class Api::UsersController < Api::BaseController
       :profile_picture,
       :cover_photo,
       :color_theme,
+      :avatar_color,
       :dark_mode,
       :landing_page,
       :job_title,
@@ -202,6 +203,7 @@ class Api::UsersController < Api::BaseController
         rails_blob_url(user.profile_picture, only_path: true) : nil,
       cover_photo: user.cover_photo.attached? ?
         rails_blob_url(user.cover_photo, only_path: true) : nil,
+      avatar_color: user.avatar_color,
       roles: user.roles.pluck(:name),
       landing_page: user.landing_page,
       phone_number: user.phone_number,

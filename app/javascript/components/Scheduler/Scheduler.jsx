@@ -26,6 +26,12 @@ import {
 } from '@heroicons/react/24/outline'; // Ensure this path is correct and package installed
 import { CheckCircleIcon as CheckCircleSolidIcon } from '@heroicons/react/24/solid'; // Ensure this path is correct
 
+const getTaskTypeParam = (viewMode) => (
+  viewMode === 'qa' ? 'qa' : viewMode === 'dev' ? 'Code' : null
+);
+
+const isStructuredTask = (task) => ['Code', 'qa'].includes(task?.type);
+
 
 // --- Helper Components ---
 
@@ -235,7 +241,7 @@ function TaskCell({ date, devId, tasksInCell, setEditingTask, handleTaskUpdate, 
   );
 }
 
-function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = false }) {
+function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, viewMode = 'combined' }) {
   const [sprint, setSprint] = useState(null);
   const [developers, setDevelopers] = useState([]);
   const [tasks, setTasks] = useState([]); // will hold task logs
@@ -249,6 +255,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
   const [editingTask, setEditingTask] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [mainHeaderHeight, setMainHeaderHeight] = useState(0); // State to store main header height
+  const taskTypeParam = getTaskTypeParam(viewMode);
 
   // Ref for the main header
   const mainHeaderRef = useCallback(node => {
@@ -280,7 +287,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
   useEffect(() => {
     const params = { project_id: projectId };
     if (sprintId) params.sprint_id = sprintId;
-    if (qaMode) params.type = 'qa';
+    if (taskTypeParam) params.type = taskTypeParam;
 
     Promise.all([
       SchedulerAPI.getDevelopers(projectId ? { project_id: projectId } : {}),
@@ -290,14 +297,14 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
       .then(([devRes, logRes, taskRes]) => {
         setDevelopers(devRes.data);
         setTasks(logRes.data);
-        setAllTasks(taskRes.data);
+        setAllTasks((taskRes.data || []).filter(isStructuredTask));
         setLoading(l => ({ ...l, developers: false, tasks: false }));
       })
       .catch(() => {
         setError("Could not load developers or tasks");
         setLoading(l => ({ ...l, developers: false, tasks: false }));
       });
-  }, [sprintId, projectId, qaMode]);
+  }, [sprintId, projectId, taskTypeParam]);
 
   const getWeekdaysInRange = useCallback((start, end, workingDaysMask = 62) => {
     const datesArr = [];
@@ -539,9 +546,19 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, qaMode = fals
             <header ref={mainHeaderRef} className="bg-white/80 backdrop-blur-md shadow-sm top-0 z-40">
               <div className="container mx-auto px-4 py-3"> {/* Added some padding for better click area */}
                 <div className="flex justify-between items-center">
-                  <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] flex items-center">
-                    <TableCellsIcon className="h-6 w-6 mr-2 text-[var(--theme-color)]" /> Sprint Logs
-                  </h1>
+                  <div className="flex items-center gap-3">
+                    <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] flex items-center">
+                      <TableCellsIcon className="h-6 w-6 mr-2 text-[var(--theme-color)]" /> Sprint Logs
+                    </h1>
+                    {viewMode !== 'dev' && (
+                      <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${viewMode === 'qa'
+                        ? 'border-purple-200 bg-purple-50 text-purple-700'
+                        : 'border-indigo-200 bg-indigo-50 text-indigo-700'
+                        }`}>
+                        {viewMode === 'qa' ? 'QA mode' : 'Combined mode'}
+                      </span>
+                    )}
+                  </div>
                   <div className="flex space-x-2">
                     <button
                       onClick={() => setIsAddTaskModalOpen(true)}

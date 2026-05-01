@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 const TaskForm = ({ onAddTask, onCancel, defaultType = 'general' }) => {
@@ -15,6 +15,10 @@ const TaskForm = ({ onAddTask, onCancel, defaultType = 'general' }) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
+  useEffect(() => {
+    setFormData((prev) => ({ ...prev, type: defaultType }));
+  }, [defaultType]);
 
   const handleSubmit = (e) => {
     e.preventDefault();

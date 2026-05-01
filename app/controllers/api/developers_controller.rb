@@ -13,7 +13,8 @@ class Api::DevelopersController < Api::BaseController
       name: user.name,
       first_name: user.first_name,
       last_name: user.last_name,
-      email: user.email
+      email: user.email,
+      avatar_color: user.avatar_color
     }
   end
 end

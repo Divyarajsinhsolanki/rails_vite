@@ -117,14 +117,15 @@ class Api::AuthController < Api::BaseController
             id: member.user_id,
             name: [member.user.first_name, member.user.last_name].compact.join(' '),
             profile_picture: member.user.profile_picture.attached? ?
-              rails_blob_url(member.user.profile_picture, only_path: true) : nil
+              rails_blob_url(member.user.profile_picture, only_path: true) : nil,
+            avatar_color: member.user.avatar_color
           }
         end
       }
     end
     render json: {
       user: current_user.as_json(include: { roles: { only: [:name] } })
-                      .merge(profile_picture: profile_picture_url, cover_photo: cover_photo_url, phone_number: current_user.phone_number, bio: current_user.bio, social_links: current_user.social_links || {}),
+                      .merge(profile_picture: profile_picture_url, cover_photo: cover_photo_url, avatar_color: current_user.avatar_color, phone_number: current_user.phone_number, bio: current_user.bio, social_links: current_user.social_links || {}),
       teams: teams,
       projects: projects,
       keka: current_user.keka_payload
@@ -162,6 +163,7 @@ class Api::AuthController < Api::BaseController
       :profile_picture,
       :cover_photo,
       :color_theme,
+      :avatar_color,
       :dark_mode,
       :landing_page,
       :phone_number,
@@ -180,6 +182,7 @@ class Api::AuthController < Api::BaseController
     user.as_json(include: { roles: { only: [:name] } }).merge(
       profile_picture: profile_picture_url,
       cover_photo: cover_photo_url,
+      avatar_color: user.avatar_color,
       landing_page: user.landing_page,
       phone_number: user.phone_number,
       bio: user.bio,

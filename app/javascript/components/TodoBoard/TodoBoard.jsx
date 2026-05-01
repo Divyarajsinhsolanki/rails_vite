@@ -34,7 +34,13 @@ const initialData = {
   completed: { name: "Completed", color: "bg-green-100", items: [] },
 };
 
-export default function TodoBoard({ sprintId, projectId, onSprintChange, qaMode = false }) {
+const getTaskTypeParam = (viewMode) => (
+  viewMode === 'qa' ? 'qa' : viewMode === 'dev' ? 'Code' : null
+);
+
+const isStructuredTask = (task) => ['Code', 'qa'].includes(task?.type);
+
+export default function TodoBoard({ sprintId, projectId, onSprintChange, viewMode = 'combined' }) {
   const { user } = useContext(AuthContext);
   const [columns, setColumns] = useState(initialData);
   const [searchTerm, setSearchTerm] = useState("");
@@ -42,6 +48,7 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange, qaMode 
   const [sprints, setSprints] = useState([]);
   const [selectedSprintId, setSelectedSprintId] = useState(sprintId || null);
   const [taskView, setTaskView] = useState('all');
+  const taskTypeParam = getTaskTypeParam(viewMode);
 
   useEffect(() => {
     if (sprintId) setSelectedSprintId(sprintId);
@@ -70,15 +77,20 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange, qaMode 
   }, [projectId, sprintId]);
 
   useEffect(() => {
-    const params = selectedSprintId ? { sprint_id: selectedSprintId, project_id: projectId } : { type: 'general' };
-    if (qaMode) params.type = 'qa';
+    if (!selectedSprintId) {
+      setColumns(groupBy([]));
+      return;
+    }
+
+    const params = { sprint_id: selectedSprintId, project_id: projectId };
+    if (taskTypeParam) params.type = taskTypeParam;
     SchedulerAPI.getTasks(params)
       .then(res => {
-        const grouped = groupBy(res.data);
+        const grouped = groupBy((res.data || []).filter(isStructuredTask));
         setColumns(grouped);
       })
       .catch(() => toast.error("Could not load tasks"));
-  }, [selectedSprintId, projectId, qaMode]);
+  }, [selectedSprintId, projectId, taskTypeParam]);
 
   useEffect(() => {
     if (onSprintChange && selectedSprintId) {
@@ -103,12 +115,30 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange, qaMode 
   const handleAddTask = async (newTaskData) => {
     try {
       const payload = { ...newTaskData };
+      const assigneeName = user?.first_name || user?.name || user?.email || '';
       // ensure the task is assigned to the current user
       if (user) payload.assigned_to_user = user.id;
-      payload.type = qaMode ? 'qa' : payload.type;
       if (projectId) payload.project_id = projectId;
       if (selectedSprintId) payload.sprint_id = selectedSprintId;
+
+      if (viewMode === 'qa') {
+        payload.type = 'qa';
+        payload.developer_id = null;
+        payload.qa_assigned = payload.qa_assigned || assigneeName;
+      } else {
+        if (!user?.id) {
+          toast.error("Current user is required to create a dev task.");
+          return;
+        }
+        payload.type = 'Code';
+        payload.developer_id = payload.developer_id || user.id;
+      }
+
       const { data } = await SchedulerAPI.createTask(payload);
+      if (!isStructuredTask(data) || (taskTypeParam && data.type !== taskTypeParam)) {
+        setShowForm(false);
+        return;
+      }
       const statusKey = data.status || 'todo';
       setColumns(prev => ({
         ...prev,
@@ -137,6 +167,15 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange, qaMode 
   const handleUpdateTask = async (colId, taskId, updates) => {
     try {
       const { data } = await SchedulerAPI.updateTask(taskId, updates);
+      if (!isStructuredTask(data) || (taskTypeParam && data.type !== taskTypeParam)) {
+        setColumns(prev => ({
+          ...prev,
+          [colId]: { ...prev[colId], items: prev[colId].items.filter(t => t.id !== data.id) }
+        }));
+        toast.success("Task updated");
+        return;
+      }
+
       const newStatus = data.status || colId;
       setColumns(prev => {
         // if status didn't change, update in place
@@ -248,9 +287,12 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange, qaMode 
               <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] flex items-center">
                 <Squares2X2Icon className="h-7 w-7 mr-2" />Taskboard
               </h1>
-              {qaMode && (
-                <span className="inline-flex items-center rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700 border border-purple-200">
-                  QA mode
+              {viewMode !== 'dev' && (
+                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold border ${viewMode === 'qa'
+                  ? 'bg-purple-50 text-purple-700 border-purple-200'
+                  : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                  }`}>
+                  {viewMode === 'qa' ? 'QA mode' : 'Combined mode'}
                 </span>
               )}
             </div>
@@ -289,7 +331,7 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange, qaMode 
         </header>
 
         <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Add a New Task">
-          <TaskForm onAddTask={handleAddTask} onCancel={() => setShowForm(false)} defaultType={qaMode ? 'qa' : 'general'} />
+          <TaskForm onAddTask={handleAddTask} onCancel={() => setShowForm(false)} defaultType={viewMode === 'qa' ? 'qa' : 'Code'} />
         </Modal>
 
         <div className="grid md:grid-cols-2 gap-6 mb-8">

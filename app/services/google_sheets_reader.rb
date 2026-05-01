@@ -4,6 +4,8 @@ require 'googleauth'
 class GoogleSheetsReader
   include SheetOperationLogging
 
+  SHEET_READ_RANGE = 'A1:ZZ'.freeze
+
   def initialize(sheet_name, spreadsheet_id)
     @sheet_name = sheet_name
     @spreadsheet_id = spreadsheet_id
@@ -13,7 +15,7 @@ class GoogleSheetsReader
   end
 
   def read_data
-    range = "#{@sheet_name}!A1:Z"
+    range = "#{@sheet_name}!#{SHEET_READ_RANGE}"
     ensure_spreadsheet_id!
     log_sheet_info('Sheet read started', range: range)
     response = @service.get_spreadsheet_values(@spreadsheet_id, range)

@@ -12,6 +12,8 @@ import IssueTracker from './IssueTracker';
 import ProjectVault from './ProjectVault';
 import PageLoader from '../components/ui/PageLoader';
 
+const VIEW_MODES = ['dev', 'qa', 'combined'];
+
 const calculateWorkingDays = (start, end, workingDaysMask = 62) => {
   let count = 0;
   const current = new Date(start);
@@ -53,7 +55,7 @@ export default function SprintDashboard() {
   const [sprints, setSprints] = useState([]);
   const [project, setProject] = useState(null);
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(false);
-  const [qaMode, setQaMode] = useState(false);
+  const [viewMode, setViewMode] = useState('combined');
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(true);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState('');
@@ -101,12 +103,12 @@ export default function SprintDashboard() {
     }
   }, [activeTab, sheetEnabled]);
 
-  // Turn off QA mode if project changes or project does not support it.
+  // Fall back to dev-only when the project does not support QA mode.
   useEffect(() => {
-    if (!project?.qa_mode_enabled && qaMode) {
-      setQaMode(false);
+    if (!project?.qa_mode_enabled && viewMode !== 'dev') {
+      setViewMode('dev');
     }
-  }, [project?.qa_mode_enabled, qaMode]);
+  }, [project?.qa_mode_enabled, viewMode]);
 
   // Load sprints when project changes and select the active one
   useEffect(() => {
@@ -210,6 +212,8 @@ export default function SprintDashboard() {
       setIsSavingSettings(false);
     }
   };
+
+  const viewModeLabel = viewMode === 'qa' ? 'QA' : viewMode === 'combined' ? 'Combined' : 'Dev';
 
 
   return (
@@ -331,21 +335,29 @@ export default function SprintDashboard() {
               </button>
             </div>
             {project?.qa_mode_enabled && (
-              <div className="ml-3 flex items-center gap-3 rounded-full border border-purple-200 bg-purple-50 px-3 py-1">
-                <span className="text-sm font-semibold text-purple-700">QA mode</span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={qaMode}
-                  onClick={() => setQaMode((prev) => !prev)}
-                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 shadow-sm ${qaMode ? 'bg-purple-600' : 'bg-slate-300'
-                    }`}
-                >
-                  <span
-                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${qaMode ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                  />
-                </button>
+              <div className="ml-3 flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1">
+                {VIEW_MODES.map((mode) => {
+                  const active = viewMode === mode;
+                  const label = mode === 'qa' ? 'QA' : mode === 'combined' ? 'Combined' : 'Dev';
+                  const activeClasses = mode === 'qa'
+                    ? 'bg-purple-600 text-white shadow'
+                    : mode === 'combined'
+                      ? 'bg-indigo-600 text-white shadow'
+                      : 'bg-slate-700 text-white shadow';
+
+                  return (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setViewMode(mode)}
+                      className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${active ? activeClasses : 'text-slate-600 hover:bg-white hover:text-slate-900'}`}
+                      aria-pressed={active}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+                <span className="sr-only">Current view mode: {viewModeLabel}</span>
               </div>
             )}
           </div>
@@ -383,7 +395,7 @@ export default function SprintDashboard() {
           sprintId={sprintId}
           onSprintChange={handleSprintChange}
           sheetIntegrationEnabled={project?.sheet_integration_enabled}
-          qaMode={qaMode}
+          viewMode={viewMode}
         />
       )}
       {activeTab === 'scheduler' && (
@@ -392,14 +404,14 @@ export default function SprintDashboard() {
             sprintId={sprintId}
             projectId={projectId}
             sheetIntegrationEnabled={project?.sheet_integration_enabled}
-            qaMode={qaMode}
+            viewMode={viewMode}
           />
         ) : (
           <p className="p-4">No sprint selected</p>
         )
       )}
       {activeTab === 'todo' && (
-        sprintId ? <TodoBoard sprintId={sprintId} projectId={projectId} qaMode={qaMode} onSprintChange={handleSprintChange} /> : <p className="p-4">No sprint selected</p>
+        sprintId ? <TodoBoard sprintId={sprintId} projectId={projectId} viewMode={viewMode} onSprintChange={handleSprintChange} /> : <p className="p-4">No sprint selected</p>
       )}
       {activeTab === 'sheet' && sheetEnabled && (
         <Sheet sheetName={sprint?.name} projectId={projectId} sheetId={project?.sheet_id} />

@@ -11,6 +11,43 @@ import {
 } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const HEADER_GROUPS = {
+  task: ['task', 'taskid'],
+  title: ['taskdetails', 'tasktitle', 'title'],
+  developer: ['devassigned', 'assignedtodeveloper', 'developer'],
+  review: ['review', 'assigneduser', 'assignedtouser'],
+  qaAssigned: ['qaassigned'],
+  internalQa: ['internalqa'],
+  blocker: ['blocker'],
+  demo: ['demo'],
+  priority: ['priority']
+};
+
+const KNOWN_HEADER_KEYS = new Set(Object.values(HEADER_GROUPS).flat());
+
+const normalizeHeader = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const detectHeaderRowIndex = (sheetRows) => {
+  let bestIndex = 0;
+  let bestScore = 0;
+
+  sheetRows.forEach((row, index) => {
+    const normalizedCells = row.map(normalizeHeader).filter(Boolean);
+    if (!normalizedCells.length) return;
+
+    const matchedHeaders = normalizedCells.filter((cell) => KNOWN_HEADER_KEYS.has(cell));
+    const hasTaskColumn = normalizedCells.some((cell) => HEADER_GROUPS.task.includes(cell));
+    const hasTitleColumn = normalizedCells.some((cell) => HEADER_GROUPS.title.includes(cell));
+
+    if (hasTaskColumn && hasTitleColumn && matchedHeaders.length >= 3 && matchedHeaders.length > bestScore) {
+      bestIndex = index;
+      bestScore = matchedHeaders.length;
+    }
+  });
+
+  return bestIndex;
+};
+
 const Sheet = ({ sheetName, projectId, sheetId }) => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,17 +83,28 @@ const Sheet = ({ sheetName, projectId, sheetId }) => {
     loadData();
   }, [loadData]);
 
-  const filteredRows = useMemo(() => {
-    if (!searchQuery.trim()) return rows;
-    const query = searchQuery.toLowerCase();
-    return rows.filter((row, index) => {
-      if (index === 0) return true; // Always keep header
-      return row.some(cell => String(cell).toLowerCase().includes(query));
-    });
-  }, [rows, searchQuery]);
+  const headerRowIndex = useMemo(() => detectHeaderRowIndex(rows), [rows]);
 
-  const headerRow = rows.length > 0 ? rows[0] : [];
-  const bodyRows = filteredRows.length > 1 ? filteredRows.slice(1) : [];
+  const titleText = useMemo(() => {
+    if (headerRowIndex === 0) return null;
+
+    const titleRows = rows.slice(0, headerRowIndex);
+    for (const row of titleRows) {
+      const value = row.find((cell) => String(cell || '').trim());
+      if (value) return String(value).trim();
+    }
+
+    return null;
+  }, [rows, headerRowIndex]);
+
+  const headerRow = rows.length > 0 ? (rows[headerRowIndex] || []) : [];
+  const bodySourceRows = rows.length > headerRowIndex + 1 ? rows.slice(headerRowIndex + 1) : [];
+
+  const bodyRows = useMemo(() => {
+    if (!searchQuery.trim()) return bodySourceRows;
+    const query = searchQuery.toLowerCase();
+    return bodySourceRows.filter((row) => row.some((cell) => String(cell).toLowerCase().includes(query)));
+  }, [bodySourceRows, searchQuery]);
 
   if (loading) {
     return (
@@ -96,7 +144,9 @@ const Sheet = ({ sheetName, projectId, sheetId }) => {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-zinc-800 dark:text-zinc-100 tracking-tight">Google Sheet</h1>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">{sheetName ? `Showing: ${sheetName}` : 'Spreadsheet data'}</p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
+                {titleText || (sheetName ? `Showing: ${sheetName}` : 'Spreadsheet data')}
+              </p>
             </div>
           </div>
 

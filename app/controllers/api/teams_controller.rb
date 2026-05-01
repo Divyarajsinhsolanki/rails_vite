@@ -65,6 +65,7 @@ class Api::TeamsController < Api::BaseController
           email: tu.user.email,
           profile_picture: tu.user.profile_picture.attached? ?
             rails_blob_url(tu.user.profile_picture, only_path: true) : nil,
+          avatar_color: tu.user.avatar_color,
           role: tu.role,
           status: tu.status,
           job_title: tu.user.job_title,
@@ -116,6 +117,7 @@ class Api::TeamsController < Api::BaseController
       availability_status: user.availability_status,
       availability_label: user.availability_label,
       current_projects_count: user.current_projects_count,
+      avatar_color: user.avatar_color,
       profile_picture: profile_picture_url(user),
       skills: user.user_skills.map { |user_skill| serialize_member_skill(user_skill) }.sort_by { |skill| skill[:name] }
     }

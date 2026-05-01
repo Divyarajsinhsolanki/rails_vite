@@ -1,0 +1,10 @@
+# Logfile created on 2026-04-24 12:39:43 +0530 by logger.rb/v1.7.0
+I, [2026-04-24T12:39:43.562269 #9683]  INFO -- : Calling: add_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/uploads/0d1931f9-2e1c-4c84-947a-728083844d68_working.pdf", 2]
+I, [2026-04-24T12:39:43.589980 #9683]  INFO -- : Adding blank pages to /home/divyarajs/react_projects/rails_vite/public/uploads/0d1931f9-2e1c-4c84-947a-728083844d68_working.pdf at positions [2]
+I, [2026-04-24T12:39:43.618633 #9683]  INFO -- : Blank pages added successfully.
+I, [2026-04-24T12:39:57.144736 #9683]  INFO -- : Calling: remove_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/uploads/0d1931f9-2e1c-4c84-947a-728083844d68_working.pdf", 2]
+I, [2026-04-24T12:39:57.175625 #9683]  INFO -- : Removing pages [2] from /home/divyarajs/react_projects/rails_vite/public/uploads/0d1931f9-2e1c-4c84-947a-728083844d68_working.pdf
+I, [2026-04-24T12:39:57.203877 #9683]  INFO -- : Pages [2] removed successfully.
+I, [2026-04-24T12:40:08.781810 #9683]  INFO -- : Calling: rotate_page with arguments: ["/home/divyarajs/react_projects/rails_vite/public/uploads/0d1931f9-2e1c-4c84-947a-728083844d68_working.pdf", 270, 1]
+I, [2026-04-24T12:40:08.811078 #9683]  INFO -- : Rotating pages [1] of /home/divyarajs/react_projects/rails_vite/public/uploads/0d1931f9-2e1c-4c84-947a-728083844d68_working.pdf by 270 degrees
+I, [2026-04-24T12:40:08.833871 #9683]  INFO -- : Pages rotated successfully.

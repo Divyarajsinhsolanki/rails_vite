@@ -133,6 +133,7 @@ class Api::ProjectsController < Api::BaseController
           name: [pu.user.first_name, pu.user.last_name].compact.join(' '),
           profile_picture: pu.user.profile_picture.attached? ?
             rails_blob_url(pu.user.profile_picture, only_path: true) : nil,
+          avatar_color: pu.user.avatar_color,
           email: pu.user.email,
           department_name: pu.user.department&.name,
           availability_status: pu.user.availability_status,

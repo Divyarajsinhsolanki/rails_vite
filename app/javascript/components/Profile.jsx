@@ -5,8 +5,9 @@ import { getStatusClasses } from '/utils/taskUtils';
 import { Squares2X2Icon, FolderIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { AuthContext } from '../context/AuthContext';
 import { COLOR_MAP } from '/utils/theme';
+import { buildAvatarStyle, getAvatarInitial, normalizeAvatarColor } from '/utils/avatar';
 
-const Avatar = ({ name, src, size = 'md' }) => {
+const Avatar = ({ name, src, size = 'md', color }) => {
   const sizes = {
     sm: 'w-8 h-8',
     md: 'w-12 h-12',
@@ -22,9 +23,12 @@ const Avatar = ({ name, src, size = 'md' }) => {
       />
     );
   }
-  const initial = name ? name.charAt(0).toUpperCase() : "?";
+  const initial = getAvatarInitial(name);
   return (
-    <div className={`${sizes[size]} rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-gray-600 border-2 border-white/80 shadow-sm`}>
+    <div
+      className={`${sizes[size]} rounded-full flex items-center justify-center border-2 border-white/80 shadow-sm`}
+      style={buildAvatarStyle(color)}
+    >
       {size === 'lg' ? (
         <span className="text-xl font-medium">{initial}</span>
       ) : (
@@ -54,6 +58,7 @@ const Profile = () => {
     profile_picture: null,
     cover_photo: null,
     color_theme: "#3b82f6",
+    avatar_color: "#6366f1",
     phone_number: "",
     bio: "",
     social_links: {
@@ -89,7 +94,8 @@ const Profile = () => {
         : await fetchUserInfo();
       const userData = data.user || data;
       const theme = COLOR_MAP[userData.color_theme] || userData.color_theme || '#3b82f6';
-      const updatedUser = { ...userData, color_theme: theme };
+      const avatarColor = normalizeAvatarColor(userData.avatar_color);
+      const updatedUser = { ...userData, color_theme: theme, avatar_color: avatarColor };
       setUser((prev) => ({ ...prev, ...updatedUser }));
       if (!viewingOtherProfile) {
         setAuthUser((prev) => ({ ...(prev || {}), ...updatedUser }));
@@ -116,6 +122,7 @@ const Profile = () => {
         profile_picture: userData.profile_picture,
         cover_photo: userData.cover_photo,
         color_theme: theme,
+        avatar_color: avatarColor,
         phone_number: userData.phone_number || "",
         bio: userData.bio || "",
         social_links: {
@@ -247,6 +254,7 @@ const Profile = () => {
     payload.append("auth[last_name]", formData.last_name);
     payload.append("auth[date_of_birth]", formData.date_of_birth);
     payload.append("auth[color_theme]", formData.color_theme);
+    payload.append("auth[avatar_color]", formData.avatar_color);
     payload.append("auth[phone_number]", formData.phone_number || "");
     payload.append("auth[bio]", formData.bio || "");
     Object.entries(formData.social_links || {}).forEach(([key, value]) => {
@@ -288,7 +296,8 @@ const Profile = () => {
         .join(" ") || "Unnamed User")
     : "";
 
-  const initial = (user?.first_name || user?.email || "").charAt(0).toUpperCase();
+  const initial = getAvatarInitial(displayName || user?.email);
+  const avatarPreviewColor = normalizeAvatarColor(editMode ? formData.avatar_color : user?.avatar_color);
 
   const todayStr = new Date().toISOString().split("T")[0];
   const normalizeKekaPayload = (payload) => {
@@ -568,7 +577,10 @@ const Profile = () => {
                     className="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-4 border-white/80 shadow-lg transition-all duration-300 hover:shadow-xl group-hover:scale-105"
                   />
                 ) : (
-                  <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-tr from-[var(--theme-color)] to-[var(--theme-color)] text-white text-5xl md:text-6xl font-bold flex items-center justify-center border-4 border-white/80 shadow-lg transition-all duration-300 hover:shadow-xl group-hover:scale-105">
+                  <div
+                    className="w-32 h-32 md:w-40 md:h-40 rounded-full text-5xl md:text-6xl font-bold flex items-center justify-center border-4 border-white/80 shadow-lg transition-all duration-300 hover:shadow-xl group-hover:scale-105"
+                    style={buildAvatarStyle(avatarPreviewColor)}
+                  >
                     {initial}
                   </div>
                 )}
@@ -1164,7 +1176,7 @@ const Profile = () => {
                         <div className="flex items-center mb-4">
                           <div className="flex -space-x-2">
                             {team.users.slice(0,3).map((m) => (
-                              <Avatar key={m.id} name={m.name} src={m.profile_picture} />
+                              <Avatar key={m.id} name={m.name} src={m.profile_picture} color={m.avatar_color} />
                             ))}
                             {team.users.length > 3 && (
                               <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs text-gray-500 border-2 border-white">
@@ -1224,9 +1236,10 @@ const Profile = () => {
                               ) : (
                                 <div
                                   key={m.id}
-                                  className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs font-medium text-gray-500"
+                                  className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-xs font-medium"
+                                  style={buildAvatarStyle(m.avatar_color)}
                                 >
-                                  {m.name.charAt(0).toUpperCase()}
+                                  {getAvatarInitial(m.name)}
                                 </div>
                               )
                             ))}
@@ -1596,6 +1609,38 @@ const Profile = () => {
                           className="w-6 h-6 rounded-full"
                           style={{ backgroundColor: color }}
                           aria-label={name}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Avatar Color</label>
+                  <p className="text-xs text-gray-500 mb-3">Used when your profile picture is missing.</p>
+                  <div className="flex items-center gap-4">
+                    <div
+                      className="w-12 h-12 rounded-full border border-white/80 shadow-sm flex items-center justify-center text-sm font-semibold"
+                      style={buildAvatarStyle(formData.avatar_color)}
+                    >
+                      {getAvatarInitial(formData.first_name || displayName || user?.email)}
+                    </div>
+                    <input
+                      type="color"
+                      name="avatar_color"
+                      value={formData.avatar_color}
+                      onChange={handleInputChange}
+                      className="w-16 h-10 p-0 border-0 bg-transparent cursor-pointer rounded-lg overflow-hidden"
+                    />
+                    <div className="flex gap-2">
+                      {Object.entries(COLOR_MAP).map(([name, color]) => (
+                        <button
+                          key={`avatar-${name}`}
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, avatar_color: color }))}
+                          className="w-6 h-6 rounded-full"
+                          style={{ backgroundColor: color }}
+                          aria-label={`${name} avatar color`}
                         />
                       ))}
                     </div>

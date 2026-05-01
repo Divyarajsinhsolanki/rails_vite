@@ -129,9 +129,40 @@ class Api::TasksController < Api::BaseController
     if permitted[:type] == 'general'
       permitted.delete(:sprint_id)
       permitted.delete(:project_id)
+      return permitted
     end
 
+    normalize_structured_task_attributes!(permitted)
     permitted
+  end
+
+  def normalize_structured_task_attributes!(permitted)
+    developer_id = resolved_task_attribute(permitted, :developer_id, fallback: @task&.developer_id)
+    qa_assigned = resolved_task_attribute(permitted, :qa_assigned, fallback: @task&.qa_assigned)
+
+    normalized_type =
+      if developer_id.present?
+        'Code'
+      elsif qa_assigned.present?
+        'qa'
+      else
+        permitted[:type].presence || @task&.type
+      end
+
+    permitted[:type] = normalized_type if normalized_type.present?
+
+    estimate_source =
+      if normalized_type == 'qa'
+        resolved_task_attribute(permitted, :qa_hours, fallback: @task&.qa_hours)
+      else
+        resolved_task_attribute(permitted, :dev_hours, fallback: @task&.dev_hours)
+      end
+
+    permitted[:estimated_hours] = estimate_source if estimate_source.present?
+  end
+
+  def resolved_task_attribute(permitted, key, fallback:)
+    permitted.key?(key) ? permitted[key] : fallback
   end
 
   def serialize_tasks(tasks)
