@@ -1,6 +1,7 @@
 class Message < ApplicationRecord
   IMAGE_TYPES = %w[image/png image/jpeg image/jpg image/gif image/webp].freeze
   VIDEO_TYPES = %w[video/mp4 video/webm video/quicktime].freeze
+  MENTION_REGEX = /@([a-zA-Z0-9._-]+)/.freeze
 
   belongs_to :conversation
   belongs_to :user
@@ -48,19 +49,45 @@ class Message < ApplicationRecord
   end
 
   def notify_participants
-    recipient_ids = conversation.participants.where.not(id: user_id).pluck(:id)
+    recipients = conversation.participants.where.not(id: user_id)
+    mentioned_user_ids = extract_mentioned_user_ids(recipients)
 
-    recipient_ids.each do |recipient_id|
+    recipients.find_each do |recipient|
+      mentioned = mentioned_user_ids.include?(recipient.id)
+
       Notification.create(
-        recipient_id: recipient_id,
+        recipient_id: recipient.id,
         actor: user,
-        action: "chat_message",
+        action: mentioned ? "chat_ping" : "chat_message",
         notifiable: self,
         metadata: {
           conversation_id: conversation_id,
-          conversation_name: conversation.display_name(User.find(recipient_id))
+          conversation_name: conversation.display_name(recipient),
+          mentioned: mentioned
         }
       )
     end
+  end
+
+  def extract_mentioned_user_ids(recipients)
+    return [] if body.blank?
+
+    handles = body.scan(MENTION_REGEX).flatten.map(&:downcase).uniq
+    return [] if handles.empty?
+
+    recipients.select do |participant|
+      mention_handles_for(participant).any? { |handle| handles.include?(handle) }
+    end.map(&:id)
+  end
+
+  def mention_handles_for(participant)
+    [
+      participant.email.to_s.split("@").first,
+      participant.full_name.to_s,
+      [ participant.first_name, participant.last_name ].compact.join(" "),
+      participant.first_name.to_s
+    ].map { |value| value.to_s.downcase.strip.gsub(/\s+/, ".") }
+      .reject(&:blank?)
+      .uniq
   end
 end

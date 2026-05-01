@@ -53,6 +53,9 @@ class Api::NotificationsController < Api::BaseController
     when 'chat_message'
       conversation_name = notification.metadata&.dig('conversation_name') || 'a conversation'
       "#{notification.actor.full_name} sent a message in #{conversation_name}"
+    when 'chat_ping'
+      conversation_name = notification.metadata&.dig('conversation_name') || 'a conversation'
+      "#{notification.actor.full_name} mentioned you in #{conversation_name}"
     else
       "New notification"
     end
