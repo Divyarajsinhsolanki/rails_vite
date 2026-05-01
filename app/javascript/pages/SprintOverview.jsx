@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { SchedulerAPI, getUsers, fetchProjects } from '../components/api';
 import { Toaster, toast } from 'react-hot-toast';
 import SpinnerOverlay from '../components/ui/SpinnerOverlay';
@@ -6,6 +6,7 @@ import { FiX } from 'react-icons/fi';
 import { CalendarDaysIcon, PlusCircleIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { buildAvatarStyle, getAvatarInitial } from '/utils/avatar';
+import { groupTasksByAssignment } from '../utils/sprintViewUtils';
 
 const mapTask = (t) => ({
     id: t.task_id,
@@ -66,6 +67,26 @@ const formatHours = (hours) => {
     const normalizedHours = numericHours.toFixed(2).replace(/\.0+$/, '').replace(/\.(\d*?)0+$/, '.$1');
 
     return `${normalizedHours}h`;
+};
+
+const mapProjectMembersForBoard = (projectMembers = []) => {
+    const members = projectMembers.map(member => ({
+        id: member.id,
+        first_name: member.name,
+        email: member.email || member.name,
+        profile_picture: member.profile_picture,
+        avatar_color: member.avatar_color,
+        role: member.role
+    }));
+
+    const developerOptions = projectMembers.map(member => ({
+        id: member.id,
+        name: member.name || member.email,
+        avatar_color: member.avatar_color,
+        role: member.role
+    }));
+
+    return { members, developerOptions };
 };
 
 // Task Details Modal Component
@@ -845,7 +866,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate, projectId, viewMod
 };
 
 // Main Component
-const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationEnabled, viewMode = 'combined' }) => {
+const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationEnabled, projectMembers, viewMode = 'combined' }) => {
     const [sprints, setSprints] = useState([]);
     const [developers, setDevelopers] = useState([]);
     const [users, setUsers] = useState([]);
@@ -924,25 +945,17 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
     };
 
     useEffect(() => {
-        if (projectId) {
+        if (projectId && Array.isArray(projectMembers)) {
+            const { members, developerOptions } = mapProjectMembersForBoard(projectMembers);
+            setUsers(members);
+            setDevelopers(developerOptions);
+        } else if (projectId) {
             fetchProjects().then(({ data }) => {
                 const list = Array.isArray(data) ? data : [];
                 const project = list.find(p => p.id === Number(projectId));
-                const members = (project ? project.users : []).map(u => ({
-                    id: u.id,
-                    first_name: u.name,
-                    email: u.email || u.name,
-                    profile_picture: u.profile_picture,
-                    avatar_color: u.avatar_color
-                }));
+                const { members, developerOptions } = mapProjectMembersForBoard(project ? project.users : []);
                 setUsers(members);
-                setDevelopers(
-                    members.map(member => ({
-                        id: member.id,
-                        name: member.first_name || member.email,
-                        avatar_color: member.avatar_color
-                    }))
-                );
+                setDevelopers(developerOptions);
             });
         } else {
             SchedulerAPI.getDevelopers().then(res => setDevelopers(res.data));
@@ -971,7 +984,7 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                     if (onSprintChange) onSprintChange(null);
                 }
             });
-    }, [projectId, sprintId]);
+    }, [projectId, sprintId, projectMembers]);
 
     useEffect(() => {
         if (!sprintId && onSprintChange && selectedSprintId !== null) {
@@ -1007,64 +1020,25 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
         return true;
     });
 
-    // Group tasks by developer so we can display them together in the table
-    const developerMap = developers.reduce((acc, d) => {
-        acc[String(d.id)] = d;
+    const developerMap = useMemo(() => developers.reduce((acc, developer) => {
+        acc[String(developer.id)] = developer;
         return acc;
-    }, {});
-
-    const tasksByDeveloper = filteredTasks.reduce((acc, task) => {
-        const devId = task.assignedTo?.[0] ? String(task.assignedTo[0]) : 'unassigned';
-        if (!acc[devId]) acc[devId] = [];
-        acc[devId].push(task);
-        return acc;
-    }, {});
-
-    const sortDevelopers = (a, b) => {
-        const nameA = developerMap[a]?.name?.toLowerCase() || 'zzzz';
-        const nameB = developerMap[b]?.name?.toLowerCase() || 'zzzz';
-        if (nameA === 'ankitsir') return -1;
-        if (nameB === 'ankitsir') return 1;
-        return nameA.localeCompare(nameB);
-    };
-
-    const groupedTasks = Object.keys(tasksByDeveloper)
-        .sort(sortDevelopers)
-        .map(devId => {
-            const taskList = tasksByDeveloper[devId].sort((a, b) => (a.order || 0) - (b.order || 0));
-            const totalHours = taskList.reduce((sum, t) => sum + (parseFloat(t.estimatedHours) || 0), 0);
-            return {
-                developer: developerMap[devId],
-                devId,
-                tasks: taskList,
-                totalHours
-            };
-        });
+    }, {}), [developers]);
 
     const filteredBacklogTasks = backlogTasks.filter(task => {
         if (filterUsers.length && !filterUsers.includes(String(task.assignedUser))) return false;
         return true;
     });
 
-    const backlogByDeveloper = filteredBacklogTasks.reduce((acc, task) => {
-        const devId = task.assignedTo?.[0] ? String(task.assignedTo[0]) : 'unassigned';
-        if (!acc[devId]) acc[devId] = [];
-        acc[devId].push(task);
-        return acc;
-    }, {});
+    const groupedTasks = useMemo(
+        () => groupTasksByAssignment(filteredTasks, developerMap),
+        [filteredTasks, developerMap]
+    );
 
-    const groupedBacklog = Object.keys(backlogByDeveloper)
-        .sort(sortDevelopers)
-        .map(devId => {
-            const taskList = backlogByDeveloper[devId].sort((a, b) => (a.order || 0) - (b.order || 0));
-            const totalHours = taskList.reduce((sum, t) => sum + (parseFloat(t.estimatedHours) || 0), 0);
-            return {
-                developer: developerMap[devId],
-                devId,
-                tasks: taskList,
-                totalHours
-            };
-        });
+    const groupedBacklog = useMemo(
+        () => groupTasksByAssignment(filteredBacklogTasks, developerMap),
+        [filteredBacklogTasks, developerMap]
+    );
 
     const getUserName = (userId) => {
         const user = users.find(u => String(u.id) === String(userId));
@@ -1073,6 +1047,61 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
     };
 
     const currentSprint = sprints.find(s => s.id === selectedSprintId);
+
+    const renderGroupHeader = (group) => (
+        <tr className={group.type === 'qa' ? 'bg-purple-50' : 'bg-gray-100'}>
+            <td colSpan="9" className="px-6 py-2 font-semibold text-gray-700">
+                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${group.type === 'qa'
+                    ? 'bg-purple-100 text-purple-700'
+                    : 'bg-slate-200 text-slate-700'
+                    }`}>
+                    {group.type === 'qa' ? 'QA' : 'Dev'}
+                </span>
+                <span className="ml-2">{group.label}</span>
+                <span className="ml-2 text-sm font-normal text-gray-500">Total Est. Hours: {formatHours(group.totalHours)}</span>
+            </td>
+        </tr>
+    );
+
+    const renderTaskCells = (task) => (
+        <>
+            <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                {task.order}
+            </td>
+            <td className="px-6 py-3 whitespace-nowrap text-sm text-indigo-600 hover:underline">
+                <a href={task.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                    {task.id}
+                </a>
+            </td>
+            <td className="px-6 py-3 whitespace-normal text-sm text-gray-900">
+                {task.title}
+            </td>
+            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                {formatHours(task.estimatedHours)}
+            </td>
+            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                {getTaskAssignmentLabel(task)}
+            </td>
+            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                {getUserName(task.assignedUser)}
+            </td>
+            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                {task.startDate ? new Date(task.startDate).getDate() : '-'}
+            </td>
+            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                {task.endDate ? new Date(task.endDate).getDate() : '-'}
+            </td>
+            <td className="px-6 py-3 whitespace-nowrap text-sm">
+                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                    ${task.status === 'Completed' ? 'bg-green-100 text-green-800' : ''}
+                    ${task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' : ''}
+                    ${task.status === 'To Do' ? 'bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)]' : ''}
+                `}>
+                    {task.status}
+                </span>
+            </td>
+        </>
+    );
 
     const matchesActiveView = (taskLike) => !taskTypeParam || taskLike.type === taskTypeParam;
 
@@ -1331,61 +1360,34 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                             </thead>
                             {groupedTasks.length > 0 ? (
                                 groupedTasks.map(group => (
-                                    <Droppable droppableId={`dev-${group.devId}`} key={group.devId}>
-                                        {(provided) => (
-                                            <tbody ref={provided.innerRef} {...provided.droppableProps} className="bg-white divide-y divide-gray-200">
-                                                <tr className="bg-gray-100">
-                                                    <td colSpan="9" className="px-6 py-2 font-semibold text-gray-700">
-                                                        {group.developer ? group.developer.name : 'Unassigned'} - Total Est. Hours: {formatHours(group.totalHours)}
-                                                    </td>
+                                    group.type === 'dev' ? (
+                                        <Droppable droppableId={`dev-${group.rawValue}`} key={group.key}>
+                                            {(provided) => (
+                                                <tbody ref={provided.innerRef} {...provided.droppableProps} className="bg-white divide-y divide-gray-200">
+                                                    {renderGroupHeader(group)}
+                                                    {group.tasks.map((task, idx) => (
+                                                        <Draggable key={task.dbId} draggableId={`task-${task.dbId}`} index={idx}>
+                                                            {(prov) => (
+                                                                <tr ref={prov.innerRef} {...prov.draggableProps} {...prov.dragHandleProps} className="hover:bg-gray-50 cursor-pointer" onClick={() => openTaskModal(task)}>
+                                                                    {renderTaskCells(task)}
+                                                                </tr>
+                                                            )}
+                                                        </Draggable>
+                                                    ))}
+                                                    {provided.placeholder}
+                                                </tbody>
+                                            )}
+                                        </Droppable>
+                                    ) : (
+                                        <tbody key={group.key} className="bg-white divide-y divide-gray-200">
+                                            {renderGroupHeader(group)}
+                                            {group.tasks.map(task => (
+                                                <tr key={task.dbId} className="hover:bg-gray-50 cursor-pointer" onClick={() => openTaskModal(task)}>
+                                                    {renderTaskCells(task)}
                                                 </tr>
-                                                {group.tasks.map((task, idx) => (
-                                                    <Draggable key={task.dbId} draggableId={`task-${task.dbId}`} index={idx}>
-                                                        {(prov) => (
-                                                            <tr ref={prov.innerRef} {...prov.draggableProps} {...prov.dragHandleProps} className="hover:bg-gray-50 cursor-pointer" onClick={() => openTaskModal(task)}>
-                                                                <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                                    {task.order}
-                                                                </td>
-                                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-indigo-600 hover:underline">
-                                                                    <a href={task.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
-                                                                        {task.id}
-                                                                    </a>
-                                                                </td>
-                                                                <td className="px-6 py-3 whitespace-normal text-sm text-gray-900">
-                                                                    {task.title}
-                                                                </td>
-                                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                                                                    {formatHours(task.estimatedHours)}
-                                                                </td>
-                                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                                                                    {getTaskAssignmentLabel(task)}
-                                                                </td>
-                                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                                                                    {getUserName(task.assignedUser)}
-                                                                </td>
-                                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                                                                    {task.startDate ? new Date(task.startDate).getDate() : '-'}
-                                                                </td>
-                                                                <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                                                                    {task.endDate ? new Date(task.endDate).getDate() : '-'}
-                                                                </td>
-                                                                <td className="px-6 py-3 whitespace-nowrap text-sm">
-                                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                                                                        ${task.status === 'Completed' ? 'bg-green-100 text-green-800' : ''}
-                                                                        ${task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' : ''}
-                                                                        ${task.status === 'To Do' ? 'bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)]' : ''}
-                                                                    `}>
-                                                                        {task.status}
-                                                                    </span>
-                                                                </td>
-                                                            </tr>
-                                                        )}
-                                                    </Draggable>
-                                                ))}
-                                                {provided.placeholder}
-                                            </tbody>
-                                        )}
-                                    </Droppable>
+                                            ))}
+                                        </tbody>
+                                    )
                                 ))
                             ) : (
                                 <tbody>
@@ -1442,30 +1444,11 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                         </thead>
                         {groupedBacklog.length > 0 ? (
                             groupedBacklog.map(group => (
-                                <tbody key={group.devId} className="bg-white divide-y divide-gray-200">
-                                    <tr className="bg-gray-100">
-                                        <td colSpan="9" className="px-6 py-2 font-semibold text-gray-700">
-                                            {group.developer ? group.developer.name : 'Unassigned'} - Total Est. Hours: {formatHours(group.totalHours)}
-                                        </td>
-                                    </tr>
+                                <tbody key={group.key} className="bg-white divide-y divide-gray-200">
+                                    {renderGroupHeader(group)}
                                     {group.tasks.map(task => (
                                         <tr key={task.dbId} className="hover:bg-gray-50 cursor-pointer" onClick={() => openTaskModal(task, true)}>
-                                            <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{task.order}</td>
-                                            <td className="px-6 py-3 whitespace-nowrap text-sm text-indigo-600 hover:underline">
-                                                <a href={task.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>{task.id}</a>
-                                            </td>
-                                            <td className="px-6 py-3 whitespace-normal text-sm text-gray-900">{task.title}</td>
-                                            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{formatHours(task.estimatedHours)}</td>
-                                            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{getTaskAssignmentLabel(task)}</td>
-                                            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{getUserName(task.assignedUser)}</td>
-                                            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{task.startDate ? new Date(task.startDate).getDate() : '-'}</td>
-                                            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{task.endDate ? new Date(task.endDate).getDate() : '-'}</td>
-                                            <td className="px-6 py-3 whitespace-nowrap text-sm">
-                                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                                                    ${task.status === 'Completed' ? 'bg-green-100 text-green-800' : ''}
-                                                    ${task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' : ''}
-                                                    ${task.status === 'To Do' ? 'bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)]' : ''}`}>{task.status}</span>
-                                            </td>
+                                            {renderTaskCells(task)}
                                         </tr>
                                     ))}
                                 </tbody>

@@ -67,6 +67,7 @@ export const SchedulerAPI = {
   // Task Logs
   getTaskLogs: (params = {}) => api.get('/task_logs.json', { params }),
   createTaskLog: (data) => api.post('/task_logs.json', { task_log: data }),
+  bulkCreateTaskLogs: (entries) => api.post('/task_logs/bulk_create.json', { task_logs: entries }),
   updateTaskLog: (id, data) => api.patch(`/task_logs/${id}.json`, { task_log: data }),
   deleteTaskLog: (id) => api.delete(`/task_logs/${id}.json`),
   importSprintTasks: (id) => api.post(`/sprints/${id}/import_tasks`),

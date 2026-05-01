@@ -395,6 +395,7 @@ export default function SprintDashboard() {
           sprintId={sprintId}
           onSprintChange={handleSprintChange}
           sheetIntegrationEnabled={project?.sheet_integration_enabled}
+          projectMembers={project?.users}
           viewMode={viewMode}
         />
       )}
@@ -404,6 +405,7 @@ export default function SprintDashboard() {
             sprintId={sprintId}
             projectId={projectId}
             sheetIntegrationEnabled={project?.sheet_integration_enabled}
+            projectMembers={project?.users}
             viewMode={viewMode}
           />
         ) : (

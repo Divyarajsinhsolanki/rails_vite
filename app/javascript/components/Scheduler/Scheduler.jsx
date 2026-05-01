@@ -4,9 +4,11 @@ import { CSS } from '@dnd-kit/utilities';
 import { SchedulerAPI } from '../api';
 import { Toaster, toast } from 'react-hot-toast';
 import SpinnerOverlay from '../ui/SpinnerOverlay';
+import { getVisibleMembersForView } from '../../utils/sprintViewUtils';
 
 // Assuming these are your existing form components
 import AddTaskForm from '../Scheduler/AddTaskForm';
+import BulkLogForm from '../Scheduler/BulkLogForm';
 import EditTaskForm from '../Scheduler/EditTaskForm';
 
 import {
@@ -47,12 +49,12 @@ function LoadingSpinner() {
   );
 }
 
-function Modal({ isOpen, onClose, title, children }) {
+function Modal({ isOpen, onClose, title, children, panelClassName = 'max-w-2xl' }) {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center z-50 p-4 transition-opacity duration-300 ease-in-out">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl transform transition-all duration-300 ease-in-out scale-95 opacity-0 animate-modalShow">
+      <div className={`bg-white rounded-xl shadow-2xl w-full ${panelClassName} transform transition-all duration-300 ease-in-out scale-95 opacity-0 animate-modalShow`}>
         <div className="flex justify-between items-center p-4 border-b border-gray-200">
           <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
           <button
@@ -241,7 +243,7 @@ function TaskCell({ date, devId, tasksInCell, setEditingTask, handleTaskUpdate, 
   );
 }
 
-function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, viewMode = 'combined' }) {
+function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, projectMembers = [], viewMode = 'combined' }) {
   const [sprint, setSprint] = useState(null);
   const [developers, setDevelopers] = useState([]);
   const [tasks, setTasks] = useState([]); // will hold task logs
@@ -252,10 +254,24 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, viewMode = 'c
   const [error, setError] = useState(null);
 
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+  const [isBulkLogModalOpen, setIsBulkLogModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [mainHeaderHeight, setMainHeaderHeight] = useState(0); // State to store main header height
   const taskTypeParam = getTaskTypeParam(viewMode);
+  const visibleDevelopers = useMemo(
+    () => getVisibleMembersForView({
+      members: developers,
+      projectMembers,
+      viewMode,
+      records: tasks.filter((task) => !task.deleted),
+    }),
+    [developers, projectMembers, viewMode, tasks]
+  );
+  const memberHoursLabel = viewMode === 'qa' ? 'QA Hours' : viewMode === 'combined' ? 'Team Hours' : 'Developer Hours';
+  const memberColumnLabel = viewMode === 'qa' ? 'QA' : viewMode === 'combined' ? 'Member' : 'Developer';
+  const dailyHoursLabel = viewMode === 'qa' ? 'Daily QA Hours' : viewMode === 'combined' ? 'Daily Team Hours' : 'Daily Hours';
+  const formDevelopers = visibleDevelopers.length ? visibleDevelopers : developers;
 
   // Ref for the main header
   const mainHeaderRef = useCallback(node => {
@@ -337,7 +353,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, viewMode = 'c
     const structuredTasks = {};
     dates.forEach(date => {
       structuredTasks[date] = {};
-      developers.forEach(dev => {
+      visibleDevelopers.forEach(dev => {
         structuredTasks[date][dev.id] = [];
       });
     });
@@ -347,7 +363,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, viewMode = 'c
       }
     });
     return structuredTasks;
-  }, [tasks, dates, developers]);
+  }, [tasks, dates, visibleDevelopers]);
 
   const addTask = async (formData) => {
     const tempId = `temp-${Date.now()}`;
@@ -407,6 +423,21 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, viewMode = 'c
     setProcessing(false);
   };
 
+  const handleBulkCreate = async (entries) => {
+    try {
+      setProcessing(true);
+      const { data: createdLogs } = await SchedulerAPI.bulkCreateTaskLogs(entries);
+      const createdList = Array.isArray(createdLogs) ? createdLogs : [];
+      setTasks(prev => [...prev, ...createdList]);
+      setIsBulkLogModalOpen(false);
+      toast.success(`Created ${createdList.length || entries.length} logs`);
+    } catch (error) {
+      const message = error?.response?.data?.errors?.join(', ') || error?.message || 'Could not create bulk logs.';
+      toast.error(`Error: ${message}`);
+    }
+    setProcessing(false);
+  };
+
   const handleTaskUpdate = useCallback((updatedTask) => {
     setTasks(prevTasks => {
       if (updatedTask.deleted) {
@@ -443,7 +474,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, viewMode = 'c
 
   const { hoursByDevDate, hoursByDateDev, dailyTotalsPerDev, grandTotalsPerDev, dailyTotalsPerDate } = useMemo(() => {
     const hByDevDate = {};
-    developers.forEach(dev => {
+    visibleDevelopers.forEach(dev => {
       hByDevDate[dev.id] = {};
       dates.forEach(date => hByDevDate[dev.id][date] = 0);
     });
@@ -451,7 +482,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, viewMode = 'c
     const hByDateDev = {};
     dates.forEach(date => {
       hByDateDev[date] = {};
-      developers.forEach(dev => hByDateDev[date][dev.id] = 0);
+      visibleDevelopers.forEach(dev => hByDateDev[date][dev.id] = 0);
     });
 
     tasks.filter(t => !t.deleted).forEach(task => {
@@ -465,7 +496,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, viewMode = 'c
     });
 
     const dtPerDev = {};
-    developers.forEach(dev => {
+    visibleDevelopers.forEach(dev => {
       dtPerDev[dev.id] = {};
       dates.forEach(date => {
         dtPerDev[dev.id][date] = (tasksByDateDev[date]?.[dev.id] || [])
@@ -475,17 +506,17 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, viewMode = 'c
     });
 
     const gtPerDev = {};
-    developers.forEach(dev => {
+    visibleDevelopers.forEach(dev => {
       gtPerDev[dev.id] = dates.reduce((sum, date) => sum + (dtPerDev[dev.id][date] || 0), 0);
     });
 
     const dtPerDate = {};
     dates.forEach(date => {
-      dtPerDate[date] = developers.reduce((sum, dev) => sum + (dtPerDev[dev.id][date] || 0), 0);
+      dtPerDate[date] = visibleDevelopers.reduce((sum, dev) => sum + (dtPerDev[dev.id][date] || 0), 0);
     });
 
     return { hoursByDevDate: hByDevDate, hoursByDateDev: hByDateDev, dailyTotalsPerDev: dtPerDev, grandTotalsPerDev: gtPerDev, dailyTotalsPerDate: dtPerDate };
-  }, [tasks, developers, dates, tasksByDateDev]);
+  }, [tasks, visibleDevelopers, dates, tasksByDateDev]);
 
 
   const formatDate = useCallback((isoDateString) => {
@@ -567,6 +598,13 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, viewMode = 'c
                       <PlusCircleIcon className="h-5 w-5 mr-2" />
                       Add Log
                     </button>
+                    <button
+                      onClick={() => setIsBulkLogModalOpen(true)}
+                      className="flex items-center bg-slate-700 hover:bg-slate-800 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105"
+                    >
+                      <DocumentDuplicateIcon className="h-5 w-5 mr-2" />
+                      Bulk Log
+                    </button>
                     {sheetIntegrationEnabled && (
                       <button
                         onClick={handleExportScheduler}
@@ -588,7 +626,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, viewMode = 'c
                     <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-r border-gray-200 sticky left-0 bg-gray-100/90 z-20">
                       Date
                     </th>
-                    {developers.map(dev => (
+                    {visibleDevelopers.map(dev => (
                       <th key={dev.id} className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-r border-gray-200 whitespace-nowrap">
                         {dev.name}
                         <span className="block text-[10px] font-normal text-gray-400">Total: {grandTotalsPerDev[dev.id] || 0}h</span>
@@ -599,9 +637,9 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, viewMode = 'c
                 <tbody className="bg-white divide-y divide-gray-200">
                   {dates.length === 0 && (
                     <tr>
-                      <td colSpan={developers.length + 1} className="p-6 text-center text-gray-500">
+                      <td colSpan={visibleDevelopers.length + 1} className="p-6 text-center text-gray-500">
                         <InformationCircleIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                        No dates found for this sprint, or developers are not loaded.
+                        No dates found for this sprint, or matching members are not loaded.
                       </td>
                     </tr>
                   )}
@@ -611,7 +649,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, viewMode = 'c
                         {formatDate(date)}
                         <span className="block text-xs text-gray-400">{dailyTotalsPerDate[date] || 0}h Total</span>
                       </td>
-                      {developers.map(dev => (
+                      {visibleDevelopers.map(dev => (
                         <TaskCell
                           key={`${date}-${dev.id}`}
                           date={date}
@@ -636,21 +674,21 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, viewMode = 'c
             </h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-white/70 backdrop-blur-md shadow-xl rounded-xl overflow-hidden border border-gray-200">
-                <h3 className="text-lg font-medium text-gray-700 px-5 py-3 border-b border-gray-200">Developer Hours</h3>
+                <h3 className="text-lg font-medium text-gray-700 px-5 py-3 border-b border-gray-200">{memberHoursLabel}</h3>
                 <div className="overflow-x-auto"> {/* Added overflow-x-auto here for scrolling */}
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50/80">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Developer</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{memberColumnLabel}</th>
                         {/* **FIX 1: Removed .slice() to show all dates** */}
                         {dates.map(date => (
                           <th key={date} className="px-3 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{formatDate(date).split(',')[0]}</th>
                         ))}
                         <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
-                      </tr>
+                    </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {developers.map((dev, index) => (
+                      {visibleDevelopers.map((dev, index) => (
                         <tr key={dev.id} className={index % 2 === 0 ? undefined : 'bg-gray-50/70'}>
                           <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-800">{dev.name}</td>
                           {/* **FIX 1: Removed .slice() to show all dates** */}
@@ -666,14 +704,14 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, viewMode = 'c
               </div>
 
               <div className="bg-white/70 backdrop-blur-md shadow-xl rounded-xl overflow-hidden border border-gray-200">
-                <h3 className="text-lg font-medium text-gray-700 px-5 py-3 border-b border-gray-200">Daily Hours</h3>
+                <h3 className="text-lg font-medium text-gray-700 px-5 py-3 border-b border-gray-200">{dailyHoursLabel}</h3>
                 <div className="overflow-x-auto"> {/* Added overflow-x-auto here for scrolling */}
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50/80">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
                         {/* Showing all developers, ensure this is intended or use slice if needed */}
-                        {developers.map(dev => (
+                        {visibleDevelopers.map(dev => (
                           <th key={dev.id} className="px-3 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">{dev.name.split(' ')[0]}</th>
                         ))}
                         <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
@@ -683,7 +721,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, viewMode = 'c
                       {dates.map((date, index) => (
                         <tr key={date} className={index % 2 === 0 ? undefined : 'bg-gray-50/70'}>
                           <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-800">{formatDate(date)}</td>
-                          {developers.map(dev => (
+                          {visibleDevelopers.map(dev => (
                             <td key={dev.id} className="px-3 py-3 whitespace-nowrap text-sm text-gray-600 text-center">{hoursByDateDev[date]?.[dev.id] || '0'}</td>
                           ))}
                           <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-800 text-center">{dailyTotalsPerDate[date] || '0'}</td>
@@ -700,7 +738,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, viewMode = 'c
 
       <Modal isOpen={isAddTaskModalOpen} onClose={() => setIsAddTaskModalOpen(false)} title="✨ Add Log">
         <AddTaskForm
-          developers={developers}
+          developers={formDevelopers}
           dates={dates}
           types={types}
           tasks={allTasks}
@@ -708,11 +746,29 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, viewMode = 'c
         />
       </Modal>
 
+      <Modal
+        isOpen={isBulkLogModalOpen}
+        onClose={() => setIsBulkLogModalOpen(false)}
+        title="📚 Bulk Log"
+        panelClassName="max-w-6xl"
+      >
+        <BulkLogForm
+          tasks={allTasks}
+          existingLogs={tasks}
+          developers={formDevelopers}
+          dates={dates}
+          types={types}
+          viewMode={viewMode}
+          onSubmit={handleBulkCreate}
+          onCancel={() => setIsBulkLogModalOpen(false)}
+        />
+      </Modal>
+
       <Modal isOpen={!!editingTask} onClose={() => setEditingTask(null)} title="✏️ Edit Task">
         {editingTask && (
           <EditTaskForm
             task={editingTask}
-            developers={developers}
+            developers={formDevelopers}
             dates={dates}
             types={types}
             tasks={allTasks}

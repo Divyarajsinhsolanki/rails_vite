@@ -110,7 +110,11 @@ Rails.application.routes.draw do
     end
     resources :project_users, only: [:create, :update, :destroy]
     delete 'project_users/leave/:project_id', to: 'project_users#leave'
-    resources :task_logs, only: [:index, :create, :update, :destroy]
+    resources :task_logs, only: [:index, :create, :update, :destroy] do
+      collection do
+        post :bulk_create
+      end
+    end
 
     resources :items, only: [:index, :create, :update, :destroy]
     resources :issues, only: [:index, :create, :update, :destroy] do

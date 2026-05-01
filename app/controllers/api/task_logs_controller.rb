@@ -25,6 +25,25 @@ class Api::TaskLogsController < Api::BaseController
     end
   end
 
+  def bulk_create
+    created_logs = []
+
+    TaskLog.transaction do
+      bulk_task_log_params.each_with_index do |attributes, index|
+        task_log = TaskLog.new(attributes)
+        unless task_log.save
+          raise BulkCreateError, "Row #{index + 1}: #{task_log.errors.full_messages.to_sentence}"
+        end
+
+        created_logs << task_log
+      end
+    end
+
+    render json: serialize_task_logs(created_logs), status: :created
+  rescue BulkCreateError => e
+    render json: { errors: [e.message] }, status: :unprocessable_entity
+  end
+
   def update
     if @task_log.update(task_log_params)
       render json: serialize_task_log(@task_log)
@@ -48,6 +67,13 @@ class Api::TaskLogsController < Api::BaseController
     params.require(:task_log).permit(:task_id, :developer_id, :log_date, :type, :hours_logged, :status, :created_by, :updated_by)
   end
 
+  def bulk_task_log_params
+    Array(params.require(:task_logs)).map do |entry|
+      permitted = entry.is_a?(ActionController::Parameters) ? entry : ActionController::Parameters.new(entry)
+      permitted.permit(:task_id, :developer_id, :log_date, :type, :hours_logged, :status, :created_by, :updated_by)
+    end
+  end
+
   def serialize_task_logs(task_logs)
     task_logs.as_json(include: serialization_includes)
   end
@@ -62,4 +88,6 @@ class Api::TaskLogsController < Api::BaseController
       developer: { only: [:id, :first_name, :last_name, :email], methods: [:name] }
     }
   end
+
+  class BulkCreateError < StandardError; end
 end
