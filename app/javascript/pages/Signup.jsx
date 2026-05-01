@@ -57,7 +57,7 @@ const Signup = ({ switchToLogin }) => {
     <div className="flex min-h-full items-center justify-center">
       <Toaster position="top-right" />
       {loading && <SpinnerOverlay />}
-      <div className="w-full max-w-md rounded-2xl border border-slate-100 bg-white p-8 shadow-2xl transition-transform hover:scale-[1.01]">
+      <div className="w-full max-w-md rounded-2xl border border-white/30 bg-white/95 p-8 shadow-2xl transition-transform hover:scale-[1.01]">
         <h2 className="mb-8 text-center text-3xl font-bold text-slate-900">Create Account</h2>
 
         {/* Signup Form */}
