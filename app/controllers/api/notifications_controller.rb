@@ -1,13 +1,18 @@
 class Api::NotificationsController < Api::BaseController
+  PAGE_SIZE = 20
+
   def index
-    notifications_scope = current_user.notifications.recent
+    notifications_scope = current_user.notifications.includes(:actor).recent
     notifications_scope = apply_status_filter(notifications_scope)
     notifications_scope = apply_action_filter(notifications_scope)
     notifications_scope = apply_notifiable_type_filter(notifications_scope)
-    notifications = notifications_scope.page(params[:page]).per(20)
-    
+
+    current_page = requested_page
+    total_count = notifications_scope.count
+    notifications = notifications_scope.offset((current_page - 1) * PAGE_SIZE).limit(PAGE_SIZE)
+
     render json: {
-      notifications: notifications.map do |n| 
+      notifications: notifications.map do |n|
         {
           id: n.id,
           actor: n.actor.full_name,
@@ -22,8 +27,8 @@ class Api::NotificationsController < Api::BaseController
         }
       end,
       meta: {
-        total_pages: notifications.total_pages,
-        current_page: notifications.current_page,
+        total_pages: total_pages(total_count),
+        current_page: current_page,
         unread_count: current_user.notifications.unread.count
       }
     }
@@ -41,6 +46,15 @@ class Api::NotificationsController < Api::BaseController
   end
 
   private
+
+  def requested_page
+    page = params[:page].to_i
+    page.positive? ? page : 1
+  end
+
+  def total_pages(total_count)
+    (total_count.to_f / PAGE_SIZE).ceil
+  end
 
   def generate_message(notification)
     case notification.action
