@@ -8,7 +8,7 @@ class User < ApplicationRecord
 
   enum status: { invited: "invited", active: "active", locked: "locked" }, _default: "invited"
 
-  LANDING_PAGES = %w[posts profile vault knowledge worklog projects teams].freeze
+  LANDING_PAGES = %w[calendar posts profile vault knowledge worklog projects teams pdf users departments chat notifications].freeze
   AVAILABILITY_LABELS = {
     'available_now' => 'Available Now',
     'available_soon' => 'Available in 2 weeks',
@@ -18,6 +18,10 @@ class User < ApplicationRecord
     "commented" => true,
     "assigned" => true,
     "update" => true,
+    "chat_message" => true,
+    "chat_ping" => true,
+    "reacted" => true,
+    "calendar_reminder" => true,
     "digest" => false
   }.freeze
   AVATAR_COLOR_FORMAT = /\A#[0-9a-f]{6}\z/i
