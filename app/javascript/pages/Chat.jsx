@@ -22,6 +22,7 @@ import {
   FiZap
 } from "react-icons/fi";
 import {
+  SchedulerAPI,
   addMessageReaction,
   createConversation,
   fetchConversation,
@@ -29,11 +30,19 @@ import {
   getUsers,
   removeMessageReaction,
   sendMessage,
-  startDirectConversation,
-  updatePresence
+  startDirectConversation
 } from "../components/api";
 import { AuthContext } from "../context/AuthContext";
 import { sendToConversation, subscribeToConversationChat, subscribeToUserChat } from "../lib/chatCable";
+import {
+  applyComposerEntity,
+  getComposerEntityQuery,
+  getPreferredUserMentionHandle,
+  getTaskReferenceKey,
+  getUserMentionAliases,
+  resolveChatMessageText,
+  tokenizeChatMessage
+} from "../utils/chatMentions";
 
 const REACTION_EMOJIS = ["👍", "❤️", "🎉"];
 const CONVERSATION_FILTERS = [
@@ -96,7 +105,7 @@ const formatParticipantStatus = (participant, currentUserId) => {
   return `Read ${formatDistanceToNow(new Date(participant.last_read_at), { addSuffix: true })}`;
 };
 
-const messageMatchesQuery = (message, query) => {
+const messageMatchesQuery = (message, query, mentionLookups) => {
   const normalizedQuery = query.trim().toLowerCase();
   if (!normalizedQuery) return true;
 
@@ -104,9 +113,19 @@ const messageMatchesQuery = (message, query) => {
     .map((attachment) => `${attachment.filename || ""} ${attachment.content_type || ""}`)
     .join(" ")
     .toLowerCase();
+  const resolvedMessageText = [
+    message.body,
+    resolveChatMessageText(message.body || "", mentionLookups),
+    tokenizeChatMessage(message.body || "", mentionLookups)
+      .map((segment) => segment.searchText || segment.text)
+      .join(" ")
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
 
   return [
-    message.body,
+    resolvedMessageText,
     message.user_name,
     attachmentText
   ].some((value) => value?.toLowerCase().includes(normalizedQuery));
@@ -166,6 +185,101 @@ const HighlightText = ({ text = "", query }) => {
   );
 };
 
+const getTaskNavigationTarget = (task) => {
+  if (!task) return null;
+
+  if (task.task_url) {
+    return {
+      type: "external",
+      href: task.task_url
+    };
+  }
+
+  const projectId = task.project_id || task.sprint?.project_id;
+
+  if (projectId) {
+    return {
+      type: "internal",
+      to: {
+        pathname: `/projects/${projectId}/dashboard`,
+        search: "?tab=todo"
+      },
+      state: { focusTaskId: task.id || task.task_id }
+    };
+  }
+
+  return {
+    type: "internal",
+    to: "/worklog",
+    state: { focusTaskId: task.id || task.task_id }
+  };
+};
+
+const MentionText = ({ text, query }) => (
+  <span className="whitespace-pre-wrap break-words">
+    <HighlightText text={text} query={query} />
+  </span>
+);
+
+const RichMessageText = ({ text = "", isMe, searchQuery, mentionLookups }) => {
+  const segments = tokenizeChatMessage(text, mentionLookups);
+  const baseTagClass = isMe
+    ? "border-white/15 bg-white/10 text-white hover:bg-white/15"
+    : "border-slate-200/90 bg-slate-100/90 text-slate-800 hover:bg-slate-200/80 dark:border-zinc-700 dark:bg-zinc-800/90 dark:text-slate-100 dark:hover:bg-zinc-700/80";
+
+  return (
+    <div className="whitespace-pre-wrap break-words text-sm leading-6">
+      {segments.map((segment, index) => {
+        if (segment.kind === "text") {
+          return <HighlightText key={`${segment.kind}-${index}`} text={segment.text} query={searchQuery} />;
+        }
+
+        if (segment.kind === "user") {
+          return (
+            <Link
+              key={`${segment.kind}-${segment.raw}-${index}`}
+              to={`/profile/${segment.user.id}`}
+              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[0.92em] font-semibold transition ${baseTagClass}`}
+              title={segment.user.email || segment.text}
+            >
+              <MentionText text={segment.text} query={searchQuery} />
+            </Link>
+          );
+        }
+
+        const taskTarget = getTaskNavigationTarget(segment.task);
+
+        if (taskTarget?.type === "external") {
+          return (
+            <a
+              key={`${segment.kind}-${segment.raw}-${index}`}
+              href={taskTarget.href}
+              target="_blank"
+              rel="noreferrer"
+              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[0.92em] font-semibold transition ${baseTagClass}`}
+              title={segment.task.title || segment.text}
+            >
+              <MentionText text={segment.text} query={searchQuery} />
+            </a>
+          );
+        }
+
+        return (
+          <Link
+            key={`${segment.kind}-${segment.raw}-${index}`}
+            to={taskTarget?.to || "/worklog"}
+            state={taskTarget?.state}
+            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[0.92em] font-semibold transition ${baseTagClass}`}
+            title={segment.task.title || segment.text}
+          >
+            <MentionText text={segment.text} query={searchQuery} />
+          </Link>
+        );
+      })}
+    </div>
+  );
+};
+
 const Avatar = ({ name, src, size = "md", className = "" }) => {
   const sizeClasses = {
     sm: "h-8 w-8 text-xs",
@@ -218,13 +332,13 @@ const StatCard = ({ icon, label, value, accentClass }) => (
   </div>
 );
 
-const ConversationItem = ({ conversation, currentUserId, isActive, searchQuery }) => {
+const ConversationItem = ({ conversation, currentUserId, isActive, searchQuery, previewText }) => {
   const isUnread = conversation.unread_count > 0;
   const isDirect = conversation.conversation_type === "direct";
   const displayName = getConversationDisplayName(conversation, currentUserId);
   const displayImage = getConversationDisplayImage(conversation, currentUserId);
   const subtitle = isDirect ? "Direct message" : `${conversation.participants?.length || 0} members`;
-  const previewText = conversation.last_message || (isDirect ? "No messages yet" : "Create a room that keeps the whole group aligned");
+  const conversationPreview = previewText || (isDirect ? "No messages yet" : "Create a room that keeps the whole group aligned");
 
   return (
     <Link
@@ -275,7 +389,7 @@ const ConversationItem = ({ conversation, currentUserId, isActive, searchQuery }
 
           <div className="mt-3 flex items-end justify-between gap-3">
             <p className={`line-clamp-2 text-xs leading-5 ${isActive ? "text-sky-50/80" : isUnread ? "font-semibold text-slate-800 dark:text-slate-100" : "text-slate-500 dark:text-slate-400"}`}>
-              <HighlightText text={previewText} query={searchQuery} />
+              <HighlightText text={conversationPreview} query={searchQuery} />
             </p>
 
             {isUnread && (
@@ -341,7 +455,7 @@ const MessageAttachmentCard = ({ attachment, isMe, searchQuery }) => {
   );
 };
 
-const MessageBubble = ({ message, isMe, showAvatar, onToggleReaction, participants, searchQuery }) => {
+const MessageBubble = ({ message, isMe, showAvatar, onToggleReaction, participants, searchQuery, mentionLookups }) => {
   const timeString = format(new Date(message.created_at), "h:mm a");
   const reactions = message.reactions || {};
   const reactedEmojis = message.reacted_emojis || [];
@@ -378,11 +492,7 @@ const MessageBubble = ({ message, isMe, showAvatar, onToggleReaction, participan
                 : "border-white/80 bg-white/92 text-slate-800 dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-slate-200"
             } ${searchQuery.trim() ? "ring-2 ring-amber-300/60" : ""}`}
           >
-            {message.body && (
-              <p className="whitespace-pre-wrap break-words text-sm leading-6">
-                <HighlightText text={message.body} query={searchQuery} />
-              </p>
-            )}
+            {message.body && <RichMessageText text={message.body} isMe={isMe} searchQuery={searchQuery} mentionLookups={mentionLookups} />}
 
             {message.attachments?.length > 0 && (
               <div className={`grid gap-2 ${message.body ? "mt-3" : ""} ${message.attachments.length > 1 ? "sm:grid-cols-2" : "grid-cols-1"}`}>
@@ -460,6 +570,67 @@ const MessageBubble = ({ message, isMe, showAvatar, onToggleReaction, participan
   );
 };
 
+const MentionSuggestions = ({ suggestions, activeIndex, onSelect }) => {
+  if (!suggestions.length) return null;
+
+  return (
+    <div className="mt-3 overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_18px_45px_-34px_rgba(15,23,42,0.35)] dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="border-b border-slate-100 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400 dark:border-zinc-800 dark:text-slate-500">
+        {suggestions[0]?.trigger === "#" ? "Tasks" : "People"}
+      </div>
+
+      <div className="max-h-72 overflow-y-auto py-1">
+        {suggestions.map((suggestion, index) => {
+          const isActive = index === activeIndex;
+
+          return (
+            <button
+              key={`${suggestion.trigger}-${suggestion.id}`}
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => onSelect(suggestion)}
+              className={`flex w-full items-start gap-3 px-4 py-3 text-left transition ${
+                isActive
+                  ? "bg-slate-950 text-white dark:bg-white dark:text-slate-950"
+                  : "text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-zinc-800"
+              }`}
+            >
+              {suggestion.trigger === "@" ? (
+                <Avatar name={suggestion.label} src={suggestion.profilePicture} size="sm" />
+              ) : (
+                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl ${
+                  isActive
+                    ? "bg-white/10 text-white dark:bg-slate-100 dark:text-slate-950"
+                    : "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-200"
+                }`}>
+                  <FiHash className="h-4 w-4" />
+                </div>
+              )}
+
+              <div className="min-w-0 flex-1">
+                <p className={`truncate text-sm font-semibold ${isActive ? "text-current" : "text-slate-900 dark:text-white"}`}>
+                  {suggestion.label}
+                </p>
+                <p className={`mt-1 truncate text-xs ${isActive ? "text-white/70 dark:text-slate-600" : "text-slate-500 dark:text-slate-400"}`}>
+                  {suggestion.description}
+                </p>
+              </div>
+
+              <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${
+                isActive
+                  ? "bg-white/10 text-white dark:bg-slate-100 dark:text-slate-950"
+                  : "bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-slate-300"
+              }`}>
+                {suggestion.insertText}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const Chat = () => {
   const { conversationId } = useParams();
   const navigate = useNavigate();
@@ -474,12 +645,15 @@ const Chat = () => {
   const [activeConversation, setActiveConversation] = useState(null);
   const [isConversationLoading, setIsConversationLoading] = useState(false);
   const [users, setUsers] = useState([]);
+  const [tasks, setTasks] = useState([]);
 
   const [messageBody, setMessageBody] = useState("");
   const [attachments, setAttachments] = useState([]);
   const [isSending, setIsSending] = useState(false);
   const [typingUsers, setTypingUsers] = useState({});
   const [showInfo, setShowInfo] = useState(false);
+  const [composerSelection, setComposerSelection] = useState({ start: 0, end: 0 });
+  const [activeMentionIndex, setActiveMentionIndex] = useState(0);
 
   const [sideSearchQuery, setSideSearchQuery] = useState("");
   const [conversationFilter, setConversationFilter] = useState("all");
@@ -575,6 +749,9 @@ const Chat = () => {
     getUsers()
       .then(({ data }) => setUsers(Array.isArray(data) ? data : []))
       .catch((error) => console.error("Failed to load users", error));
+    SchedulerAPI.getTasks()
+      .then(({ data }) => setTasks(Array.isArray(data) ? data : []))
+      .catch((error) => console.error("Failed to load tasks for chat mentions", error));
   }, [fetchAllData]);
 
   useEffect(() => {
@@ -643,30 +820,7 @@ const Chat = () => {
       }
 
       if (payload?.type === "message_reactions_updated" && Number(payload.conversation_id) === Number(conversationId)) {
-        setActiveConversation((previous) => {
-          if (!previous) return previous;
-
-          return {
-            ...previous,
-            messages: (previous.messages || []).map((message) => {
-              if (message.id !== payload.message_id) return message;
-
-              const currentCount = message.reactions?.[payload.last_actor_emoji] || 0;
-              const reactedEmojis = new Set(message.reacted_emojis || []);
-
-              if (payload.last_actor_id && Number(payload.last_actor_id) === Number(user?.id) && payload.last_actor_emoji) {
-                if (payload.last_actor_action === "added") reactedEmojis.add(payload.last_actor_emoji);
-                if (payload.last_actor_action === "removed" && currentCount <= 1) reactedEmojis.delete(payload.last_actor_emoji);
-              }
-
-              return {
-                ...message,
-                reactions: payload.reactions || {},
-                reacted_emojis: Array.from(reactedEmojis)
-              };
-            })
-          };
-        });
+        applyReactionUpdate(payload.message_id, payload);
       }
 
       if (payload?.type === "typing_indicator" && Number(payload.conversation_id) === Number(conversationId)) {
@@ -714,7 +868,7 @@ const Chat = () => {
     });
 
     return () => convSub.unsubscribe();
-  }, [conversationId, fetchAllData, markConversationAsRead, user?.id]);
+  }, [applyReactionUpdate, conversationId, fetchAllData, markConversationAsRead, user?.id]);
 
   useEffect(() => () => {
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
@@ -758,12 +912,167 @@ const Chat = () => {
     [typingUsers]
   );
 
+  const usersById = useMemo(
+    () => users.reduce((lookup, candidate) => {
+      lookup[Number(candidate.id)] = candidate;
+      return lookup;
+    }, {}),
+    [users]
+  );
+
+  const usersByHandle = useMemo(
+    () => users.reduce((lookup, candidate) => {
+      getUserMentionAliases(candidate).forEach((alias) => {
+        if (alias && !lookup[alias]) lookup[alias] = candidate;
+      });
+
+      return lookup;
+    }, {}),
+    [users]
+  );
+
+  const mentionableTasks = useMemo(
+    () => tasks.filter((task) => task.task_id),
+    [tasks]
+  );
+
+  const tasksByKey = useMemo(
+    () => mentionableTasks.reduce((lookup, task) => {
+      const taskKey = getTaskReferenceKey(task);
+      if (taskKey && !lookup[taskKey]) lookup[taskKey] = task;
+      return lookup;
+    }, {}),
+    [mentionableTasks]
+  );
+
+  const mentionLookups = useMemo(
+    () => ({ usersByHandle, tasksByKey }),
+    [tasksByKey, usersByHandle]
+  );
+
+  const conversationParticipants = useMemo(
+    () => (activeConversation?.participants || []).map((participant) => ({
+      ...(usersById[Number(participant.id)] || {}),
+      ...participant,
+      name: participant.name || getFullUserName(usersById[Number(participant.id)] || participant)
+    })),
+    [activeConversation?.participants, usersById]
+  );
+
+  const mentionableUsers = useMemo(() => {
+    const seenIds = new Set();
+
+    return conversationParticipants.filter((participant) => {
+      const participantId = Number(participant.id);
+
+      if (!participantId || participantId === Number(user?.id) || seenIds.has(participantId)) {
+        return false;
+      }
+
+      seenIds.add(participantId);
+      return true;
+    });
+  }, [conversationParticipants, user?.id]);
+
+  const activeComposerEntity = useMemo(
+    () => getComposerEntityQuery(messageBody, composerSelection.start),
+    [composerSelection.start, messageBody]
+  );
+
+  const userMentionSuggestions = useMemo(() => {
+    if (activeComposerEntity?.trigger !== "@") return [];
+
+    const normalizedQuery = activeComposerEntity.query.trim().toLowerCase();
+
+    return mentionableUsers
+      .filter((candidate) => {
+        const searchableText = [
+          getFullUserName(candidate),
+          candidate.email,
+          candidate.job_title,
+          ...getUserMentionAliases(candidate)
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        return !normalizedQuery || searchableText.includes(normalizedQuery);
+      })
+      .sort((left, right) => {
+        const leftHandle = getPreferredUserMentionHandle(left);
+        const rightHandle = getPreferredUserMentionHandle(right);
+        const leftStarts = leftHandle.startsWith(normalizedQuery) || getFullUserName(left).toLowerCase().startsWith(normalizedQuery);
+        const rightStarts = rightHandle.startsWith(normalizedQuery) || getFullUserName(right).toLowerCase().startsWith(normalizedQuery);
+
+        if (leftStarts !== rightStarts) return leftStarts ? -1 : 1;
+
+        return getFullUserName(left).localeCompare(getFullUserName(right));
+      })
+      .slice(0, 6)
+      .map((candidate) => ({
+        trigger: "@",
+        id: candidate.id,
+        label: getFullUserName(candidate),
+        description: candidate.job_title || candidate.email || "Conversation participant",
+        insertText: `@${getPreferredUserMentionHandle(candidate)}`,
+        profilePicture: candidate.profile_picture
+      }));
+  }, [activeComposerEntity, mentionableUsers]);
+
+  const taskMentionSuggestions = useMemo(() => {
+    if (activeComposerEntity?.trigger !== "#") return [];
+
+    const normalizedQuery = activeComposerEntity.query.trim().toLowerCase();
+
+    return mentionableTasks
+      .filter((task) => {
+        const searchableText = [
+          task.task_id,
+          task.title,
+          task.status
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        return !normalizedQuery || searchableText.includes(normalizedQuery);
+      })
+      .sort((left, right) => {
+        const leftKey = (left.task_id || "").toLowerCase();
+        const rightKey = (right.task_id || "").toLowerCase();
+        const leftStarts = leftKey.startsWith(normalizedQuery);
+        const rightStarts = rightKey.startsWith(normalizedQuery);
+
+        if (leftStarts !== rightStarts) return leftStarts ? -1 : 1;
+
+        return leftKey.localeCompare(rightKey);
+      })
+      .slice(0, 6)
+      .map((task) => ({
+        trigger: "#",
+        id: task.id || task.task_id,
+        label: task.task_id,
+        description: task.title || task.status || "Task",
+        insertText: `#${task.task_id}`
+      }));
+  }, [activeComposerEntity, mentionableTasks]);
+
+  const activeMentionSuggestions = useMemo(() => {
+    if (activeComposerEntity?.trigger === "@") return userMentionSuggestions;
+    if (activeComposerEntity?.trigger === "#") return taskMentionSuggestions;
+    return [];
+  }, [activeComposerEntity?.trigger, taskMentionSuggestions, userMentionSuggestions]);
+
+  useEffect(() => {
+    setActiveMentionIndex(0);
+  }, [activeComposerEntity?.query, activeComposerEntity?.trigger, activeConversation?.id]);
+
   const filteredConversations = useMemo(() => {
     const normalizedQuery = deferredSideSearchQuery.trim().toLowerCase();
     const matchesSearch = (conversation) => {
       if (!normalizedQuery) return true;
       const displayName = getConversationDisplayName(conversation, user?.id).toLowerCase();
-      const lastMessage = conversation.last_message?.toLowerCase() || "";
+      const lastMessage = resolveChatMessageText(conversation.last_message || "", mentionLookups).toLowerCase();
       return displayName.includes(normalizedQuery) || lastMessage.includes(normalizedQuery);
     };
 
@@ -777,12 +1086,12 @@ const Chat = () => {
       direct: conversations.direct.filter((conversation) => matchesFilter(conversation) && matchesSearch(conversation)),
       group: conversations.group.filter((conversation) => matchesFilter(conversation) && matchesSearch(conversation))
     };
-  }, [conversationFilter, conversations, deferredSideSearchQuery, user?.id]);
+  }, [conversationFilter, conversations, deferredSideSearchQuery, mentionLookups, user?.id]);
 
   const filteredMessages = useMemo(() => {
     if (!deferredThreadSearchQuery.trim()) return activeConversationMessages;
-    return activeConversationMessages.filter((message) => messageMatchesQuery(message, deferredThreadSearchQuery));
-  }, [activeConversationMessages, deferredThreadSearchQuery]);
+    return activeConversationMessages.filter((message) => messageMatchesQuery(message, deferredThreadSearchQuery, mentionLookups));
+  }, [activeConversationMessages, deferredThreadSearchQuery, mentionLookups]);
 
   const groupedMessages = useMemo(
     () => groupMessagesByDay(filteredMessages),
@@ -847,16 +1156,54 @@ const Chat = () => {
     ];
   }, [activeConversation, activeConversationOtherParticipant?.name]);
 
-  const handleToggleReaction = async (messageId, emoji, isActive) => {
+  const applyReactionUpdate = useCallback((messageId, updates = {}) => {
+    setActiveConversation((previous) => {
+      if (!previous) return previous;
+
+      return {
+        ...previous,
+        messages: (previous.messages || []).map((message) => {
+          if (Number(message.id) !== Number(messageId)) return message;
+
+          const nextReactedEmojis = Array.isArray(updates.reacted_emojis)
+            ? updates.reacted_emojis
+            : (() => {
+                const reactedEmojis = new Set(message.reacted_emojis || []);
+
+                if (updates.last_actor_id && Number(updates.last_actor_id) === Number(user?.id) && updates.last_actor_emoji) {
+                  if (updates.last_actor_action === "added") reactedEmojis.add(updates.last_actor_emoji);
+                  if (updates.last_actor_action === "removed") reactedEmojis.delete(updates.last_actor_emoji);
+                }
+
+                return Array.from(reactedEmojis);
+              })();
+
+          return {
+            ...message,
+            reactions: updates.reactions || {},
+            reacted_emojis: nextReactedEmojis
+          };
+        })
+      };
+    });
+  }, [user?.id]);
+
+  const handleToggleReaction = useCallback(async (messageId, emoji, isActive) => {
     if (!conversationId) return;
 
     try {
-      if (isActive) await removeMessageReaction(conversationId, messageId, emoji);
-      else await addMessageReaction(conversationId, messageId, emoji);
+      const { data } = isActive
+        ? await removeMessageReaction(conversationId, messageId, emoji)
+        : await addMessageReaction(conversationId, messageId, emoji);
+
+      applyReactionUpdate(messageId, {
+        reactions: data?.reactions || {},
+        reacted_emojis: data?.reacted_emojis || []
+      });
     } catch (error) {
       console.error("Failed to update reaction", error);
     }
-  };
+  }, [applyReactionUpdate, conversationId]);
 
   const handleAddAttachments = (event) => {
     const nextFiles = Array.from(event.target.files || []);
@@ -864,6 +1211,32 @@ const Chat = () => {
 
     setAttachments((previous) => [...previous, ...nextFiles]);
     event.target.value = "";
+  };
+
+  const syncComposerSelection = (event) => {
+    setComposerSelection({
+      start: event.target.selectionStart ?? 0,
+      end: event.target.selectionEnd ?? 0
+    });
+  };
+
+  const handleSelectMention = (suggestion) => {
+    if (!activeComposerEntity) return;
+
+    const replacement = suggestion.insertText;
+    const nextComposerState = applyComposerEntity(messageBody, activeComposerEntity, replacement);
+
+    setMessageBody(nextComposerState.value);
+    setComposerSelection({
+      start: nextComposerState.selectionStart,
+      end: nextComposerState.selectionEnd
+    });
+    setActiveMentionIndex(0);
+
+    window.requestAnimationFrame(() => {
+      composerTextareaRef.current?.focus();
+      composerTextareaRef.current?.setSelectionRange(nextComposerState.selectionStart, nextComposerState.selectionEnd);
+    });
   };
 
   const handleSendMessage = async (event) => {
@@ -890,6 +1263,8 @@ const Chat = () => {
 
       setMessageBody("");
       setAttachments([]);
+      setComposerSelection({ start: 0, end: 0 });
+      setActiveMentionIndex(0);
       fetchAllData();
     } catch (error) {
       console.error("Failed to send message", error);
@@ -1063,6 +1438,7 @@ const Chat = () => {
                           currentUserId={user?.id}
                           isActive={Number(conversationId) === Number(conversation.id)}
                           searchQuery={deferredSideSearchQuery}
+                          previewText={resolveChatMessageText(conversation.last_message || "", mentionLookups)}
                         />
                       ))}
                     </div>
@@ -1093,6 +1469,7 @@ const Chat = () => {
                           currentUserId={user?.id}
                           isActive={Number(conversationId) === Number(conversation.id)}
                           searchQuery={deferredSideSearchQuery}
+                          previewText={resolveChatMessageText(conversation.last_message || "", mentionLookups)}
                         />
                       ))}
                     </div>
@@ -1340,8 +1717,9 @@ const Chat = () => {
                                     isMe={Number(message.user_id) === Number(user?.id)}
                                     showAvatar={showAvatar}
                                     onToggleReaction={handleToggleReaction}
-                                    participants={activeConversation.participants}
+                                    participants={conversationParticipants}
                                     searchQuery={deferredThreadSearchQuery}
+                                    mentionLookups={mentionLookups}
                                   />
                                 );
                               })}
@@ -1443,6 +1821,7 @@ const Chat = () => {
                               value={messageBody}
                               onChange={(event) => {
                                 setMessageBody(event.target.value);
+                                syncComposerSelection(event);
                                 sendTyping(true);
 
                                 if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
@@ -1451,14 +1830,45 @@ const Chat = () => {
                                 }, 1800);
                               }}
                               onKeyDown={(event) => {
+                                if (activeMentionSuggestions.length > 0) {
+                                  if (event.key === "ArrowDown") {
+                                    event.preventDefault();
+                                    setActiveMentionIndex((previous) => (previous + 1) % activeMentionSuggestions.length);
+                                    return;
+                                  }
+
+                                  if (event.key === "ArrowUp") {
+                                    event.preventDefault();
+                                    setActiveMentionIndex((previous) => (
+                                      previous - 1 < 0 ? activeMentionSuggestions.length - 1 : previous - 1
+                                    ));
+                                    return;
+                                  }
+
+                                  if ((event.key === "Enter" && !event.shiftKey) || event.key === "Tab") {
+                                    event.preventDefault();
+                                    handleSelectMention(activeMentionSuggestions[activeMentionIndex] || activeMentionSuggestions[0]);
+                                    return;
+                                  }
+                                }
+
                                 if (event.key === "Enter" && !event.shiftKey) {
                                   event.preventDefault();
                                   handleSendMessage(event);
                                 }
                               }}
+                              onClick={syncComposerSelection}
+                              onKeyUp={syncComposerSelection}
+                              onSelect={syncComposerSelection}
                               rows={1}
                               placeholder="Write a message..."
                               className="max-h-40 min-h-[28px] w-full resize-none border-0 bg-transparent p-0 text-sm leading-6 text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
+                            />
+
+                            <MentionSuggestions
+                              suggestions={activeMentionSuggestions}
+                              activeIndex={activeMentionIndex}
+                              onSelect={handleSelectMention}
                             />
 
                             <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
@@ -1468,6 +1878,8 @@ const Chat = () => {
                                   Enter to send
                                 </span>
                                 <span>Shift + Enter for new line</span>
+                                <span>@ mention teammates</span>
+                                <span># reference tasks</span>
                               </div>
 
                               <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">

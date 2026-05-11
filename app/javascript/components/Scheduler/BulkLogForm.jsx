@@ -46,6 +46,95 @@ const buildLoggedHoursByTask = (logs = []) =>
     return accumulator;
   }, {});
 
+const buildDailyHoursByMemberDate = (logs = []) =>
+  logs.reduce((accumulator, log) => {
+    const developerId = log?.developer_id ?? log?.developerId;
+    const logDate = log?.log_date ?? log?.logDate;
+    if (!developerId || !logDate || log?.deleted) return accumulator;
+
+    if (!accumulator[String(developerId)]) accumulator[String(developerId)] = {};
+    accumulator[String(developerId)][logDate] = (accumulator[String(developerId)][logDate] || 0) + numberOrZero(log.hours_logged);
+    return accumulator;
+  }, {});
+
+const appendOrMergeEntry = (entries, nextEntry) => {
+  const existingEntry = entries.find((entry) => (
+    entry.task_id === nextEntry.task_id &&
+    entry.developer_id === nextEntry.developer_id &&
+    entry.log_date === nextEntry.log_date &&
+    entry.type === nextEntry.type
+  ));
+
+  if (existingEntry) {
+    existingEntry.hours_logged += nextEntry.hours_logged;
+    return;
+  }
+
+  entries.push(nextEntry);
+};
+
+const buildDistributionPlan = ({ rows, dates, startDate, maxHoursPerDay, existingLogs, logType }) => {
+  const distributionDates = dates.filter((date) => date >= startDate);
+  const perDayLimit = numberOrZero(maxHoursPerDay);
+  const dailyHoursByMemberDate = buildDailyHoursByMemberDate(existingLogs);
+  const selectedRows = rows.filter((row) => row.selected && row.developerId && numberOrZero(row.hours) > 0);
+  const entries = [];
+  let overflowHours = 0;
+  let overflowTasks = 0;
+
+  selectedRows.forEach((row) => {
+    const developerId = String(row.developerId);
+    let remainingHours = numberOrZero(row.hours);
+
+    distributionDates.forEach((date) => {
+      if (remainingHours <= 0 || perDayLimit <= 0) return;
+
+      const currentHours = dailyHoursByMemberDate[developerId]?.[date] || 0;
+      const availableHours = Math.max(perDayLimit - currentHours, 0);
+      if (availableHours <= 0) return;
+
+      const assignedHours = Math.min(remainingHours, availableHours);
+      appendOrMergeEntry(entries, {
+        task_id: row.taskId,
+        developer_id: Number(developerId),
+        log_date: date,
+        type: logType,
+        hours_logged: assignedHours,
+        status: 'todo'
+      });
+
+      if (!dailyHoursByMemberDate[developerId]) dailyHoursByMemberDate[developerId] = {};
+      dailyHoursByMemberDate[developerId][date] = currentHours + assignedHours;
+      remainingHours -= assignedHours;
+    });
+
+    if (remainingHours > 0 && distributionDates.length) {
+      const lastDate = distributionDates[distributionDates.length - 1];
+      appendOrMergeEntry(entries, {
+        task_id: row.taskId,
+        developer_id: Number(developerId),
+        log_date: lastDate,
+        type: logType,
+        hours_logged: remainingHours,
+        status: 'todo'
+      });
+
+      if (!dailyHoursByMemberDate[developerId]) dailyHoursByMemberDate[developerId] = {};
+      dailyHoursByMemberDate[developerId][lastDate] = (dailyHoursByMemberDate[developerId][lastDate] || 0) + remainingHours;
+      overflowHours += remainingHours;
+      overflowTasks += 1;
+    }
+  });
+
+  return {
+    entries,
+    selectedRows,
+    distributionDates,
+    overflowHours,
+    overflowTasks
+  };
+};
+
 const sortTasks = (left, right) => {
   const leftOrder = Number(left?.order) || Number.MAX_SAFE_INTEGER;
   const rightOrder = Number(right?.order) || Number.MAX_SAFE_INTEGER;
@@ -80,6 +169,7 @@ export default function BulkLogForm({
 }) {
   const [logDate, setLogDate] = useState('');
   const [logType, setLogType] = useState('');
+  const [maxHoursPerDay, setMaxHoursPerDay] = useState('8');
   const [applyDeveloperId, setApplyDeveloperId] = useState('');
   const [showOnlyRemaining, setShowOnlyRemaining] = useState(true);
   const [rows, setRows] = useState([]);
@@ -112,6 +202,7 @@ export default function BulkLogForm({
     setRows(nextRows);
     setLogDate(resolveDefaultLogDate(dates));
     setLogType(resolveDefaultLogType(viewMode, types));
+    setMaxHoursPerDay('8');
     setApplyDeveloperId(developers[0] ? String(developers[0].id) : '');
     setShowOnlyRemaining(true);
     setError('');
@@ -130,6 +221,18 @@ export default function BulkLogForm({
   const selectedHoursTotal = useMemo(
     () => selectedRows.reduce((sum, row) => sum + numberOrZero(row.hours), 0),
     [selectedRows]
+  );
+
+  const distributionPreview = useMemo(
+    () => buildDistributionPlan({
+      rows,
+      dates,
+      startDate: logDate,
+      maxHoursPerDay,
+      existingLogs,
+      logType
+    }),
+    [rows, dates, logDate, maxHoursPerDay, existingLogs, logType]
   );
 
   const remainingTaskCount = useMemo(
@@ -195,7 +298,7 @@ export default function BulkLogForm({
     setError('');
 
     if (!logDate) {
-      setError('Select a log date.');
+      setError('Select a start date.');
       return;
     }
 
@@ -204,17 +307,8 @@ export default function BulkLogForm({
       return;
     }
 
-    const payload = selectedRows.map((row) => ({
-      task_id: row.taskId,
-      developer_id: Number(row.developerId),
-      log_date: logDate,
-      type: logType,
-      hours_logged: numberOrZero(row.hours),
-      status: 'todo'
-    })).filter((entry) => entry.hours_logged > 0);
-
-    if (!payload.length) {
-      setError('Select at least one task with hours greater than 0.');
+    if (numberOrZero(maxHoursPerDay) <= 0) {
+      setError('Per day max hours must be greater than 0.');
       return;
     }
 
@@ -224,7 +318,17 @@ export default function BulkLogForm({
       return;
     }
 
-    await onSubmit(payload);
+    if (!distributionPreview.distributionDates.length) {
+      setError('No sprint dates are available from the selected start date.');
+      return;
+    }
+
+    if (!distributionPreview.entries.length) {
+      setError('Select at least one task with hours greater than 0.');
+      return;
+    }
+
+    await onSubmit(distributionPreview.entries);
   };
 
   if (!developers.length) {
@@ -245,9 +349,9 @@ export default function BulkLogForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="grid grid-cols-1 gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 xl:grid-cols-5">
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">Log Date</label>
+          <label className="mb-2 block text-sm font-medium text-slate-700">Start Date</label>
           <select
             value={logDate}
             onChange={(event) => setLogDate(event.target.value)}
@@ -272,6 +376,18 @@ export default function BulkLogForm({
               <option key={type} value={type}>{type}</option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">Per Day Max Hours</label>
+          <input
+            type="number"
+            min="0.25"
+            step="0.25"
+            value={maxHoursPerDay}
+            onChange={(event) => setMaxHoursPerDay(event.target.value)}
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+          />
         </div>
 
         <div>
@@ -310,7 +426,7 @@ export default function BulkLogForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Tasks With Remaining Hours</div>
           <div className="mt-2 text-2xl font-bold text-slate-900">{remainingTaskCount}</div>
@@ -323,7 +439,21 @@ export default function BulkLogForm({
           <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Selected Hours</div>
           <div className="mt-2 text-2xl font-bold text-slate-900">{formatHours(selectedHoursTotal)}</div>
         </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Generated Log Rows</div>
+          <div className="mt-2 text-2xl font-bold text-slate-900">{distributionPreview.entries.length}</div>
+        </div>
       </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+        Bulk log starts from <span className="font-semibold text-slate-800">{logDate ? new Date(logDate).toLocaleDateString() : 'the selected date'}</span> and fills each working day up to <span className="font-semibold text-slate-800">{formatHours(maxHoursPerDay)}</span> for each member before moving the remaining task hours to the next sprint date.
+      </div>
+
+      {distributionPreview.overflowHours > 0 && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          {formatHours(distributionPreview.overflowHours)} could not fit within the daily limit for {distributionPreview.overflowTasks} task{distributionPreview.overflowTasks === 1 ? '' : 's'} and will be added on the last sprint day so you can adjust manually.
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2">
         <button
@@ -349,7 +479,7 @@ export default function BulkLogForm({
         </button>
       </div>
 
-      <div className="max-h-[60vh] overflow-auto rounded-2xl border border-slate-200">
+      <div className="max-h-[45vh] overflow-auto rounded-2xl border border-slate-200 lg:max-h-[50vh]">
         <table className="min-w-full divide-y divide-slate-200">
           <thead className="sticky top-0 bg-slate-50">
             <tr>

@@ -64,6 +64,8 @@ const Notifications = () => {
         return <MessageSquare className="w-4 h-4 text-blue-500" />;
       case 'chat_message':
         return <MessageSquare className="w-4 h-4 text-indigo-500" />;
+      case 'chat_ping':
+        return <MessageSquare className="w-4 h-4 text-fuchsia-500" />;
       case 'assigned':
         return <Briefcase className="w-4 h-4 text-green-500" />;
       case 'update':
@@ -144,6 +146,7 @@ const Notifications = () => {
             <option value="commented">Comments</option>
             <option value="update">Updates</option>
             <option value="chat_message">Chat messages</option>
+            <option value="chat_ping">Mentions</option>
           </select>
 
           <input

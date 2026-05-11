@@ -53,20 +53,22 @@ function Modal({ isOpen, onClose, title, children, panelClassName = 'max-w-2xl' 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center z-50 p-4 transition-opacity duration-300 ease-in-out">
-      <div className={`bg-white rounded-xl shadow-2xl w-full ${panelClassName} transform transition-all duration-300 ease-in-out scale-95 opacity-0 animate-modalShow`}>
-        <div className="flex justify-between items-center p-4 border-b border-gray-200">
-          <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
-            aria-label="Close modal"
-          >
-            <XCircleIcon className="h-7 w-7" />
-          </button>
-        </div>
-        <div className="p-6">
-          {children}
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 p-4 backdrop-blur-sm transition-opacity duration-300 ease-in-out">
+      <div className="flex min-h-full items-start justify-center py-4">
+        <div className={`bg-white rounded-xl shadow-2xl w-full ${panelClassName} max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col transform transition-all duration-300 ease-in-out scale-95 opacity-0 animate-modalShow`}>
+          <div className="flex justify-between items-center p-4 border-b border-gray-200">
+            <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
+              aria-label="Close modal"
+            >
+              <XCircleIcon className="h-7 w-7" />
+            </button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto p-6">
+            {children}
+          </div>
         </div>
       </div>
     </div>
@@ -109,8 +111,6 @@ function TaskCard({ task, onEdit, onTaskUpdate, onDuplicate }) {
   };
 
   const deleteTask = async () => {
-    const title = task.task?.task_id || task.task_id;
-    if (!window.confirm(`Are you sure you want to delete task "${title}"?`)) return;
     onTaskUpdate({ ...task, deleted: true });
     try {
       await SchedulerAPI.deleteTaskLog(task.id);
@@ -262,11 +262,10 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, projectMember
   const visibleDevelopers = useMemo(
     () => getVisibleMembersForView({
       members: developers,
-      projectMembers,
       viewMode,
-      records: tasks.filter((task) => !task.deleted),
+      records: allTasks,
     }),
-    [developers, projectMembers, viewMode, tasks]
+    [developers, viewMode, allTasks]
   );
   const memberHoursLabel = viewMode === 'qa' ? 'QA Hours' : viewMode === 'combined' ? 'Team Hours' : 'Developer Hours';
   const memberColumnLabel = viewMode === 'qa' ? 'QA' : viewMode === 'combined' ? 'Member' : 'Developer';

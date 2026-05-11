@@ -59,13 +59,21 @@ module Chat
       end
 
       def broadcast_notification(notification)
-        message = if notification.action == "reacted"
-                    "#{notification.actor.full_name} reacted with #{notification.metadata['emoji']} to your message"
-                  elsif notification.metadata[:conversation_name].present?
-                    "New message in #{notification.metadata[:conversation_name]}"
-                  else
-                    "You have a new notification"
-                  end
+        metadata = notification.metadata.respond_to?(:with_indifferent_access) ? notification.metadata.with_indifferent_access : {}
+
+        message =
+          case notification.action
+          when "reacted"
+            "#{notification.actor.full_name} reacted with #{metadata[:emoji]} to your message"
+          when "chat_ping"
+            conversation_name = metadata[:conversation_name].presence || "a conversation"
+            "#{notification.actor.full_name} mentioned you in #{conversation_name}"
+          when "chat_message"
+            conversation_name = metadata[:conversation_name].presence || "a conversation"
+            "#{notification.actor.full_name} sent a message in #{conversation_name}"
+          else
+            "You have a new notification"
+          end
 
         payload = {
           type: "notification_received",

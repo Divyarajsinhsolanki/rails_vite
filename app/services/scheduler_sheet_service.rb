@@ -4,6 +4,8 @@ require 'googleauth'
 class SchedulerSheetService
   include SheetOperationLogging
 
+  SHEET_CLEAR_RANGE = 'A:ZZ'.freeze
+
   def initialize(sheet_name, spreadsheet_id)
     @sheet_name = sheet_name
     @spreadsheet_id = spreadsheet_id
@@ -57,11 +59,12 @@ class SchedulerSheetService
 
   def write_sheet(values)
     ensure_spreadsheet_id!
+    ensure_sheet_exists!
     clear_sheet
     value_range = Google::Apis::SheetsV4::ValueRange.new(values: values)
     @service.update_spreadsheet_value(
       @spreadsheet_id,
-      "#{@sheet_name}!A1",
+      a1_range('A1'),
       value_range,
       value_input_option: 'RAW'
     )
@@ -69,7 +72,8 @@ class SchedulerSheetService
 
   def clear_sheet
     ensure_spreadsheet_id!
-    @service.clear_values(@spreadsheet_id, "#{@sheet_name}!A1:Z")
+    ensure_sheet_exists!
+    @service.clear_values(@spreadsheet_id, a1_range(SHEET_CLEAR_RANGE))
   end
 
   def strike_completed_cells(matrix, developers, dates)
@@ -109,15 +113,51 @@ class SchedulerSheetService
   def sheet_id
     @sheet_id ||= begin
       ensure_spreadsheet_id!
-      spreadsheet = @service.get_spreadsheet(@spreadsheet_id)
-      sheet = spreadsheet.sheets.find { |s| s.properties.title == @sheet_name }
-      return sheet.properties.sheet_id if sheet
-
-      raise StandardError, "Sheet not found: #{@sheet_name}"
+      find_sheet_id || create_sheet!
     end
   end
 
   def ensure_spreadsheet_id!
     raise ArgumentError, 'Spreadsheet ID is missing' if @spreadsheet_id.blank?
+  end
+
+  def ensure_sheet_exists!
+    sheet_id
+  end
+
+  def find_sheet_id
+    spreadsheet = @service.get_spreadsheet(@spreadsheet_id)
+    spreadsheet.sheets.find { |sheet| sheet.properties.title == @sheet_name }&.properties&.sheet_id
+  end
+
+  def create_sheet!
+    request = Google::Apis::SheetsV4::BatchUpdateSpreadsheetRequest.new(
+      requests: [
+        Google::Apis::SheetsV4::Request.new(
+          add_sheet: Google::Apis::SheetsV4::AddSheetRequest.new(
+            properties: Google::Apis::SheetsV4::SheetProperties.new(title: @sheet_name)
+          )
+        )
+      ]
+    )
+    response = @service.batch_update_spreadsheet(@spreadsheet_id, request)
+    created_sheet_id = response.replies&.first&.add_sheet&.properties&.sheet_id
+    raise StandardError, "Sheet could not be created: #{@sheet_name}" if created_sheet_id.blank?
+
+    log_sheet_info('Scheduler sheet created', created_sheet_id: created_sheet_id)
+    created_sheet_id
+  rescue Google::Apis::ClientError
+    existing_sheet_id = find_sheet_id
+    return existing_sheet_id if existing_sheet_id.present?
+
+    raise
+  end
+
+  def a1_range(range)
+    "#{quoted_sheet_name}!#{range}"
+  end
+
+  def quoted_sheet_name
+    "'#{@sheet_name.to_s.gsub("'", "''")}'"
   end
 end

@@ -58,44 +58,40 @@ describe("sprintViewUtils", () => {
       { id: 2, name: "QA One" },
       { id: 3, name: "Dev Two" },
     ];
-    const projectMembers = [
-      { id: 1, role: "developer" },
-      { id: 2, role: "qa" },
-      { id: 3, role: "developer" },
-    ];
 
     expect(
       getVisibleMembersForView({
         members,
-        projectMembers,
         viewMode: "dev",
-        records: [{ developer_id: 1 }],
+        records: [{ type: "Code", developer_id: 1 }],
       }).map((member) => member.id)
-    ).toEqual([1, 3]);
+    ).toEqual([1]);
 
     expect(
       getVisibleMembersForView({
         members,
-        projectMembers,
         viewMode: "qa",
-        records: [{ developer_id: 2 }],
+        records: [{ type: "qa", assigned_to_user: 2 }],
       }).map((member) => member.id)
     ).toEqual([2]);
   });
 
-  it("falls back to active members when project roles are unavailable", () => {
+  it("uses assigned sprint members only in combined mode", () => {
     const members = [
       { id: 1, name: "Dev One" },
       { id: 2, name: "QA One" },
+      { id: 3, name: "Dev Two" },
     ];
 
     expect(
       getVisibleMembersForView({
         members,
-        projectMembers: [],
-        viewMode: "qa",
-        records: [{ developer_id: 2 }],
+        viewMode: "combined",
+        records: [
+          { type: "Code", developer_id: 1 },
+          { type: "qa", assigned_to_user: 2 },
+        ],
       }).map((member) => member.id)
-    ).toEqual([2]);
+    ).toEqual([1, 2]);
   });
 });

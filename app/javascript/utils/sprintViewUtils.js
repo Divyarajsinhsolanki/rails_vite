@@ -77,43 +77,25 @@ export function groupTasksByAssignment(tasks = [], developerMap = {}) {
 
 export function getVisibleMembersForView({
   members = [],
-  projectMembers = [],
   viewMode = "combined",
   records = [],
 } = {}) {
-  if (viewMode === "combined") {
-    return members;
-  }
-
-  const activityIds = new Set(
+  const assignedIds = new Set(
     records
-      .map((record) => record?.developer_id ?? record?.developerId)
+      .map((record) => {
+        const recordType = String(record?.type || "").toLowerCase();
+        const preferredQaAssignee = record?.assigned_to_user ?? record?.assignedUser ?? record?.assigned_user?.id;
+        const preferredDevAssignee = record?.developer_id ?? record?.developerId ?? record?.developer?.id;
+
+        if (viewMode === "qa" || recordType === "qa") {
+          return preferredQaAssignee ?? preferredDevAssignee;
+        }
+
+        return preferredDevAssignee ?? preferredQaAssignee;
+      })
       .filter(Boolean)
       .map((id) => String(id))
   );
 
-  const roleById = Object.fromEntries(
-    (projectMembers || []).map((member) => [String(member.id), (member.role || "").toLowerCase()])
-  );
-
-  const hasQaRoles = (projectMembers || []).some(
-    (member) => (member?.role || "").toLowerCase() === "qa"
-  );
-
-  if (!hasQaRoles) {
-    return activityIds.size
-      ? members.filter((member) => activityIds.has(String(member.id)))
-      : members;
-  }
-
-  return members.filter((member) => {
-    const memberId = String(member.id);
-    const role = roleById[memberId];
-
-    if (viewMode === "qa") {
-      return role === "qa" || activityIds.has(memberId);
-    }
-
-    return role !== "qa" || activityIds.has(memberId);
-  });
+  return members.filter((member) => assignedIds.has(String(member.id)));
 }
