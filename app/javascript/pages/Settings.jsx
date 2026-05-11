@@ -9,14 +9,13 @@ import {
   Palette,
   Bell,
   Shield,
-  LogOut,
   Moon,
   Sun,
-  Check,
-  Laptop
+  Check
 } from "lucide-react";
 
 const landingPageOptions = [
+  { value: "calendar", label: "Calendar" },
   { value: "posts", label: "Posts Feed" },
   { value: "profile", label: "My Profile" },
   { value: "vault", label: "Personal Vault" },
@@ -24,6 +23,54 @@ const landingPageOptions = [
   { value: "worklog", label: "Work Logs" },
   { value: "projects", label: "Projects Dashboard" },
   { value: "teams", label: "Teams Overview" },
+  { value: "pdf", label: "PDF Tools" },
+  { value: "users", label: "People Directory" },
+  { value: "departments", label: "Departments" },
+  { value: "chat", label: "Chat" },
+  { value: "notifications", label: "Notifications" },
+];
+
+const notificationPreferenceOptions = [
+  {
+    key: "commented",
+    label: "Comments",
+    description: "Get notified when someone comments on your posts."
+  },
+  {
+    key: "assigned",
+    label: "Assignments",
+    description: "Get notified when a task or project is assigned to you."
+  },
+  {
+    key: "update",
+    label: "Task Updates",
+    description: "Get notified when a task assigned to you changes status."
+  },
+  {
+    key: "chat_message",
+    label: "Chat Messages",
+    description: "Get notified when someone sends a message in your conversations."
+  },
+  {
+    key: "chat_ping",
+    label: "Chat Mentions",
+    description: "Get notified when someone mentions you in chat."
+  },
+  {
+    key: "reacted",
+    label: "Message Reactions",
+    description: "Get notified when someone reacts to one of your chat messages."
+  },
+  {
+    key: "calendar_reminder",
+    label: "Calendar Reminders",
+    description: "Get notified when your calendar reminders are due."
+  },
+  {
+    key: "digest",
+    label: "Weekly Digest",
+    description: "Receive a weekly summary of your team's activity."
+  },
 ];
 
 function classNames(...classes) {
@@ -37,6 +84,10 @@ const Settings = () => {
     commented: true,
     assigned: true,
     update: true,
+    chat_message: true,
+    chat_ping: true,
+    reacted: true,
+    calendar_reminder: true,
     digest: false
   };
 
@@ -269,83 +320,28 @@ const Settings = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <Switch.Group as="div" className="flex items-center justify-between py-3">
-                    <span className="flex-grow flex flex-col">
-                      <Switch.Label as="span" className="text-sm font-medium text-gray-900" passive>
-                        Comments
-                      </Switch.Label>
-                      <Switch.Description as="span" className="text-sm text-gray-500">
-                        Get notified when someone posts a comment on your task.
-                      </Switch.Description>
-                    </span>
-                  <Switch
-                      checked={notificationPrefs.commented}
-                      onChange={(val) => setNotificationPrefs((p) => ({ ...p, commented: val }))}
-                      className={`${notificationPrefs.commented ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
-                    >
-                      <span aria-hidden="true" className={`${notificationPrefs.commented ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200`} />
-                    </Switch>
-                  </Switch.Group>
-
-                  <div className="border-t border-gray-100"></div>
-
-                  <Switch.Group as="div" className="flex items-center justify-between py-3">
-                    <span className="flex-grow flex flex-col">
-                      <Switch.Label as="span" className="text-sm font-medium text-gray-900" passive>
-                        Task Assignment
-                      </Switch.Label>
-                      <Switch.Description as="span" className="text-sm text-gray-500">
-                        Get notified when a task is assigned to you.
-                      </Switch.Description>
-                    </span>
-                    <Switch
-                      checked={notificationPrefs.assigned}
-                      onChange={(val) => setNotificationPrefs((p) => ({ ...p, assigned: val }))}
-                      className={`${notificationPrefs.assigned ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
-                    >
-                      <span aria-hidden="true" className={`${notificationPrefs.assigned ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200`} />
-                    </Switch>
-                  </Switch.Group>
-
-                  <div className="border-t border-gray-100"></div>
-
-                  <Switch.Group as="div" className="flex items-center justify-between py-3">
-                    <span className="flex-grow flex flex-col">
-                      <Switch.Label as="span" className="text-sm font-medium text-gray-900" passive>
-                        Task Updates
-                      </Switch.Label>
-                      <Switch.Description as="span" className="text-sm text-gray-500">
-                        Get notified when a task assigned to you changes status.
-                      </Switch.Description>
-                    </span>
-                    <Switch
-                      checked={notificationPrefs.update}
-                      onChange={(val) => setNotificationPrefs((p) => ({ ...p, update: val }))}
-                      className={`${notificationPrefs.update ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
-                    >
-                      <span aria-hidden="true" className={`${notificationPrefs.update ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200`} />
-                    </Switch>
-                  </Switch.Group>
-
-                  <div className="border-t border-gray-100"></div>
-
-                  <Switch.Group as="div" className="flex items-center justify-between py-3">
-                    <span className="flex-grow flex flex-col">
-                      <Switch.Label as="span" className="text-sm font-medium text-gray-900" passive>
-                        Weekly Digest
-                      </Switch.Label>
-                      <Switch.Description as="span" className="text-sm text-gray-500">
-                        Receive a weekly summary of your team's activity.
-                      </Switch.Description>
-                    </span>
-                    <Switch
-                      checked={notificationPrefs.digest}
-                      onChange={(val) => setNotificationPrefs((p) => ({ ...p, digest: val }))}
-                      className={`${notificationPrefs.digest ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
-                    >
-                      <span aria-hidden="true" className={`${notificationPrefs.digest ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200`} />
-                    </Switch>
-                  </Switch.Group>
+                  {notificationPreferenceOptions.map((option, index) => (
+                    <React.Fragment key={option.key}>
+                      {index > 0 && <div className="border-t border-gray-100"></div>}
+                      <Switch.Group as="div" className="flex items-center justify-between gap-4 py-3">
+                        <span className="flex-grow flex flex-col">
+                          <Switch.Label as="span" className="text-sm font-medium text-gray-900" passive>
+                            {option.label}
+                          </Switch.Label>
+                          <Switch.Description as="span" className="text-sm text-gray-500">
+                            {option.description}
+                          </Switch.Description>
+                        </span>
+                        <Switch
+                          checked={Boolean(notificationPrefs[option.key])}
+                          onChange={(val) => setNotificationPrefs((p) => ({ ...p, [option.key]: val }))}
+                          className={`${notificationPrefs[option.key] ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                        >
+                          <span aria-hidden="true" className={`${notificationPrefs[option.key] ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200`} />
+                        </Switch>
+                      </Switch.Group>
+                    </React.Fragment>
+                  ))}
                 </div>
 
                 <div className="flex justify-end pt-6 border-t border-gray-100">

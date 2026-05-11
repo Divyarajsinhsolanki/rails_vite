@@ -64,12 +64,18 @@ class Api::NotificationsController < Api::BaseController
       "#{notification.actor.full_name} commented on your post"
     when 'update'
       "#{notification.actor.full_name} updated a task"
+    when 'calendar_reminder'
+      event_title = notification.metadata&.dig('event_title') || 'an event'
+      "Reminder: #{event_title} is coming up"
     when 'chat_message'
       conversation_name = notification.metadata&.dig('conversation_name') || 'a conversation'
       "#{notification.actor.full_name} sent a message in #{conversation_name}"
     when 'chat_ping'
       conversation_name = notification.metadata&.dig('conversation_name') || 'a conversation'
       "#{notification.actor.full_name} mentioned you in #{conversation_name}"
+    when 'reacted'
+      emoji = notification.metadata&.dig('emoji')
+      emoji.present? ? "#{notification.actor.full_name} reacted #{emoji} to your message" : "#{notification.actor.full_name} reacted to your message"
     else
       "New notification"
     end
