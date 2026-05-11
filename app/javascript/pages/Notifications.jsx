@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Bell, Check, Clock, MessageSquare, Briefcase, FileText } from 'lucide-react';
+import { Bell, Calendar, Check, Clock, Heart, MessageSquare, Briefcase, FileText } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fetchNotifications, markNotificationRead, markAllNotificationsRead } from '../components/api';
 
@@ -63,9 +63,14 @@ const Notifications = () => {
       case 'commented':
         return <MessageSquare className="w-4 h-4 text-blue-500" />;
       case 'chat_message':
+      case 'chat_ping':
         return <MessageSquare className="w-4 h-4 text-indigo-500" />;
       case 'chat_ping':
         return <MessageSquare className="w-4 h-4 text-fuchsia-500" />;
+      case 'reacted':
+        return <Heart className="w-4 h-4 text-pink-500" />;
+      case 'calendar_reminder':
+        return <Calendar className="w-4 h-4 text-purple-500" />;
       case 'assigned':
         return <Briefcase className="w-4 h-4 text-green-500" />;
       case 'update':
@@ -147,6 +152,9 @@ const Notifications = () => {
             <option value="update">Updates</option>
             <option value="chat_message">Chat messages</option>
             <option value="chat_ping">Mentions</option>
+            <option value="chat_ping">Chat mentions</option>
+            <option value="reacted">Message reactions</option>
+            <option value="calendar_reminder">Calendar reminders</option>
           </select>
 
           <input

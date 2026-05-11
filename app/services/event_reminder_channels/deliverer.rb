@@ -32,7 +32,7 @@ module EventReminderChannels
       Notification.create(
         recipient: @recipient,
         actor: @recipient,
-        action: 'update',
+        action: 'calendar_reminder',
         notifiable: @event,
         metadata: {
           type: 'calendar_reminder',
