@@ -13,7 +13,9 @@ import {
   FiSave,
   FiSearch,
   FiStar,
+  FiTarget,
   FiTrash2,
+  FiZap,
 } from "react-icons/fi";
 import {
   createCalendarEvent,
@@ -82,6 +84,51 @@ const toReadableTime = (isoString) =>
   });
 
 const sameDay = (a, b) => new Date(a).toDateString() === new Date(b).toDateString();
+
+const EVENT_TYPE_META = {
+  meeting: {
+    label: "Meeting",
+    accent: "#38bdf8",
+    gradient: "from-sky-400/90 via-blue-500/85 to-cyan-300/90",
+    glow: "rgba(56, 189, 248, 0.42)",
+  },
+  deadline: {
+    label: "Deadline",
+    accent: "#fb7185",
+    gradient: "from-rose-400/95 via-red-500/90 to-orange-300/90",
+    glow: "rgba(251, 113, 133, 0.56)",
+  },
+  reminder: {
+    label: "Reminder",
+    accent: "#a78bfa",
+    gradient: "from-violet-400/90 via-fuchsia-500/85 to-purple-300/90",
+    glow: "rgba(167, 139, 250, 0.45)",
+  },
+  focus: {
+    label: "Focus Block",
+    accent: "#34d399",
+    gradient: "from-emerald-400/90 via-teal-500/85 to-lime-300/90",
+    glow: "rgba(52, 211, 153, 0.45)",
+  },
+  sprint_ceremony: {
+    label: "Sprint Ceremony",
+    accent: "#fbbf24",
+    gradient: "from-amber-300/95 via-orange-400/90 to-yellow-200/90",
+    glow: "rgba(251, 191, 36, 0.48)",
+  },
+};
+
+const eventMeta = (type) => EVENT_TYPE_META[type] || EVENT_TYPE_META.meeting;
+
+const deadlineUrgency = (event) => {
+  if (event.event_type !== "deadline") return "normal";
+  const hoursUntil = (new Date(event.start_at).getTime() - Date.now()) / 36e5;
+  if (hoursUntil <= 24) return "critical";
+  if (hoursUntil <= 72) return "hot";
+  return "watch";
+};
+
+const minutesBetween = (start, end) => Math.max(0, Math.round((new Date(end) - new Date(start)) / 60000));
 
 const Calendar = () => {
   const now = new Date();
@@ -205,12 +252,40 @@ const Calendar = () => {
     };
   }, [filteredEvents]);
 
-  const nextEvent = useMemo(() => {
+  const upcomingEvents = useMemo(() => {
     const current = new Date();
     return filteredEvents
       .filter((event) => new Date(event.start_at) >= current)
-      .sort((a, b) => new Date(a.start_at) - new Date(b.start_at))[0];
+      .sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
   }, [filteredEvents]);
+
+  const nextEvent = upcomingEvents[0];
+
+  const timelineEvents = useMemo(() => upcomingEvents.slice(0, 8), [upcomingEvents]);
+
+  const todayEvents = useMemo(() => {
+    const todayDate = new Date();
+    return filteredEvents
+      .filter((event) => sameDay(event.start_at, todayDate))
+      .sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
+  }, [filteredEvents]);
+
+  const orbitingReminders = useMemo(() => {
+    const reminders = todayEvents.filter((event) => event.event_type === "reminder" || event.event_reminders?.length);
+    return (reminders.length ? reminders : upcomingEvents).slice(0, 4);
+  }, [todayEvents, upcomingEvents]);
+
+  const focusMinutesToday = useMemo(() => (
+    todayEvents
+      .filter((event) => event.event_type === "focus")
+      .reduce((total, event) => total + minutesBetween(event.start_at, event.end_at), 0)
+  ), [todayEvents]);
+
+  const urgentDeadlines = useMemo(() => (
+    upcomingEvents
+      .filter((event) => event.event_type === "deadline")
+      .slice(0, 3)
+  ), [upcomingEvents]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -378,52 +453,140 @@ const Calendar = () => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-      <section className="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 p-6 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold tracking-[0.25em] uppercase text-blue-600 dark:text-blue-400">Planner</p>
-            <h1 className="mt-1 text-2xl font-bold text-zinc-900 dark:text-zinc-100">Calendar workspace</h1>
-            <p className="text-sm text-zinc-600 dark:text-zinc-300 mt-1">Full CRUD, recurrence, drag reschedule, conflicts, and sync tools.</p>
-          </div>
+    <div className="mx-auto max-w-[1500px] px-4 sm:px-6 py-8 space-y-6">
 
-          <button type="button" onClick={load} disabled={loading} className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white/90 dark:bg-zinc-800/90 px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-white">
-            <FiRefreshCw className={loading ? "animate-spin" : ""} />
-            Refresh
-          </button>
-        </div>
+      <style>{`
+        @keyframes calendar-orbit-spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes calendar-deadline-glow {
+          0%, 100% { filter: brightness(1); box-shadow: 0 0 24px rgba(251, 113, 133, 0.24); }
+          50% { filter: brightness(1.18); box-shadow: 0 0 42px rgba(251, 113, 133, 0.48); }
+        }
+        .calendar-orbit { animation: calendar-orbit-spin 18s linear infinite; }
+        .calendar-orbit > svg { animation: calendar-orbit-spin 18s linear infinite reverse; }
+        .calendar-depth-card { transform-style: preserve-3d; }
+        .calendar-depth-card::after {
+          content: "";
+          position: absolute;
+          inset: auto 12% -18px;
+          height: 24px;
+          border-radius: 999px;
+          background: rgba(15, 23, 42, 0.35);
+          filter: blur(12px);
+          transform: translateZ(-35px);
+        }
+        .calendar-depth-card:hover { transform: translateY(-18px) rotateX(8deg) rotateY(-8deg) scale(1.04); }
+        .calendar-drag-lift { transform: translateY(-32px) rotateX(12deg) rotateY(-10deg) scale(1.08) !important; opacity: 0.88; }
+        .calendar-deadline-pulse { animation: calendar-deadline-glow 2.5s ease-in-out infinite; }
+        .calendar-rail::-webkit-scrollbar { height: 10px; }
+        .calendar-rail::-webkit-scrollbar-thumb { background: rgba(125, 211, 252, 0.35); border-radius: 999px; }
+      `}</style>
+      <section className="relative overflow-hidden rounded-[2rem] border border-white/20 bg-slate-950 p-6 text-white shadow-2xl shadow-blue-950/30">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(59,130,246,0.38),transparent_32%),radial-gradient(circle_at_80%_8%,rgba(168,85,247,0.34),transparent_30%),linear-gradient(135deg,rgba(15,23,42,0.95),rgba(30,41,59,0.9))]" />
+        <div className="pointer-events-none absolute -right-20 top-8 h-72 w-72 rounded-full border border-cyan-300/20 bg-cyan-300/10 blur-sm" />
+        <div className="relative grid gap-6 xl:grid-cols-[1.05fr_1.4fr]">
+          <div className="flex flex-col justify-between gap-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.35em] text-cyan-200">Temporal command center</p>
+                <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Calendar workspace</h1>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">A dimensional planning surface for meetings, deadlines, reminders, focus blocks, and sprint ceremonies.</p>
+              </div>
+              <button type="button" onClick={load} disabled={loading} className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-950/30 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/15 disabled:opacity-60">
+                <FiRefreshCw className={loading ? "animate-spin" : ""} />
+                Refresh
+              </button>
+            </div>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {statCards.map((card) => (
-            <div key={card.label} className="rounded-2xl border border-zinc-200/80 dark:border-zinc-700 bg-white/85 dark:bg-zinc-900/70 p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{card.label}</p>
-              <div className="mt-1 flex items-center justify-between">
-                <p className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">{card.value}</p>
-                <card.icon className="text-blue-500" />
+            <div className="grid gap-3 sm:grid-cols-2">
+              {statCards.map((card) => (
+                <div key={card.label} className="group rounded-3xl border border-white/10 bg-white/[0.08] p-4 shadow-xl shadow-black/10 backdrop-blur transition duration-300 hover:-translate-y-1 hover:bg-white/[0.12]">
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{card.label}</p>
+                  <div className="mt-2 flex items-center justify-between">
+                    <p className="text-3xl font-black">{card.value}</p>
+                    <span className="rounded-2xl bg-cyan-300/15 p-3 text-cyan-200 transition group-hover:rotate-6 group-hover:scale-110"><card.icon /></span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="rounded-3xl border border-white/10 bg-white/[0.08] p-4 backdrop-blur">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.25em] text-cyan-200">Today focus</p>
+                    <p className="mt-1 text-2xl font-black">{todayEvents.length} event{todayEvents.length === 1 ? "" : "s"}</p>
+                  </div>
+                  <div className="calendar-orbit relative h-20 w-20 rounded-full border border-cyan-200/20 bg-cyan-200/10">
+                    {orbitingReminders.map((event, index) => (
+                      <span key={event.id} className="absolute left-1/2 top-1/2 h-2.5 w-2.5 rounded-full" style={{ backgroundColor: eventMeta(event.event_type).accent, transform: `rotate(${index * 90}deg) translateX(34px)` }} />
+                    ))}
+                    <FiTarget className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-cyan-100" />
+                  </div>
+                </div>
+                <p className="mt-3 text-sm text-slate-300">{focusMinutesToday ? `${Math.round(focusMinutesToday / 60 * 10) / 10} hours reserved for deep work today.` : "No focus block today — create one to protect maker time."}</p>
+              </div>
+
+              <div className="rounded-3xl border border-white/10 bg-white/[0.08] p-4 backdrop-blur">
+                <p className="text-xs uppercase tracking-[0.25em] text-rose-200">Deadline heat</p>
+                <div className="mt-3 space-y-2">
+                  {urgentDeadlines.length ? urgentDeadlines.map((event) => (
+                    <div key={event.id} className={`rounded-2xl border px-3 py-2 text-sm ${deadlineUrgency(event) === "critical" ? "border-rose-300/50 bg-rose-400/20 shadow-[0_0_28px_rgba(251,113,133,0.35)]" : "border-amber-300/30 bg-amber-300/10"}`}>
+                      <div className="flex items-center justify-between gap-3"><span className="font-semibold">{event.title}</span><span className="text-xs text-slate-300">{toReadableDate(event.start_at)}</span></div>
+                    </div>
+                  )) : <p className="text-sm text-slate-300">No upcoming deadlines in this view.</p>}
+                </div>
               </div>
             </div>
-          ))}
-        </div>
-
-        {insights ? (
-          <div className="mt-4 text-xs text-zinc-700 dark:text-zinc-300">
-            Workload: {insights.total_events} total events, {insights.overloaded_days} overloaded days.
           </div>
-        ) : null}
 
-        {nextEvent ? (
-          <div className="mt-4 rounded-2xl bg-blue-600 text-white px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-wide text-blue-100">Next up</p>
-              <p className="font-semibold">{nextEvent.title}</p>
-              <p className="text-sm text-blue-100">{toReadableDate(nextEvent.start_at)} at {toReadableTime(nextEvent.start_at)}</p>
+          <div className="rounded-[2rem] border border-white/10 bg-white/[0.07] p-4 shadow-2xl shadow-black/20 backdrop-blur-xl">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.25em] text-cyan-200">3D timeline rail</p>
+                <h2 className="mt-1 text-xl font-bold">Upcoming time wheel</h2>
+              </div>
+              {nextEvent ? (
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs text-slate-200"><FiZap className="text-yellow-200" />Next: {toReadableTime(nextEvent.start_at)}</span>
+              ) : null}
             </div>
-            <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-xs">
-              <FiClock />
-              {nextEvent.event_type.replace("_", " ")}
-            </span>
+
+            <div className="calendar-rail mt-6 overflow-x-auto pb-4">
+              <div className="relative flex min-h-[310px] min-w-[760px] items-center gap-5 px-3" style={{ perspective: "1200px" }}>
+                <div className="absolute left-4 right-4 top-1/2 h-2 -translate-y-1/2 rounded-full bg-gradient-to-r from-cyan-300/15 via-white/35 to-fuchsia-300/15 shadow-[0_0_34px_rgba(125,211,252,0.25)]" />
+                <div className="absolute left-1/2 top-6 bottom-6 w-px bg-cyan-200/30" />
+                <span className="absolute left-1/2 top-0 -translate-x-1/2 rounded-full border border-cyan-200/30 bg-cyan-200/15 px-3 py-1 text-xs font-bold text-cyan-100">Today</span>
+                {timelineEvents.length ? timelineEvents.map((event, index) => {
+                  const meta = eventMeta(event.event_type);
+                  const urgency = deadlineUrgency(event);
+                  const lift = index % 2 === 0 ? "-translate-y-12 rotate-[-2deg]" : "translate-y-12 rotate-[2deg]";
+                  return (
+                    <article
+                      key={event.id}
+                      draggable
+                      onDragStart={() => setDraggingEventId(event.id)}
+                      onDragEnd={() => setDraggingEventId(null)}
+                      className={`calendar-depth-card relative z-10 w-48 shrink-0 rounded-[1.5rem] border border-white/15 bg-gradient-to-br ${meta.gradient} p-4 text-white shadow-2xl transition duration-300 ${lift} ${draggingEventId === event.id ? "calendar-drag-lift" : "hover:-translate-y-4"} ${urgency === "critical" ? "calendar-deadline-pulse" : ""}`}
+                      style={{ boxShadow: `0 24px 60px ${meta.glow}` }}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide">{meta.label}</span>
+                        <FiClock className="mt-1 opacity-80" />
+                      </div>
+                      <h3 className="mt-5 line-clamp-2 text-lg font-black leading-tight">{event.title}</h3>
+                      <p className="mt-3 text-xs font-medium text-white/85">{toReadableDate(event.start_at)} · {toReadableTime(event.start_at)}</p>
+                      <div className="mt-4 h-1.5 rounded-full bg-white/25"><div className="h-full rounded-full bg-white/80" style={{ width: `${Math.min(100, 35 + index * 8)}%` }} /></div>
+                    </article>
+                  );
+                }) : (
+                  <div className="relative z-10 mx-auto rounded-3xl border border-dashed border-white/20 bg-white/10 p-8 text-center text-sm text-slate-300">No upcoming events on the rail yet.</div>
+                )}
+              </div>
+            </div>
           </div>
-        ) : null}
+        </div>
       </section>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -514,7 +677,7 @@ const Calendar = () => {
 
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
             {dragDays.map((day) => (
-              <div key={day.toDateString()} onDragOver={(e) => e.preventDefault()} onDrop={() => handleDropOnDay(day)} className="min-h-20 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 p-2 text-xs">
+              <div key={day.toDateString()} onDragOver={(e) => e.preventDefault()} onDrop={() => handleDropOnDay(day)} className={`min-h-20 rounded-xl border border-dashed p-2 text-xs transition duration-300 ${draggingEventId ? "border-cyan-400 bg-cyan-50 shadow-lg shadow-cyan-500/10 dark:bg-cyan-950/20" : "border-zinc-300 dark:border-zinc-700"}`}>
                 <p className="font-semibold">{day.toLocaleDateString([], { weekday: "short" })}</p>
                 <p>{day.toLocaleDateString([], { month: "short", day: "numeric" })}</p>
                 <p className="mt-1 text-zinc-500">Drop here</p>
@@ -525,7 +688,15 @@ const Calendar = () => {
           {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
 
           {loading ? (
-            <p className="mt-4 text-sm text-zinc-500">Loading events...</p>
+            <div className="mt-4 space-y-3">
+              {[0, 1, 2].map((item) => (
+                <div key={item} className="overflow-hidden rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-800/60">
+                  <div className="h-3 w-32 animate-pulse rounded-full bg-zinc-200 dark:bg-zinc-700" />
+                  <div className="mt-4 h-5 w-2/3 animate-pulse rounded-full bg-zinc-200 dark:bg-zinc-700" />
+                  <div className="mt-3 h-3 w-1/2 animate-pulse rounded-full bg-zinc-100 dark:bg-zinc-700/60" />
+                </div>
+              ))}
+            </div>
           ) : grouped.length === 0 ? (
             <div className="mt-6 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 p-8 text-center"><FiCalendar className="mx-auto text-zinc-400" size={20} /><p className="mt-2 text-sm text-zinc-500">No events in this view.</p></div>
           ) : (
@@ -536,8 +707,17 @@ const Calendar = () => {
                   <div className="mt-2 space-y-2">
                     {group.events.map((event) => {
                       const isEditing = editingEventId === event.id;
+                      const meta = eventMeta(event.event_type);
+                      const urgency = deadlineUrgency(event);
                       return (
-                        <article key={event.id} draggable onDragStart={() => setDraggingEventId(event.id)} className="rounded-xl border border-zinc-200 dark:border-zinc-700 p-3 bg-zinc-50/70 dark:bg-zinc-800/50">
+                        <article
+                          key={event.id}
+                          draggable
+                          onDragStart={() => setDraggingEventId(event.id)}
+                          onDragEnd={() => setDraggingEventId(null)}
+                          className={`calendar-depth-card relative rounded-2xl border p-4 transition duration-300 hover:-translate-y-1 hover:rotate-[0.4deg] dark:border-zinc-700 ${draggingEventId === event.id ? "calendar-drag-lift border-cyan-300 bg-cyan-50/80 dark:bg-cyan-950/30" : "border-zinc-200 bg-zinc-50/80 dark:bg-zinc-800/60"} ${urgency === "critical" ? "calendar-deadline-pulse shadow-[0_0_30px_rgba(251,113,133,0.35)]" : urgency === "hot" ? "shadow-[0_0_22px_rgba(251,191,36,0.22)]" : ""}`}
+                          style={{ borderLeft: `4px solid ${meta.accent}` }}
+                        >
                           {isEditing ? (
                             <div className="space-y-2">
                               <input value={editForm.title || ""} onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))} className="w-full rounded border px-2 py-1 text-sm" />
@@ -567,7 +747,7 @@ const Calendar = () => {
                                   </p>
                                 </div>
                                 <div className="flex items-start gap-2">
-                                  <span className="text-xs rounded-full px-2 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 h-fit">{event.event_type.replace("_", " ")}</span>
+                                  <span className="text-xs rounded-full px-2 py-1 text-white h-fit" style={{ backgroundColor: meta.accent }}>{event.event_type.replace("_", " ")}</span>
                                   <span className="text-xs rounded-full px-2 py-1 bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-100 h-fit">{event.status}</span>
                                 </div>
                               </div>
