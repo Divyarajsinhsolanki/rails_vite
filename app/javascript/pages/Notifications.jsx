@@ -63,7 +63,6 @@ const Notifications = () => {
       case 'commented':
         return <MessageSquare className="w-4 h-4 text-blue-500" />;
       case 'chat_message':
-      case 'chat_ping':
         return <MessageSquare className="w-4 h-4 text-indigo-500" />;
       case 'chat_ping':
         return <MessageSquare className="w-4 h-4 text-fuchsia-500" />;
@@ -152,7 +151,6 @@ const Notifications = () => {
             <option value="update">Updates</option>
             <option value="chat_message">Chat messages</option>
             <option value="chat_ping">Mentions</option>
-            <option value="chat_ping">Chat mentions</option>
             <option value="reacted">Message reactions</option>
             <option value="calendar_reminder">Calendar reminders</option>
           </select>
