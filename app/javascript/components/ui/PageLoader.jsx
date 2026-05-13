@@ -13,21 +13,23 @@ export default function PageLoader({
   overlay = false,
 }) {
   const containerClass = overlay
-    ? "fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 px-4 backdrop-blur-[2px]"
-    : `flex items-center justify-center ${compact ? "py-10" : "min-h-[55vh] px-4"}`;
+    ? "fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 px-4 backdrop-blur-[3px]"
+    : `relative flex items-center justify-center ${compact ? "py-10" : "min-h-[55vh] px-4"}`;
 
   return (
     <div className={containerClass}>
-      <div className={`w-full max-w-md rounded-2xl border border-slate-200 bg-white/95 p-6 ${overlay ? "shadow-2xl" : "shadow-sm"}`}>
-        <div className="mb-4 flex items-center gap-3">
-          <span className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[var(--theme-color)]" />
+      <div className={`premium-loader-card w-full max-w-md rounded-[1.75rem] border border-white/70 bg-white/90 p-6 ${overlay ? "shadow-2xl" : "shadow-sm"}`}>
+        <div className="mb-5 flex items-center gap-4">
+          <span className="premium-loader-mark" aria-hidden="true">
+            <span />
+          </span>
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">{title}</p>
-            <p className="text-base font-medium text-slate-700">{message}</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">{title}</p>
+            <p className="text-base font-semibold text-slate-800">{message}</p>
           </div>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
-          <div className="h-full w-1/2 animate-pulse rounded-full bg-[var(--theme-color)]" />
+        <div className="premium-loader-track" aria-hidden="true">
+          <div className="premium-loader-bar" />
         </div>
       </div>
     </div>

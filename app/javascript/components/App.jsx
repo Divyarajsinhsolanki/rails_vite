@@ -6,8 +6,7 @@ import { AuthProvider } from "../context/AuthContext";
 import PrivateRoute from "../components/PrivateRoute";
 import ProjectMemberRoute from "../components/ProjectMemberRoute";
 
-import Navbar from "../components/Navbar";
-import Footer from "./Footer";
+import AppShell from "./AppShell";
 import PdfPage from "./PdfPage";
 import PostPage from "../pages/PostPage";
 import Profile from "../components/Profile";
@@ -33,7 +32,6 @@ import DepartmentDetails from "../pages/DepartmentDetails";
 import PageLoader from "./ui/PageLoader";
 import Chat from "../pages/Chat";
 import Notifications from "../pages/Notifications";
-import ChatLauncher from "./ChatLauncher";
 
 const RouteTransitionLoader = ({ children }) => {
   const location = useLocation();
@@ -59,53 +57,41 @@ const App = () => {
       <AuthProvider> {/* ✅ Wrap the entire app with AuthProvider */}
         <Toaster position="top-right" />
         <PageTitle />
-        <div className="flex min-h-screen flex-col">
+        <AppShell>
+          <RouteTransitionLoader>
+            <Routes>
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/legal" element={<Legal />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/projects/:projectId/issues" element={<ProjectMemberRoute><IssueTracker standalone /></ProjectMemberRoute>} />
 
-          {/* ✅ Navbar */}
-          <Navbar />
-
-          {/* ✅ Page Content */}
-          <main className="flex min-h-0 flex-1 flex-col">
-            <RouteTransitionLoader>
-              <Routes>
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/legal" element={<Legal />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/projects/:projectId/issues" element={<ProjectMemberRoute><IssueTracker standalone /></ProjectMemberRoute>} />
-
-                {/* 🔐 Protected */}
-                <Route path="/" element={<PrivateRoute><Calendar /></PrivateRoute>} />
-                <Route path="/momentum" element={<Navigate to="/calendar" replace />} />
-                <Route path="/pdf" element={<PrivateRoute><PdfPage /></PrivateRoute>} />
-                <Route path="/posts" element={<PrivateRoute><PostPage /></PrivateRoute>} />
-                <Route path="/vault" element={<PrivateRoute><Vault /></PrivateRoute>} />
-                <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
-                <Route path="/profile/:userId" element={<PrivateRoute><Profile /></PrivateRoute>} />
-                <Route path="/knowledge" element={<PrivateRoute><KnowledgeDashboard /></PrivateRoute>} />
-                <Route path="/worklog" element={<PrivateRoute><WorkLog /></PrivateRoute>} />
-                <Route path="/calendar" element={<PrivateRoute><Calendar /></PrivateRoute>} />
-                <Route path="/projects" element={<PrivateRoute><Projects /></PrivateRoute>} />
-                <Route path="/teams" element={<PrivateRoute><Teams /></PrivateRoute>} />
-                <Route path="/projects/:projectId/dashboard" element={<ProjectMemberRoute><SprintDashboard /></ProjectMemberRoute>} />
-                <Route path="/users" element={<PrivateRoute><Users /></PrivateRoute>} />
-                <Route path="/departments" element={<PrivateRoute><Departments /></PrivateRoute>} />
-                <Route path="/departments/:id" element={<PrivateRoute><DepartmentDetails /></PrivateRoute>} />
-                <Route path="/admin" element={<PrivateRoute ownerOnly><Admin /></PrivateRoute>} />
-                <Route path="/admin/login-as-user" element={<PrivateRoute ownerOnly><AdminImpersonation /></PrivateRoute>} />
-                <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
-                <Route path="/chat" element={<PrivateRoute><Chat /></PrivateRoute>} />
-                <Route path="/chat/:conversationId" element={<PrivateRoute><Chat /></PrivateRoute>} />
-                <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
-              </Routes>
-            </RouteTransitionLoader>
-          </main>
-
-          <ChatLauncher />
-          {/* ✅ Footer */}
-          <Footer />
-
-        </div>
+              {/* 🔐 Protected */}
+              <Route path="/" element={<PrivateRoute><Calendar /></PrivateRoute>} />
+              <Route path="/momentum" element={<Navigate to="/calendar" replace />} />
+              <Route path="/pdf" element={<PrivateRoute><PdfPage /></PrivateRoute>} />
+              <Route path="/posts" element={<PrivateRoute><PostPage /></PrivateRoute>} />
+              <Route path="/vault" element={<PrivateRoute><Vault /></PrivateRoute>} />
+              <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+              <Route path="/profile/:userId" element={<PrivateRoute><Profile /></PrivateRoute>} />
+              <Route path="/knowledge" element={<PrivateRoute><KnowledgeDashboard /></PrivateRoute>} />
+              <Route path="/worklog" element={<PrivateRoute><WorkLog /></PrivateRoute>} />
+              <Route path="/calendar" element={<PrivateRoute><Calendar /></PrivateRoute>} />
+              <Route path="/projects" element={<PrivateRoute><Projects /></PrivateRoute>} />
+              <Route path="/teams" element={<PrivateRoute><Teams /></PrivateRoute>} />
+              <Route path="/projects/:projectId/dashboard" element={<ProjectMemberRoute><SprintDashboard /></ProjectMemberRoute>} />
+              <Route path="/users" element={<PrivateRoute><Users /></PrivateRoute>} />
+              <Route path="/departments" element={<PrivateRoute><Departments /></PrivateRoute>} />
+              <Route path="/departments/:id" element={<PrivateRoute><DepartmentDetails /></PrivateRoute>} />
+              <Route path="/admin" element={<PrivateRoute ownerOnly><Admin /></PrivateRoute>} />
+              <Route path="/admin/login-as-user" element={<PrivateRoute ownerOnly><AdminImpersonation /></PrivateRoute>} />
+              <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
+              <Route path="/chat" element={<PrivateRoute><Chat /></PrivateRoute>} />
+              <Route path="/chat/:conversationId" element={<PrivateRoute><Chat /></PrivateRoute>} />
+              <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
+            </Routes>
+          </RouteTransitionLoader>
+        </AppShell>
       </AuthProvider>
     </Router>
   );
