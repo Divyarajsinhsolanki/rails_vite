@@ -26,6 +26,37 @@ const useNavbarEffects = () => {
   return { scrolled };
 };
 
+const LogoBadge = ({ onClick }) => {
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = (event) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width - 0.5) * 16;
+    const y = ((event.clientY - rect.top) / rect.height - 0.5) * -16;
+    setTilt({ x, y });
+  };
+
+  return (
+    <Link
+      to="/"
+      className="nav-logo-badge group flex items-center gap-3"
+      onClick={onClick}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setTilt({ x: 0, y: 0 })}
+      style={{ "--logo-tilt-x": `${tilt.y}deg`, "--logo-tilt-y": `${tilt.x}deg` }}
+      aria-label="Open NexusHub home"
+    >
+      <span className="nav-logo-mark">
+        <img src={logo} alt="" className="relative z-10 h-8 w-auto" />
+        <span className="nav-logo-orbit" aria-hidden="true" />
+      </span>
+      <span className="nav-logo-wordmark hidden sm:block text-xl font-black tracking-tight text-zinc-800 dark:text-zinc-100">
+        Nexus<span>Hub</span>
+      </span>
+    </Link>
+  );
+};
+
 // Holographic Avatar Component
 const HolographicAvatar = ({ user }) => {
   const [angle, setAngle] = useState(0);
@@ -81,26 +112,34 @@ const AnimatedNavLink = ({ to, label, icon: Icon, onClick }) => {
     <NavLink
       to={to}
       onClick={onClick}
-      className="relative flex items-center gap-2 px-3 py-2 rounded-lg group"
+      className={`nav-command-link relative flex items-center gap-2 rounded-xl px-3 py-2 group ${isActive ? 'is-active' : ''}`}
     >
-      <div className={`relative z-10 flex items-center gap-2 ${isActive ? 'text-white' : 'text-zinc-600 dark:text-zinc-300'}`}>
-        {Icon && <Icon className="h-5 w-5" />}
-        <span className="font-medium">{label}</span>
-      </div>
+      <span className={`relative z-10 flex items-center gap-2 ${isActive ? 'text-white' : 'text-zinc-600 dark:text-zinc-300'}`}>
+        {Icon && (
+          <span className="nav-command-icon grid h-7 w-7 place-items-center rounded-lg">
+            <Icon className="h-4 w-4" />
+          </span>
+        )}
+        <span className="font-semibold">{label}</span>
+      </span>
 
       {isActive && (
-        <motion.div
-          layoutId="nav-active-bg"
-          className="absolute inset-0 bg-[var(--theme-color)] rounded-lg shadow-lg"
-          transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-        />
+        <>
+          <motion.span
+            layoutId="nav-active-bg"
+            className="absolute inset-0 rounded-xl bg-[var(--theme-color)] shadow-lg shadow-[rgb(var(--theme-color-rgb)/0.24)]"
+            transition={{ type: 'spring', bounce: 0.22, duration: 0.62 }}
+          />
+          <motion.span
+            layoutId="nav-liquid-underline"
+            className="nav-liquid-underline absolute"
+            transition={{ type: 'spring', bounce: 0.28, duration: 0.7 }}
+          />
+        </>
       )}
 
       {!isActive && (
-        <motion.div
-          className="absolute inset-0 bg-zinc-100 dark:bg-zinc-800 opacity-0 group-hover:opacity-100 rounded-lg"
-          transition={{ duration: 0.2 }}
-        />
+        <span className="absolute inset-0 rounded-xl bg-zinc-100/0 transition-colors duration-200 group-hover:bg-zinc-100 dark:group-hover:bg-zinc-800" />
       )}
     </NavLink>
   );
@@ -129,10 +168,12 @@ const ProjectsDropdown = ({ projects, onItemClick }) => {
     <div className="relative group" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+        className="nav-command-link relative flex items-center gap-2 rounded-xl px-3 py-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
       >
-        <FiLayers className="h-5 w-5" />
-        <span className="font-medium">Projects</span>
+        <span className="nav-command-icon grid h-7 w-7 place-items-center rounded-lg">
+          <FiLayers className="h-4 w-4" />
+        </span>
+        <span className="font-semibold">Projects</span>
         <FiChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
@@ -233,7 +274,7 @@ const Navbar = () => {
 
   // Dynamic background based on scroll and route
   const getNavbarBackground = () =>
-    'bg-white dark:bg-zinc-900 backdrop-blur-lg shadow-sm border-zinc-200 dark:border-zinc-800';
+    'nav-command-header bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl shadow-sm border-zinc-200/70 dark:border-zinc-800/80';
 
   return (
     <motion.header
@@ -244,20 +285,7 @@ const Navbar = () => {
     >
       <div className="container mx-auto flex justify-between items-center h-full px-4 sm:px-6">
         {/* Logo */}
-        <Link
-          to="/"
-          className="flex items-center gap-3 group"
-          onClick={() => setIsMobileMenuOpen(false)}
-        >
-          <img src={logo} alt="Logo" className="h-8 w-auto transition-transform group-hover:scale-110" />
-          <motion.h1
-            className="hidden sm:block text-xl font-bold text-zinc-800 dark:text-zinc-100"
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-          >
-            Nexus<span className="text-blue-500">Hub</span>
-          </motion.h1>
-        </Link>
+        <LogoBadge onClick={() => setIsMobileMenuOpen(false)} />
 
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-1">
@@ -280,6 +308,13 @@ const Navbar = () => {
             />
           )}
         </nav>
+
+        <div className="hidden xl:flex min-w-0 flex-1 justify-end px-3">
+          <div className="nav-command-status" aria-label="Command center status">
+            <span className="nav-command-status-dot" />
+            <span className="truncate">{user ? `Command center · ${location.pathname === '/' ? 'Calendar' : location.pathname.split('/').filter(Boolean)[0] || 'Home'}` : 'Guest deck online'}</span>
+          </div>
+        </div>
 
         {/* Right side actions */}
         <div className="flex items-center gap-4">
@@ -446,9 +481,12 @@ const Navbar = () => {
                   className="flex items-center gap-3"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  <img src={logo} alt="Logo" className="h-8 w-auto" />
-                  <span className="text-xl font-bold text-zinc-800 dark:text-zinc-100">
-                    Nexus<span className="text-blue-500">Hub</span>
+                  <span className="nav-logo-mark">
+                    <img src={logo} alt="" className="relative z-10 h-8 w-auto" />
+                    <span className="nav-logo-orbit" aria-hidden="true" />
+                  </span>
+                  <span className="nav-logo-wordmark text-xl font-black tracking-tight text-zinc-800 dark:text-zinc-100">
+                    Nexus<span>Hub</span>
                   </span>
                 </Link>
                 <button
