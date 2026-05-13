@@ -20,7 +20,7 @@ function AuthPage({ mode = "login" }) {
           }}
         />
       </div>
-      <div className="relative z-10 min-h-screen px-4 py-10 sm:px-6 lg:px-8">
+      <div className="relative z-10 min-h-screen px-4 py-8 sm:px-6 lg:px-8">
         {current === "signup" ? (
           <Signup switchToLogin={() => setCurrent("login")} />
         ) : (
