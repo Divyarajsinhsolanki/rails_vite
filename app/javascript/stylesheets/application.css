@@ -50,13 +50,14 @@ body {
 .landing-hero-3d {
   transform-style: preserve-3d;
   perspective: 1200px;
+  touch-action: none;
 }
 
 .landing-hero-3d::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(115deg, transparent 0%, rgba(255, 255, 255, 0.08) 42%, transparent 58%);
+  background: linear-gradient(115deg, transparent 0%, rgba(14, 165, 233, 0.12) 42%, transparent 58%);
   transform: translateX(-120%);
   transition: transform 0.8s ease;
   z-index: 2;
@@ -82,8 +83,8 @@ body {
   width: var(--particle-size);
   height: var(--particle-size);
   border-radius: 9999px;
-  background: rgba(165, 243, 252, 0.82);
-  box-shadow: 0 0 18px rgba(34, 211, 238, 0.72);
+  background: rgba(14, 165, 233, 0.68);
+  box-shadow: 0 0 18px rgba(14, 165, 233, 0.42);
   animation: landing-particle-drift 7s ease-in-out infinite;
   animation-delay: var(--particle-delay);
   opacity: 0.78;
@@ -97,9 +98,9 @@ body {
 
 .landing-orb-perspective {
   position: relative;
-  width: min(100%, 420px);
+  width: min(100%, 400px);
   aspect-ratio: 1;
-  --orbit-radius: clamp(128px, 38vw, 188px);
+  --orbit-radius: clamp(104px, 20vw, 154px);
   transform-style: preserve-3d;
   transform: rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
   transition: transform 180ms ease-out;
@@ -109,9 +110,9 @@ body {
   position: absolute;
   inset: 12%;
   border-radius: 9999px;
-  border: 1px solid rgba(125, 211, 252, 0.42);
+  border: 1px solid rgba(14, 165, 233, 0.26);
   transform-style: preserve-3d;
-  box-shadow: 0 0 44px rgba(34, 211, 238, 0.18), inset 0 0 28px rgba(34, 211, 238, 0.12);
+  box-shadow: 0 0 44px rgba(14, 165, 233, 0.12), inset 0 0 28px rgba(14, 165, 233, 0.10);
 }
 
 .landing-timeline-ring::before,
@@ -121,8 +122,8 @@ body {
   width: 10px;
   height: 10px;
   border-radius: 9999px;
-  background: #a5f3fc;
-  box-shadow: 0 0 24px rgba(103, 232, 249, 0.95);
+  background: #38bdf8;
+  box-shadow: 0 0 24px rgba(14, 165, 233, 0.58);
 }
 
 .landing-timeline-ring::before {
@@ -141,7 +142,7 @@ body {
 
 .landing-timeline-ring-two {
   inset: 21%;
-  border-color: rgba(216, 180, 254, 0.36);
+  border-color: rgba(168, 85, 247, 0.22);
   transform: rotateX(64deg) rotateZ(28deg);
   animation: landing-orbit-spin-reverse 15s linear infinite;
 }
@@ -149,7 +150,7 @@ body {
 .landing-timeline-ring-three {
   inset: 5%;
   border-style: dashed;
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: rgba(59, 130, 246, 0.14);
   transform: rotateY(58deg) rotateX(18deg);
   animation: landing-orbit-spin 26s linear infinite;
 }
@@ -168,7 +169,7 @@ body {
   width: 56%;
   height: 1px;
   transform-origin: left center;
-  background: linear-gradient(90deg, rgba(103, 232, 249, 0), rgba(103, 232, 249, 0.54), rgba(216, 180, 254, 0));
+  background: linear-gradient(90deg, rgba(14, 165, 233, 0), rgba(14, 165, 233, 0.34), rgba(168, 85, 247, 0));
 }
 
 .landing-network-lines span:nth-child(1) {
@@ -185,22 +186,22 @@ body {
 
 .landing-core-orb {
   position: absolute;
-  inset: 31%;
+  inset: 33%;
   display: grid;
   place-items: center;
   border-radius: 9999px;
   background:
-    radial-gradient(circle at 32% 22%, rgba(255, 255, 255, 0.95), rgba(125, 211, 252, 0.65) 18%, rgba(59, 130, 246, 0.34) 42%, rgba(15, 23, 42, 0.2) 72%),
-    linear-gradient(135deg, rgba(34, 211, 238, 0.4), rgba(168, 85, 247, 0.28));
-  box-shadow: 0 0 44px rgba(34, 211, 238, 0.5), 0 0 100px rgba(79, 70, 229, 0.34), inset -18px -20px 36px rgba(15, 23, 42, 0.42);
+    radial-gradient(circle at 32% 22%, rgba(255, 255, 255, 0.95), rgba(125, 211, 252, 0.65) 18%, rgba(59, 130, 246, 0.34) 42%, rgba(255, 255, 255, 0.48) 72%),
+    linear-gradient(135deg, rgba(14, 165, 233, 0.28), rgba(168, 85, 247, 0.18));
+  box-shadow: 0 0 44px rgba(14, 165, 233, 0.32), 0 0 100px rgba(79, 70, 229, 0.18), inset -18px -20px 36px rgba(59, 130, 246, 0.18);
   transform-style: preserve-3d;
   animation: landing-pulse-orb 4.2s ease-in-out infinite;
 }
 
 .landing-core-cube {
   position: relative;
-  width: 74px;
-  height: 74px;
+  width: 68px;
+  height: 68px;
   transform-style: preserve-3d;
   animation: landing-cube-spin 12s linear infinite;
 }
@@ -208,18 +209,18 @@ body {
 .landing-cube-face {
   position: absolute;
   inset: 0;
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.32), rgba(34, 211, 238, 0.12));
-  box-shadow: inset 0 0 28px rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(14, 165, 233, 0.28);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.84), rgba(14, 165, 233, 0.18));
+  box-shadow: inset 0 0 28px rgba(14, 165, 233, 0.14);
   backdrop-filter: blur(8px);
 }
 
-.landing-cube-front { transform: translateZ(37px); }
-.landing-cube-back { transform: rotateY(180deg) translateZ(37px); }
-.landing-cube-right { transform: rotateY(90deg) translateZ(37px); }
-.landing-cube-left { transform: rotateY(-90deg) translateZ(37px); }
-.landing-cube-top { transform: rotateX(90deg) translateZ(37px); }
-.landing-cube-bottom { transform: rotateX(-90deg) translateZ(37px); }
+.landing-cube-front { transform: translateZ(34px); }
+.landing-cube-back { transform: rotateY(180deg) translateZ(34px); }
+.landing-cube-right { transform: rotateY(90deg) translateZ(34px); }
+.landing-cube-left { transform: rotateY(-90deg) translateZ(34px); }
+.landing-cube-top { transform: rotateX(90deg) translateZ(34px); }
+.landing-cube-bottom { transform: rotateX(-90deg) translateZ(34px); }
 
 .landing-orbit-icons {
   position: absolute;
@@ -241,11 +242,11 @@ body {
   align-items: center;
   gap: 0.45rem;
   border-radius: 9999px;
-  padding: 0.65rem 0.85rem;
+  padding: 0.55rem 0.72rem;
   color: #0f172a;
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   font-weight: 900;
-  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.28), 0 0 24px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 18px 36px rgba(14, 165, 233, 0.18), 0 0 24px rgba(14, 165, 233, 0.12);
   transform: translate(-50%, -50%) rotateX(0deg) scale(1);
   transition: transform 220ms ease, filter 220ms ease;
   white-space: nowrap;
@@ -266,8 +267,8 @@ body {
 
 .landing-feature-card:hover {
   transform: translateY(-8px) rotateX(7deg);
-  border-color: rgba(125, 211, 252, 0.42);
-  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(14, 165, 233, 0.34);
+  background: rgba(255, 255, 255, 0.95);
 }
 
 @keyframes landing-particle-drift {
@@ -448,7 +449,7 @@ body {
   .premium-loader-mark::before {
     inset: 0.45rem;
     border: 2px solid rgba(255, 255, 255, 0.72);
-    border-top-color: rgba(255, 255, 255, 0.18);
+    border-top-color: rgba(59, 130, 246, 0.14);
     animation: premium-loader-spin 1.05s linear infinite;
   }
 
