@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { auth, getRedirectResult } from "../firebaseConfig";
 import { Toaster, toast } from "react-hot-toast";
 import SpinnerOverlay from "../components/ui/SpinnerOverlay";
+import WorkspaceOrb from "../components/landing/WorkspaceOrb";
 
 const Login = ({ switchToSignup }) => {
   const { handleLogin, handleGoogleLogin } = useContext(AuthContext);
@@ -46,62 +47,17 @@ const Login = ({ switchToSignup }) => {
       .catch(console.error);
   }, [searchParams]);
 
-  const featureHighlights = [
-    {
-      title: "Unified Dashboard",
-      description: "Track members, events, and communications in one streamlined view.",
-    },
-    {
-      title: "Smart Automations",
-      description: "Set reminders, confirmations, and follow-ups without manual work.",
-    },
-    {
-      title: "Team Collaboration",
-      description: "Share updates, assign tasks, and keep everyone aligned in real time.",
-    },
-  ];
-
   return (
     <div className="min-h-full">
       <Toaster position="top-right" />
       {loading && <SpinnerOverlay />}
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 py-8 lg:flex-row lg:items-center lg:gap-14">
-        <div className="relative isolate overflow-hidden rounded-3xl border border-blue-100 bg-white/85 p-10 shadow-lg backdrop-blur-md lg:w-1/2">
-          <div className="absolute -left-10 -top-10 h-40 w-40 rounded-full bg-blue-500/10 blur-3xl" aria-hidden />
-          <div className="absolute -right-6 bottom-0 h-32 w-32 rounded-full bg-indigo-400/10 blur-2xl" aria-hidden />
-          <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
-            ✨ New to the platform?
-          </p>
-          <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">All your community tools in one place</h1>
-          <p className="mt-3 text-base text-slate-600">
-            Organize programs, automate updates, and keep members engaged with a workspace designed for modern teams.
-          </p>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            {featureHighlights.map((feature) => (
-              <div
-                key={feature.title}
-                className="group rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/90 to-indigo-500/80 text-white">
-                  <span className="text-lg">★</span>
-                </div>
-                <h3 className="mt-3 text-lg font-semibold text-slate-900">{feature.title}</h3>
-                <p className="mt-1 text-sm text-slate-600 leading-relaxed">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-slate-500">
-            <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-700">
-              🔒 Secure by default
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-700">
-              ⏱️ Setup in minutes
-            </span>
-          </div>
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 py-8 lg:flex-row lg:items-center lg:gap-10 xl:gap-14">
+        <div className="lg:w-[58%]">
+          <WorkspaceOrb />
         </div>
 
-        <div className="lg:w-1/2">
-          <div className="w-full max-w-md rounded-2xl border border-blue-100/70 bg-white/95 p-8 shadow-xl transition-transform duration-200 hover:scale-[1.01]">
+        <div className="lg:w-[42%]">
+          <div className="w-full max-w-md rounded-3xl border border-white/60 bg-white/95 p-8 shadow-2xl shadow-slate-900/10 transition-transform duration-200 hover:-translate-y-1">
             <h2 className="mb-1 text-center text-3xl font-bold text-slate-900">Welcome back</h2>
             <p className="mb-8 text-center text-sm text-slate-500">Sign in to continue where you left off.</p>
 
