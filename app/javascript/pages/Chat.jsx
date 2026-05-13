@@ -786,6 +786,38 @@ const Chat = () => {
     textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`;
   }, [messageBody]);
 
+  const applyReactionUpdate = useCallback((messageId, updates = {}) => {
+    setActiveConversation((previous) => {
+      if (!previous) return previous;
+
+      return {
+        ...previous,
+        messages: (previous.messages || []).map((message) => {
+          if (Number(message.id) !== Number(messageId)) return message;
+
+          const nextReactedEmojis = Array.isArray(updates.reacted_emojis)
+            ? updates.reacted_emojis
+            : (() => {
+                const reactedEmojis = new Set(message.reacted_emojis || []);
+
+                if (updates.last_actor_id && Number(updates.last_actor_id) === Number(user?.id) && updates.last_actor_emoji) {
+                  if (updates.last_actor_action === "added") reactedEmojis.add(updates.last_actor_emoji);
+                  if (updates.last_actor_action === "removed") reactedEmojis.delete(updates.last_actor_emoji);
+                }
+
+                return Array.from(reactedEmojis);
+              })();
+
+          return {
+            ...message,
+            reactions: updates.reactions || {},
+            reacted_emojis: nextReactedEmojis
+          };
+        })
+      };
+    });
+  }, [user?.id]);
+
   useEffect(() => {
     const userSub = subscribeToUserChat((payload) => {
       if (payload?.type === "conversation_refresh") {
@@ -1155,38 +1187,6 @@ const Chat = () => {
       "Can we sync on the next step here?"
     ];
   }, [activeConversation, activeConversationOtherParticipant?.name]);
-
-  const applyReactionUpdate = useCallback((messageId, updates = {}) => {
-    setActiveConversation((previous) => {
-      if (!previous) return previous;
-
-      return {
-        ...previous,
-        messages: (previous.messages || []).map((message) => {
-          if (Number(message.id) !== Number(messageId)) return message;
-
-          const nextReactedEmojis = Array.isArray(updates.reacted_emojis)
-            ? updates.reacted_emojis
-            : (() => {
-                const reactedEmojis = new Set(message.reacted_emojis || []);
-
-                if (updates.last_actor_id && Number(updates.last_actor_id) === Number(user?.id) && updates.last_actor_emoji) {
-                  if (updates.last_actor_action === "added") reactedEmojis.add(updates.last_actor_emoji);
-                  if (updates.last_actor_action === "removed") reactedEmojis.delete(updates.last_actor_emoji);
-                }
-
-                return Array.from(reactedEmojis);
-              })();
-
-          return {
-            ...message,
-            reactions: updates.reactions || {},
-            reacted_emojis: nextReactedEmojis
-          };
-        })
-      };
-    });
-  }, [user?.id]);
 
   const handleToggleReaction = useCallback(async (messageId, emoji, isActive) => {
     if (!conversationId) return;
