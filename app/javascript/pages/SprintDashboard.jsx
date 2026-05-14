@@ -214,179 +214,172 @@ export default function SprintDashboard() {
   };
 
   const viewModeLabel = viewMode === 'qa' ? 'QA' : viewMode === 'combined' ? 'Combined' : 'Dev';
+  const sprintRangeLabel = sprint ? formatDateRange(sprint.start_date, sprint.end_date) : 'No sprint selected';
+  const workingDaysCount = sprint
+    ? calculateWorkingDays(
+      sprint.start_date,
+      sprint.end_date,
+      typeof sprint.working_days_mask === 'number' ? sprint.working_days_mask : 62
+    )
+    : 0;
+  const dashboardTabs = [
+    { key: 'overview', label: 'Overview' },
+    { key: 'scheduler', label: 'Scheduler' },
+    { key: 'todo', label: 'Todo' },
+    { key: 'statistics', label: 'Statistics' },
+    { key: 'issues', label: 'Issue Tracker' },
+    sheetEnabled ? { key: 'sheet', label: 'Sheet' } : null,
+    { key: 'vault', label: 'Vault' },
+    { key: 'settings', label: 'Settings' },
+  ].filter(Boolean);
+  const emptyState = (
+    <div className="shell-panel shell-panel-strong mt-6 rounded-[30px] px-6 py-12 text-center">
+      <p className="text-lg font-semibold text-slate-900">No sprint selected</p>
+      <p className="mt-2 text-sm text-slate-500">Pick a sprint from the command deck to load this workspace.</p>
+    </div>
+  );
 
 
   return (
-    <div className="">
-      <header className="bg-white shadow-sm p-2">
-        {/* {project && (
-          <div className="mb-2">
-            <h2 className="text-lg font-semibold text-gray-800">{project.name}</h2>
-            {project.description && (
-              <p className="text-gray-500 text-sm">{project.description}</p>
-            )}
-          </div>
-        )} */}
-        <div className="flex justify-between items-center gap-4">
-          <h1 className="text-lg font-semibold text-gray-800 flex items-center">
-            <CalendarDaysIcon className="h-6 w-6 mr-2 text-[var(--theme-color)]" />
-            {sprint ? (
-              <span className="flex flex-col sm:flex-row sm:items-center">
-                <span className="truncate">Sprint: {sprint.name}</span>
-                <span className="sm:ml-3 text-base font-medium text-gray-600">
-                  ({formatDateRange(sprint.start_date, sprint.end_date)})
-                </span>
-                <span className="sm:ml-3 text-base font-medium text-gray-600">
-                  Working Days: {calculateWorkingDays(
-                    sprint.start_date,
-                    sprint.end_date,
-                    typeof sprint.working_days_mask === 'number' ? sprint.working_days_mask : 62
-                  )}
-                </span>
+    <div className="space-y-6 pb-8">
+      <header className="shell-panel shell-panel-strong landing-hero-3d overflow-hidden rounded-[36px]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(103,232,249,0.16),transparent_24%),radial-gradient(circle_at_left,rgba(52,109,255,0.12),transparent_26%)]" />
+        <div className="relative space-y-6 p-5 sm:p-6 lg:p-7">
+          <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+            <div className="max-w-4xl">
+              <span className="shell-eyebrow">Project Command Deck</span>
+              <h1 className="mt-3 text-3xl font-semibold tracking-[-0.05em] text-slate-950 sm:text-4xl">
+                {project?.name || 'Project Dashboard'}
+              </h1>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base">
+                {project?.description || 'Plan sprint delivery, review project health, and move between execution surfaces from one shared control room.'}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 xl:justify-end">
+              <span className="shell-chip">
+                <span className="shell-chip-dot" />
+                {activeTab}
               </span>
-            ) : (
-              'Sprint Manager'
-            )}
-          </h1>
-          {/* Tab Navigation */}
-          <div className="flex justify-between items-center">
-            <div className="flex bg-white rounded-full p-1 shadow-md border border-gray-100">
-              <button
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out
-                  ${activeTab === 'overview'
-                    ? 'bg-[var(--theme-color)] text-white shadow-lg'
-                    : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
-                  }`}
-                onClick={() => setActiveTab('overview')}
-              >
-                Overview
-              </button>
-              <button
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ml-1.5
-                  ${activeTab === 'scheduler'
-                    ? 'bg-[var(--theme-color)] text-white shadow-lg'
-                    : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
-                  }`}
-                onClick={() => setActiveTab('scheduler')}
-              >
-                Scheduler
-              </button>
-              <button
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ml-1.5
-                  ${activeTab === 'todo'
-                    ? 'bg-[var(--theme-color)] text-white shadow-lg'
-                    : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
-                  }`}
-                onClick={() => setActiveTab('todo')}
-              >
-                Todo
-              </button>
-              <button
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ml-1.5
-                  ${activeTab === 'statistics'
-                    ? 'bg-[var(--theme-color)] text-white shadow-lg'
-                    : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
-                  }`}
-                onClick={() => setActiveTab('statistics')}
-              >
-                Statistics
-              </button>
-              <button
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ml-1.5
-                  ${activeTab === 'issues'
-                    ? 'bg-[var(--theme-color)] text-white shadow-lg'
-                    : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
-                  }`}
-                onClick={() => setActiveTab('issues')}
-              >
-                Issue Tracker
-              </button>
-              {sheetEnabled && (
+              <span className="shell-chip">
+                <span className="shell-chip-dot" />
+                {viewModeLabel} mode
+              </span>
+              {sheetEnabled ? (
+                <span className="shell-chip">
+                  <span className="shell-chip-dot" />
+                  Sheet linked
+                </span>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="shell-kpi-card">
+                <span className="shell-kpi-label">Sprint Window</span>
+                <span className="shell-kpi-value">{sprint ? sprint.name : 'Awaiting sprint'}</span>
+                <span className="shell-kpi-meta">{sprintRangeLabel}</span>
+              </div>
+
+              <div className="shell-kpi-card">
+                <span className="shell-kpi-label">Working Days</span>
+                <span className="shell-kpi-value">{workingDaysCount}</span>
+                <span className="shell-kpi-meta">Configured against this sprint schedule.</span>
+              </div>
+
+              <div className="shell-kpi-card">
+                <span className="shell-kpi-label">Project Crew</span>
+                <span className="shell-kpi-value">{project?.users?.length || 0}</span>
+                <span className="shell-kpi-meta">{project?.qa_mode_enabled ? 'Dev and QA lanes enabled.' : 'Dev-only workflow active.'}</span>
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-[30px] border border-white/12 bg-[linear-gradient(135deg,rgba(7,17,32,0.96),rgba(30,41,59,0.92))] p-5 text-white shadow-[0_28px_54px_rgb(15_23_42_/_0.22)]">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.26em] text-white/45">
+                {sprint && isCurrentSprint(sprint) ? 'Current Sprint' : 'Sprint Status'}
+              </p>
+              <div className="mt-3 flex items-end justify-between gap-3">
+                <div>
+                  <p className="text-2xl font-semibold tracking-[-0.04em]">
+                    {sprint ? sprint.name : 'No sprint selected'}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-white/66">
+                    Use the sprint manager to swap windows, review dates, and shift this dashboard into the correct execution lane.
+                  </p>
+                </div>
                 <button
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ml-1.5
-                    ${activeTab === 'sheet'
-                      ? 'bg-[var(--theme-color)] text-white shadow-lg'
-                      : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
-                    }`}
-                  onClick={() => setActiveTab('sheet')}
+                  type="button"
+                  onClick={() => setIsHeaderExpanded((value) => !value)}
+                  className="shell-button-secondary shrink-0 bg-white/10 px-4 py-3 text-white shadow-none hover:bg-white/16"
                 >
-                  Sheet
+                  {isHeaderExpanded ? <ChevronUpIcon className="h-5 w-5" /> : <ChevronDownIcon className="h-5 w-5" />}
+                  {isHeaderExpanded ? 'Hide' : 'Manage'}
                 </button>
-              )}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto]">
+            <div className="shell-segmented scrollbar-hide overflow-x-auto">
+              {dashboardTabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`shell-segmented-button whitespace-nowrap ${activeTab === tab.key ? 'shell-segmented-button-active' : ''}`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 xl:justify-end">
+              {project?.qa_mode_enabled ? (
+                <div className="shell-segmented">
+                  {VIEW_MODES.map((mode) => {
+                    const active = viewMode === mode;
+                    const label = mode === 'qa' ? 'QA' : mode === 'combined' ? 'Combined' : 'Dev';
+
+                    return (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => setViewMode(mode)}
+                        className={`shell-segmented-button min-w-[5rem] ${active ? 'shell-segmented-button-active' : ''}`}
+                        aria-pressed={active}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                  <span className="sr-only">Current view mode: {viewModeLabel}</span>
+                </div>
+              ) : null}
+
               <button
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ml-1.5
-                  ${activeTab === 'vault'
-                    ? 'bg-[var(--theme-color)] text-white shadow-lg'
-                    : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
-                  }`}
-                onClick={() => setActiveTab('vault')}
+                type="button"
+                onClick={() => setIsHeaderExpanded((value) => !value)}
+                className="shell-button-secondary px-5 py-3"
               >
-                Vault
-              </button>
-              <button
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ml-1.5
-                  ${activeTab === 'settings'
-                    ? 'bg-[var(--theme-color)] text-white shadow-lg'
-                    : 'text-gray-700 hover:bg-[rgb(var(--theme-color-rgb)/0.1)] hover:text-[var(--theme-color)]'
-                  }`}
-                onClick={() => setActiveTab('settings')}
-              >
-                Settings
+                <CalendarDaysIcon className="h-5 w-5" />
+                {isHeaderExpanded ? 'Hide Sprint Manager' : 'Open Sprint Manager'}
               </button>
             </div>
-            {project?.qa_mode_enabled && (
-              <div className="ml-3 flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1">
-                {VIEW_MODES.map((mode) => {
-                  const active = viewMode === mode;
-                  const label = mode === 'qa' ? 'QA' : mode === 'combined' ? 'Combined' : 'Dev';
-                  const activeClasses = mode === 'qa'
-                    ? 'bg-purple-600 text-white shadow'
-                    : mode === 'combined'
-                      ? 'bg-indigo-600 text-white shadow'
-                      : 'bg-slate-700 text-white shadow';
+          </div>
 
-                  return (
-                    <button
-                      key={mode}
-                      type="button"
-                      onClick={() => setViewMode(mode)}
-                      className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${active ? activeClasses : 'text-slate-600 hover:bg-white hover:text-slate-900'}`}
-                      aria-pressed={active}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-                <span className="sr-only">Current view mode: {viewModeLabel}</span>
-              </div>
-            )}
-          </div>
-          <div
-            className="flex items-center space-x-3 cursor-pointer select-none p-2 rounded-lg hover:bg-[rgb(var(--theme-color-rgb)/0.1)] transition-colors duration-200"
-            onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}
-          >
-            {sprint && (
-              <p className="text-m text-gray-600">
-                {isCurrentSprint(sprint) ? 'Current Sprint:' : 'Selected Sprint:'}{' '}
-                <span className="font-semibold text-[var(--theme-color)]">{sprint.name}</span>
-              </p>
-            )}
-            {isHeaderExpanded ? (
-              <ChevronUpIcon className="h-5 w-5 text-gray-500" />
-            ) : (
-              <ChevronDownIcon className="h-5 w-5 text-gray-500" />
-            )}
-          </div>
-        </div>
-        <div className={`mt-4 border-t border-gray-200 pt-4 ${isHeaderExpanded ? '' : 'hidden'}`}>
-          <SprintManager
-            onSprintChange={handleSprintChange}
-            projectId={projectId}
-            projectName={project?.name}
-            selectedDate={selectedDate}
-            sprintId={sprintId}
-            isVisible={isHeaderExpanded}
-          />
+          {isHeaderExpanded ? (
+            <div className="shell-panel shell-panel-strong rounded-[30px] px-4 py-5 sm:px-5">
+              <SprintManager
+                onSprintChange={handleSprintChange}
+                projectId={projectId}
+                projectName={project?.name}
+                selectedDate={selectedDate}
+                sprintId={sprintId}
+                isVisible={isHeaderExpanded}
+              />
+            </div>
+          ) : null}
         </div>
       </header>
       {activeTab === 'overview' && (
@@ -409,11 +402,13 @@ export default function SprintDashboard() {
             viewMode={viewMode}
           />
         ) : (
-          <p className="p-4">No sprint selected</p>
+          emptyState
         )
       )}
       {activeTab === 'todo' && (
-        sprintId ? <TodoBoard sprintId={sprintId} projectId={projectId} viewMode={viewMode} onSprintChange={handleSprintChange} /> : <p className="p-4">No sprint selected</p>
+        sprintId
+          ? <TodoBoard sprintId={sprintId} projectId={projectId} viewMode={viewMode} onSprintChange={handleSprintChange} />
+          : emptyState
       )}
       {activeTab === 'sheet' && sheetEnabled && (
         <Sheet sheetName={sprint?.name} projectId={projectId} sheetId={project?.sheet_id} />
@@ -428,7 +423,7 @@ export default function SprintDashboard() {
         <ProjectVault projectId={projectId} />
       )}
       {activeTab === 'settings' && (
-        <div className="mx-auto mt-6 w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="shell-panel shell-panel-strong mx-auto mt-2 w-full max-w-5xl rounded-[32px] p-6 shadow-[0_24px_54px_rgb(15_23_42_/_0.08)] sm:p-7">
           <h2 className="text-2xl font-bold text-slate-900">Project Settings</h2>
           <p className="mt-1 text-sm text-slate-500">
             Update the same project settings available in the Projects edit page.
@@ -437,22 +432,22 @@ export default function SprintDashboard() {
           <form onSubmit={handleProjectSettingsSubmit} className="mt-6 space-y-5">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
-              <input id="name" name="name" value={projectSettings.name} onChange={handleProjectSettingsChange} required className="w-full rounded-lg border border-gray-300 p-3" />
+              <input id="name" name="name" value={projectSettings.name} onChange={handleProjectSettingsChange} required className="shell-input p-3" />
             </div>
 
             <div>
               <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-              <textarea id="description" name="description" value={projectSettings.description} onChange={handleProjectSettingsChange} className="w-full rounded-lg border border-gray-300 p-3 h-28 resize-y" />
+              <textarea id="description" name="description" value={projectSettings.description} onChange={handleProjectSettingsChange} className="shell-input h-28 resize-y p-3" />
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label htmlFor="start_date" className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                <input type="date" id="start_date" name="start_date" value={projectSettings.start_date} onChange={handleProjectSettingsChange} className="w-full rounded-lg border border-gray-300 p-3" />
+                <input type="date" id="start_date" name="start_date" value={projectSettings.start_date} onChange={handleProjectSettingsChange} className="shell-input p-3" />
               </div>
               <div>
                 <label htmlFor="end_date" className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                <input type="date" id="end_date" name="end_date" value={projectSettings.end_date} onChange={handleProjectSettingsChange} className="w-full rounded-lg border border-gray-300 p-3" />
+                <input type="date" id="end_date" name="end_date" value={projectSettings.end_date} onChange={handleProjectSettingsChange} className="shell-input p-3" />
               </div>
             </div>
 
@@ -467,18 +462,18 @@ export default function SprintDashboard() {
             </label>
 
             {projectSettings.sheet_integration_enabled && (
-              <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="space-y-4 rounded-[24px] border border-white/70 bg-white/64 p-4">
                 <div>
                   <label htmlFor="sheet_id" className="block text-sm font-medium text-gray-700 mb-1">Task Sheet ID</label>
-                  <input id="sheet_id" name="sheet_id" value={projectSettings.sheet_id} onChange={handleProjectSettingsChange} className="w-full rounded-lg border border-gray-300 p-3" />
+                  <input id="sheet_id" name="sheet_id" value={projectSettings.sheet_id} onChange={handleProjectSettingsChange} className="shell-input p-3" />
                 </div>
                 <div>
                   <label htmlFor="issue_sheet_id" className="block text-sm font-medium text-gray-700 mb-1">Issue Tracker Sheet ID</label>
-                  <input id="issue_sheet_id" name="issue_sheet_id" value={projectSettings.issue_sheet_id} onChange={handleProjectSettingsChange} className="w-full rounded-lg border border-gray-300 p-3" />
+                  <input id="issue_sheet_id" name="issue_sheet_id" value={projectSettings.issue_sheet_id} onChange={handleProjectSettingsChange} className="shell-input p-3" />
                 </div>
                 <div>
                   <label htmlFor="issue_sheet_name" className="block text-sm font-medium text-gray-700 mb-1">Issue Tracker Sheet Name</label>
-                  <input id="issue_sheet_name" name="issue_sheet_name" value={projectSettings.issue_sheet_name} onChange={handleProjectSettingsChange} className="w-full rounded-lg border border-gray-300 p-3" />
+                  <input id="issue_sheet_name" name="issue_sheet_name" value={projectSettings.issue_sheet_name} onChange={handleProjectSettingsChange} className="shell-input p-3" />
                 </div>
               </div>
             )}
@@ -490,7 +485,7 @@ export default function SprintDashboard() {
             )}
 
             <div className="flex justify-end">
-              <button type="submit" disabled={isSavingSettings} className="rounded-lg bg-[var(--theme-color)] px-5 py-2 text-white font-semibold disabled:opacity-60">
+              <button type="submit" disabled={isSavingSettings} className="shell-button-primary disabled:opacity-60">
                 {isSavingSettings ? 'Saving...' : 'Save Settings'}
               </button>
             </div>

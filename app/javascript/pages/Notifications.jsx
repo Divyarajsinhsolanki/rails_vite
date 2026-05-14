@@ -1,15 +1,139 @@
-import React, { useEffect, useState } from 'react';
-import { Bell, Calendar, Check, Clock, Heart, MessageSquare, Briefcase, FileText } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { fetchNotifications, markNotificationRead, markAllNotificationsRead } from '../components/api';
+import React, { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Bell,
+  Briefcase,
+  Calendar,
+  Check,
+  CheckCheck,
+  Clock,
+  FileText,
+  Heart,
+  MessageSquare,
+  Search,
+  Sparkles,
+} from "lucide-react";
+import { format, formatDistanceToNow } from "date-fns";
+
+import {
+  fetchNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+} from "../components/api";
+
+const ACTION_META = {
+  commented: {
+    label: "Comment",
+    icon: MessageSquare,
+    rail: "bg-sky-400",
+    surface: "bg-sky-50 text-sky-700",
+    tint: "from-sky-400/30 via-cyan-300/20 to-transparent",
+  },
+  chat_message: {
+    label: "Chat",
+    icon: MessageSquare,
+    rail: "bg-indigo-400",
+    surface: "bg-indigo-50 text-indigo-700",
+    tint: "from-indigo-400/30 via-violet-300/20 to-transparent",
+  },
+  chat_ping: {
+    label: "Mention",
+    icon: MessageSquare,
+    rail: "bg-fuchsia-400",
+    surface: "bg-fuchsia-50 text-fuchsia-700",
+    tint: "from-fuchsia-400/30 via-pink-300/20 to-transparent",
+  },
+  reacted: {
+    label: "Reaction",
+    icon: Heart,
+    rail: "bg-rose-400",
+    surface: "bg-rose-50 text-rose-700",
+    tint: "from-rose-400/30 via-pink-300/20 to-transparent",
+  },
+  calendar_reminder: {
+    label: "Reminder",
+    icon: Calendar,
+    rail: "bg-violet-400",
+    surface: "bg-violet-50 text-violet-700",
+    tint: "from-violet-400/30 via-purple-300/20 to-transparent",
+  },
+  assigned: {
+    label: "Assignment",
+    icon: Briefcase,
+    rail: "bg-emerald-400",
+    surface: "bg-emerald-50 text-emerald-700",
+    tint: "from-emerald-400/30 via-teal-300/20 to-transparent",
+  },
+  update: {
+    label: "Update",
+    icon: FileText,
+    rail: "bg-amber-400",
+    surface: "bg-amber-50 text-amber-700",
+    tint: "from-amber-400/30 via-orange-300/20 to-transparent",
+  },
+  default: {
+    label: "Alert",
+    icon: Bell,
+    rail: "bg-slate-400",
+    surface: "bg-slate-100 text-slate-700",
+    tint: "from-slate-300/30 via-slate-200/20 to-transparent",
+  },
+};
+
+const STATUS_OPTIONS = [
+  { value: "all", label: "All" },
+  { value: "unread", label: "Unread" },
+  { value: "read", label: "Read" },
+];
+
+const ACTION_OPTIONS = [
+  { value: "all", label: "All types" },
+  { value: "assigned", label: "Assignments" },
+  { value: "commented", label: "Comments" },
+  { value: "update", label: "Updates" },
+  { value: "chat_message", label: "Chat" },
+  { value: "chat_ping", label: "Mentions" },
+  { value: "reacted", label: "Reactions" },
+  { value: "calendar_reminder", label: "Reminders" },
+];
+
+const getActionMeta = (action) => ACTION_META[action] || ACTION_META.default;
+
+const getGroupLabel = (value) => {
+  const notificationDate = value ? new Date(value) : new Date();
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfYesterday = new Date(startOfToday);
+  startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+
+  if (notificationDate >= startOfToday) return "Today";
+  if (notificationDate >= startOfYesterday) return "Yesterday";
+  return "Earlier";
+};
+
+const formatGroupCaption = (group, value) => {
+  if (!value) return group;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return group;
+  if (group === "Today" || group === "Yesterday") return format(date, "EEE, MMM d");
+  return format(date, "MMMM d, yyyy");
+};
+
+const MetricCard = ({ label, value, caption }) => (
+  <div className="rounded-[24px] border border-white/14 bg-white/[0.08] p-4 shadow-inner shadow-white/5 backdrop-blur-md">
+    <p className="text-[0.68rem] font-semibold uppercase tracking-[0.28em] text-slate-300">{label}</p>
+    <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white">{value}</p>
+    <p className="mt-2 text-sm text-slate-300">{caption}</p>
+  </div>
+);
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [actionFilter, setActionFilter] = useState('all');
-  const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [actionFilter, setActionFilter] = useState("all");
+  const [query, setQuery] = useState("");
   const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
@@ -19,17 +143,19 @@ const Notifications = () => {
   const loadNotifications = async () => {
     setLoading(true);
     setLoadError(null);
+
     try {
       const response = await fetchNotifications({
         page: 1,
         status: statusFilter,
-        action_type: actionFilter === 'all' ? undefined : actionFilter
+        action_type: actionFilter === "all" ? undefined : actionFilter,
       });
+
       setNotifications(response.data.notifications || []);
       setUnreadCount(response.data.meta?.unread_count || 0);
     } catch (error) {
-      console.error('Failed to load notifications', error);
-      setLoadError('Unable to load notifications right now. Please refresh and try again.');
+      console.error("Failed to load notifications", error);
+      setLoadError("Unable to load notifications right now. Please refresh and try again.");
     } finally {
       setLoading(false);
     }
@@ -39,184 +165,325 @@ const Notifications = () => {
     try {
       await markNotificationRead(id);
       setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n))
+        prev.map((notification) =>
+          notification.id === id ? { ...notification, read_at: new Date().toISOString() } : notification
+        )
       );
-      const justMarkedUnread = notifications.find((n) => n.id === id && !n.read_at);
-      if (justMarkedUnread) setUnreadCount((prev) => Math.max(0, prev - 1));
+
+      const justMarkedUnread = notifications.find((notification) => notification.id === id && !notification.read_at);
+      if (justMarkedUnread) {
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      }
     } catch (error) {
-      console.error('Failed to mark read', error);
+      console.error("Failed to mark read", error);
     }
   };
 
   const handleMarkAllRead = async () => {
     try {
       await markAllNotificationsRead();
-      setNotifications((prev) => prev.map((n) => ({ ...n, read_at: new Date().toISOString() })));
+      setNotifications((prev) => prev.map((notification) => ({ ...notification, read_at: new Date().toISOString() })));
       setUnreadCount(0);
     } catch (error) {
-      console.error('Failed to mark all read', error);
+      console.error("Failed to mark all read", error);
     }
   };
 
-  const getIcon = (action) => {
-    switch (action) {
-      case 'commented':
-        return <MessageSquare className="w-4 h-4 text-blue-500" />;
-      case 'chat_message':
-        return <MessageSquare className="w-4 h-4 text-indigo-500" />;
-      case 'chat_ping':
-        return <MessageSquare className="w-4 h-4 text-fuchsia-500" />;
-      case 'reacted':
-        return <Heart className="w-4 h-4 text-pink-500" />;
-      case 'calendar_reminder':
-        return <Calendar className="w-4 h-4 text-purple-500" />;
-      case 'assigned':
-        return <Briefcase className="w-4 h-4 text-green-500" />;
-      case 'update':
-        return <FileText className="w-4 h-4 text-orange-500" />;
-      default:
-        return <Bell className="w-4 h-4 text-gray-500" />;
-    }
-  };
+  const filteredNotifications = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
 
-  const groupedNotifications = notifications
-    .filter((notification) => {
-      if (!query.trim()) return true;
-      return notification.message?.toLowerCase().includes(query.toLowerCase());
-    })
-    .reduce((acc, notification) => {
-      const notificationDate = notification.created_at ? new Date(notification.created_at) : new Date();
-      const now = new Date();
-      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const startOfYesterday = new Date(startOfToday);
-      startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+    return notifications.filter((notification) => {
+      if (!normalizedQuery) return true;
 
-      let groupTitle = 'Earlier';
-      if (notificationDate >= startOfToday) groupTitle = 'Today';
-      else if (notificationDate >= startOfYesterday) groupTitle = 'Yesterday';
+      const meta = getActionMeta(notification.action);
+      return (
+        notification.message?.toLowerCase().includes(normalizedQuery) ||
+        meta.label.toLowerCase().includes(normalizedQuery)
+      );
+    });
+  }, [notifications, query]);
 
-      if (!acc[groupTitle]) acc[groupTitle] = [];
-      acc[groupTitle].push(notification);
-      return acc;
+  const groupedNotifications = useMemo(() => {
+    return filteredNotifications.reduce((accumulator, notification) => {
+      const group = getGroupLabel(notification.created_at);
+      if (!accumulator[group]) accumulator[group] = [];
+      accumulator[group].push(notification);
+      return accumulator;
     }, {});
+  }, [filteredNotifications]);
 
-  const groupOrder = ['Today', 'Yesterday', 'Earlier'];
+  const groupOrder = ["Today", "Yesterday", "Earlier"];
+  const todayCount = notifications.filter((notification) => getGroupLabel(notification.created_at) === "Today").length;
+  const mentionsCount = notifications.filter((notification) => notification.action === "chat_ping").length;
+  const assignmentCount = notifications.filter((notification) => notification.action === "assigned").length;
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Notifications</h1>
-          <p className="mt-1 text-sm text-gray-600">{unreadCount} unread</p>
-        </div>
-        {unreadCount > 0 && (
-          <button
-            onClick={handleMarkAllRead}
-            className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            <Check className="h-4 w-4" />
-            Mark all as read
-          </button>
-        )}
-      </div>
+    <div className="min-h-screen pb-16 text-slate-900">
+      <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+        <section className="relative overflow-hidden rounded-[36px] border border-slate-900/10 bg-slate-950 px-6 py-6 text-white shadow-[0_32px_90px_rgb(15_23_42_/_0.24)] sm:px-7">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(103,232,249,0.22),transparent_24%),radial-gradient(circle_at_82%_20%,rgba(167,139,250,0.22),transparent_24%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(15,23,42,0.82))]" />
+          <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+          <div className="absolute -right-16 top-10 h-48 w-48 rounded-full bg-cyan-400/15 blur-3xl" />
+          <div className="absolute bottom-0 left-1/3 h-40 w-40 rounded-full bg-indigo-500/20 blur-3xl" />
 
-      <div className="mb-4 flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="inline-flex rounded-md border border-gray-200 bg-gray-50 p-1">
-          {[
-            { value: 'all', label: 'All' },
-            { value: 'unread', label: 'Unread' },
-            { value: 'read', label: 'Read' }
-          ].map((option) => (
-            <button
-              key={option.value}
-              onClick={() => setStatusFilter(option.value)}
-              className={`rounded-md px-3 py-1.5 text-sm ${
-                statusFilter === option.value ? 'bg-white font-medium text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
+          <div className="relative grid gap-6 xl:grid-cols-[minmax(0,_1fr)_24rem] xl:items-end">
+            <div>
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-200/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-100">
+                <span className="h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_16px_rgba(110,231,183,0.9)]" />
+                Signal Feed
+              </div>
 
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <select
-            value={actionFilter}
-            onChange={(e) => setActionFilter(e.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700"
-          >
-            <option value="all">All types</option>
-            <option value="assigned">Assignments</option>
-            <option value="commented">Comments</option>
-            <option value="update">Updates</option>
-            <option value="chat_message">Chat messages</option>
-            <option value="chat_ping">Mentions</option>
-            <option value="reacted">Message reactions</option>
-            <option value="calendar_reminder">Calendar reminders</option>
-          </select>
+              <h1 className="max-w-3xl text-4xl font-semibold tracking-[-0.05em] text-white sm:text-5xl">
+                Command-center notifications with real priority and depth.
+              </h1>
+              <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
+                Scan activity by lane, isolate unread pressure, and clear the queue without losing context. This feed is tuned for fast decisions rather than a flat inbox list.
+              </p>
 
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search notifications..."
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-          />
-        </div>
-      </div>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <MetricCard label="Unread" value={unreadCount} caption="Signals still waiting for action." />
+                <MetricCard label="Today" value={todayCount} caption="Items created in the current lane." />
+                <MetricCard label="Mentions" value={mentionsCount} caption="Direct pings that need attention." />
+                <MetricCard label="Assignments" value={assignmentCount} caption="Tasks and ownership changes." />
+              </div>
+            </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+            <div className="rounded-[30px] border border-white/12 bg-white/[0.08] p-5 shadow-inner shadow-white/5 backdrop-blur-md">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.28em] text-slate-300">Queue Health</p>
+              <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white">
+                {filteredNotifications.length}
+                <span className="ml-2 text-base font-medium text-slate-300">visible signal{filteredNotifications.length === 1 ? "" : "s"}</span>
+              </p>
+              <p className="mt-3 text-sm leading-6 text-slate-300">
+                {unreadCount > 0
+                  ? `${unreadCount} unread notifications are still live in the feed.`
+                  : "The unread queue is clear right now."}
+              </p>
+
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleMarkAllRead}
+                  disabled={unreadCount === 0}
+                  className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-semibold text-slate-950 shadow-[0_18px_34px_rgb(255_255_255_/_0.18)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  <CheckCheck className="h-4 w-4" />
+                  Mark all as read
+                </button>
+                <button
+                  type="button"
+                  onClick={loadNotifications}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white hover:bg-white/16"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Refresh feed
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="shell-panel shell-panel-strong overflow-hidden rounded-[32px]">
+          <div className="space-y-5 p-5 sm:p-6">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">Filter deck</p>
+                <h2 className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-slate-950">Shape the feed by urgency and type.</h2>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {STATUS_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setStatusFilter(option.value)}
+                    className={`rounded-full border px-4 py-2.5 text-sm font-semibold transition ${
+                      statusFilter === option.value
+                        ? "border-slate-950 bg-slate-950 text-white shadow-[0_18px_34px_rgb(15_23_42_/_0.16)]"
+                        : "border-white/70 bg-white/72 text-slate-600 hover:bg-white hover:text-slate-950"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,_1fr)_auto]">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                <input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search messages or signal type..."
+                  className="w-full rounded-[22px] border border-white/70 bg-white/80 py-3 pl-12 pr-4 text-sm text-slate-700 outline-none transition focus:border-sky-200 focus:bg-white focus:shadow-[0_18px_34px_rgb(15_23_42_/_0.08)]"
+                />
+              </div>
+
+              <div className="scrollbar-hide flex gap-2 overflow-x-auto">
+                {ACTION_OPTIONS.map((option) => {
+                  const isActive = actionFilter === option.value;
+                  const meta = getActionMeta(option.value);
+                  const Icon = option.value === "all" ? Sparkles : meta.icon;
+
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setActionFilter(option.value)}
+                      className={`inline-flex items-center gap-2 rounded-[18px] border px-4 py-3 text-sm font-semibold whitespace-nowrap transition ${
+                        isActive
+                          ? "border-slate-950 bg-slate-950 text-white shadow-[0_18px_34px_rgb(15_23_42_/_0.16)]"
+                          : "border-white/70 bg-white/72 text-slate-600 hover:bg-white hover:text-slate-950"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </section>
+
         {loading ? (
-          <div className="p-8 text-center text-sm text-gray-500">Loading notifications...</div>
+          <div className="grid gap-5">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div
+                key={index}
+                className="overflow-hidden rounded-[30px] border border-white/70 bg-white/76 p-5 shadow-[0_20px_44px_rgb(15_23_42_/_0.08)]"
+              >
+                <div className="mb-4 h-6 w-48 animate-pulse rounded-xl bg-slate-100" />
+                <div className="space-y-3">
+                  {Array.from({ length: 3 }).map((__, rowIndex) => (
+                    <div key={rowIndex} className="h-24 animate-pulse rounded-[22px] bg-slate-100" />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         ) : loadError ? (
-          <div className="p-8 text-center text-sm text-red-600">{loadError}</div>
+          <div className="shell-panel shell-panel-strong rounded-[30px] px-6 py-16 text-center">
+            <p className="text-lg font-semibold text-rose-600">{loadError}</p>
+          </div>
         ) : notifications.length === 0 ? (
-          <div className="p-8 text-center text-sm text-gray-500">No notifications yet</div>
-        ) : Object.keys(groupedNotifications).length === 0 ? (
-          <div className="p-8 text-center text-sm text-gray-500">No notifications match your filters</div>
+          <div className="shell-panel shell-panel-strong rounded-[30px] px-6 py-16 text-center">
+            <p className="text-xl font-semibold text-slate-950">No notifications yet</p>
+            <p className="mt-2 text-sm text-slate-500">This feed will fill as assignments, comments, chats, and reminders start flowing.</p>
+          </div>
+        ) : filteredNotifications.length === 0 ? (
+          <div className="shell-panel shell-panel-strong rounded-[30px] px-6 py-16 text-center">
+            <p className="text-xl font-semibold text-slate-950">No notifications match your filters</p>
+            <p className="mt-2 text-sm text-slate-500">Broaden the query or switch lanes to see more signals.</p>
+          </div>
         ) : (
-          <div>
+          <div className="space-y-5">
             {groupOrder.map((group) => {
               const entries = groupedNotifications[group];
               if (!entries?.length) return null;
+
               return (
-                <div key={group}>
-                  <div className="border-y border-gray-100 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    {group}
+                <section
+                  key={group}
+                  className="shell-panel shell-panel-strong overflow-hidden rounded-[30px]"
+                >
+                  <div className="flex flex-col gap-3 border-b border-white/60 bg-white/46 px-5 py-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">{group}</p>
+                      <h2 className="mt-1 text-xl font-semibold tracking-[-0.03em] text-slate-950">
+                        {entries.length} signal{entries.length === 1 ? "" : "s"}
+                      </h2>
+                    </div>
+                    <span className="shell-chip">
+                      <span className="shell-chip-dot" />
+                      {formatGroupCaption(group, entries[0]?.created_at)}
+                    </span>
                   </div>
-                  <ul className="divide-y divide-gray-100">
-                    {entries.map((notification) => (
-                      <li key={notification.id} className={`flex items-start gap-3 p-4 ${notification.read_at ? 'bg-white' : 'bg-blue-50'}`}>
-                        <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-200">
-                          {notification.actor_avatar ? (
-                            <img src={notification.actor_avatar} alt="" className="h-8 w-8 rounded-full object-cover" />
-                          ) : (
-                            getIcon(notification.action)
-                          )}
-                        </div>
 
-                        <div className="min-w-0 flex-1">
-                          <p className={`text-sm ${notification.read_at ? 'text-gray-600' : 'font-medium text-gray-900'}`}>
-                            {notification.message}
-                          </p>
-                          <p className="mt-1 flex items-center text-xs text-gray-500">
-                            <Clock className="mr-1 h-3 w-3" />
-                            {notification.created_at ? formatDistanceToNow(new Date(notification.created_at), { addSuffix: true }) : 'Just now'}
-                          </p>
-                        </div>
+                  <ul className="space-y-4 p-4 sm:p-5">
+                    {entries.map((notification, index) => {
+                      const meta = getActionMeta(notification.action);
+                      const Icon = meta.icon;
+                      const isUnread = !notification.read_at;
 
-                        {!notification.read_at && (
-                          <button
-                            onClick={() => handleMarkRead(notification.id)}
-                            className="rounded p-1 text-blue-600 hover:bg-blue-100"
-                            title="Mark as read"
-                          >
-                            <Check className="h-4 w-4" />
-                          </button>
-                        )}
-                      </li>
-                    ))}
+                      return (
+                        <motion.li
+                          key={notification.id}
+                          initial={{ opacity: 0, y: 18 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.28, delay: index * 0.04 }}
+                          whileHover={{ y: -4, scale: 1.006 }}
+                          className={`group relative overflow-hidden rounded-[26px] border bg-white/88 p-4 shadow-[0_18px_38px_rgb(15_23_42_/_0.08)] transition-shadow hover:shadow-[0_24px_54px_rgb(15_23_42_/_0.12)] ${
+                            isUnread ? "border-sky-100" : "border-white/70"
+                          }`}
+                        >
+                          <div className={`absolute inset-y-4 left-0 w-1 rounded-r-full ${meta.rail}`} />
+                          <div className={`absolute inset-0 bg-gradient-to-r ${meta.tint} opacity-70`} />
+
+                          <div className="relative flex gap-4">
+                            <div className="mt-0.5 shrink-0">
+                              {notification.actor_avatar ? (
+                                <img
+                                  src={notification.actor_avatar}
+                                  alt=""
+                                  className="h-12 w-12 rounded-[18px] border border-white/70 object-cover shadow-[0_12px_26px_rgb(15_23_42_/_0.08)]"
+                                />
+                              ) : (
+                                <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-white/70 bg-white/90 shadow-[0_12px_26px_rgb(15_23_42_/_0.08)]">
+                                  <Icon className="h-5 w-5 text-slate-700" />
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                <div className="min-w-0">
+                                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                                    <span className={`inline-flex items-center rounded-full px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.18em] ${meta.surface}`}>
+                                      {meta.label}
+                                    </span>
+                                    {isUnread ? (
+                                      <span className="inline-flex items-center rounded-full bg-slate-950 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-white">
+                                        Unread
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                        Read
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className={`text-sm leading-6 ${isUnread ? "font-semibold text-slate-950" : "text-slate-600"}`}>
+                                    {notification.message}
+                                  </p>
+                                </div>
+
+                                <div className="flex shrink-0 items-center gap-3">
+                                  <p className="flex items-center gap-1 text-xs text-slate-500">
+                                    <Clock className="h-3.5 w-3.5" />
+                                    {notification.created_at
+                                      ? formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })
+                                      : "Just now"}
+                                  </p>
+                                  {isUnread ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleMarkRead(notification.id)}
+                                      className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-700 hover:bg-sky-100"
+                                      title="Mark as read"
+                                    >
+                                      <Check className="h-3.5 w-3.5" />
+                                      Mark read
+                                    </button>
+                                  ) : null}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.li>
+                      );
+                    })}
                   </ul>
-                </div>
+                </section>
               );
             })}
           </div>

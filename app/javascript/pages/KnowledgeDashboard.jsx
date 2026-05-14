@@ -41,6 +41,7 @@ import ImageOfTheDayCard from "../components/Knowledge/ImageOfTheDayCard";
 import DailyQuizCard from "../components/Knowledge/DailyQuizCard";
 import StudyReminderCard from "../components/Knowledge/StudyReminderCard";
 import { KnowledgeBookmarksProvider, useKnowledgeBookmarks } from "../context/KnowledgeBookmarksContext";
+import WorkspaceOrb from "../components/landing/WorkspaceOrb";
 
 
 
@@ -72,17 +73,18 @@ const CategoryTab = ({ category, isActive, onClick, index }) => (
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.3, delay: index * 0.05 }}
     onClick={onClick}
-    className={`relative flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 ${isActive
-      ? "bg-white text-gray-900 shadow-xl shadow-white/20"
-      : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white backdrop-blur-sm"
-      }`}
+    className={`relative flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold whitespace-nowrap transition-all duration-300 ${
+      isActive
+        ? "border-slate-950 bg-slate-950 text-white shadow-[0_18px_34px_rgb(15_23_42_/_0.18)]"
+        : "border-white/70 bg-white/68 text-slate-600 hover:bg-white hover:text-slate-950"
+    }`}
   >
     <span className="text-lg">{category.icon}</span>
     <span>{category.name}</span>
     {isActive && (
       <motion.div
         layoutId="activeTabIndicator"
-        className="absolute inset-0 rounded-xl bg-white -z-10"
+        className="absolute inset-0 -z-10 rounded-2xl bg-slate-950"
         transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
       />
     )}
@@ -485,314 +487,320 @@ function KnowledgeDashboardContent() {
     day: "numeric",
   });
 
+  const heroMetrics = useMemo(
+    () => [
+      [`${totalCardsCount}`, "Live cards"],
+      [`${savedCount}`, "Saved cues"],
+      [`${dueCount}`, "Due reviews"],
+      [`${collectionsCount}`, "Collections"],
+    ],
+    [collectionsCount, dueCount, savedCount, totalCardsCount]
+  );
+
+  const heroFeatures = useMemo(
+    () => [
+      {
+        title: "Signal Depth",
+        metric: `${totalCardsCount}`,
+        copy: "Track news, learning prompts, market movers, and dev signals from one premium deck.",
+      },
+      {
+        title: "Review Rhythm",
+        metric: dueCount > 0 ? `${dueCount} due` : "Clear",
+        copy: "Keep spaced repetition active with due-card visibility and one-click review actions.",
+      },
+      {
+        title: "Personal Capture",
+        metric: `${savedCount}`,
+        copy: "Save what matters into collections and build a memory system around your workflow.",
+      },
+      {
+        title: "Collections",
+        metric: `${collectionsCount}`,
+        copy: "Organize ideas into reusable stacks that turn scattered inputs into a reusable reference layer.",
+      },
+    ],
+    [collectionsCount, dueCount, savedCount, totalCardsCount]
+  );
+
+  const orbitItems = useMemo(
+    () => [
+      { label: "News", icon: FiBell, angle: 10, tone: "from-sky-300 to-cyan-200" },
+      { label: "Learning", icon: FiBook, angle: 82, tone: "from-emerald-300 to-teal-200" },
+      { label: "Saved", icon: FiBookmark, angle: 154, tone: "from-amber-300 to-orange-200" },
+      { label: "Markets", icon: FiTrendingUp, angle: 226, tone: "from-fuchsia-300 to-pink-200" },
+      { label: "Tech", icon: FiZap, angle: 298, tone: "from-violet-300 to-indigo-200" },
+    ],
+    []
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Premium Hero Header */}
-      <header className="relative overflow-hidden">
-        {/* Gradient Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500" />
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIgMS44LTQgNC00czQgMS44IDQgNC0xLjggNC00IDQtNC0xLjgtNC00eiIvPjwvZz48L2c+PC9zdmc+')] opacity-30" />
+    <div className="min-h-screen pb-16 text-slate-900">
+      <div className="mx-auto max-w-[98%] space-y-8 px-4 pt-6 sm:px-6 lg:px-8">
+        <WorkspaceOrb
+          eyebrow="Knowledge Signal Matrix"
+          title="Turn learning, news, and market context into a single living feed."
+          description="Move from passive reading to an active command center with saved cues, due reviews, and curated daily signals designed for fast thinking."
+          metrics={heroMetrics}
+          featureCards={heroFeatures}
+          orbitItems={orbitItems}
+        />
 
-        <div className="relative max-w-[98%] mx-auto px-6 py-6">
+        <section className="shell-panel shell-panel-strong sticky top-[6rem] z-20 overflow-hidden rounded-[32px]">
+          <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent" />
 
-          {/* Top Row: Title and Date */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="flex flex-col gap-1 mb-4"
-
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
-                <FiBook className="h-6 w-6 text-white" />
-              </div>
+          <div className="space-y-5 p-5 sm:p-6">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
               <div>
-                <h1 className="text-4xl font-bold text-white tracking-tight">Knowledge Hub</h1>
-                <p className="text-white/70 text-sm mt-1">{currentDate}</p>
+                <div className="shell-chip mb-3">
+                  <span className="shell-chip-dot" />
+                  Knowledge Command Deck
+                </div>
+                <h2 className="text-2xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-3xl">
+                  Curated discovery with active memory built in.
+                </h2>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base">
+                  Filter the feed, search across live cards, and jump between saved collections and due reviews without losing the premium signal-first layout.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="shell-chip">
+                  <span className="shell-chip-dot" />
+                  {currentDate}
+                </span>
+                <span className="shell-chip">
+                  <span className="shell-chip-dot" />
+                  {filteredCards.length} visible
+                </span>
+                {filtersActive ? (
+                  <button
+                    type="button"
+                    onClick={() => setFilters({ reminderDue: false, hasNotes: false })}
+                    className="rounded-full border border-white/70 bg-white/72 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600 hover:bg-white hover:text-slate-950"
+                  >
+                    Clear filters
+                  </button>
+                ) : null}
               </div>
             </div>
-            <p className="text-white/80 text-lg max-w-2xl mt-2">
-              Your daily feed of curated knowledge. Discover, learn, and grow with handpicked content across news, tech, stocks, and learning.
-            </p>
-          </motion.div>
 
-          {/* Statistics Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-
-            <StatCard
-              icon={FiLayers}
-              label="Total Cards"
-              value={totalCardsCount}
-              color="bg-gradient-to-br from-blue-500 to-blue-600"
-              delay={0.1}
-            />
-            <StatCard
-              icon={FiStar}
-              label="Saved"
-              value={savedCount}
-              color="bg-gradient-to-br from-amber-500 to-orange-500"
-              delay={0.2}
-            />
-            <StatCard
-              icon={FiBell}
-              label="Due Today"
-              value={dueCount}
-              color="bg-gradient-to-br from-rose-500 to-pink-500"
-              delay={0.3}
-            />
-            <StatCard
-              icon={FiFolder}
-              label="Collections"
-              value={collectionsCount}
-              color="bg-gradient-to-br from-emerald-500 to-teal-500"
-              delay={0.4}
-            />
-          </div>
-
-          {/* Category Tabs */}
-          <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
-            {categories.map((cat, index) => (
-              <CategoryTab
-                key={cat.id}
-                category={cat}
-                isActive={activeCategory === cat.id}
-                onClick={() => setActiveCategory(cat.id)}
-                index={index}
-              />
-            ))}
-          </div>
-        </div>
-      </header>
-
-      {/* Search and Filters Bar */}
-      <div className="sticky top-0 z-20 backdrop-blur-xl bg-white/80 border-b border-gray-200/50 shadow-sm">
-        <div className="max-w-[98%] mx-auto px-6 py-4">
-
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            {/* Search */}
-            <div className="relative flex-1 max-w-md">
-              <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Search cards..."
-                className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:bg-white transition-all duration-200"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  <FiX className="h-4 w-4 text-gray-500" />
-                </button>
-              )}
-            </div>
-
-            {/* Filters */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500 mr-2">
-                <FiFilter className="inline-block h-4 w-4 mr-1" />
-                Filters:
-              </span>
-              {filterOptions.map((option) => {
-                const isActive = filters[option.key];
-                const IconComponent = option.icon;
-                return (
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,_1fr)_auto]">
+              <div className="relative">
+                <FiSearch className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search the knowledge deck..."
+                  className="w-full rounded-[22px] border border-white/70 bg-white/80 py-3 pl-12 pr-12 text-sm text-slate-700 outline-none ring-0 transition focus:border-sky-200 focus:bg-white focus:shadow-[0_18px_34px_rgb(15_23_42_/_0.08)]"
+                />
+                {searchQuery ? (
                   <button
-                    key={option.key}
-                    type="button"
-                    onClick={() =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        [option.key]: !prev[option.key],
-                      }))
-                    }
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${isActive
-                      ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg shadow-indigo-200"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
-                    aria-pressed={isActive}
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
                   >
-                    <IconComponent className="h-4 w-4" />
-                    {option.label}
+                    <FiX className="h-4 w-4" />
                   </button>
-                );
-              })}
-              {filtersActive && (
-                <button
-                  onClick={() => setFilters({ reminderDue: false, hasNotes: false })}
-                  className="text-sm text-indigo-600 hover:text-indigo-800 font-medium ml-2"
-                >
-                  Clear all
-                </button>
-              )}
+                ) : null}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {filterOptions.map((option) => {
+                  const isActive = filters[option.key];
+                  const IconComponent = option.icon;
+
+                  return (
+                    <button
+                      key={option.key}
+                      type="button"
+                      onClick={() =>
+                        setFilters((prev) => ({
+                          ...prev,
+                          [option.key]: !prev[option.key],
+                        }))
+                      }
+                      className={`inline-flex items-center gap-2 rounded-[18px] border px-4 py-3 text-sm font-semibold transition ${
+                        isActive
+                          ? "border-slate-950 bg-slate-950 text-white shadow-[0_18px_34px_rgb(15_23_42_/_0.18)]"
+                          : "border-white/70 bg-white/72 text-slate-600 hover:bg-white hover:text-slate-950"
+                      }`}
+                      aria-pressed={isActive}
+                    >
+                      <IconComponent className="h-4 w-4" />
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-1">
+              {categories.map((cat, index) => (
+                <CategoryTab
+                  key={cat.id}
+                  category={cat}
+                  isActive={activeCategory === cat.id}
+                  onClick={() => setActiveCategory(cat.id)}
+                  index={index}
+                />
+              ))}
             </div>
           </div>
-        </div>
-      </div>
+        </section>
 
-      {/* Feedback Toast */}
-      <AnimatePresence>
-        {feedback && (
-          <motion.div
-            initial={{ opacity: 0, y: -20, x: "-50%" }}
-            animate={{ opacity: 1, y: 0, x: "-50%" }}
-            exit={{ opacity: 0, y: -20, x: "-50%" }}
-            className="fixed top-24 left-1/2 z-50"
-          >
-            <div
-              className={`flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl ${feedback.type === "error"
-                ? "bg-red-500 text-white"
-                : feedback.type === "info"
-                  ? "bg-blue-500 text-white"
-                  : "bg-emerald-500 text-white"
-                }`}
+        <AnimatePresence>
+          {feedback ? (
+            <motion.div
+              initial={{ opacity: 0, y: -20, x: "-50%" }}
+              animate={{ opacity: 1, y: 0, x: "-50%" }}
+              exit={{ opacity: 0, y: -20, x: "-50%" }}
+              className="fixed left-1/2 top-24 z-50"
             >
-              {feedback.type === "success" && <FiCheckCircle className="h-5 w-5" />}
-              {feedback.type === "error" && <FiX className="h-5 w-5" />}
-              {feedback.type === "info" && <FiBookmark className="h-5 w-5" />}
-              <span className="font-medium">{feedback.message}</span>
-              <button
-                className="ml-2 p-1 rounded-lg hover:bg-white/20 transition-colors"
-                onClick={() => setFeedback(null)}
+              <div
+                className={`flex items-center gap-3 rounded-[22px] border px-5 py-3 shadow-[0_24px_64px_rgb(15_23_42_/_0.2)] backdrop-blur-xl ${
+                  feedback.type === "error"
+                    ? "border-rose-200 bg-rose-500 text-white"
+                    : feedback.type === "info"
+                      ? "border-sky-200 bg-sky-500 text-white"
+                      : "border-emerald-200 bg-emerald-500 text-white"
+                }`}
               >
-                <FiX className="h-4 w-4" />
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Main Content */}
-      <main className="max-w-[98%] mx-auto px-6 py-10">
-
-        {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 items-start">
-            {[...Array(10)].map((_, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: i * 0.05 }}
-                className="rounded-2xl overflow-hidden"
-              >
-                <div className="h-8 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-pulse rounded-t-2xl" />
-                <div className="h-48 bg-gray-100 animate-pulse" />
-                <div className="h-24 bg-gray-50 animate-pulse rounded-b-2xl" />
-              </motion.div>
-            ))}
-          </div>
-        ) : (
-          <motion.div layout className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5 gap-6">
-            <AnimatePresence>
-              {filteredCards.map((item, index) => (
-                <motion.div
-                  key={item.key}
-                  layout
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.4, delay: index * 0.03 }}
-                  whileHover={{ y: -8, scale: 1.02 }}
-                  className="mb-6 break-inside-avoid"
+                {feedback.type === "success" && <FiCheckCircle className="h-5 w-5" />}
+                {feedback.type === "error" && <FiX className="h-5 w-5" />}
+                {feedback.type === "info" && <FiBookmark className="h-5 w-5" />}
+                <span className="font-medium">{feedback.message}</span>
+                <button
+                  className="ml-2 rounded-lg p-1 hover:bg-white/20"
+                  onClick={() => setFeedback(null)}
                 >
-                  <div className="group relative rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-indigo-100/50 transition-all duration-300">
-                    {/* Gradient accent line */}
-                    <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <FiX className="h-4 w-4" />
+                </button>
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
 
-                    <item.Component {...item.props} />
+        <main className="space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">Signal Overview</p>
+              <p className="mt-1 text-sm text-slate-600">
+                {filteredCards.length} card{filteredCards.length === 1 ? "" : "s"} in view
+                {hasSearch ? ` for "${searchQuery.trim()}"` : ""}
+                {filtersActive ? " with active filters applied" : ""}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="shell-chip">
+                <span className="shell-chip-dot" />
+                Saved {savedCount}
+              </span>
+              <span className="shell-chip">
+                <span className="shell-chip-dot" />
+                Due {dueCount}
+              </span>
+            </div>
+          </div>
 
-                    {item.bookmark && (
-                      <SavedBookmarkFooter
-                        bookmark={item.bookmark}
-                        onRemove={() => handleBookmarkToggle({
-                          cardType: item.bookmark.card_type,
-                          sourceId: item.bookmark.source_id,
-                          payload: item.bookmark.payload,
-                        })}
-                        onMarkReviewed={() => bookmarkHelpers.markReviewed(item.bookmark)}
-                      />
-                    )}
+          {isLoading ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+              {[...Array(10)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3, delay: i * 0.04 }}
+                  className="overflow-hidden rounded-[28px] border border-white/70 bg-white/76 shadow-[0_20px_44px_rgb(15_23_42_/_0.08)]"
+                >
+                  <div className="h-1 bg-gradient-to-r from-sky-400 via-cyan-300 to-indigo-400" />
+                  <div className="space-y-4 p-5">
+                    <div className="h-6 animate-pulse rounded-xl bg-slate-100" />
+                    <div className="h-36 animate-pulse rounded-2xl bg-slate-100" />
+                    <div className="h-20 animate-pulse rounded-2xl bg-slate-50" />
                   </div>
                 </motion.div>
               ))}
-            </AnimatePresence>
-          </motion.div>
-        )}
-
-        {/* Empty State */}
-        {filteredCards.length === 0 && !isLoading && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-20"
-          >
-            <div className="relative inline-block">
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full blur-2xl opacity-50" />
-              <div className="relative text-8xl mb-6">
-                {hasSearch || filtersActive ? "🔍" : "📚"}
-              </div>
             </div>
-            {hasSearch || filtersActive ? (
-              <>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">No matches found</h3>
-                <p className="text-gray-500 max-w-md mx-auto">
-                  Try adjusting your search or clearing the filters to discover more knowledge cards.
-                </p>
-                <button
-                  onClick={() => {
-                    setSearchQuery("");
-                    setFilters({ reminderDue: false, hasNotes: false });
-                  }}
-                  className="mt-6 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-indigo-200 transition-all duration-200"
-                >
-                  Clear filters
-                </button>
-              </>
-            ) : (
-              <>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">No items in this category</h3>
-                <p className="text-gray-500">Try selecting a different category above to explore more content.</p>
-              </>
-            )}
-          </motion.div>
-        )}
-      </main>
+          ) : (
+            <motion.div layout className="columns-1 gap-6 sm:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5">
+              <AnimatePresence>
+                {filteredCards.map((item, index) => (
+                  <motion.div
+                    key={item.key}
+                    layout
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.94 }}
+                    transition={{ duration: 0.36, delay: index * 0.025 }}
+                    whileHover={{ y: -6, rotateX: 2, scale: 1.012 }}
+                    className="mb-6 break-inside-avoid"
+                  >
+                    <div className="group relative overflow-hidden rounded-[28px] border border-white/70 bg-white/76 shadow-[0_22px_52px_rgb(15_23_42_/_0.08)] backdrop-blur-xl transition-shadow duration-300 hover:shadow-[0_28px_64px_rgb(15_23_42_/_0.14)]">
+                      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-400 via-cyan-300 to-indigo-400 opacity-70 transition-opacity duration-300 group-hover:opacity-100" />
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.28),transparent_40%)] opacity-80" />
 
-      {/* Premium Footer */}
-      <footer className="relative mt-16 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-t from-gray-100 to-transparent" />
-        <div className="relative max-w-[98%] mx-auto px-6 py-8">
+                      <div className="relative">
+                        <item.Component {...item.props} />
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500">
-                <FiZap className="h-5 w-5 text-white" />
+                        {item.bookmark ? (
+                          <SavedBookmarkFooter
+                            bookmark={item.bookmark}
+                            onRemove={() =>
+                              handleBookmarkToggle({
+                                cardType: item.bookmark.card_type,
+                                sourceId: item.bookmark.source_id,
+                                payload: item.bookmark.payload,
+                              })
+                            }
+                            onMarkReviewed={() => bookmarkHelpers.markReviewed(item.bookmark)}
+                          />
+                        ) : null}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          )}
+
+          {filteredCards.length === 0 && !isLoading ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="shell-panel shell-panel-strong rounded-[32px] px-6 py-16 text-center"
+            >
+              <div className="relative inline-block">
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-sky-100 to-indigo-100 blur-2xl opacity-70" />
+                <div className="relative mb-6 text-7xl">{hasSearch || filtersActive ? "🔍" : "📚"}</div>
               </div>
-              <div>
-                <p className="font-semibold text-gray-900">Knowledge Hub</p>
-                <p className="text-sm text-gray-500">Updated daily with fresh content</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-6 text-sm text-gray-500">
-              <span className="flex items-center gap-2">
-                <FiCalendar className="h-4 w-4" />
-                {new Date().toLocaleDateString()}
-              </span>
-              <span className="flex items-center gap-2">
-                <FiLayers className="h-4 w-4" />
-                {totalCardsCount} cards
-              </span>
-              <span className="flex items-center gap-2">
-                <FiStar className="h-4 w-4" />
-                {savedCount} saved
-              </span>
-            </div>
-          </div>
-        </div>
-      </footer>
+              {hasSearch || filtersActive ? (
+                <>
+                  <h3 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">No matches found</h3>
+                  <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+                    Adjust the search or clear the active filters to reopen the full knowledge signal deck.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setSearchQuery("");
+                      setFilters({ reminderDue: false, hasNotes: false });
+                    }}
+                    className="mt-6 rounded-full bg-slate-950 px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_34px_rgb(15_23_42_/_0.18)] hover:brightness-110"
+                  >
+                    Clear filters
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">No cards in this lane</h3>
+                  <p className="mt-2 text-sm text-slate-500">
+                    Switch categories above to move across the rest of the knowledge network.
+                  </p>
+                </>
+              )}
+            </motion.div>
+          ) : null}
+        </main>
 
       {/* Premium Bookmark Modal */}
       <BookmarkModal
@@ -828,6 +836,7 @@ function KnowledgeDashboardContent() {
         }}
       />
     </div>
+  </div>
   );
 }
 

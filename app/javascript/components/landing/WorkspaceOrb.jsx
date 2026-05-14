@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { FiBookOpen, FiCalendar, FiLock, FiMessageSquare, FiTrello } from "react-icons/fi";
 
-const orbitItems = [
+const defaultOrbitItems = [
   { label: "Calendar", icon: FiCalendar, angle: 8, tone: "from-sky-300 to-cyan-200" },
   { label: "Vault", icon: FiLock, angle: 78, tone: "from-amber-300 to-orange-200" },
   { label: "Chat", icon: FiMessageSquare, angle: 148, tone: "from-fuchsia-300 to-pink-200" },
@@ -9,7 +9,7 @@ const orbitItems = [
   { label: "Projects", icon: FiTrello, angle: 292, tone: "from-violet-300 to-indigo-200" },
 ];
 
-const featureCards = [
+const defaultFeatureCards = [
   {
     title: "Daily Sync",
     metric: "09:30",
@@ -32,6 +32,12 @@ const featureCards = [
   },
 ];
 
+const defaultMetrics = [
+  ["5", "Core modules"],
+  ["360°", "Workspace view"],
+  ["Live", "Team signal"],
+];
+
 const FloatingParticles = () => (
   <div className="landing-particles" aria-hidden="true">
     {Array.from({ length: 28 }).map((_, index) => (
@@ -48,8 +54,29 @@ const FloatingParticles = () => (
   </div>
 );
 
-const WorkspaceOrb = () => {
+const WorkspaceOrb = ({
+  eyebrow = "Nexus Command Deck",
+  title = "Plan sprints inside a living 3D workspace.",
+  description = "Flow through projects, calendar, chat, knowledge, and vault tools from one immersive hub built for modern product teams.",
+  metrics = defaultMetrics,
+  featureCards = defaultFeatureCards,
+  orbitItems = defaultOrbitItems,
+  className = "",
+}) => {
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
+
+  const normalizedMetrics = useMemo(
+    () => (Array.isArray(metrics) && metrics.length > 0 ? metrics : defaultMetrics),
+    [metrics]
+  );
+  const normalizedFeatures = useMemo(
+    () => (Array.isArray(featureCards) && featureCards.length > 0 ? featureCards : defaultFeatureCards),
+    [featureCards]
+  );
+  const normalizedOrbitItems = useMemo(
+    () => (Array.isArray(orbitItems) && orbitItems.length > 0 ? orbitItems : defaultOrbitItems),
+    [orbitItems]
+  );
 
   const handleMouseMove = (event) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -62,7 +89,7 @@ const WorkspaceOrb = () => {
 
   return (
     <section
-      className="landing-hero-3d group relative isolate overflow-hidden rounded-[2rem] border border-white/15 bg-slate-950/70 p-5 text-white shadow-2xl shadow-cyan-950/40 backdrop-blur-xl sm:p-7"
+      className={`landing-hero-3d group relative isolate overflow-hidden rounded-[2rem] border border-white/15 bg-slate-950/70 p-5 text-white shadow-2xl shadow-cyan-950/40 backdrop-blur-xl sm:p-7 ${className}`}
       onMouseMove={handleMouseMove}
       onMouseLeave={resetTilt}
       style={{ "--tilt-x": `${tilt.y}deg`, "--tilt-y": `${tilt.x}deg` }}
@@ -78,24 +105,20 @@ const WorkspaceOrb = () => {
         <div className="space-y-6">
           <span className="inline-flex items-center gap-2 rounded-full border border-cyan-200/30 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.28em] text-cyan-100 shadow-lg shadow-cyan-950/20">
             <span className="h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.9)]" />
-            Nexus Command Deck
+            {eyebrow}
           </span>
 
           <div>
             <h1 className="max-w-xl text-4xl font-black leading-[0.95] tracking-tight text-white sm:text-5xl xl:text-6xl">
-              Plan sprints inside a living 3D workspace.
+              {title}
             </h1>
             <p className="mt-5 max-w-xl text-base leading-8 text-slate-300 sm:text-lg">
-              Flow through projects, calendar, chat, knowledge, and vault tools from one immersive hub built for modern product teams.
+              {description}
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
-            {[
-              ["5", "Core modules"],
-              ["360°", "Workspace view"],
-              ["Live", "Team signal"],
-            ].map(([value, label]) => (
+          <div className={`grid gap-3 ${normalizedMetrics.length >= 4 ? "sm:grid-cols-2 xl:grid-cols-4" : "sm:grid-cols-3"}`}>
+            {normalizedMetrics.map(([value, label]) => (
               <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.07] p-4 shadow-inner shadow-white/5">
                 <p className="text-2xl font-black text-cyan-100">{value}</p>
                 <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-slate-400">{label}</p>
@@ -128,7 +151,7 @@ const WorkspaceOrb = () => {
             </div>
 
             <div className="landing-orbit-icons">
-              {orbitItems.map(({ label, icon: Icon, angle, tone }) => (
+              {normalizedOrbitItems.map(({ label, icon: Icon, angle, tone }) => (
                 <div
                   key={label}
                   className="landing-orbit-node"
@@ -145,8 +168,8 @@ const WorkspaceOrb = () => {
         </div>
       </div>
 
-      <div className="relative z-10 mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {featureCards.map((feature, index) => (
+      <div className={`relative z-10 mt-7 grid gap-4 ${normalizedFeatures.length >= 4 ? "md:grid-cols-2 xl:grid-cols-4" : "md:grid-cols-2"}`}>
+        {normalizedFeatures.map((feature, index) => (
           <article
             key={feature.title}
             className="landing-feature-card rounded-3xl border border-white/12 bg-white/[0.08] p-5 shadow-xl shadow-slate-950/20 backdrop-blur-md"

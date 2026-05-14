@@ -298,6 +298,9 @@ const Profile = () => {
 
   const initial = getAvatarInitial(displayName || user?.email);
   const avatarPreviewColor = normalizeAvatarColor(editMode ? formData.avatar_color : user?.avatar_color);
+  const currentRoleLabel = (user?.roles?.[0]?.name || "member")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 
   const todayStr = new Date().toISOString().split("T")[0];
   const normalizeKekaPayload = (payload) => {
@@ -510,40 +513,26 @@ const Profile = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[var(--theme-color-light)] to-white">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-[var(--theme-color)] border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading your profile...</p>
+      <div className="flex min-h-[60vh] items-center justify-center py-16">
+        <div className="premium-loader-card shell-panel shell-panel-strong rounded-[32px] px-8 py-10 text-center">
+          <div className="premium-loader-mark mx-auto">
+            <span />
+          </div>
+          <div className="premium-loader-track mt-6 w-56">
+            <div className="premium-loader-bar animate-[shell-loader_1.45s_ease-in-out_infinite]" />
+          </div>
+          <p className="mt-5 text-sm font-medium text-slate-600">Loading your profile...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[var(--theme-color-light)] to-white p-4 md:p-8">
-      {/* Floating Particles Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        {[...Array(30)].map((_, i) => (
-          <div 
-            key={i}
-            className="absolute rounded-full bg-[var(--theme-color)]/10"
-            style={{
-              width: `${Math.random() * 10 + 5}px`,
-              height: `${Math.random() * 10 + 5}px`,
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              animation: `float ${Math.random() * 20 + 10}s linear infinite`,
-              animationDelay: `${Math.random() * 5}s`
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Main Container */}
-      <div className="max-w-7xl mx-auto relative z-10">
+    <div className="pb-12 pt-4 sm:pt-6">
+      <div className="mx-auto max-w-[1280px] space-y-6">
         {/* Profile Header */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-lg overflow-hidden mb-8 border border-white/30">
-          <div className="relative h-48 md:h-56 bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)]">
+        <div className="shell-panel shell-panel-strong overflow-hidden rounded-[38px]">
+          <div className="relative h-56 overflow-hidden bg-[linear-gradient(135deg,rgba(15,23,42,0.9),rgba(52,109,255,0.58),rgba(103,232,249,0.34))] md:h-64">
             {/* Cover Photo */}
             {user?.cover_photo && user.cover_photo !== 'null' && (
               <img 
@@ -552,11 +541,20 @@ const Profile = () => {
                 className="absolute inset-0 w-full h-full object-cover" 
               />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,17,32,0.08),rgba(7,17,32,0.72))]" />
+            <div className="absolute left-6 top-6 flex flex-wrap items-center gap-2">
+              <span className="shell-chip border-white/25 bg-slate-950/35 text-white/88 shadow-none backdrop-blur-md">
+                <span className="shell-chip-dot" />
+                Profile Console
+              </span>
+              <span className="shell-chip border-white/25 bg-white/10 text-white/82 shadow-none backdrop-blur-md">
+                {viewingOtherProfile ? "Team profile" : "Personal profile"}
+              </span>
+            </div>
             
             {/* Cover Photo Edit Button */}
             {editMode && !viewingOtherProfile && (
-              <label className="absolute bottom-4 right-4 bg-white/90 p-2 rounded-full shadow-md cursor-pointer hover:bg-white transition-all hover:scale-110">
+              <label className="absolute bottom-5 right-5 cursor-pointer rounded-full border border-white/30 bg-white/15 p-2.5 text-white shadow-[0_18px_36px_rgb(15_23_42_/_0.22)] backdrop-blur-md hover:bg-white/24">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)]" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                 </svg>
@@ -565,27 +563,28 @@ const Profile = () => {
             )}
           </div>
           
-          <div className="px-6 md:px-8 pb-8 relative z-10">
-            <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
+          <div className="relative px-5 pb-8 sm:px-8">
+            <div className="flex flex-col gap-7 xl:flex-row xl:items-end xl:justify-between">
               {/* Profile Picture */}
-              <div className="relative group -mt-16">
-                <div className="absolute inset-0 rounded-full bg-[var(--theme-color)]/20 blur-md -z-10"></div>
+              <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
+              <div className="relative group -mt-16 sm:-mt-20">
+                <div className="absolute inset-0 rounded-full bg-[var(--theme-color)]/20 blur-xl -z-10"></div>
                 {user?.profile_picture && user.profile_picture !== 'null' ? (
                   <img
                     src={user.profile_picture}
                     alt="Profile"
-                    className="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-4 border-white/80 shadow-lg transition-all duration-300 hover:shadow-xl group-hover:scale-105"
+                    className="h-32 w-32 rounded-full border-4 border-white/90 object-cover shadow-[0_26px_54px_rgb(15_23_42_/_0.18)] transition-all duration-300 group-hover:scale-[1.03] md:h-40 md:w-40"
                   />
                 ) : (
                   <div
-                    className="w-32 h-32 md:w-40 md:h-40 rounded-full text-5xl md:text-6xl font-bold flex items-center justify-center border-4 border-white/80 shadow-lg transition-all duration-300 hover:shadow-xl group-hover:scale-105"
+                    className="flex h-32 w-32 items-center justify-center rounded-full border-4 border-white/90 text-5xl font-bold shadow-[0_26px_54px_rgb(15_23_42_/_0.18)] transition-all duration-300 group-hover:scale-[1.03] md:h-40 md:w-40 md:text-6xl"
                     style={buildAvatarStyle(avatarPreviewColor)}
                   >
                     {initial}
                   </div>
                 )}
                 {editMode && !viewingOtherProfile && (
-                  <label className="absolute bottom-2 right-2 bg-white/90 p-2 rounded-full shadow-md cursor-pointer hover:bg-white transition-all hover:scale-110">
+                  <label className="absolute bottom-2 right-2 cursor-pointer rounded-full border border-white/70 bg-white/92 p-2 shadow-[0_14px_26px_rgb(15_23_42_/_0.14)] hover:bg-white">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)]" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                     </svg>
@@ -595,60 +594,62 @@ const Profile = () => {
               </div>
 
               {/* User Info */}
-              <div className="flex-1 text-center md:text-left">
-                <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
+              <div className="flex-1 text-center sm:text-left">
+                <div className="mb-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                  <span className="shell-chip">
+                    <span className="shell-chip-dot" />
+                    {currentRoleLabel}
+                  </span>
+                  {user?.date_of_birth && (
+                    <span className="shell-chip">
+                      Born {new Date(user.date_of_birth).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </span>
+                  )}
+                </div>
+                <h1 className="text-4xl font-semibold tracking-[-0.05em] text-slate-950 md:text-5xl">
                   {user ? displayName : "Loading..."}
                 </h1>
-                <p className="text-[var(--theme-color)] mt-1 font-medium">{user?.email}</p>
+                <p className="mt-2 text-lg font-medium text-[var(--theme-color)]">{user?.email}</p>
                 {user?.phone_number && (
-                  <p className="text-gray-600 mt-1">{user.phone_number}</p>
+                  <p className="mt-1 text-sm text-slate-500">{user.phone_number}</p>
                 )}
                 {user?.bio && (
-                  <p className="text-gray-600 mt-2 max-w-2xl">{user.bio}</p>
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{user.bio}</p>
                 )}
-                <div className="mt-2 flex flex-wrap gap-3 text-sm">
-                  {user?.social_links?.linkedin && <a className="text-[var(--theme-color)] hover:underline" href={user.social_links.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>}
-                  {user?.social_links?.github && <a className="text-[var(--theme-color)] hover:underline" href={user.social_links.github} target="_blank" rel="noreferrer">GitHub</a>}
-                  {user?.social_links?.twitter && <a className="text-[var(--theme-color)] hover:underline" href={user.social_links.twitter} target="_blank" rel="noreferrer">Twitter</a>}
-                  {user?.social_links?.website && <a className="text-[var(--theme-color)] hover:underline" href={user.social_links.website} target="_blank" rel="noreferrer">Website</a>}
+                <div className="mt-3 flex flex-wrap justify-center gap-3 text-sm sm:justify-start">
+                  {user?.social_links?.linkedin && <a className="font-medium text-[var(--theme-color)] hover:underline" href={user.social_links.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>}
+                  {user?.social_links?.github && <a className="font-medium text-[var(--theme-color)] hover:underline" href={user.social_links.github} target="_blank" rel="noreferrer">GitHub</a>}
+                  {user?.social_links?.twitter && <a className="font-medium text-[var(--theme-color)] hover:underline" href={user.social_links.twitter} target="_blank" rel="noreferrer">Twitter</a>}
+                  {user?.social_links?.website && <a className="font-medium text-[var(--theme-color)] hover:underline" href={user.social_links.website} target="_blank" rel="noreferrer">Website</a>}
                 </div>
-                
-                {user?.date_of_birth && (
-                  <p className="text-gray-500 mt-2 flex items-center justify-center md:justify-start">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1.5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                    </svg>
-                    Born {new Date(user.date_of_birth).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                  </p>
-                )}
-                
-                <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-3">
-                  <div className="bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full flex items-center shadow-sm border border-gray-100 hover:shadow-md transition">
+                <div className="mt-5 flex flex-wrap justify-center gap-3 sm:justify-start">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/72 px-4 py-2 text-sm font-semibold text-slate-700 shadow-[0_14px_28px_rgb(15_23_42_/_0.06)]">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)] mr-2" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 12.094A5.973 5.973 0 004 15v1H1v-1a3 3 0 013.75-2.906z" />
                     </svg>
-                    <span className="text-sm font-medium">{teams.length} Teams</span>
+                    <span>{teams.length} Teams</span>
                   </div>
-                  <div className="bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full flex items-center shadow-sm border border-gray-100 hover:shadow-md transition">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/72 px-4 py-2 text-sm font-semibold text-slate-700 shadow-[0_14px_28px_rgb(15_23_42_/_0.06)]">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)] mr-2" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2H5a1 1 0 010-2h12a2 2 0 001-2V4a2 2 0 00-2-2H6a2 2 0 00-2 2z" clipRule="evenodd" />
                     </svg>
-                    <span className="text-sm font-medium">{projects.length} Projects</span>
+                    <span>{projects.length} Projects</span>
                   </div>
-                  <div className="bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full flex items-center shadow-sm border border-gray-100 hover:shadow-md transition">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/72 px-4 py-2 text-sm font-semibold text-slate-700 shadow-[0_14px_28px_rgb(15_23_42_/_0.06)]">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)] mr-2" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                     </svg>
-                    <span className="text-sm font-medium">{nonGeneralTasks.length} Tasks</span>
+                    <span>{nonGeneralTasks.length} Tasks</span>
                   </div>
                 </div>
+              </div>
               </div>
 
               {/* Edit Button */}
               {!editMode && !viewingOtherProfile && (
                 <button
                   onClick={() => setEditMode(true)}
-                  className="flex items-center gap-2 px-6 py-3 bg-[var(--theme-color)] text-white font-semibold rounded-full hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 hover:shadow-[var(--theme-color)]/30"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/75 bg-[linear-gradient(135deg,var(--theme-color),var(--theme-secondary))] px-6 py-3 text-sm font-semibold text-white shadow-[0_24px_44px_rgb(52_109_255_/_0.22)] hover:brightness-110"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -660,7 +661,7 @@ const Profile = () => {
               {!editMode && viewingOtherProfile && (
                 <button
                   onClick={handleStartDirectChat}
-                  className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700 transition"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/75 bg-slate-950 px-6 py-3 text-sm font-semibold text-white shadow-[0_24px_44px_rgb(15_23_42_/_0.18)] hover:brightness-110"
                 >
                   Text
                 </button>
@@ -670,11 +671,11 @@ const Profile = () => {
         </div>
 
         {/* Content Tabs */}
-        <div className="mb-8">
-          <div className="flex overflow-x-auto pb-2 scrollbar-hide">
+        <div className="shell-panel shell-panel-strong rounded-[28px] p-2">
+          <div className="scrollbar-hide flex gap-2 overflow-x-auto">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`px-6 py-3 font-medium whitespace-nowrap transition-all ${activeTab === 'overview' ? 'text-[var(--theme-color)] border-b-2 border-[var(--theme-color)]' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`rounded-[18px] px-5 py-3 font-semibold whitespace-nowrap transition-all ${activeTab === 'overview' ? 'bg-slate-950 text-white shadow-[0_18px_34px_rgb(15_23_42_/_0.18)]' : 'text-slate-500 hover:bg-white/72 hover:text-slate-800'}`}
             >
               <div className="flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -685,7 +686,7 @@ const Profile = () => {
             </button>
             <button
               onClick={() => setActiveTab('posts')}
-              className={`px-6 py-3 font-medium whitespace-nowrap transition-all ${activeTab === 'posts' ? 'text-[var(--theme-color)] border-b-2 border-[var(--theme-color)]' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`rounded-[18px] px-5 py-3 font-semibold whitespace-nowrap transition-all ${activeTab === 'posts' ? 'bg-slate-950 text-white shadow-[0_18px_34px_rgb(15_23_42_/_0.18)]' : 'text-slate-500 hover:bg-white/72 hover:text-slate-800'}`}
             >
               <div className="flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -696,7 +697,7 @@ const Profile = () => {
             </button>
             <button
               onClick={() => setActiveTab('tasks')}
-              className={`px-6 py-3 font-medium whitespace-nowrap transition-all ${activeTab === 'tasks' ? 'text-[var(--theme-color)] border-b-2 border-[var(--theme-color)]' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`rounded-[18px] px-5 py-3 font-semibold whitespace-nowrap transition-all ${activeTab === 'tasks' ? 'bg-slate-950 text-white shadow-[0_18px_34px_rgb(15_23_42_/_0.18)]' : 'text-slate-500 hover:bg-white/72 hover:text-slate-800'}`}
             >
               <div className="flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -707,7 +708,7 @@ const Profile = () => {
             </button>
             <button
               onClick={() => setActiveTab('teams')}
-              className={`px-6 py-3 font-medium whitespace-nowrap transition-all ${activeTab === 'teams' ? 'text-[var(--theme-color)] border-b-2 border-[var(--theme-color)]' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`rounded-[18px] px-5 py-3 font-semibold whitespace-nowrap transition-all ${activeTab === 'teams' ? 'bg-slate-950 text-white shadow-[0_18px_34px_rgb(15_23_42_/_0.18)]' : 'text-slate-500 hover:bg-white/72 hover:text-slate-800'}`}
             >
               <div className="flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -718,7 +719,7 @@ const Profile = () => {
             </button>
             <button
               onClick={() => setActiveTab('projects')}
-              className={`px-6 py-3 font-medium whitespace-nowrap transition-all ${activeTab === 'projects' ? 'text-[var(--theme-color)] border-b-2 border-[var(--theme-color)]' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`rounded-[18px] px-5 py-3 font-semibold whitespace-nowrap transition-all ${activeTab === 'projects' ? 'bg-slate-950 text-white shadow-[0_18px_34px_rgb(15_23_42_/_0.18)]' : 'text-slate-500 hover:bg-white/72 hover:text-slate-800'}`}
             >
               <div className="flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -729,7 +730,7 @@ const Profile = () => {
             </button>
             <button
               onClick={() => setActiveTab('keka')}
-              className={`px-6 py-3 font-medium whitespace-nowrap transition-all ${activeTab === 'keka' ? 'text-[var(--theme-color)] border-b-2 border-[var(--theme-color)]' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`rounded-[18px] px-5 py-3 font-semibold whitespace-nowrap transition-all ${activeTab === 'keka' ? 'bg-slate-950 text-white shadow-[0_18px_34px_rgb(15_23_42_/_0.18)]' : 'text-slate-500 hover:bg-white/72 hover:text-slate-800'}`}
             >
               <div className="flex items-center gap-2">
                 <Squares2X2Icon className="h-5 w-5" />
@@ -737,19 +738,20 @@ const Profile = () => {
               </div>
             </button>
           </div>
-          
-          <div className="bg-white/80 backdrop-blur-lg rounded-b-xl rounded-tr-xl shadow-lg p-6 border border-white/30">
+        </div>
+
+        <div className="shell-panel shell-panel-strong rounded-[32px] p-6 sm:p-7">
             {activeTab === 'overview' && (
               <div className="space-y-8">
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-100">
+                  <div className="rounded-[24px] border border-sky-100 bg-[linear-gradient(135deg,rgba(232,244,255,0.92),rgba(213,232,255,0.72))] p-6 shadow-[0_20px_40px_rgb(59_130_246_/_0.08)]">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-blue-600 font-medium">Active Tasks</p>
                         <h3 className="text-2xl font-bold text-blue-800 mt-1">{nonGeneralTasks.length}</h3>
                       </div>
-                      <div className="bg-blue-100 p-3 rounded-lg">
+                      <div className="rounded-2xl bg-white/70 p-3 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.8)]">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
@@ -761,13 +763,13 @@ const Profile = () => {
                     </div>
                   </div>
                   
-                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-100">
+                  <div className="rounded-[24px] border border-fuchsia-100 bg-[linear-gradient(135deg,rgba(250,240,255,0.92),rgba(237,228,255,0.72))] p-6 shadow-[0_20px_40px_rgb(168_85_247_/_0.08)]">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-purple-600 font-medium">Team Projects</p>
                         <h3 className="text-2xl font-bold text-purple-800 mt-1">{projects.length}</h3>
                       </div>
-                      <div className="bg-purple-100 p-3 rounded-lg">
+                      <div className="rounded-2xl bg-white/70 p-3 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.8)]">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                         </svg>
@@ -779,13 +781,13 @@ const Profile = () => {
                     </div>
                   </div>
                   
-                  <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-100">
+                  <div className="rounded-[24px] border border-emerald-100 bg-[linear-gradient(135deg,rgba(235,253,242,0.92),rgba(214,248,226,0.72))] p-6 shadow-[0_20px_40px_rgb(16_185_129_/_0.08)]">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-green-600 font-medium">Recent Posts</p>
                         <h3 className="text-2xl font-bold text-green-800 mt-1">{posts.length}</h3>
                       </div>
-                      <div className="bg-green-100 p-3 rounded-lg">
+                      <div className="rounded-2xl bg-white/70 p-3 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.8)]">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                         </svg>
@@ -1465,8 +1467,6 @@ const Profile = () => {
             )}
           </div>
         </div>
-      </div>
-
       {/* Edit Profile Modal */}
       {editMode && !viewingOtherProfile && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">

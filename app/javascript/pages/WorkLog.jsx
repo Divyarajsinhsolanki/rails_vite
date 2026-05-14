@@ -90,7 +90,7 @@ const Modal = ({ children, isOpen, onClose }) => (
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.9, y: 20 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+          className="shell-panel shell-panel-strong w-full max-w-2xl overflow-y-auto rounded-[30px] shadow-[0_34px_90px_rgb(15_23_42_/_0.22)]"
         >
           {children}
         </motion.div>
@@ -528,6 +528,13 @@ const WorkLog = () => {
     };
   }, [categories, currentTasks, timeSummary, dailyNote, goalMinutes, viewMode]);
 
+  const trackedTimeLabel = `${Math.floor(timeSummary.totalMinutes / 60)}h ${timeSummary.totalMinutes % 60}m`;
+  const focusTimeLabel = `${Math.floor(timeSummary.productiveMinutes / 60)}h ${timeSummary.productiveMinutes % 60}m`;
+  const activeTimerTask = currentTasks.find(task => task.id === activeTaskId) || null;
+  const selectedRangeLabel = viewMode === 'weekly'
+    ? `${format(startOfWeek(selectedDate, { weekStartsOn: 1 }), 'MMM d')} - ${format(endOfWeek(selectedDate, { weekStartsOn: 1 }), 'MMM d, yyyy')}`
+    : format(selectedDate, 'EEEE, MMM d, yyyy');
+
   // --- Handlers ---
   const handleDateChange = useCallback((days) => {
     setSelectedDate(current => addDays(current, days));
@@ -692,94 +699,104 @@ const WorkLog = () => {
   }, []);
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-gray-50 to-[rgb(var(--theme-color-rgb)/0.1)] font-sans text-gray-800 p-4 sm:p-6 lg:p-8 ${isExpandedView ? 'fixed inset-0 z-50 bg-white overflow-y-auto' : ''}`}>
-      <div className="max-w-[98%] mx-auto">
+    <div className={`min-h-screen pb-10 text-slate-900 ${isExpandedView ? 'fixed inset-0 z-50 overflow-y-auto bg-[linear-gradient(180deg,#f8fbff_0%,var(--shell-bg)_48%,#edf2fa_100%)]' : ''}`}>
+      <div className="mx-auto max-w-[98%] space-y-6">
 
         {/* Header */}
-        <header className="mb-4">
-
-          <div className="flex flex-wrap justify-between items-start gap-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3">
-                <SparklesIcon className="h-8 w-8 text-[var(--theme-color)]" />
-                Work Log
-              </h1>
-              <p className="text-gray-500 mt-1">Your personal dashboard for productivity and time management.</p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setIsExpandedView(!isExpandedView)}
-                className="p-2 rounded-full bg-gray-100 hover:bg-gray-200"
-                title={isExpandedView ? "Exit fullscreen" : "Enter fullscreen"}
-              >
-                {isExpandedView ? (
-                  <ArrowsPointingInIcon className="h-5 w-5" />
-                ) : (
-                  <ArrowsPointingOutIcon className="h-5 w-5" />
-                )}
-              </button>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setViewMode('daily')}
-                  className={`px-4 py-2 rounded-lg ${viewMode === 'daily' ? 'bg-[var(--theme-color)] text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
-                >
-                  Daily
-                </button>
-                <button
-                  onClick={() => setViewMode('weekly')}
-                  className={`px-4 py-2 rounded-lg ${viewMode === 'weekly' ? 'bg-[var(--theme-color)] text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
-                >
-                  Weekly
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Productivity Score */}
-          <div className="mt-4 bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color-light)] rounded-xl p-4 text-white">
-
-            <div className="flex justify-between items-center">
+        <header className="shell-panel shell-panel-strong landing-hero-3d overflow-hidden rounded-[36px]">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(103,232,249,0.18),transparent_24%),radial-gradient(circle_at_left,rgba(52,109,255,0.14),transparent_28%)]" />
+          <div className="relative space-y-6 p-5 sm:p-6 lg:p-7">
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)] xl:items-start">
               <div>
-                <h2 className="text-lg font-semibold">Today's Productivity</h2>
-                <p className="text-[var(--theme-color-light)] text-sm">
-                  {timeSummary.productiveMinutes > 0
-                    ? `${Math.floor(timeSummary.productiveMinutes / 60)}h ${timeSummary.productiveMinutes % 60}m of productive work`
-                    : "Start tracking your work to see insights"}
+                <span className="shell-eyebrow">Focus Command Deck</span>
+                <h1 className="mt-3 flex items-center gap-3 text-3xl font-semibold tracking-[-0.05em] text-slate-950 sm:text-4xl">
+                  <SparklesIcon className="h-8 w-8 text-[var(--theme-color)]" />
+                  Work Log
+                </h1>
+                <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base">
+                  Track deep work, map your time by category, and keep your daily execution system in the same control-room language as the rest of the app.
                 </p>
+
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <span className="shell-chip">
+                    <span className="shell-chip-dot" />
+                    {selectedRangeLabel}
+                  </span>
+                  <span className="shell-chip">
+                    <span className="shell-chip-dot" />
+                    {currentTasks.length} entries
+                  </span>
+                  {activeTimerTask ? (
+                    <span className="shell-chip">
+                      <span className="shell-chip-dot" />
+                      Tracking {activeTimerTask.title}
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="mt-5 flex flex-wrap items-center gap-3">
+                  <button
+                    onClick={() => setIsExpandedView(!isExpandedView)}
+                    className="shell-button-secondary"
+                    title={isExpandedView ? "Exit fullscreen" : "Enter fullscreen"}
+                  >
+                    {isExpandedView ? (
+                      <ArrowsPointingInIcon className="h-5 w-5" />
+                    ) : (
+                      <ArrowsPointingOutIcon className="h-5 w-5" />
+                    )}
+                    {isExpandedView ? 'Exit Fullscreen' : 'Fullscreen'}
+                  </button>
+
+                  <div className="shell-segmented">
+                    <button
+                      onClick={() => setViewMode('daily')}
+                      className={`shell-segmented-button min-w-[5.5rem] ${viewMode === 'daily' ? 'shell-segmented-button-active' : ''}`}
+                    >
+                      Daily
+                    </button>
+                    <button
+                      onClick={() => setViewMode('weekly')}
+                      className={`shell-segmented-button min-w-[5.5rem] ${viewMode === 'weekly' ? 'shell-segmented-button-active' : ''}`}
+                    >
+                      Weekly
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              <div className="relative w-20 h-20">
-                <svg viewBox="0 0 36 36" className="w-full h-full">
-                  <path
-                    d="M18 2.0845
-                      a 15.9155 15.9155 0 0 1 0 31.831
-                      a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke="rgba(255,255,255,0.2)"
-                    strokeWidth="3"
-                  />
-                  <path
-                    d="M18 2.0845
-                      a 15.9155 15.9155 0 0 1 0 31.831
-                      a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="3"
-                    strokeDasharray={`${productivityScore}, 100`}
-                  />
-                  <text x="18" y="20" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">
-                    {productivityScore}%
-                  </text>
-                </svg>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="shell-kpi-card">
+                  <span className="shell-kpi-label">Productivity</span>
+                  <span className="shell-kpi-value">{productivityScore}%</span>
+                  <span className="shell-kpi-meta">{focusTimeLabel} of focused work logged.</span>
+                </div>
+                <div className="shell-kpi-card">
+                  <span className="shell-kpi-label">Tracked Time</span>
+                  <span className="shell-kpi-value">{trackedTimeLabel}</span>
+                  <span className="shell-kpi-meta">Across {currentTasks.length} scheduled entries.</span>
+                </div>
+                <div className="shell-kpi-card">
+                  <span className="shell-kpi-label">Pomodoro State</span>
+                  <span className="shell-kpi-value">{pomodoroState.mode === 'work' ? 'Focus' : pomodoroState.mode === 'shortBreak' ? 'Short Break' : 'Long Break'}</span>
+                  <span className="shell-kpi-meta">Session {pomodoroState.count + (pomodoroState.mode === 'work' ? 1 : 0)} • {pomodoroState.isActive ? 'Running' : 'Idle'}</span>
+                </div>
+                <div className="overflow-hidden rounded-[24px] border border-white/12 bg-[linear-gradient(135deg,rgba(7,17,32,0.96),rgba(30,41,59,0.92))] p-5 text-white shadow-[0_24px_48px_rgb(15_23_42_/_0.2)]">
+                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-white/45">Focus Snapshot</p>
+                  <p className="mt-3 text-2xl font-semibold tracking-[-0.04em]">{activeTimerTask ? activeTimerTask.title : 'Ready to focus'}</p>
+                  <p className="mt-2 text-sm leading-6 text-white/68">
+                    {activeTimerTask
+                      ? `Your live timer is attached to ${activeTimerTask.title}.`
+                      : 'Start a timer or log a task to anchor the next focus block.'}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         </header>
 
         {/* Main Content */}
-        <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <main className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
           {/* Left Column - Calendar & Summary */}
           <aside className="lg:col-span-1 space-y-8">
             <CalendarWidget
@@ -884,21 +901,30 @@ const CalendarWidget = ({ selectedDate, setSelectedDate, handleDateChange, getTa
   );
 
   return (
-    <motion.div layout className="bg-white rounded-2xl shadow-sm p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">
+    <motion.div layout className="shell-panel shell-panel-strong rounded-[28px] p-6 shadow-[0_20px_44px_rgb(15_23_42_/_0.08)]">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold text-slate-950">
           {viewMode === 'daily'
             ? format(selectedDate, 'MMMM yyyy')
             : `Week of ${format(weekStart, 'MMM d')}`}
         </h2>
-        <div className="flex items-center space-x-1">
-          <button onClick={() => handleDateChange(-1)} className="p-2 rounded-lg hover:bg-gray-100">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleDateChange(-1)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-white/72 text-slate-600 transition hover:-translate-y-0.5 hover:bg-white"
+          >
             <ChevronLeftIcon className="h-5 w-5" />
           </button>
-          <button onClick={() => setSelectedDate(new Date())} className="px-3 py-1.5 text-sm font-medium bg-gray-100 rounded-lg hover:bg-gray-200">
+          <button
+            onClick={() => setSelectedDate(new Date())}
+            className="shell-button-secondary min-h-0 px-4 py-2 text-sm"
+          >
             Today
           </button>
-          <button onClick={() => handleDateChange(1)} className="p-2 rounded-lg hover:bg-gray-100">
+          <button
+            onClick={() => handleDateChange(1)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-white/72 text-slate-600 transition hover:-translate-y-0.5 hover:bg-white"
+          >
             <ChevronRightIcon className="h-5 w-5" />
           </button>
         </div>
@@ -906,7 +932,7 @@ const CalendarWidget = ({ selectedDate, setSelectedDate, handleDateChange, getTa
 
       {viewMode === 'daily' ? (
         <>
-          <div className="grid grid-cols-7 gap-1 text-center text-xs text-gray-500 font-medium">
+          <div className="grid grid-cols-7 gap-1 text-center text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
             {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(day => <div key={day}>{day}</div>)}
           </div>
           <div className="grid grid-cols-7 gap-1 mt-2">
@@ -920,13 +946,13 @@ const CalendarWidget = ({ selectedDate, setSelectedDate, handleDateChange, getTa
                   <button
                     key={`${weekStart}-${i}`}
                     onClick={() => setSelectedDate(date)}
-                    className={`h-9 w-9 rounded-full flex items-center justify-center text-sm transition-colors relative
-                      ${isSelected ? 'bg-[var(--theme-color)] text-white font-bold' : 'hover:bg-gray-100'}
-                      ${!isCurrentMonth ? 'text-gray-300' : ''}
+                    className={`relative flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-all
+                      ${isSelected ? 'bg-[linear-gradient(135deg,rgb(var(--theme-color-rgb)/0.96),rgb(var(--theme-secondary-rgb)/0.88))] text-white shadow-[0_14px_28px_rgb(var(--theme-color-rgb)/0.24)]' : 'text-slate-700 hover:-translate-y-0.5 hover:bg-white/84'}
+                      ${!isCurrentMonth ? 'text-slate-300' : ''}
                     `}
                   >
                     {format(date, 'd')}
-                    {hasTasks && <span className={`absolute bottom-1.5 w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-[var(--theme-color)]'}`}></span>}
+                    {hasTasks && <span className={`absolute bottom-1.5 h-1.5 w-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-[var(--theme-color)]'}`}></span>}
                   </button>
                 );
               })
@@ -943,13 +969,13 @@ const CalendarWidget = ({ selectedDate, setSelectedDate, handleDateChange, getTa
               <button
                 key={i}
                 onClick={() => setSelectedDate(date)}
-                className={`flex flex-col items-center p-2 rounded-lg transition-colors
-                  ${isSelected ? 'bg-[rgb(var(--theme-color-rgb)/0.1)] border border-[var(--theme-color)]' : 'hover:bg-gray-100'}
+                className={`flex flex-col items-center rounded-[20px] border px-2 py-3 transition-all
+                  ${isSelected ? 'border-[rgb(var(--theme-color-rgb)/0.28)] bg-[linear-gradient(135deg,rgba(52,109,255,0.12),rgba(129,91,255,0.14))] shadow-[0_14px_28px_rgb(var(--theme-color-rgb)/0.12)]' : 'border-white/65 bg-white/55 hover:-translate-y-0.5 hover:bg-white/78'}
                 `}
               >
-                <div className="text-sm text-gray-500">{format(date, 'EEE')}</div>
-                <div className="font-medium mt-1">{format(date, 'd')}</div>
-                {hasTasks && <span className="w-1.5 h-1.5 rounded-full bg-[var(--theme-color)] mt-1"></span>}
+                <div className="text-sm text-slate-500">{format(date, 'EEE')}</div>
+                <div className="mt-1 font-semibold text-slate-900">{format(date, 'd')}</div>
+                {hasTasks && <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[var(--theme-color)]"></span>}
               </button>
             );
           })}
@@ -971,11 +997,11 @@ const PomodoroWidget = ({ pomodoroState, onStart, onPause, onReset }) => {
   ) * 100;
 
   return (
-    <motion.div layout className="bg-white rounded-2xl shadow-sm p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Pomodoro Timer</h2>
-        <div className="flex items-center gap-1 bg-gray-100 rounded-full px-2 py-1 text-sm">
-          <span className={`w-2 h-2 rounded-full ${pomodoroState.mode === 'work' ? 'bg-red-500' : 'bg-green-500'}`}></span>
+    <motion.div layout className="shell-panel shell-panel-strong rounded-[28px] p-6 shadow-[0_20px_44px_rgb(15_23_42_/_0.08)]">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold text-slate-950">Pomodoro Timer</h2>
+        <div className="shell-chip px-3 py-2 text-[0.65rem]">
+          <span className={`h-2 w-2 rounded-full ${pomodoroState.mode === 'work' ? 'bg-rose-500' : 'bg-emerald-500'}`}></span>
           <span className="font-medium">
             {pomodoroState.mode === 'work'
               ? 'Work'
@@ -987,18 +1013,18 @@ const PomodoroWidget = ({ pomodoroState, onStart, onPause, onReset }) => {
       </div>
 
       <div className="relative">
-        <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden mb-6">
+        <div className="mb-6 h-3 w-full overflow-hidden rounded-full bg-slate-200/80">
           <div
-            className={`h-full ${pomodoroState.mode === 'work' ? 'bg-red-500' : 'bg-green-500'}`}
+            className={`h-full ${pomodoroState.mode === 'work' ? 'bg-[linear-gradient(90deg,#f43f5e,#fb7185)]' : 'bg-[linear-gradient(90deg,#10b981,#34d399)]'}`}
             style={{ width: `${progress}%` }}
           ></div>
         </div>
 
         <div className="text-center mb-6">
-          <div className="text-4xl font-bold tracking-tighter">
+          <div className="text-4xl font-bold tracking-tighter text-slate-950">
             {minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}
           </div>
-          <div className="text-sm text-gray-500 mt-1">
+          <div className="mt-1 text-sm text-slate-500">
             {pomodoroState.mode === 'work'
               ? `Session ${pomodoroState.count + 1}`
               : 'Take a break!'}
@@ -1007,17 +1033,17 @@ const PomodoroWidget = ({ pomodoroState, onStart, onPause, onReset }) => {
 
         <div className="flex justify-center gap-3">
           {pomodoroState.isActive ? (
-            <button onClick={onPause} className="px-5 py-2.5 bg-gray-800 text-white rounded-lg hover:bg-gray-900">
+            <button onClick={onPause} className="shell-button-dark px-5 py-3">
               <StopIcon className="h-5 w-5 inline mr-2" />
               Pause
             </button>
           ) : (
-            <button onClick={onStart} className="px-5 py-2.5 bg-[var(--theme-color)] text-white rounded-lg hover:brightness-110">
+            <button onClick={onStart} className="shell-button-primary px-5 py-3">
               <PlayIcon className="h-5 w-5 inline mr-2" />
               Start
             </button>
           )}
-          <button onClick={onReset} className="px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50">
+          <button onClick={onReset} className="shell-button-secondary px-4 py-3">
             Reset
           </button>
         </div>
@@ -1042,13 +1068,13 @@ const TimeSummaryWidget = ({ timeSummary, categories, priorities, weeklySummary,
   }), [weeklySummary, themeColor]);
 
   return (
-    <motion.div layout className="bg-white rounded-2xl shadow-sm p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
+    <motion.div layout className="shell-panel shell-panel-strong rounded-[28px] p-6 shadow-[0_20px_44px_rgb(15_23_42_/_0.08)]">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-950">
           <ChartPieIcon className="h-5 w-5" />
           {viewMode === 'daily' ? 'Daily Summary' : 'Weekly Overview'}
         </h2>
-        <span className="font-bold text-[var(--theme-color)] text-lg">{totalHours} hrs</span>
+        <span className="shell-chip text-[0.68rem]">{totalHours} hrs</span>
       </div>
 
       {viewMode === 'daily' ? (
@@ -1060,12 +1086,12 @@ const TimeSummaryWidget = ({ timeSummary, categories, priorities, weeklySummary,
                 if (!minutes) return null;
                 const percentage = (minutes / timeSummary.totalMinutes * 100).toFixed(0);
                 return (
-                  <div key={cat.id} className="flex items-center justify-between text-sm">
+                  <div key={cat.id} className="flex items-center justify-between rounded-[18px] border border-white/60 bg-white/62 px-3 py-2 text-sm">
                     <div className="flex items-center gap-2">
                       <span className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.hex }}></span>
-                      <span className="font-medium">{cat.name}</span>
+                      <span className="font-medium text-slate-900">{cat.name}</span>
                     </div>
-                    <span className="text-gray-500">
+                    <span className="text-slate-500">
                       {Math.floor(minutes / 60)}h {minutes % 60}m ({percentage}%)
                     </span>
                   </div>
@@ -1073,19 +1099,19 @@ const TimeSummaryWidget = ({ timeSummary, categories, priorities, weeklySummary,
               })}
             </div>
 
-            <div className="pt-4 border-t border-gray-200">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">By Priority</h3>
+            <div className="border-t border-white/70 pt-4">
+              <h3 className="mb-2 text-sm font-medium text-slate-700">By Priority</h3>
               <div className="space-y-2">
                 {priorities.map(pri => {
                   const minutes = timeSummary.byPriority[pri.id];
                   if (!minutes) return null;
                   return (
-                    <div key={pri.id} className="flex items-center justify-between text-sm">
+                    <div key={pri.id} className="flex items-center justify-between rounded-[18px] border border-white/60 bg-white/62 px-3 py-2 text-sm">
                       <div className="flex items-center gap-2">
                         <span className="w-3 h-3 rounded-full" style={{ backgroundColor: pri.hex }}></span>
-                        <span className="font-medium">{pri.name}</span>
+                        <span className="font-medium text-slate-900">{pri.name}</span>
                       </div>
-                      <span className="text-gray-500">
+                      <span className="text-slate-500">
                         {Math.floor(minutes / 60)}h {minutes % 60}m
                       </span>
                     </div>
@@ -1095,13 +1121,13 @@ const TimeSummaryWidget = ({ timeSummary, categories, priorities, weeklySummary,
             </div>
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
-            <ClockIcon className="h-12 w-12 mx-auto text-gray-300" />
+          <div className="rounded-[24px] border border-dashed border-white/70 bg-white/42 py-8 text-center text-slate-500">
+            <ClockIcon className="mx-auto h-12 w-12 text-slate-300" />
             <p className="mt-2 text-sm">Log a task to see your time breakdown.</p>
           </div>
         )
       ) : (
-        <div className="h-64">
+        <div className="h-64 rounded-[24px] border border-white/60 bg-white/56 p-3">
           <Bar
             data={weeklyChartData}
             options={{
@@ -1127,9 +1153,9 @@ const TimeSummaryWidget = ({ timeSummary, categories, priorities, weeklySummary,
 
 const DailyNotes = ({ note, onChange }) => {
   return (
-    <motion.div layout className="bg-white rounded-2xl shadow-sm p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
+    <motion.div layout className="shell-panel shell-panel-strong rounded-[28px] p-6 shadow-[0_20px_44px_rgb(15_23_42_/_0.08)]">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-950">
           <DocumentTextIcon className="h-5 w-5" />
           Daily Notes
         </h2>
@@ -1139,10 +1165,10 @@ const DailyNotes = ({ note, onChange }) => {
         value={note}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Reflect on your day, note important insights, or plan for tomorrow..."
-        className="w-full min-h-[120px] p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]"
+        className="shell-input min-h-[140px] resize-y p-4"
       />
 
-      <div className="mt-3 text-xs text-gray-500 flex items-center">
+      <div className="mt-3 flex items-center text-xs text-slate-500">
         <LightBulbIcon className="h-4 w-4 mr-1" />
         Tip: These notes are saved automatically
       </div>
@@ -1176,58 +1202,58 @@ const InsightsSidebar = ({ insights, onGoalChange }) => {
     over: 'text-red-600',
     under: 'text-amber-600',
     onTrack: 'text-emerald-600',
-    tracked: 'text-gray-600',
-    neutral: 'text-gray-500'
+    tracked: 'text-slate-600',
+    neutral: 'text-slate-500'
   };
 
   const actionableGoalProgress = goalProgress.filter(item => item.goalMinutes > 0 || item.actualMinutes > 0);
 
   return (
-    <motion.div layout className="bg-white rounded-2xl shadow-sm p-6 space-y-6">
+    <motion.div layout className="shell-panel shell-panel-strong space-y-6 rounded-[28px] p-6 shadow-[0_20px_44px_rgb(15_23_42_/_0.08)]">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
+        <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-950">
           <LightBulbIcon className="h-5 w-5" />
           Productivity Insights
         </h2>
-        <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-600">{scopeLabel}</span>
+        <span className="shell-chip text-[0.65rem]">{scopeLabel}</span>
       </div>
 
-      <div className="p-4 rounded-xl bg-[rgb(var(--theme-color-rgb)/0.08)] border border-[rgb(var(--theme-color-rgb)/0.2)] space-y-3">
+      <div className="space-y-3 rounded-[24px] border border-[rgb(var(--theme-color-rgb)/0.18)] bg-[linear-gradient(135deg,rgba(52,109,255,0.09),rgba(129,91,255,0.08))] p-4">
         <div>
-          <p className="text-sm font-semibold text-gray-800">{breakAdvice.message}</p>
-          <p className="text-sm text-gray-600 mt-1">{breakAdvice.detail}</p>
+          <p className="text-sm font-semibold text-slate-900">{breakAdvice.message}</p>
+          <p className="mt-1 text-sm text-slate-600">{breakAdvice.detail}</p>
         </div>
         {breakAdvice.totalWorkMinutes > 0 && (
-          <div className="flex flex-wrap gap-2 text-xs text-gray-600">
-            <span className="px-2 py-1 rounded-full bg-white border border-gray-200">{breakAdvice.averageSession}m avg focus</span>
-            <span className="px-2 py-1 rounded-full bg-white border border-gray-200">{breakAdvice.workShare}% focus</span>
-            <span className="px-2 py-1 rounded-full bg-white border border-gray-200">{breakAdvice.breakShare}% breaks</span>
+          <div className="flex flex-wrap gap-2 text-xs text-slate-600">
+            <span className="rounded-full border border-white/70 bg-white/72 px-2 py-1">{breakAdvice.averageSession}m avg focus</span>
+            <span className="rounded-full border border-white/70 bg-white/72 px-2 py-1">{breakAdvice.workShare}% focus</span>
+            <span className="rounded-full border border-white/70 bg-white/72 px-2 py-1">{breakAdvice.breakShare}% breaks</span>
             {breakAdvice.recommendedEvery > 0 && (
-              <span className="px-2 py-1 rounded-full bg-white border border-gray-200">Break every ~{breakAdvice.recommendedEvery}m</span>
+              <span className="rounded-full border border-white/70 bg-white/72 px-2 py-1">Break every ~{breakAdvice.recommendedEvery}m</span>
             )}
           </div>
         )}
       </div>
 
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-700">Goals vs logged time</h3>
-          <span className="text-[10px] uppercase tracking-wide text-gray-400">Minutes</span>
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-slate-700">Goals vs logged time</h3>
+          <span className="text-[10px] uppercase tracking-wide text-slate-400">Minutes</span>
         </div>
         {actionableGoalProgress.length === 0 ? (
-          <p className="text-sm text-gray-500">Set a goal for any category to start tracking progress.</p>
+          <p className="text-sm text-slate-500">Set a goal for any category to start tracking progress.</p>
         ) : (
           <div className="space-y-4">
             {actionableGoalProgress.map(item => (
-              <div key={item.category.id} className="space-y-2">
-                <div className="flex items-center justify-between text-xs font-medium text-gray-600">
+              <div key={item.category.id} className="space-y-2 rounded-[22px] border border-white/60 bg-white/58 p-4">
+                <div className="flex items-center justify-between text-xs font-medium text-slate-600">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.category.hex }}></span>
                     <span>{item.category.name}</span>
                   </div>
                   <span>{formatMinutes(item.actualMinutes)} / {formatMinutes(item.goalMinutes)}</span>
                 </div>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-2 overflow-hidden rounded-full bg-slate-200/80">
                   <div
                     className="h-full"
                     style={{
@@ -1236,7 +1262,7 @@ const InsightsSidebar = ({ insights, onGoalChange }) => {
                     }}
                   ></div>
                 </div>
-                <div className="flex items-center justify-between text-xs text-gray-500">
+                <div className="flex items-center justify-between text-xs text-slate-500">
                   <span className={`flex items-center gap-1 ${statusColor[item.status]}`}>
                     {statusCopy[item.status]}
                     {item.goalMinutes > 0 && (
@@ -1247,13 +1273,13 @@ const InsightsSidebar = ({ insights, onGoalChange }) => {
                     )}
                   </span>
                   <label className="flex items-center gap-1">
-                    <span className="text-[10px] uppercase tracking-wide text-gray-400">Goal</span>
+                    <span className="text-[10px] uppercase tracking-wide text-slate-400">Goal</span>
                     <input
                       type="number"
                       min="0"
                       value={item.goalMinutes}
                       onChange={(e) => onGoalChange(item.category.id, e.target.value)}
-                      className="w-20 rounded border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--theme-color)]"
+                      className="shell-input w-20 px-2 py-1 text-xs"
                     />
                   </label>
                 </div>
@@ -1264,16 +1290,16 @@ const InsightsSidebar = ({ insights, onGoalChange }) => {
       </div>
 
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-700">Overbooked categories</h3>
-          <ArrowUpIcon className="h-4 w-4 text-gray-400" />
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-slate-700">Overbooked categories</h3>
+          <ArrowUpIcon className="h-4 w-4 text-slate-400" />
         </div>
         {overbookedCategories.length === 0 ? (
-          <p className="text-sm text-gray-500">No categories are exceeding their targets.</p>
+          <p className="text-sm text-slate-500">No categories are exceeding their targets.</p>
         ) : (
           <div className="space-y-3">
             {overbookedCategories.map(item => (
-              <div key={item.category.id} className="rounded-lg border border-red-100 bg-red-50/60 p-3">
+              <div key={item.category.id} className="rounded-[20px] border border-rose-200/70 bg-rose-50/72 p-3">
                 <div className="flex items-center justify-between text-xs font-medium text-red-600">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.category.hex }}></span>
@@ -1291,15 +1317,15 @@ const InsightsSidebar = ({ insights, onGoalChange }) => {
       </div>
 
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-gray-700">Daily reflection summary</h3>
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-slate-700">Daily reflection summary</h3>
           <SparklesIcon className="h-4 w-4 text-[var(--theme-color)]" />
         </div>
-        <p className="text-sm text-gray-600 mb-2">{aiSummary.headline}</p>
+        <p className="mb-2 text-sm text-slate-600">{aiSummary.headline}</p>
         {aiSummary.bullets.length === 0 ? (
-          <p className="text-xs text-gray-500">Add a note or log more work to receive AI-style highlights.</p>
+          <p className="text-xs text-slate-500">Add a note or log more work to receive AI-style highlights.</p>
         ) : (
-          <ul className="list-disc list-inside text-xs text-gray-600 space-y-1">
+          <ul className="list-disc list-inside space-y-1 text-xs text-slate-600">
             {aiSummary.bullets.map((bullet, index) => (
               <li key={index}>{bullet}</li>
             ))}
@@ -1314,18 +1340,33 @@ const FilterWidget = ({ categories, priorities, tags, filter, onToggleFilter, on
   const hasFilters = filter.categories.length > 0 || filter.priorities.length > 0 || filter.tags.length > 0;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-4 mb-6">
+    <div className="shell-panel shell-panel-strong mb-6 rounded-[28px] p-5 shadow-[0_20px_44px_rgb(15_23_42_/_0.08)]">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <p className="shell-eyebrow">Filter Stack</p>
+          <h3 className="mt-2 text-lg font-semibold text-slate-950">Refine the timeline</h3>
+        </div>
+        {hasFilters ? (
+          <button
+            onClick={onClearFilters}
+            className="shell-button-dark px-4 py-2 text-sm"
+          >
+            Clear Filters
+          </button>
+        ) : null}
+      </div>
+
       <div className="flex flex-wrap gap-4">
         <div>
-          <h3 className="text-sm font-medium text-gray-700 mb-1">Category</h3>
+          <h3 className="mb-2 text-sm font-medium text-slate-700">Category</h3>
           <div className="flex flex-wrap gap-1">
             {categories.map(cat => (
               <button
                 key={cat.id}
                 onClick={() => onToggleFilter('categories', cat.id)}
-                className={`px-2 py-1 text-xs rounded-full transition-all ${filter.categories.includes(cat.id)
-                    ? 'text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${filter.categories.includes(cat.id)
+                    ? 'text-white shadow-[0_14px_30px_rgb(var(--theme-color-rgb)/0.18)]'
+                    : 'border-white/70 bg-white/68 text-slate-700 hover:-translate-y-0.5 hover:bg-white'
                   }`}
                 style={filter.categories.includes(cat.id) ? { backgroundColor: cat.hex } : {}}
               >
@@ -1336,15 +1377,15 @@ const FilterWidget = ({ categories, priorities, tags, filter, onToggleFilter, on
         </div>
 
         <div>
-          <h3 className="text-sm font-medium text-gray-700 mb-1">Priority</h3>
+          <h3 className="mb-2 text-sm font-medium text-slate-700">Priority</h3>
           <div className="flex flex-wrap gap-1">
             {priorities.map(pri => (
               <button
                 key={pri.id}
                 onClick={() => onToggleFilter('priorities', pri.id)}
-                className={`px-2 py-1 text-xs rounded-full transition-all ${filter.priorities.includes(pri.id)
-                    ? 'text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${filter.priorities.includes(pri.id)
+                    ? 'text-white shadow-[0_14px_30px_rgb(var(--theme-color-rgb)/0.18)]'
+                    : 'border-white/70 bg-white/68 text-slate-700 hover:-translate-y-0.5 hover:bg-white'
                   }`}
                 style={filter.priorities.includes(pri.id) ? { backgroundColor: pri.hex } : {}}
               >
@@ -1355,15 +1396,15 @@ const FilterWidget = ({ categories, priorities, tags, filter, onToggleFilter, on
         </div>
 
         <div>
-          <h3 className="text-sm font-medium text-gray-700 mb-1">Tags</h3>
+          <h3 className="mb-2 text-sm font-medium text-slate-700">Tags</h3>
           <div className="flex flex-wrap gap-1">
             {tags.map(tag => (
               <button
                 key={tag}
                 onClick={() => onToggleFilter('tags', tag)}
-                className={`px-2 py-1 text-xs rounded-full transition-all flex items-center ${filter.tags.includes(tag)
-                    ? 'bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)]'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                className={`flex items-center rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${filter.tags.includes(tag)
+                    ? 'border-[rgb(var(--theme-color-rgb)/0.2)] bg-[rgb(var(--theme-color-rgb)/0.12)] text-[var(--theme-color)]'
+                    : 'border-white/70 bg-white/68 text-slate-700 hover:-translate-y-0.5 hover:bg-white'
                   }`}
               >
                 <TagIcon className="h-3 w-3 mr-1" />
@@ -1372,17 +1413,6 @@ const FilterWidget = ({ categories, priorities, tags, filter, onToggleFilter, on
             ))}
           </div>
         </div>
-
-        {hasFilters && (
-          <div className="flex items-end">
-            <button
-              onClick={onClearFilters}
-              className="px-3 py-1 text-xs bg-gray-800 text-white rounded-lg hover:bg-gray-900"
-            >
-              Clear Filters
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -1415,11 +1445,11 @@ const TimelineView = ({
 
   if (viewMode === 'weekly') {
     return (
-      <div className="bg-white rounded-2xl shadow-sm">
-        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+      <div className="shell-panel shell-panel-strong overflow-hidden rounded-[28px] shadow-[0_20px_44px_rgb(15_23_42_/_0.08)]">
+        <div className="flex items-center justify-between border-b border-white/70 p-6">
           <div>
-            <h2 className="text-lg font-semibold">Weekly Overview</h2>
-            <p className="text-sm text-gray-500">
+            <h2 className="text-lg font-semibold text-slate-950">Weekly Overview</h2>
+            <p className="text-sm text-slate-500">
               {format(startOfWeek(selectedDate, { weekStartsOn: 1 }), 'MMM d')} -
               {format(addDays(startOfWeek(selectedDate, { weekStartsOn: 1 }), 6), 'MMM d')}
             </p>
@@ -1427,11 +1457,11 @@ const TimelineView = ({
         </div>
 
         <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-7">
             {weeklySummary.map((day, index) => (
-              <div key={index} className="text-center">
-                <div className="font-medium text-sm text-gray-700">{day.dayName}</div>
-                <div className="text-lg font-bold mt-1">{Math.floor(day.minutes / 60)}h {day.minutes % 60}m</div>
+              <div key={index} className="rounded-[22px] border border-white/65 bg-white/58 p-3 text-center shadow-[0_14px_30px_rgb(15_23_42_/_0.05)]">
+                <div className="text-sm font-medium text-slate-700">{day.dayName}</div>
+                <div className="mt-1 text-lg font-bold text-slate-950">{Math.floor(day.minutes / 60)}h {day.minutes % 60}m</div>
 
                 <div className="mt-4 space-y-2">
                   {tasks.filter(task => isSameDay(task.date, day.date)).map(task => {
@@ -1441,14 +1471,14 @@ const TimelineView = ({
                     return (
                       <div
                         key={task.id}
-                        className="p-2 rounded-lg text-left text-xs border-l-4"
+                        className="rounded-[16px] border-l-4 bg-white/74 p-2 text-left text-xs"
                         style={{
                           borderLeftColor: priority?.hex,
                           backgroundColor: category ? hexToRgba(category.hex, 0.1) : undefined,
                         }}
                       >
-                        <div className="font-medium truncate">{task.title}</div>
-                        <div className="text-gray-500 truncate">{task.startTime} - {task.endTime}</div>
+                        <div className="truncate font-medium text-slate-900">{task.title}</div>
+                        <div className="truncate text-slate-500">{task.startTime} - {task.endTime}</div>
                       </div>
                     );
                   })}
@@ -1462,15 +1492,15 @@ const TimelineView = ({
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm">
-      <div className="p-6 border-b border-gray-200 flex justify-between items-center flex-wrap gap-4">
+    <div className="shell-panel shell-panel-strong overflow-hidden rounded-[28px] shadow-[0_20px_44px_rgb(15_23_42_/_0.08)]">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/70 p-6">
         <div>
-          <h2 className="text-lg font-semibold">Timeline for {format(selectedDate, 'MMMM d')}</h2>
-          <p className="text-sm text-gray-500">
+          <h2 className="text-lg font-semibold text-slate-950">Timeline for {format(selectedDate, 'MMMM d')}</h2>
+          <p className="text-sm text-slate-500">
             {tasks.length} tasks scheduled · Total: {Math.floor(timeSummary.totalMinutes / 60)}h {timeSummary.totalMinutes % 60}m
           </p>
         </div>
-        <button onClick={onAddTask} className="flex items-center gap-2 bg-[var(--theme-color)] text-white font-semibold py-2 px-4 rounded-lg shadow-sm hover:brightness-110 transition-all">
+        <button onClick={onAddTask} className="shell-button-primary px-5 py-3">
           <PlusIcon className="h-5 w-5" />
           <span>Add Task</span>
         </button>
@@ -1478,19 +1508,19 @@ const TimelineView = ({
 
       <div className="p-6">
         {tasks.length === 0 ? (
-          <div className="text-center py-20">
-            <h3 className="text-lg font-medium text-gray-900 mb-1">It's a blank canvas!</h3>
-            <p className="text-gray-500 mb-4">Add your first task to start building your day.</p>
-            <button onClick={onAddTask} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[var(--theme-color)] hover:brightness-110">
+          <div className="rounded-[24px] border border-dashed border-white/70 bg-white/42 py-20 text-center">
+            <h3 className="mb-1 text-lg font-medium text-slate-900">It&apos;s a blank canvas</h3>
+            <p className="mb-4 text-slate-500">Add your first task to start building your day.</p>
+            <button onClick={onAddTask} className="shell-button-primary px-5 py-3 text-sm">
               Log First Task
             </button>
           </div>
         ) : (
-          <div className="relative">
+          <div className="relative rounded-[24px] border border-white/65 bg-white/54 p-4">
             {/* Hour Markers */}
             <div className="absolute left-0 top-0 bottom-0 w-12">
               {hours.map(hour => (
-                <div key={hour} className="h-[calc(100%/18)] text-right pr-2 text-xs text-gray-400 border-t border-gray-100 flex items-center justify-end">
+                <div key={hour} className="flex h-[calc(100%/18)] items-center justify-end border-t border-white/70 pr-2 text-right text-xs text-slate-400">
                   {hour % 12 === 0 ? 12 : hour % 12} {hour < 12 || hour === 24 ? 'am' : 'pm'}
                 </div>
               ))}
@@ -1498,7 +1528,7 @@ const TimelineView = ({
 
             {/* Timeline Grid */}
             <div className="ml-12">
-              {hours.map(hour => <div key={hour} className="h-14 border-t border-gray-200"></div>)}
+              {hours.map(hour => <div key={hour} className="h-14 border-t border-white/70"></div>)}
             </div>
 
             {/* Task Items */}
@@ -1523,12 +1553,13 @@ const TimelineView = ({
                       style={{ top: `${top}%`, height: `${height}%` }}
                     >
                       <div
-                        className="rounded-lg p-3 h-full flex flex-col justify-between text-white shadow-lg overflow-hidden relative"
+                        className="relative flex h-full flex-col justify-between overflow-hidden rounded-[20px] border border-white/18 p-3 text-white shadow-[0_22px_42px_rgb(15_23_42_/_0.16)]"
                         style={{ backgroundColor: category?.hex }}
                       >
-                        <div className="absolute top-0 left-0 w-full h-1 bg-white/30"></div>
+                        <div className="absolute left-0 top-0 h-1 w-full bg-white/30"></div>
+                        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),rgba(15,23,42,0.08))]" />
 
-                        <div>
+                        <div className="relative">
                           <div className="flex justify-between items-start">
                             <h3 className="font-bold text-sm truncate">{task.title}</h3>
                             {priority && (
@@ -1544,7 +1575,7 @@ const TimelineView = ({
                           {task.tags?.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
                               {task.tags.map(tag => (
-                                <span key={tag} className="bg-black/20 px-1.5 py-0.5 rounded text-xs">
+                                <span key={tag} className="rounded-full bg-black/18 px-2 py-0.5 text-[11px]">
                                   {tag}
                                 </span>
                               ))}
@@ -1552,11 +1583,11 @@ const TimelineView = ({
                           )}
                         </div>
 
-                        <div className="mt-2 flex items-center justify-between">
+                        <div className="relative mt-2 flex items-center justify-between">
                           {activeTaskId === task.id ? (
                             <button
                               onClick={() => onStopTimer()}
-                              className="text-xs bg-red-500 hover:bg-red-600 px-2 py-1 rounded flex items-center"
+                              className="flex items-center rounded-full bg-rose-500 px-3 py-1 text-xs font-medium hover:bg-rose-600"
                             >
                               <StopIcon className="h-3 w-3 mr-1" />
                               Stop Timer
@@ -1564,18 +1595,18 @@ const TimelineView = ({
                           ) : (
                             <button
                               onClick={() => onStartTimer(task.id)}
-                              className="text-xs bg-white/20 hover:bg-white/30 px-2 py-1 rounded flex items-center"
+                              className="flex items-center rounded-full bg-white/18 px-3 py-1 text-xs font-medium hover:bg-white/28"
                             >
                               <PlayIcon className="h-3 w-3 mr-1" />
                               Start Timer
                             </button>
                           )}
 
-                          <div className="absolute top-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => onEditTask(task)} className="p-1.5 bg-black/20 rounded-full hover:bg-black/40">
+                          <div className="absolute right-2 top-2 flex items-center space-x-1 opacity-0 transition-opacity group-hover:opacity-100">
+                            <button onClick={() => onEditTask(task)} className="rounded-full bg-black/20 p-1.5 hover:bg-black/40">
                               <PencilIcon className="h-4 w-4" />
                             </button>
-                            <button onClick={() => onDeleteTask(task.id)} className="p-1.5 bg-black/20 rounded-full hover:bg-black/40">
+                            <button onClick={() => onDeleteTask(task.id)} className="rounded-full bg-black/20 p-1.5 hover:bg-black/40">
                               <TrashIcon className="h-4 w-4" />
                             </button>
                           </div>
@@ -1664,9 +1695,12 @@ const TaskFormModal = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <form onSubmit={handleSubmit}>
-        <div className="p-6 flex justify-between items-center border-b border-gray-200">
-          <h2 className="text-xl font-semibold">{task ? 'Edit Task' : 'Add New Task'}</h2>
-          <button type="button" onClick={onClose} className="p-2 rounded-full hover:bg-gray-100">
+        <div className="flex items-center justify-between border-b border-white/70 p-6">
+          <div>
+            <p className="shell-eyebrow">Task Composer</p>
+            <h2 className="mt-2 text-xl font-semibold text-slate-950">{task ? 'Edit Task' : 'Add New Task'}</h2>
+          </div>
+          <button type="button" onClick={onClose} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-white/72 text-slate-600 transition hover:-translate-y-0.5 hover:bg-white">
             <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
@@ -1674,14 +1708,14 @@ const TaskFormModal = ({
         <div className="p-6 space-y-4">
           <div className="flex items-center gap-4">
             <div className="w-full">
-              <label className="block text-sm font-medium text-gray-700 mb-1 required-label">Title</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700 required-label">Title</label>
               <input
                 type="text"
                 name="title"
                 value={formState.title || ''}
                 onChange={handleChange}
                 placeholder="What are you working on?"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]"
+                className="shell-input p-3"
                 required
               />
             </div>
@@ -1689,7 +1723,7 @@ const TaskFormModal = ({
               type="button"
               onClick={handleStartTimer}
               title="Start Timer"
-              className="flex-shrink-0 flex items-center gap-2 p-3 bg-green-500 text-white rounded-lg hover:bg-green-600"
+              className="shell-button-dark shrink-0 px-4 py-3"
             >
               <PlayIcon className="h-5 w-5" />
             </button>
@@ -1701,63 +1735,63 @@ const TaskFormModal = ({
             onChange={handleChange}
             placeholder="Add a description..."
             rows="3"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]"
+            className="shell-input min-h-[110px] p-3"
           ></textarea>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">Category</label>
               <select
                 name="category"
                 value={formState.category || categories[0]?.id}
                 onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]"
+                className="shell-input p-3"
               >
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">Priority</label>
               <select
                 name="priority"
                 value={formState.priority || priorities[0]?.id}
                 onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]"
+                className="shell-input p-3"
               >
                 {priorities.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 required-label">Start Time</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700 required-label">Start Time</label>
               <input
                 type="time"
                 name="startTime"
                 value={formState.startTime || ''}
                 onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]"
+                className="shell-input p-3"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 required-label">End Time</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700 required-label">End Time</label>
               <input
                 type="time"
                 name="endTime"
                 value={formState.endTime || ''}
                 onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)]"
+                className="shell-input p-3"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Tags</label>
             <div className="flex flex-wrap gap-2 mb-2">
               {(formState.tags || []).map(tag => (
                 <span
                   key={tag}
-                  className="flex items-center bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)] px-2 py-1 rounded-full text-sm"
+                  className="flex items-center rounded-full border border-[rgb(var(--theme-color-rgb)/0.16)] bg-[rgb(var(--theme-color-rgb)/0.1)] px-3 py-1 text-sm text-[var(--theme-color)]"
                 >
                   {tag}
                   <button
@@ -1777,12 +1811,12 @@ const TaskFormModal = ({
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
                 placeholder="Add new tag"
-                className="flex-grow p-2 border border-gray-300 rounded-lg"
+                className="shell-input flex-grow p-2"
               />
               <button
                 type="button"
                 onClick={handleAddTag}
-                className="px-3 bg-gray-800 text-white rounded-lg hover:bg-gray-900"
+                className="shell-button-dark px-4 py-2 text-sm"
               >
                 Add
               </button>
@@ -1794,7 +1828,7 @@ const TaskFormModal = ({
                   key={tag}
                   type="button"
                   onClick={() => handleTagChange(tag)}
-                  className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200"
+                  className="rounded-full border border-white/70 bg-white/68 px-3 py-1 text-sm text-slate-700 transition hover:-translate-y-0.5 hover:bg-white"
                 >
                   {tag}
                 </button>
@@ -1803,9 +1837,9 @@ const TaskFormModal = ({
           </div>
         </div>
 
-        <div className="p-6 bg-gray-50 flex justify-end items-center gap-3 rounded-b-2xl">
-          <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100">Cancel</button>
-          <button type="submit" className="px-6 py-2 bg-[var(--theme-color)] text-white rounded-lg hover:brightness-110 shadow-sm">{task ? 'Update Task' : 'Save Task'}</button>
+        <div className="flex items-center justify-end gap-3 rounded-b-[30px] border-t border-white/70 bg-white/44 p-6">
+          <button type="button" onClick={onClose} className="shell-button-secondary px-4 py-2">Cancel</button>
+          <button type="submit" className="shell-button-primary px-6 py-2">{task ? 'Update Task' : 'Save Task'}</button>
         </div>
       </form>
     </Modal>
