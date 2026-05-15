@@ -22,7 +22,7 @@ const PdfPage = () => {
   const [uploadMessage, setUploadMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [activeForm, setActiveForm] = useState(null);
-  const [droppedCoordinates, setDroppedCoordinates] = useState(null);
+  const [placementCoordinates, setPlacementCoordinates] = useState(null);
 
   useEffect(() => {
     const storedPdf = localStorage.getItem("pdfUrl");
@@ -71,9 +71,19 @@ const PdfPage = () => {
     multiple: false,
   });
 
-  const handleConfirmPosition = (coordinates) => {
-    setDroppedCoordinates(coordinates);
-  };
+  const handlePlacementChange = useCallback((coordinates) => {
+    setPlacementCoordinates((previous) => ({
+      ...(previous || {}),
+      ...coordinates,
+      x: coordinates.x === undefined ? previous?.x : coordinates.x,
+      y: coordinates.y === undefined ? previous?.y : coordinates.y,
+      pageNumber: coordinates.pageNumber || previous?.pageNumber || 1,
+    }));
+  }, []);
+
+  const handleConfirmPosition = useCallback((coordinates) => {
+    handlePlacementChange(coordinates);
+  }, [handlePlacementChange]);
 
   if (!pdfUrl) {
     return (
@@ -139,7 +149,8 @@ const PdfPage = () => {
                         pdfPath={pdfUrl}
                         activeForm={activeForm}
                         setActiveForm={setActiveForm}
-                        droppedCoordinates={droppedCoordinates}
+                        placementCoordinates={placementCoordinates}
+                        setPlacementCoordinates={setPlacementCoordinates}
                     />
                 </div>
               </motion.div>
@@ -152,6 +163,8 @@ const PdfPage = () => {
               pdfUrl={`${pdfUrl}?updated=${pdfUpdated}`}
               activeTool={activeForm}
               onConfirmPosition={handleConfirmPosition}
+              onPlacementChange={handlePlacementChange}
+              placementCoordinates={placementCoordinates}
               onCancelTool={() => setActiveForm(null)}
               setPdfUpdated={setPdfUpdated}
             />

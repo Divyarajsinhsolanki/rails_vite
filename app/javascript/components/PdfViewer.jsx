@@ -18,7 +18,7 @@ import {
 // Set worker URL to the specific version required by react-pdf 9.2.1
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@4.8.69/build/pdf.worker.min.mjs`;
 
-const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onCancelTool, setPdfUpdated }) => {
+const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, placementCoordinates, onCancelTool, setPdfUpdated }) => {
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
@@ -27,6 +27,16 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onCancelTool, setPdf
   const [processing, setProcessing] = useState(false);
   const placementTools = new Set(["addText", "addSignature", "addStamp"]);
   const shouldShowOverlay = placementTools.has(activeTool);
+
+  const changePage = (requestedPage) => {
+    const maxPage = numPages || requestedPage;
+    const nextPage = Math.min(Math.max(1, requestedPage), maxPage);
+
+    setPageNumber(nextPage);
+    if (shouldShowOverlay) {
+      onPlacementChange?.({ pageNumber: nextPage });
+    }
+  };
 
   useEffect(() => {
     // Only reset to Page 1 if the actual FILE changed, not just a cache-bust update
@@ -42,6 +52,22 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onCancelTool, setPdf
     if (!numPages) return;
     setPageNumber((prev) => Math.min(prev, numPages));
   }, [numPages]);
+
+  useEffect(() => {
+    if (!shouldShowOverlay || placementCoordinates?.pageNumber) return;
+
+    onPlacementChange?.({ pageNumber });
+  }, [shouldShowOverlay, placementCoordinates?.pageNumber, pageNumber]);
+
+  useEffect(() => {
+    if (!shouldShowOverlay || !placementCoordinates?.pageNumber) return;
+
+    const requestedPage = Number(placementCoordinates.pageNumber);
+    if (Number.isNaN(requestedPage)) return;
+
+    const maxPage = numPages || requestedPage;
+    setPageNumber(clampedPage => Math.min(Math.max(1, requestedPage), maxPage));
+  }, [shouldShowOverlay, placementCoordinates?.pageNumber, numPages]);
 
   function onDocumentLoadSuccess({ numPages }) {
     setNumPages(numPages);
@@ -99,7 +125,7 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onCancelTool, setPdf
           <div className="flex items-center space-x-1">
             <button
               disabled={pageNumber <= 1 || processing}
-              onClick={() => setPageNumber(prev => prev - 1)}
+              onClick={() => changePage(pageNumber - 1)}
               className="p-1 hover:bg-white rounded transition-all disabled:opacity-20"
             >
               <ChevronLeft className="h-3.5 w-3.5 text-gray-500" />
@@ -109,7 +135,7 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onCancelTool, setPdf
             </span>
             <button
               disabled={pageNumber >= numPages || processing}
-              onClick={() => setPageNumber(prev => prev + 1)}
+              onClick={() => changePage(pageNumber + 1)}
               className="p-1 hover:bg-white rounded transition-all disabled:opacity-20"
             >
               <ChevronRight className="h-3.5 w-3.5 text-gray-500" />
@@ -156,6 +182,8 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onCancelTool, setPdf
                   <DraggableOverlay
                     activeTool={activeTool}
                     onConfirmPosition={(pos) => onConfirmPosition({ ...pos, pageNumber })}
+                    onPlacementChange={(pos) => onPlacementChange?.({ ...pos, pageNumber })}
+                    placementCoordinates={placementCoordinates}
                     onCancel={onCancelTool}
                     scale={scale}
                     pageWidth={pageWidth ? pageWidth * scale : 600}
