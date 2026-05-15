@@ -3,10 +3,69 @@ import { SchedulerAPI, getUsers, fetchProjects } from '../components/api';
 import { Toaster, toast } from 'react-hot-toast';
 import SpinnerOverlay from '../components/ui/SpinnerOverlay';
 import { FiX } from 'react-icons/fi';
-import { CalendarDaysIcon, PlusCircleIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
+import { CalendarDaysIcon, FunnelIcon, PlusCircleIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { buildAvatarStyle, getAvatarInitial } from '/utils/avatar';
+import { getAvatarInitial } from '/utils/avatar';
 import { groupTasksByAssignment } from '../utils/sprintViewUtils';
+
+
+const FILTER_ORB_GRADIENTS = [
+    ['#22d3ee', '#2563eb', '#7c3aed'],
+    ['#f97316', '#ef4444', '#be123c'],
+    ['#34d399', '#16a34a', '#0f766e'],
+    ['#facc15', '#f59e0b', '#db2777'],
+    ['#a78bfa', '#6366f1', '#0ea5e9'],
+    ['#fb7185', '#ec4899', '#8b5cf6'],
+];
+
+const pickFilterGradient = (user, index) => {
+    if (user?.avatar_color && user.avatar_color !== 'null') {
+        return [user.avatar_color, '#ffffff', user.avatar_color];
+    }
+
+    return FILTER_ORB_GRADIENTS[index % FILTER_ORB_GRADIENTS.length];
+};
+
+const UserFilterOrb = ({ user, index, selected, onToggle }) => {
+    const [primary, highlight, shadow] = pickFilterGradient(user, index);
+    const label = user.first_name || user.email || 'User';
+    const initial = getAvatarInitial(label);
+
+    return (
+        <button
+            type="button"
+            onClick={onToggle}
+            className={`group relative h-12 w-12 rounded-2xl transition-all duration-300 [perspective:900px] focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)] focus:ring-offset-2 ${selected ? '-translate-y-1 scale-105' : 'hover:-translate-y-0.5 hover:scale-105'}`}
+            title={`Filter tasks for ${label}`}
+            aria-label={`Filter tasks for ${label}`}
+            aria-pressed={selected}
+        >
+            <span
+                className={`absolute inset-x-1 bottom-0 h-3 rounded-full blur-sm transition-opacity ${selected ? 'bg-[var(--theme-color)] opacity-60' : 'bg-slate-400 opacity-25 group-hover:opacity-40'}`}
+            />
+            <span
+                className={`relative flex h-full w-full items-center justify-center overflow-hidden rounded-2xl border text-sm font-black text-white shadow-[0_12px_24px_rgba(15,23,42,0.26)] transition-transform duration-300 [transform-style:preserve-3d] group-hover:[transform:rotateX(12deg)_rotateY(-12deg)] ${selected ? 'border-white ring-2 ring-[var(--theme-color)] [transform:rotateX(12deg)_rotateY(-12deg)]' : 'border-white/70'}`}
+                style={{
+                    background: `linear-gradient(135deg, ${primary}, ${highlight} 48%, ${shadow})`,
+                    boxShadow: selected
+                        ? `0 18px 28px ${primary}55, inset -8px -10px 18px rgba(15,23,42,0.24), inset 8px 8px 18px rgba(255,255,255,0.34)`
+                        : `0 12px 24px ${primary}3f, inset -8px -10px 18px rgba(15,23,42,0.22), inset 8px 8px 18px rgba(255,255,255,0.32)`
+                }}
+            >
+                <span className="absolute -left-4 -top-5 h-12 w-12 rounded-full bg-white/45 blur-md" />
+                <span className="absolute right-1 top-1 h-3 w-3 rounded-full bg-white/50 blur-[1px]" />
+                {user.profile_picture && user.profile_picture !== 'null' ? (
+                    <img src={user.profile_picture} alt="" className="relative h-8 w-8 rounded-xl object-cover shadow-inner ring-2 ring-white/70" />
+                ) : (
+                    <span className="relative drop-shadow-[0_2px_2px_rgba(15,23,42,0.35)]">{initial}</span>
+                )}
+                <span className="absolute -right-1 -bottom-1 flex h-6 w-6 items-center justify-center rounded-xl border border-white/80 bg-white text-[var(--theme-color)] shadow-lg">
+                    <FunnelIcon className="h-3.5 w-3.5" />
+                </span>
+            </span>
+        </button>
+    );
+};
 
 const mapTask = (t) => ({
     id: t.task_id,
@@ -1273,26 +1332,18 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                         <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] flex items-center">
                             <Squares2X2Icon className="h-7 w-7 mr-2" />Sprint Task Manager
                         </h1>
-                        <div className="flex flex-wrap items-center space-x-2">
-                            {users.map(u => (
-                                <div
+                        <div className="flex flex-wrap items-center gap-3 rounded-3xl border border-sky-100 bg-sky-50/70 px-3 py-2 shadow-inner" aria-label="Task assignee filters">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-[var(--theme-color)] shadow-[0_10px_20px_rgba(14,165,233,0.22)]">
+                                <FunnelIcon className="h-5 w-5" />
+                            </div>
+                            {users.map((u, index) => (
+                                <UserFilterOrb
                                     key={u.id}
-                                    onClick={() => toggleUserFilter(String(u.id))}
-                                    className={`cursor-pointer w-8 h-8 rounded-full border-2 ${filterUsers.includes(String(u.id)) ? 'border-[var(--theme-color)]' : 'border-transparent'}`}
-                                    title={u.first_name || u.email}
-                                >
-                                    {u.profile_picture && u.profile_picture !== 'null' ? (
-                                        <img src={u.profile_picture} alt={u.first_name}
-                                            className="w-8 h-8 rounded-full object-cover" />
-                                    ) : (
-                                        <div
-                                            className="w-8 h-8 rounded-full text-xs font-bold flex items-center justify-center"
-                                            style={buildAvatarStyle(u.avatar_color)}
-                                        >
-                                            {getAvatarInitial(u.first_name || u.email)}
-                                        </div>
-                                    )}
-                                </div>
+                                    user={u}
+                                    index={index}
+                                    selected={filterUsers.includes(String(u.id))}
+                                    onToggle={() => toggleUserFilter(String(u.id))}
+                                />
                             ))}
                         </div>
                     </div>
