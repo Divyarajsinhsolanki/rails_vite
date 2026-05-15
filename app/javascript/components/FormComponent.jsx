@@ -1,58 +1,119 @@
-import React, { useState } from "react";
-import { FaArrowLeft } from "react-icons/fa";
+import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 
-const FormComponent = ({ setActiveForm, setPdfUpdated, setPdfUrl, formFields = [], endpoint, title, pdfPath, droppedCoordinates }) => {
-  const [formData, setFormData] = useState(
-    formFields.reduce((acc, field) => ({ ...acc, [field.name]: "" }), { pdf_path: pdfPath })
-  );
+const placementFieldNames = new Set(["x", "y", "page_number"]);
 
-  // Update form data when coordinates are dropped
-  React.useEffect(() => {
-    if (droppedCoordinates) {
-      setFormData(prev => ({
-        ...prev,
-        x: Math.round(droppedCoordinates.x),
-        y: Math.round(droppedCoordinates.y),
-        page_number: droppedCoordinates.pageNumber || prev.page_number
-      }));
-    }
-  }, [droppedCoordinates]);
+const FormComponent = ({
+  setActiveForm,
+  setPdfUpdated,
+  setPdfUrl,
+  formFields = [],
+  endpoint,
+  title,
+  pdfPath,
+  placementCoordinates,
+  setPlacementCoordinates,
+}) => {
+  const initialFormData = useMemo(
+    () => formFields.reduce((acc, field) => ({ ...acc, [field.name]: "" }), { pdf_path: pdfPath }),
+    [formFields, pdfPath]
+  );
+  const [formData, setFormData] = useState(initialFormData);
+  const [errorMessage, setErrorMessage] = useState("");
+  const hasPlacementFields = formFields.some((field) => placementFieldNames.has(field.name));
+
+  useEffect(() => {
+    setFormData((prev) => ({ ...initialFormData, ...prev, pdf_path: pdfPath }));
+  }, [initialFormData, pdfPath]);
+
+  useEffect(() => {
+    if (!placementCoordinates) return;
+
+    setFormData((prev) => {
+      const next = { ...prev };
+
+      if (placementCoordinates.x !== undefined && "x" in next) {
+        next.x = Math.round(placementCoordinates.x);
+      }
+
+      if (placementCoordinates.y !== undefined && "y" in next) {
+        next.y = Math.round(placementCoordinates.y);
+      }
+
+      if (placementCoordinates.pageNumber !== undefined && "page_number" in next) {
+        next.page_number = placementCoordinates.pageNumber;
+      }
+
+      return next;
+    });
+  }, [placementCoordinates]);
+
+  const updatePlacementFromForm = (name, value) => {
+    if (!placementFieldNames.has(name) || !setPlacementCoordinates) return;
+
+    const numericValue = Number(value);
+    if (value === "" || Number.isNaN(numericValue)) return;
+
+    setPlacementCoordinates((previous) => ({
+      ...(previous || {}),
+      [name === "page_number" ? "pageNumber" : name]: numericValue,
+    }));
+  };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, type, files, value } = e.target;
+    const nextValue = type === "file" ? files?.[0] || null : value;
+
+    setFormData((prev) => ({ ...prev, [name]: nextValue }));
+    updatePlacementFromForm(name, value);
+  };
+
+  const buildRequest = () => {
+    const hasFile = formFields.some((field) => field.type === "file" && formData[field.name]);
+
+    if (hasFile) {
+      const multipart = new FormData();
+      Object.entries({ ...formData, pdf_path: pdfPath }).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) multipart.append(key, value);
+      });
+
+      return { body: multipart };
+    }
+
+    return {
+      body: JSON.stringify({ ...formData, pdf_path: pdfPath }),
+      headers: { "Content-Type": "application/json" },
+    };
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
+
     try {
+      const request = buildRequest();
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          ...(request.headers || {}),
           "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content,
         },
-        body: JSON.stringify({ ...formData, pdf_path: pdfPath }),
+        body: request.body,
       });
 
-      if (!response.ok) throw new Error("Request failed");
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Request failed");
 
-      const data = await response.json();
-
-      // If the backend returns a new PDF URL (because it created a new file), update it.
       if (data.pdf_url && setPdfUrl) {
         setPdfUrl(data.pdf_url);
         localStorage.setItem("pdfUrl", data.pdf_url);
       }
 
-      // Always bust the viewer cache after a successful mutation.
-      // Some backend actions overwrite the same file path, so relying only on
-      // a URL change can miss refreshes (e.g. add/remove/duplicate page).
       setPdfUpdated((prev) => prev + 1);
-
       setActiveForm(null);
     } catch (error) {
       console.error(error);
+      setErrorMessage(error.message || "Request failed");
     }
   };
 
@@ -65,6 +126,15 @@ const FormComponent = ({ setActiveForm, setPdfUpdated, setPdfUrl, formFields = [
       transition={{ duration: 0.3, ease: "easeInOut" }}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <h3 className="text-sm font-bold text-gray-900">{title}</h3>
+          {hasPlacementFields && (
+            <p className="text-xs text-gray-500">
+              Drag the marker on the PDF or type X/Y/page values here. Both controls stay in sync.
+            </p>
+          )}
+        </div>
+
         {formFields.map((field, index) => (
           <div key={index} className="flex flex-col">
             <label className="mb-1 text-sm font-medium text-gray-700">
@@ -73,6 +143,9 @@ const FormComponent = ({ setActiveForm, setPdfUpdated, setPdfUrl, formFields = [
             <input
               type={field.type}
               name={field.name}
+              min={field.min}
+              max={field.max}
+              step={field.step || (field.type === "number" ? "1" : undefined)}
               placeholder={field.placeholder}
               value={field.type === "file" ? undefined : formData[field.name] || ""}
               onChange={handleChange}
@@ -80,6 +153,11 @@ const FormComponent = ({ setActiveForm, setPdfUpdated, setPdfUrl, formFields = [
             />
           </div>
         ))}
+
+        {errorMessage && (
+          <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{errorMessage}</p>
+        )}
+
         <input type="hidden" name="pdf_path" value={pdfPath} />
         <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded w-full hover:bg-blue-700">Submit</button>
       </form>

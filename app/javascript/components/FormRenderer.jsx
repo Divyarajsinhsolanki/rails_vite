@@ -1,7 +1,7 @@
 import React from "react";
 import FormComponent from "./FormComponent";
 
-const FormRenderer = ({ activeForm, setActiveForm, setPdfUpdated, setPdfUrl, pdfPath, droppedCoordinates }) => {
+const FormRenderer = ({ activeForm, setActiveForm, setPdfUpdated, setPdfUrl, pdfPath, placementCoordinates, setPlacementCoordinates }) => {
   // ... (formConfigs remains unchanged) ...
 
   const formConfigs = {
@@ -61,8 +61,8 @@ const FormRenderer = ({ activeForm, setActiveForm, setPdfUpdated, setPdfUrl, pdf
       title: "Add Watermark",
       endpoint: "/add_watermark",
       formFields: [
-        { name: "text", type: "text", label: "Watermark Text" },
-        { name: "opacity", type: "number", label: "Opacity (0-1)" },
+        { name: "watermark_text", type: "text", label: "Watermark Text" },
+        { name: "opacity", type: "number", label: "Opacity (0-1)", min: "0", max: "1", step: "0.1" },
       ],
     },
     addStamp: {
@@ -123,7 +123,8 @@ const FormRenderer = ({ activeForm, setActiveForm, setPdfUpdated, setPdfUrl, pdf
       setPdfUpdated={setPdfUpdated}
       setPdfUrl={setPdfUrl} // Pass down
       pdfPath={pdfPath}
-      droppedCoordinates={droppedCoordinates} // Pass coordinates
+      placementCoordinates={placementCoordinates}
+      setPlacementCoordinates={setPlacementCoordinates}
       {...config}
     />
   );
