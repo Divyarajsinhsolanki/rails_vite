@@ -6,6 +6,7 @@ import {
   FiArrowLeft,
   FiCheck,
   FiClock,
+  FiDownload,
   FiEdit,
   FiFileText,
   FiHash,
@@ -17,7 +18,9 @@ import {
   FiPaperclip,
   FiSearch,
   FiSend,
+  FiUploadCloud,
   FiUsers,
+  FiVideo,
   FiX,
   FiZap
 } from "react-icons/fi";
@@ -160,6 +163,31 @@ const getAttachmentKindLabel = (contentType = "") => {
   if (contentType.includes("presentation")) return "Presentation";
   if (contentType.includes("word") || contentType.includes("document")) return "Document";
   return "File";
+};
+
+
+const formatFileSize = (bytes) => {
+  if (!Number.isFinite(Number(bytes)) || Number(bytes) <= 0) return "";
+
+  const units = ["B", "KB", "MB", "GB"];
+  let size = Number(bytes);
+  let unitIndex = 0;
+
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex += 1;
+  }
+
+  return `${size >= 10 || unitIndex === 0 ? Math.round(size) : size.toFixed(1)} ${units[unitIndex]}`;
+};
+
+const getFileKindLabel = (file) => {
+  const contentType = file?.type || file?.content_type || "";
+
+  if (contentType.startsWith("image/")) return "Image";
+  if (contentType.startsWith("video/")) return "Video";
+
+  return getAttachmentKindLabel(contentType);
 };
 
 const HighlightText = ({ text = "", query }) => {
@@ -406,52 +434,77 @@ const ConversationItem = ({ conversation, currentUserId, isActive, searchQuery, 
 
 const MessageAttachmentCard = ({ attachment, isMe, searchQuery }) => {
   const isImage = attachment.content_type?.startsWith("image/");
+  const isVideo = attachment.content_type?.startsWith("video/");
+  const downloadUrl = attachment.download_url || attachment.url;
+  const fileSize = formatFileSize(attachment.byte_size);
   const containerClass = isMe
     ? "border-white/20 bg-white/10 text-white"
     : "border-slate-200/80 bg-slate-50/80 text-slate-700 dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-slate-200";
+  const metaTextClass = isMe ? "text-white/70" : "text-slate-400 dark:text-slate-500";
+  const downloadClass = isMe
+    ? "bg-white/15 text-white hover:bg-white/25"
+    : "bg-white/95 text-slate-700 hover:bg-white dark:bg-zinc-800/95 dark:text-slate-100 dark:hover:bg-zinc-700";
 
-  if (isImage) {
+  if (isImage || isVideo) {
     return (
-      <a
-        href={attachment.url}
-        target="_blank"
-        rel="noreferrer"
-        className={`group/attachment relative overflow-hidden rounded-2xl border ${containerClass}`}
-      >
-        <img src={attachment.url} alt={attachment.filename} className="h-44 w-full object-cover" />
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/75 via-slate-950/15 to-transparent p-3 text-white">
+      <div className={`group/attachment relative overflow-hidden rounded-2xl border ${containerClass}`}>
+        <a href={attachment.url} target="_blank" rel="noreferrer" className="block" title={`Open ${attachment.filename}`}>
+          {isImage ? (
+            <img src={attachment.url} alt={attachment.filename} className="h-44 w-full object-cover" />
+          ) : (
+            <video src={attachment.url} className="h-44 w-full bg-slate-950 object-cover" controls preload="metadata" />
+          )}
+        </a>
+
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent p-3 text-white">
           <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.22em] text-white/80">
-            <FiImage className="h-3.5 w-3.5" />
-            Image
+            {isImage ? <FiImage className="h-3.5 w-3.5" /> : <FiVideo className="h-3.5 w-3.5" />}
+            {isImage ? "Image" : "Video"}
+            {fileSize && <span>{fileSize}</span>}
           </div>
-          <p className="mt-1 truncate text-xs font-medium">
+          <p className="mt-1 truncate pr-10 text-xs font-medium">
             <HighlightText text={attachment.filename} query={searchQuery} />
           </p>
         </div>
-      </a>
+
+        <a
+          href={downloadUrl}
+          download={attachment.filename}
+          className={`absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full shadow-lg backdrop-blur ${downloadClass}`}
+          title={`Download ${attachment.filename}`}
+          aria-label={`Download ${attachment.filename}`}
+        >
+          <FiDownload className="h-4 w-4" />
+        </a>
+      </div>
     );
   }
 
   return (
-    <a
-      href={attachment.url}
-      target="_blank"
-      rel="noreferrer"
-      className={`flex items-center gap-3 rounded-2xl border px-3 py-3 transition hover:-translate-y-0.5 ${containerClass}`}
-    >
+    <div className={`flex items-center gap-3 rounded-2xl border px-3 py-3 transition hover:-translate-y-0.5 ${containerClass}`}>
       <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${isMe ? "bg-white/10" : "bg-white text-slate-600 dark:bg-zinc-800 dark:text-slate-200"}`}>
         <FiFileText className="h-5 w-5" />
       </div>
 
-      <div className="min-w-0 flex-1">
+      <a href={attachment.url} target="_blank" rel="noreferrer" className="min-w-0 flex-1" title={`Open ${attachment.filename}`}>
         <p className="truncate text-sm font-medium">
           <HighlightText text={attachment.filename} query={searchQuery} />
         </p>
-        <p className={`mt-1 text-[11px] uppercase tracking-[0.22em] ${isMe ? "text-white/70" : "text-slate-400 dark:text-slate-500"}`}>
-          {getAttachmentKindLabel(attachment.content_type)}
+        <p className={`mt-1 text-[11px] uppercase tracking-[0.22em] ${metaTextClass}`}>
+          {[getAttachmentKindLabel(attachment.content_type), fileSize].filter(Boolean).join(" · ")}
         </p>
-      </div>
-    </a>
+      </a>
+
+      <a
+        href={downloadUrl}
+        download={attachment.filename}
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl transition ${downloadClass}`}
+        title={`Download ${attachment.filename}`}
+        aria-label={`Download ${attachment.filename}`}
+      >
+        <FiDownload className="h-4 w-4" />
+      </a>
+    </div>
   );
 };
 
@@ -649,6 +702,7 @@ const Chat = () => {
 
   const [messageBody, setMessageBody] = useState("");
   const [attachments, setAttachments] = useState([]);
+  const [isDraggingFiles, setIsDraggingFiles] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [typingUsers, setTypingUsers] = useState({});
   const [showInfo, setShowInfo] = useState(false);
@@ -912,7 +966,7 @@ const Chat = () => {
   }, [activeConversation?.messages]);
 
   const attachmentPreviewUrls = useMemo(
-    () => attachments.map((file) => (file.type.startsWith("image/") ? URL.createObjectURL(file) : null)),
+    () => attachments.map((file) => (file.type.startsWith("image/") || file.type.startsWith("video/")) ? URL.createObjectURL(file) : null),
     [attachments]
   );
 
@@ -1205,12 +1259,33 @@ const Chat = () => {
     }
   }, [applyReactionUpdate, conversationId]);
 
-  const handleAddAttachments = (event) => {
-    const nextFiles = Array.from(event.target.files || []);
+  const addAttachments = useCallback((files = []) => {
+    const nextFiles = Array.from(files).filter(Boolean);
     if (!nextFiles.length) return;
 
     setAttachments((previous) => [...previous, ...nextFiles]);
+  }, []);
+
+  const handleAddAttachments = (event) => {
+    addAttachments(event.target.files || []);
     event.target.value = "";
+  };
+
+  const handleDragOverAttachments = (event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+    setIsDraggingFiles(true);
+  };
+
+  const handleDragLeaveAttachments = (event) => {
+    if (event.currentTarget.contains(event.relatedTarget)) return;
+    setIsDraggingFiles(false);
+  };
+
+  const handleDropAttachments = (event) => {
+    event.preventDefault();
+    setIsDraggingFiles(false);
+    addAttachments(event.dataTransfer.files || []);
   };
 
   const syncComposerSelection = (event) => {
@@ -1757,6 +1832,9 @@ const Chat = () => {
                           {attachments.map((file, index) => {
                             const previewUrl = attachmentPreviewUrls[index];
                             const isImage = file.type.startsWith("image/");
+                            const isVideo = file.type.startsWith("video/");
+                            const fileKind = getFileKindLabel(file);
+                            const fileSize = formatFileSize(file.size);
 
                             return (
                               <div
@@ -1767,16 +1845,20 @@ const Chat = () => {
                                   <div className="overflow-hidden rounded-2xl">
                                     <img src={previewUrl} alt={file.name} className="h-24 w-full object-cover" />
                                   </div>
+                                ) : isVideo && previewUrl ? (
+                                  <div className="overflow-hidden rounded-2xl">
+                                    <video src={previewUrl} className="h-24 w-full bg-slate-950 object-cover" preload="metadata" muted />
+                                  </div>
                                 ) : (
                                   <div className="flex h-24 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-slate-300">
-                                    <FiPaperclip className="h-6 w-6" />
+                                    <FiFileText className="h-6 w-6" />
                                   </div>
                                 )}
 
                                 <div className="mt-2 px-1">
                                   <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-100">{file.name}</p>
                                   <p className="mt-1 text-[11px] uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
-                                    {isImage ? "Image" : "Attachment"}
+                                    {[fileKind, fileSize].filter(Boolean).join(" · ")}
                                   </p>
                                 </div>
 
@@ -1795,8 +1877,24 @@ const Chat = () => {
 
                       <form
                         onSubmit={handleSendMessage}
-                        className="rounded-[28px] border border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(248,250,252,0.98))] p-3 shadow-[0_24px_60px_-36px_rgba(15,23,42,0.7)] backdrop-blur-xl dark:border-zinc-700 dark:bg-[linear-gradient(135deg,rgba(24,24,27,0.96),rgba(9,9,11,0.96))]"
+                        onDragOver={handleDragOverAttachments}
+                        onDragLeave={handleDragLeaveAttachments}
+                        onDrop={handleDropAttachments}
+                        className={`relative rounded-[28px] border p-3 shadow-[0_24px_60px_-36px_rgba(15,23,42,0.7)] backdrop-blur-xl transition ${
+                          isDraggingFiles
+                            ? "border-sky-400 bg-sky-50/95 ring-4 ring-sky-200/60 dark:border-sky-500 dark:bg-sky-950/40 dark:ring-sky-900/50"
+                            : "border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(248,250,252,0.98))] dark:border-zinc-700 dark:bg-[linear-gradient(135deg,rgba(24,24,27,0.96),rgba(9,9,11,0.96))]"
+                        }`}
                       >
+                        {isDraggingFiles && (
+                          <div className="pointer-events-none absolute inset-2 z-20 flex items-center justify-center rounded-[24px] border-2 border-dashed border-sky-400 bg-sky-50/92 text-sky-700 shadow-inner backdrop-blur-sm dark:border-sky-500 dark:bg-sky-950/88 dark:text-sky-100">
+                            <div className="text-center">
+                              <FiUploadCloud className="mx-auto h-7 w-7" />
+                              <p className="mt-2 text-sm font-semibold">Drop images, videos, or files to attach</p>
+                              <p className="mt-1 text-xs text-sky-600 dark:text-sky-200/80">They will be sent with this message.</p>
+                            </div>
+                          </div>
+                        )}
                         <input
                           ref={fileInputRef}
                           type="file"
@@ -2006,26 +2104,44 @@ const Chat = () => {
                               </div>
                             ) : (
                               <div className="space-y-3">
-                                {sharedAttachments.slice(0, 8).map((attachment) => (
-                                  <a
-                                    key={`${attachment.message_id}-${attachment.id}`}
-                                    href={attachment.url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="flex items-center gap-3 rounded-2xl border border-white/70 bg-white/72 px-3 py-3 transition hover:-translate-y-0.5 hover:bg-white dark:border-zinc-800 dark:bg-zinc-900/72 dark:hover:bg-zinc-900"
-                                  >
-                                    <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${attachment.content_type?.startsWith("image/") ? "bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-200" : "bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-slate-200"}`}>
-                                      {attachment.content_type?.startsWith("image/") ? <FiImage className="h-5 w-5" /> : <FiFileText className="h-5 w-5" />}
-                                    </div>
+                                {sharedAttachments.slice(0, 8).map((attachment) => {
+                                  const isImage = attachment.content_type?.startsWith("image/");
+                                  const isVideo = attachment.content_type?.startsWith("video/");
+                                  const fileSize = formatFileSize(attachment.byte_size);
+                                  const iconClass = isImage
+                                    ? "bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-200"
+                                    : isVideo
+                                      ? "bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-200"
+                                      : "bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-slate-200";
 
-                                    <div className="min-w-0 flex-1">
-                                      <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{attachment.filename}</p>
-                                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                        {attachment.sender_name} • {formatDistanceToNow(new Date(attachment.sent_at), { addSuffix: true })}
-                                      </p>
+                                  return (
+                                    <div
+                                      key={`${attachment.message_id}-${attachment.id}`}
+                                      className="flex items-center gap-3 rounded-2xl border border-white/70 bg-white/72 px-3 py-3 transition hover:-translate-y-0.5 hover:bg-white dark:border-zinc-800 dark:bg-zinc-900/72 dark:hover:bg-zinc-900"
+                                    >
+                                      <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${iconClass}`}>
+                                        {isImage ? <FiImage className="h-5 w-5" /> : isVideo ? <FiVideo className="h-5 w-5" /> : <FiFileText className="h-5 w-5" />}
+                                      </div>
+
+                                      <a href={attachment.url} target="_blank" rel="noreferrer" className="min-w-0 flex-1" title={`Open ${attachment.filename}`}>
+                                        <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{attachment.filename}</p>
+                                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                          {[attachment.sender_name, formatDistanceToNow(new Date(attachment.sent_at), { addSuffix: true }), fileSize].filter(Boolean).join(" • ")}
+                                        </p>
+                                      </a>
+
+                                      <a
+                                        href={attachment.download_url || attachment.url}
+                                        download={attachment.filename}
+                                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-zinc-800 dark:text-slate-200 dark:hover:bg-zinc-700"
+                                        title={`Download ${attachment.filename}`}
+                                        aria-label={`Download ${attachment.filename}`}
+                                      >
+                                        <FiDownload className="h-4 w-4" />
+                                      </a>
                                     </div>
-                                  </a>
-                                ))}
+                                  );
+                                })}
                               </div>
                             )}
                           </section>
