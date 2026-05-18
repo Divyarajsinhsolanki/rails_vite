@@ -3,10 +3,83 @@ import { SchedulerAPI, getUsers, fetchProjects } from '../components/api';
 import { Toaster, toast } from 'react-hot-toast';
 import SpinnerOverlay from '../components/ui/SpinnerOverlay';
 import { FiX } from 'react-icons/fi';
-import { CalendarDaysIcon, PlusCircleIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
+import { CalendarDaysIcon, FunnelIcon, PlusCircleIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { buildAvatarStyle, getAvatarInitial } from '/utils/avatar';
+import { getAvatarInitial } from '/utils/avatar';
 import { groupTasksByAssignment } from '../utils/sprintViewUtils';
+
+
+const FILTER_ORB_PALETTES = [
+    { accent: '#2563eb', soft: '#dbeafe', deep: '#1e3a8a' },
+    { accent: '#0f766e', soft: '#ccfbf1', deep: '#134e4a' },
+    { accent: '#7c3aed', soft: '#ede9fe', deep: '#4c1d95' },
+    { accent: '#b45309', soft: '#fef3c7', deep: '#78350f' },
+    { accent: '#be123c', soft: '#ffe4e6', deep: '#881337' },
+    { accent: '#0369a1', soft: '#e0f2fe', deep: '#0c4a6e' },
+];
+
+const pickFilterPalette = (user, index) => {
+    if (user?.avatar_color && user.avatar_color !== 'null') {
+        return { accent: user.avatar_color, soft: '#f8fafc', deep: '#334155' };
+    }
+
+    return FILTER_ORB_PALETTES[index % FILTER_ORB_PALETTES.length];
+};
+
+const UserFilterOrb = ({ user, index, selected, onToggle }) => {
+    const palette = pickFilterPalette(user, index);
+    const label = user.first_name || user.email || 'User';
+    const initial = getAvatarInitial(label);
+
+    return (
+        <button
+            type="button"
+            onClick={onToggle}
+            className={`group relative h-11 w-11 rounded-2xl transition duration-200 [perspective:800px] focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)] focus:ring-offset-2 ${selected ? '-translate-y-0.5' : 'hover:-translate-y-0.5'}`}
+            title={`Filter tasks for ${label}`}
+            aria-label={`Filter tasks for ${label}`}
+            aria-pressed={selected}
+        >
+            <span
+                className={`absolute inset-x-1 bottom-0 h-2 rounded-full blur-md transition-opacity ${selected ? 'opacity-55' : 'opacity-20 group-hover:opacity-35'}`}
+                style={{ backgroundColor: palette.accent }}
+            />
+            <span
+                className={`relative flex h-full w-full items-center justify-center overflow-hidden rounded-2xl border transition duration-200 [transform-style:preserve-3d] group-hover:[transform:rotateX(7deg)_rotateY(-7deg)] ${selected ? 'border-slate-900/15 ring-2 ring-[var(--theme-color)] ring-offset-2 [transform:rotateX(7deg)_rotateY(-7deg)]' : 'border-white/80'}`}
+                style={{
+                    background: `linear-gradient(145deg, #ffffff 0%, ${palette.soft} 58%, #e2e8f0 100%)`,
+                    boxShadow: selected
+                        ? `0 14px 24px rgba(15, 23, 42, 0.18), 0 0 0 1px ${palette.accent}22, inset 6px 7px 10px rgba(255,255,255,0.9), inset -8px -9px 14px rgba(15,23,42,0.12)`
+                        : `0 10px 18px rgba(15, 23, 42, 0.12), inset 6px 7px 10px rgba(255,255,255,0.9), inset -8px -9px 14px rgba(15,23,42,0.10)`
+                }}
+            >
+                <span className="absolute left-1.5 top-1.5 h-4 w-4 rounded-full bg-white/80 blur-[1px]" />
+                <span
+                    className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full"
+                    style={{ backgroundColor: selected ? palette.accent : '#cbd5e1' }}
+                />
+                <span
+                    className="absolute inset-y-2 left-1 w-1 rounded-full opacity-80"
+                    style={{ background: `linear-gradient(180deg, ${palette.accent}, ${palette.deep})` }}
+                />
+                {user.profile_picture && user.profile_picture !== 'null' ? (
+                    <img src={user.profile_picture} alt="" className="relative h-7 w-7 rounded-xl object-cover shadow-sm ring-2 ring-white/90" />
+                ) : (
+                    <span className="relative text-sm font-semibold text-slate-800 drop-shadow-[0_1px_0_rgba(255,255,255,0.75)]">{initial}</span>
+                )}
+                <span
+                    className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-lg border border-white/90 text-white shadow-[0_6px_10px_rgba(15,23,42,0.22)]"
+                    style={{
+                        background: `linear-gradient(145deg, ${palette.accent}, ${palette.deep})`,
+                        transform: 'translateZ(18px)'
+                    }}
+                >
+                    <FunnelIcon className="h-3 w-3" />
+                </span>
+            </span>
+        </button>
+    );
+};
 
 const mapTask = (t) => ({
     id: t.task_id,
@@ -1273,26 +1346,21 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                         <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] flex items-center">
                             <Squares2X2Icon className="h-7 w-7 mr-2" />Sprint Task Manager
                         </h1>
-                        <div className="flex flex-wrap items-center space-x-2">
-                            {users.map(u => (
-                                <div
+                        <div className="flex flex-wrap items-center gap-2.5 rounded-2xl border border-slate-200 bg-white/85 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_12px_26px_rgba(15,23,42,0.08)]" aria-label="Task assignee filters">
+                            <div className="flex items-center gap-2 border-r border-slate-200 pr-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white shadow-[0_10px_18px_rgba(15,23,42,0.22),inset_3px_4px_8px_rgba(255,255,255,0.18)]">
+                                    <FunnelIcon className="h-[18px] w-[18px]" />
+                                </span>
+                                Filters
+                            </div>
+                            {users.map((u, index) => (
+                                <UserFilterOrb
                                     key={u.id}
-                                    onClick={() => toggleUserFilter(String(u.id))}
-                                    className={`cursor-pointer w-8 h-8 rounded-full border-2 ${filterUsers.includes(String(u.id)) ? 'border-[var(--theme-color)]' : 'border-transparent'}`}
-                                    title={u.first_name || u.email}
-                                >
-                                    {u.profile_picture && u.profile_picture !== 'null' ? (
-                                        <img src={u.profile_picture} alt={u.first_name}
-                                            className="w-8 h-8 rounded-full object-cover" />
-                                    ) : (
-                                        <div
-                                            className="w-8 h-8 rounded-full text-xs font-bold flex items-center justify-center"
-                                            style={buildAvatarStyle(u.avatar_color)}
-                                        >
-                                            {getAvatarInitial(u.first_name || u.email)}
-                                        </div>
-                                    )}
-                                </div>
+                                    user={u}
+                                    index={index}
+                                    selected={filterUsers.includes(String(u.id))}
+                                    onToggle={() => toggleUserFilter(String(u.id))}
+                                />
                             ))}
                         </div>
                     </div>
