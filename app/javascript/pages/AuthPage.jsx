@@ -1,9 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Login from "./Login";
 import Signup from "./Signup";
 
 function AuthPage({ mode = "login" }) {
   const [current, setCurrent] = useState(mode);
+
+  useEffect(() => {
+    setCurrent(mode);
+  }, [mode]);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.22),transparent_32%),radial-gradient(circle_at_80%_20%,rgba(168,85,247,0.18),transparent_28%),linear-gradient(135deg,#020617_0%,#0f172a_48%,#111827_100%)]">
