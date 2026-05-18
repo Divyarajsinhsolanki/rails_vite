@@ -8,6 +8,7 @@ const routeTitles = {
   "/calendar": "Calendar",
   "/contact": "Contact",
   "/legal": "Legal",
+  "/3d-objects": "3D Object Review",
   "/pdf": "PDF",
   "/momentum": "Daily Momentum Hub",
   "/posts": "Posts",

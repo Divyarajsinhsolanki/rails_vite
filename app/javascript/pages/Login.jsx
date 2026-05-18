@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { auth, getRedirectResult } from "../firebaseConfig";
 import { Toaster, toast } from "react-hot-toast";
 import SpinnerOverlay from "../components/ui/SpinnerOverlay";
@@ -54,6 +54,14 @@ const Login = ({ switchToSignup }) => {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 py-8 lg:flex-row lg:items-center lg:gap-10 xl:gap-14">
         <div className="lg:w-[58%]">
           <WorkspaceOrb />
+          <div className="mt-4 flex justify-center lg:justify-start">
+            <Link
+              to="/3d-objects"
+              className="inline-flex items-center rounded-full border border-cyan-200/30 bg-white/10 px-5 py-2 text-sm font-bold text-cyan-50 shadow-lg shadow-cyan-950/20 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/15"
+            >
+              Review more 3D object options
+            </Link>
+          </div>
         </div>
 
         <div className="lg:w-[42%]">
