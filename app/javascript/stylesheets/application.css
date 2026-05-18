@@ -422,6 +422,57 @@ textarea {
   color: var(--shell-muted-strong);
 }
 
+
+.dashboard-command-deck .shell-chip {
+  gap: 0.38rem;
+  padding: 0.34rem 0.7rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+}
+
+.dashboard-command-deck .shell-chip-dot {
+  width: 0.38rem;
+  height: 0.38rem;
+}
+
+.dashboard-command-deck .shell-eyebrow {
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+}
+
+.dashboard-command-deck .shell-kpi-card {
+  padding: 0.78rem 0.9rem;
+  border-radius: 1.15rem;
+  box-shadow: 0 14px 28px rgb(15 23 42 / 0.05);
+}
+
+.dashboard-command-deck .shell-kpi-label {
+  font-size: 0.66rem;
+  letter-spacing: 0.15em;
+}
+
+.dashboard-command-deck .shell-kpi-value {
+  margin-top: 0.38rem;
+  font-size: clamp(1.05rem, 1.55vw, 1.42rem);
+}
+
+.dashboard-command-deck .shell-kpi-meta {
+  margin-top: 0.25rem;
+  font-size: 0.76rem;
+  line-height: 1.32;
+}
+
+.dashboard-command-deck .shell-segmented {
+  gap: 0.25rem;
+  padding: 0.25rem;
+}
+
+.dashboard-command-deck .shell-segmented-button {
+  min-height: 2.35rem;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.82rem;
+}
+
 .shell-input {
   width: 100%;
   border: 1px solid rgb(255 255 255 / 0.7);
