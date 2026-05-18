@@ -35,6 +35,7 @@ import DepartmentDetails from "../pages/DepartmentDetails";
 import PageLoader from "./ui/PageLoader";
 import Chat from "../pages/Chat";
 import Notifications from "../pages/Notifications";
+import ObjectGallery from "../pages/ObjectGallery";
 import ChatLauncher from "./ChatLauncher";
 
 const routeTransitionProps = {
@@ -95,6 +96,7 @@ const AppRoutes = () => {
         <Routes location={location}>
           <Route path="/contact" element={<Contact />} />
           <Route path="/legal" element={<Legal />} />
+          <Route path="/3d-objects" element={<ObjectGallery />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route
