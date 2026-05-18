@@ -3,20 +3,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FiBook,
   FiBookmark,
-  FiCalendar,
   FiClock,
   FiFolder,
-  FiGrid,
-  FiRefreshCcw,
   FiSearch,
   FiStar,
-  FiTrendingUp,
   FiX,
-  FiZap,
   FiBell,
-  FiLayers,
   FiCheckCircle,
-  FiFilter,
 } from "react-icons/fi";
 import TodayInHistoryCard from "../components/Knowledge/TodayInHistoryCard";
 import QuoteOfTheDayCard from "../components/Knowledge/QuoteOfTheDayCard";
@@ -41,30 +34,6 @@ import ImageOfTheDayCard from "../components/Knowledge/ImageOfTheDayCard";
 import DailyQuizCard from "../components/Knowledge/DailyQuizCard";
 import StudyReminderCard from "../components/Knowledge/StudyReminderCard";
 import { KnowledgeBookmarksProvider, useKnowledgeBookmarks } from "../context/KnowledgeBookmarksContext";
-import WorkspaceOrb from "../components/landing/WorkspaceOrb";
-
-
-
-// Statistics Card Component
-const StatCard = ({ icon: Icon, label, value, color, delay = 0 }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.4, delay }}
-    className="relative overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur-md p-4 shadow-lg"
-  >
-    <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent" />
-    <div className="relative flex items-center gap-4">
-      <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${color} shadow-lg`}>
-        <Icon className="h-6 w-6 text-white" />
-      </div>
-      <div>
-        <p className="text-sm font-medium text-white/70">{label}</p>
-        <p className="text-2xl font-bold text-white">{value}</p>
-      </div>
-    </div>
-  </motion.div>
-);
 
 // Category Tab Component
 const CategoryTab = ({ category, isActive, onClick, index }) => (
@@ -73,7 +42,7 @@ const CategoryTab = ({ category, isActive, onClick, index }) => (
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.3, delay: index * 0.05 }}
     onClick={onClick}
-    className={`relative flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold whitespace-nowrap transition-all duration-300 ${
+    className={`relative flex items-center gap-1.5 rounded-[18px] border px-3 py-2.5 text-sm font-semibold whitespace-nowrap transition-all duration-300 ${
       isActive
         ? "border-slate-950 bg-slate-950 text-white shadow-[0_18px_34px_rgb(15_23_42_/_0.18)]"
         : "border-white/70 bg-white/68 text-slate-600 hover:bg-white hover:text-slate-950"
@@ -121,7 +90,6 @@ function KnowledgeDashboardContent() {
 
   const savedCount = bookmarks.length;
   const dueCount = dueBookmarks.length;
-  const collectionsCount = collections.length;
 
   const categories = useMemo(
     () => [
@@ -478,8 +446,6 @@ function KnowledgeDashboardContent() {
   const isLoading = uiLoading || (bookmarksLoading && activeCategory !== "saved" && activeCategory !== "due");
   const hasSearch = searchQuery.trim().length > 0;
   const filtersActive = Object.values(filters).some(Boolean);
-  const totalCardsCount = cardDefinitions.length;
-
   const currentDate = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
@@ -487,84 +453,28 @@ function KnowledgeDashboardContent() {
     day: "numeric",
   });
 
-  const heroMetrics = useMemo(
-    () => [
-      [`${totalCardsCount}`, "Live cards"],
-      [`${savedCount}`, "Saved cues"],
-      [`${dueCount}`, "Due reviews"],
-      [`${collectionsCount}`, "Collections"],
-    ],
-    [collectionsCount, dueCount, savedCount, totalCardsCount]
-  );
-
-  const heroFeatures = useMemo(
-    () => [
-      {
-        title: "Signal Depth",
-        metric: `${totalCardsCount}`,
-        copy: "Track news, learning prompts, market movers, and dev signals from one premium deck.",
-      },
-      {
-        title: "Review Rhythm",
-        metric: dueCount > 0 ? `${dueCount} due` : "Clear",
-        copy: "Keep spaced repetition active with due-card visibility and one-click review actions.",
-      },
-      {
-        title: "Personal Capture",
-        metric: `${savedCount}`,
-        copy: "Save what matters into collections and build a memory system around your workflow.",
-      },
-      {
-        title: "Collections",
-        metric: `${collectionsCount}`,
-        copy: "Organize ideas into reusable stacks that turn scattered inputs into a reusable reference layer.",
-      },
-    ],
-    [collectionsCount, dueCount, savedCount, totalCardsCount]
-  );
-
-  const orbitItems = useMemo(
-    () => [
-      { label: "News", icon: FiBell, angle: 10, tone: "from-sky-300 to-cyan-200" },
-      { label: "Learning", icon: FiBook, angle: 82, tone: "from-emerald-300 to-teal-200" },
-      { label: "Saved", icon: FiBookmark, angle: 154, tone: "from-amber-300 to-orange-200" },
-      { label: "Markets", icon: FiTrendingUp, angle: 226, tone: "from-fuchsia-300 to-pink-200" },
-      { label: "Tech", icon: FiZap, angle: 298, tone: "from-violet-300 to-indigo-200" },
-    ],
-    []
-  );
-
   return (
     <div className="min-h-screen pb-16 text-slate-900">
-      <div className="mx-auto max-w-[98%] space-y-8 px-4 pt-6 sm:px-6 lg:px-8">
-        <WorkspaceOrb
-          eyebrow="Knowledge Signal Matrix"
-          title="Turn learning, news, and market context into a single living feed."
-          description="Move from passive reading to an active command center with saved cues, due reviews, and curated daily signals designed for fast thinking."
-          metrics={heroMetrics}
-          featureCards={heroFeatures}
-          orbitItems={orbitItems}
-        />
-
+      <div className="mx-auto max-w-[98%] space-y-6 px-4 pt-6 sm:px-6 lg:px-8">
         <section className="shell-panel shell-panel-strong sticky top-[6rem] z-20 overflow-hidden rounded-[32px]">
           <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent" />
 
-          <div className="space-y-5 p-5 sm:p-6">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-              <div>
+          <div className="space-y-4 p-4 sm:p-5 lg:p-6">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+              <div className="max-w-3xl">
                 <div className="shell-chip mb-3">
                   <span className="shell-chip-dot" />
-                  Knowledge Command Deck
+                  Knowledge Signal Matrix
                 </div>
-                <h2 className="text-2xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-3xl">
+                <h1 className="text-2xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-3xl">
                   Curated discovery with active memory built in.
-                </h2>
+                </h1>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base">
-                  Filter the feed, search across live cards, and jump between saved collections and due reviews without losing the premium signal-first layout.
+                  Search the deck, filter quickly, and move between saved collections and due reviews without the extra promo UI.
                 </p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 xl:max-w-[32rem] xl:justify-end">
                 <span className="shell-chip">
                   <span className="shell-chip-dot" />
                   {currentDate}
@@ -573,11 +483,19 @@ function KnowledgeDashboardContent() {
                   <span className="shell-chip-dot" />
                   {filteredCards.length} visible
                 </span>
+                <span className="shell-chip">
+                  <span className="shell-chip-dot" />
+                  Saved {savedCount}
+                </span>
+                <span className="shell-chip">
+                  <span className="shell-chip-dot" />
+                  Due {dueCount}
+                </span>
                 {filtersActive ? (
                   <button
                     type="button"
                     onClick={() => setFilters({ reminderDue: false, hasNotes: false })}
-                    className="rounded-full border border-white/70 bg-white/72 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600 hover:bg-white hover:text-slate-950"
+                    className="rounded-full border border-white/70 bg-white/72 px-3.5 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600 hover:bg-white hover:text-slate-950"
                   >
                     Clear filters
                   </button>
@@ -585,7 +503,7 @@ function KnowledgeDashboardContent() {
               </div>
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,_1fr)_auto]">
+            <div className="grid gap-3 xl:grid-cols-[minmax(0,_1fr)_auto] xl:items-center">
               <div className="relative">
                 <FiSearch className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
                 <input
@@ -605,7 +523,7 @@ function KnowledgeDashboardContent() {
                 ) : null}
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 xl:justify-end">
                 {filterOptions.map((option) => {
                   const isActive = filters[option.key];
                   const IconComponent = option.icon;
@@ -620,7 +538,7 @@ function KnowledgeDashboardContent() {
                           [option.key]: !prev[option.key],
                         }))
                       }
-                      className={`inline-flex items-center gap-2 rounded-[18px] border px-4 py-3 text-sm font-semibold transition ${
+                      className={`inline-flex items-center gap-1.5 rounded-[18px] border px-3 py-2.5 text-sm font-semibold transition ${
                         isActive
                           ? "border-slate-950 bg-slate-950 text-white shadow-[0_18px_34px_rgb(15_23_42_/_0.18)]"
                           : "border-white/70 bg-white/72 text-slate-600 hover:bg-white hover:text-slate-950"
@@ -635,7 +553,7 @@ function KnowledgeDashboardContent() {
               </div>
             </div>
 
-            <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-1">
+            <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
               {categories.map((cat, index) => (
                 <CategoryTab
                   key={cat.id}
@@ -682,7 +600,7 @@ function KnowledgeDashboardContent() {
         </AnimatePresence>
 
         <main className="space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+          <div className="px-1">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">Signal Overview</p>
               <p className="mt-1 text-sm text-slate-600">
@@ -690,16 +608,6 @@ function KnowledgeDashboardContent() {
                 {hasSearch ? ` for "${searchQuery.trim()}"` : ""}
                 {filtersActive ? " with active filters applied" : ""}
               </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="shell-chip">
-                <span className="shell-chip-dot" />
-                Saved {savedCount}
-              </span>
-              <span className="shell-chip">
-                <span className="shell-chip-dot" />
-                Due {dueCount}
-              </span>
             </div>
           </div>
 

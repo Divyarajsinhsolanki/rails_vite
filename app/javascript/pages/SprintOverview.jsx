@@ -35,47 +35,49 @@ const UserFilterOrb = ({ user, index, selected, onToggle }) => {
         <button
             type="button"
             onClick={onToggle}
-            className={`group relative h-11 w-11 rounded-2xl transition duration-200 [perspective:800px] focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)] focus:ring-offset-2 ${selected ? '-translate-y-0.5' : 'hover:-translate-y-0.5'}`}
+            className={`group relative isolate h-11 w-11 overflow-hidden rounded-[18px] transition duration-200 [perspective:900px] focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)] focus:ring-offset-2 ${selected ? '-translate-y-0.5' : 'hover:-translate-y-0.5'}`}
             title={`Filter tasks for ${label}`}
             aria-label={`Filter tasks for ${label}`}
             aria-pressed={selected}
         >
             <span
-                className={`absolute inset-x-1 bottom-0 h-2 rounded-full blur-md transition-opacity ${selected ? 'opacity-55' : 'opacity-20 group-hover:opacity-35'}`}
+                className={`absolute inset-x-1.5 bottom-0.5 h-2.5 rounded-full blur-md transition-opacity ${selected ? 'opacity-60' : 'opacity-20 group-hover:opacity-35'}`}
                 style={{ backgroundColor: palette.accent }}
             />
             <span
-                className={`relative flex h-full w-full items-center justify-center overflow-hidden rounded-2xl border transition duration-200 [transform-style:preserve-3d] group-hover:[transform:rotateX(7deg)_rotateY(-7deg)] ${selected ? 'border-slate-900/15 ring-2 ring-[var(--theme-color)] ring-offset-2 [transform:rotateX(7deg)_rotateY(-7deg)]' : 'border-white/80'}`}
+                className={`absolute inset-0 rounded-[18px] border transition duration-200 ${selected ? 'border-white/95 ring-2 ring-[var(--theme-color)] ring-offset-2' : 'border-white/75 group-hover:border-white/95'}`}
                 style={{
-                    background: `linear-gradient(145deg, #ffffff 0%, ${palette.soft} 58%, #e2e8f0 100%)`,
+                    background: `linear-gradient(160deg, rgba(255,255,255,0.98) 0%, ${palette.soft} 55%, rgba(226,232,240,0.96) 100%)`,
                     boxShadow: selected
-                        ? `0 14px 24px rgba(15, 23, 42, 0.18), 0 0 0 1px ${palette.accent}22, inset 6px 7px 10px rgba(255,255,255,0.9), inset -8px -9px 14px rgba(15,23,42,0.12)`
-                        : `0 10px 18px rgba(15, 23, 42, 0.12), inset 6px 7px 10px rgba(255,255,255,0.9), inset -8px -9px 14px rgba(15,23,42,0.10)`
+                        ? `0 16px 28px rgba(15,23,42,0.16), 0 0 0 1px ${palette.accent}26, inset 0 1px 0 rgba(255,255,255,0.94), inset 0 -12px 16px rgba(15,23,42,0.08)`
+                        : `0 12px 22px rgba(15,23,42,0.1), inset 0 1px 0 rgba(255,255,255,0.92), inset 0 -12px 14px rgba(15,23,42,0.06)`
                 }}
             >
-                <span className="absolute left-1.5 top-1.5 h-4 w-4 rounded-full bg-white/80 blur-[1px]" />
+            </span>
+            <span className="absolute inset-x-2 top-1.5 h-3 rounded-full bg-white/70 blur-[5px]" />
+            <span
+                className={`relative flex h-full w-full items-center justify-center transition duration-200 [transform-style:preserve-3d] ${selected ? '[transform:rotateX(8deg)_rotateY(-8deg)]' : 'group-hover:[transform:rotateX(8deg)_rotateY(-8deg)]'}`}
+            >
                 <span
-                    className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full"
-                    style={{ backgroundColor: selected ? palette.accent : '#cbd5e1' }}
-                />
-                <span
-                    className="absolute inset-y-2 left-1 w-1 rounded-full opacity-80"
-                    style={{ background: `linear-gradient(180deg, ${palette.accent}, ${palette.deep})` }}
-                />
-                {user.profile_picture && user.profile_picture !== 'null' ? (
-                    <img src={user.profile_picture} alt="" className="relative h-7 w-7 rounded-xl object-cover shadow-sm ring-2 ring-white/90" />
-                ) : (
-                    <span className="relative text-sm font-semibold text-slate-800 drop-shadow-[0_1px_0_rgba(255,255,255,0.75)]">{initial}</span>
-                )}
-                <span
-                    className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-lg border border-white/90 text-white shadow-[0_6px_10px_rgba(15,23,42,0.22)]"
+                    className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-[14px] border border-white/85 shadow-[0_8px_16px_rgba(15,23,42,0.14)]"
                     style={{
-                        background: `linear-gradient(145deg, ${palette.accent}, ${palette.deep})`,
-                        transform: 'translateZ(18px)'
+                        background: `linear-gradient(145deg, rgba(255,255,255,0.35), ${palette.accent}22 100%)`,
+                        transform: 'translateZ(18px)',
                     }}
                 >
-                    <FunnelIcon className="h-3 w-3" />
+                    {user.profile_picture && user.profile_picture !== 'null' ? (
+                        <img src={user.profile_picture} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                        <span className="text-sm font-semibold text-slate-800 drop-shadow-[0_1px_0_rgba(255,255,255,0.75)]">{initial}</span>
+                    )}
                 </span>
+                <span
+                    className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full border border-white/90"
+                    style={{
+                        backgroundColor: selected ? palette.accent : '#d6e0ee',
+                        boxShadow: selected ? `0 0 0 3px ${palette.accent}18` : 'none',
+                    }}
+                />
             </span>
         </button>
     );
@@ -970,6 +972,8 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
         );
     };
 
+    const clearUserFilters = () => setFilterUsers([]);
+
     const getTaskAssignmentLabel = (task) => {
         if (task.assignedTo?.length) {
             return task.assignedTo
@@ -1337,22 +1341,59 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 px-8 pb-8 pt-2 font-sans text-gray-800">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 px-4 pb-6 pt-1 font-sans text-gray-800 sm:px-6">
             <Toaster position="top-right" />
             {processing && <SpinnerOverlay />}
-            <div className="max-w-8xl mx-auto bg-white rounded-xl shadow-lg p-4">
-                <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-center space-x-4">
-                        <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] flex items-center">
-                            <Squares2X2Icon className="h-7 w-7 mr-2" />Sprint Task Manager
+            <div className="mx-auto max-w-[96rem] rounded-[26px] bg-white p-4 shadow-lg sm:p-5">
+                <div className="mb-4 space-y-3">
+                    <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                        <h1 className="flex items-center text-[1.75rem] font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)]">
+                            <Squares2X2Icon className="mr-2 h-7 w-7" />Sprint Task Manager
                         </h1>
-                        <div className="flex flex-wrap items-center gap-2.5 rounded-2xl border border-slate-200 bg-white/85 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_12px_26px_rgba(15,23,42,0.08)]" aria-label="Task assignee filters">
-                            <div className="flex items-center gap-2 border-r border-slate-200 pr-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white shadow-[0_10px_18px_rgba(15,23,42,0.22),inset_3px_4px_8px_rgba(255,255,255,0.18)]">
-                                    <FunnelIcon className="h-[18px] w-[18px]" />
-                                </span>
-                                Filters
+                        <div className="flex flex-wrap gap-2">
+                            <button
+                                onClick={() => { setAddingToBacklog(false); setShowAddModal(true); }}
+                                className="flex items-center rounded-lg bg-[var(--theme-color)] px-4 py-2 text-sm font-semibold text-white shadow-md hover:brightness-110"
+                            >
+                                <PlusCircleIcon className="mr-2 h-5 w-5" />
+                                Add Task
+                            </button>
+                            {sheetIntegrationEnabled && (
+                                <>
+                                    <button
+                                        onClick={handleImport}
+                                        className="flex items-center rounded-lg bg-green-500 px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-green-700"
+                                    >
+                                        Import from Sheet
+                                    </button>
+                                    <button
+                                        onClick={handleExport}
+                                        className="flex items-center rounded-lg bg-[var(--theme-color)] px-4 py-2 text-sm font-semibold text-white shadow-md hover:brightness-110"
+                                    >
+                                        Export to Sheet
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    <div
+                        className="flex flex-wrap items-center gap-3 rounded-[24px] border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.96),rgba(240,247,255,0.86))] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.86),0_14px_28px_rgba(15,23,42,0.06)]"
+                        aria-label="Task assignee filters"
+                    >
+                        <div className="flex items-center gap-3 pr-1 sm:border-r sm:border-slate-200 sm:pr-4">
+                            <span className="flex h-10 w-10 items-center justify-center rounded-[16px] bg-slate-900 text-white shadow-[0_10px_18px_rgba(15,23,42,0.18),inset_3px_4px_8px_rgba(255,255,255,0.16)]">
+                                <FunnelIcon className="h-[18px] w-[18px]" />
+                            </span>
+                            <div>
+                                <p className="text-[0.62rem] font-semibold uppercase tracking-[0.24em] text-slate-500">Assignee Filter</p>
+                                <p className="text-sm font-semibold text-slate-900">
+                                    {filterUsers.length ? `${filterUsers.length} selected` : 'All assignees'}
+                                </p>
                             </div>
+                        </div>
+
+                        <div className="flex flex-1 flex-wrap items-center gap-2">
                             {users.map((u, index) => (
                                 <UserFilterOrb
                                     key={u.id}
@@ -1363,31 +1404,16 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                                 />
                             ))}
                         </div>
-                    </div>
-                    <div className="flex space-x-2">
-                        <button
-                            onClick={() => { setAddingToBacklog(false); setShowAddModal(true); }}
-                            className="flex items-center bg-[var(--theme-color)] hover:brightness-110 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
-                        >
-                            <PlusCircleIcon className="h-5 w-5 mr-2" />
-                            Add Task
-                        </button>
-                        {sheetIntegrationEnabled && (
-                            <>
-                                <button
-                                    onClick={handleImport}
-                                    className="flex items-center bg-green-500 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
-                                >
-                                    Import from Sheet
-                                </button>
-                                <button
-                                    onClick={handleExport}
-                                    className="flex items-center bg-[var(--theme-color)] hover:brightness-110 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
-                                >
-                                    Export to Sheet
-                                </button>
-                            </>
-                        )}
+
+                        {filterUsers.length > 0 ? (
+                            <button
+                                type="button"
+                                onClick={clearUserFilters}
+                                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600 shadow-[0_8px_18px_rgba(15,23,42,0.06)] hover:border-slate-300 hover:text-slate-900"
+                            >
+                                All
+                            </button>
+                        ) : null}
                     </div>
                 </div>
 

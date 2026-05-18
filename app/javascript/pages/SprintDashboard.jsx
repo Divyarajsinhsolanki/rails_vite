@@ -241,22 +241,22 @@ export default function SprintDashboard() {
 
 
   return (
-    <div className="space-y-6 pb-8">
-      <header className="shell-panel shell-panel-strong landing-hero-3d overflow-hidden rounded-[36px]">
+    <div className="space-y-5 pb-8">
+      <header className="shell-panel shell-panel-strong landing-hero-3d overflow-hidden rounded-[34px]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(103,232,249,0.16),transparent_24%),radial-gradient(circle_at_left,rgba(52,109,255,0.12),transparent_26%)]" />
-        <div className="relative space-y-6 p-5 sm:p-6 lg:p-7">
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-            <div className="max-w-4xl">
+        <div className="relative space-y-4 p-4 sm:p-5 lg:p-6">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+            <div className="max-w-3xl">
               <span className="shell-eyebrow">Project Command Deck</span>
-              <h1 className="mt-3 text-3xl font-semibold tracking-[-0.05em] text-slate-950 sm:text-4xl">
+              <h1 className="mt-2 text-[clamp(2rem,3vw,3rem)] font-semibold tracking-[-0.05em] text-slate-950">
                 {project?.name || 'Project Dashboard'}
               </h1>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base">
+              <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-600 sm:text-[0.95rem]">
                 {project?.description || 'Plan sprint delivery, review project health, and move between execution surfaces from one shared control room.'}
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 xl:justify-end">
+            <div className="flex flex-wrap items-center gap-1.5 xl:justify-end">
               <span className="shell-chip">
                 <span className="shell-chip-dot" />
                 {activeTab}
@@ -274,7 +274,7 @@ export default function SprintDashboard() {
             </div>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.92fr)]">
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="shell-kpi-card">
                 <span className="shell-kpi-label">Sprint Window</span>
@@ -295,23 +295,23 @@ export default function SprintDashboard() {
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-[30px] border border-white/12 bg-[linear-gradient(135deg,rgba(7,17,32,0.96),rgba(30,41,59,0.92))] p-5 text-white shadow-[0_28px_54px_rgb(15_23_42_/_0.22)]">
+            <div className="overflow-hidden rounded-[28px] border border-white/12 bg-[linear-gradient(135deg,rgba(7,17,32,0.96),rgba(30,41,59,0.92))] p-4 text-white shadow-[0_28px_54px_rgb(15_23_42_/_0.22)] sm:p-5">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.26em] text-white/45">
                 {sprint && isCurrentSprint(sprint) ? 'Current Sprint' : 'Sprint Status'}
               </p>
-              <div className="mt-3 flex items-end justify-between gap-3">
+              <div className="mt-2.5 flex items-end justify-between gap-3">
                 <div>
-                  <p className="text-2xl font-semibold tracking-[-0.04em]">
+                  <p className="text-[1.8rem] font-semibold tracking-[-0.04em]">
                     {sprint ? sprint.name : 'No sprint selected'}
                   </p>
-                  <p className="mt-2 text-sm leading-6 text-white/66">
+                  <p className="mt-1.5 text-sm leading-6 text-white/66">
                     Use the sprint manager to swap windows, review dates, and shift this dashboard into the correct execution lane.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsHeaderExpanded((value) => !value)}
-                  className="shell-button-secondary shrink-0 bg-white/10 px-4 py-3 text-white shadow-none hover:bg-white/16"
+                  className="shell-button-secondary shrink-0 bg-white/10 px-4 py-2.5 text-white shadow-none hover:bg-white/16"
                 >
                   {isHeaderExpanded ? <ChevronUpIcon className="h-5 w-5" /> : <ChevronDownIcon className="h-5 w-5" />}
                   {isHeaderExpanded ? 'Hide' : 'Manage'}
@@ -320,7 +320,7 @@ export default function SprintDashboard() {
             </div>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto]">
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto]">
             <div className="shell-segmented scrollbar-hide overflow-x-auto">
               {dashboardTabs.map((tab) => (
                 <button
@@ -334,7 +334,7 @@ export default function SprintDashboard() {
               ))}
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 xl:justify-end">
+            <div className="flex flex-wrap items-center gap-2.5 xl:justify-end">
               {project?.qa_mode_enabled ? (
                 <div className="shell-segmented">
                   {VIEW_MODES.map((mode) => {
@@ -360,7 +360,7 @@ export default function SprintDashboard() {
               <button
                 type="button"
                 onClick={() => setIsHeaderExpanded((value) => !value)}
-                className="shell-button-secondary px-5 py-3"
+                className="shell-button-secondary px-4 py-2.5"
               >
                 <CalendarDaysIcon className="h-5 w-5" />
                 {isHeaderExpanded ? 'Hide Sprint Manager' : 'Open Sprint Manager'}

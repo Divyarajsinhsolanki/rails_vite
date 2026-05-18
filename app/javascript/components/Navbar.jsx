@@ -159,33 +159,39 @@ const AnimatedNavLink = ({ to, label, icon: Icon, onClick, fullWidth = false }) 
   const match = useMatch({ path: to, end: to === "/" });
   const isActive = !!match;
   const layoutId = fullWidth ? "mobile-nav-active-bg" : "desktop-nav-active-bg";
+  const frameClass = fullWidth ? "rounded-[18px]" : "rounded-[16px]";
+  const contentClass = fullWidth
+    ? "gap-2.5 rounded-[18px] px-3 py-2.5 text-sm"
+    : "gap-1.5 rounded-[16px] px-2.5 py-1.5 text-[12px] xl:text-[12.5px]";
+  const iconClass = fullWidth ? "h-7 w-7 rounded-[14px]" : "h-6 w-6 rounded-[12px]";
+  const glyphClass = fullWidth ? "h-3.5 w-3.5" : "h-[13px] w-[13px]";
 
   return (
     <NavLink to={to} onClick={onClick} className={`group relative ${fullWidth ? "w-full" : "shrink-0"}`}>
       {isActive ? (
         <motion.span
           layoutId={layoutId}
-          className="absolute inset-0 rounded-[20px] border border-white/85 bg-white/92 shadow-[0_16px_34px_rgb(15_23_42_/_0.12)]"
+          className={`absolute inset-0 border border-white/85 bg-white/92 shadow-[0_16px_34px_rgb(15_23_42_/_0.12)] ${frameClass}`}
           transition={{ type: "spring", bounce: 0.2, duration: 0.55 }}
         />
       ) : (
-        <span className="absolute inset-0 rounded-[20px] border border-transparent transition group-hover:border-white/70 group-hover:bg-white/48" />
+        <span className={`absolute inset-0 border border-transparent transition group-hover:border-white/70 group-hover:bg-white/48 ${frameClass}`} />
       )}
 
       <span
-        className={`relative z-10 flex items-center gap-3 rounded-[20px] px-3.5 py-2.5 text-sm font-semibold ${
+        className={`relative z-10 flex items-center font-semibold ${
           isActive ? "text-slate-950" : "text-slate-600"
-        }`}
+        } ${contentClass}`}
       >
         {Icon ? (
           <span
-            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl ${
+            className={`flex shrink-0 items-center justify-center ${
               isActive
                 ? "bg-slate-950 text-white shadow-[0_14px_26px_rgb(15_23_42_/_0.18)]"
                 : "border border-white/70 bg-white/70 text-[var(--theme-color)] group-hover:bg-white group-hover:text-slate-950"
-            }`}
+            } ${iconClass}`}
           >
-            <Icon className="h-4 w-4" />
+            <Icon className={glyphClass} />
           </span>
         ) : null}
         <span className={fullWidth ? "truncate" : ""}>{label}</span>
@@ -213,29 +219,29 @@ const ProjectsDropdown = ({ projects, onItemClick, active }) => {
     <div className="relative shrink-0" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen((value) => !value)}
-        className={`group relative flex items-center gap-3 rounded-[20px] px-3.5 py-2.5 text-sm font-semibold ${
+        className={`group relative flex items-center gap-1.5 rounded-[16px] px-2.5 py-1.5 text-[12px] font-semibold xl:text-[12.5px] ${
           active || isOpen ? "text-slate-950" : "text-slate-600"
         }`}
       >
         <span
-          className={`absolute inset-0 rounded-[20px] border ${
+          className={`absolute inset-0 rounded-[16px] border ${
             active || isOpen
               ? "border-white/85 bg-white/90 shadow-[0_16px_34px_rgb(15_23_42_/_0.12)]"
               : "border-transparent group-hover:border-white/70 group-hover:bg-white/48"
           }`}
         />
         <span
-          className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-2xl ${
+          className={`relative z-10 flex h-6 w-6 items-center justify-center rounded-[12px] ${
             active || isOpen
               ? "bg-slate-950 text-white shadow-[0_14px_26px_rgb(15_23_42_/_0.18)]"
               : "border border-white/70 bg-white/70 text-[var(--theme-color)] group-hover:bg-white group-hover:text-slate-950"
           }`}
         >
-          <FiLayers className="h-4 w-4" />
+          <FiLayers className="h-[13px] w-[13px]" />
         </span>
         <span className="relative z-10">Projects</span>
         {projects.length > 0 ? (
-          <span className="relative z-10 inline-flex rounded-full bg-slate-950 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
+          <span className="relative z-10 inline-flex rounded-full bg-slate-950 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-white">
             {projects.length}
           </span>
         ) : null}
@@ -400,7 +406,7 @@ const Navbar = () => {
       transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
     >
       <motion.div
-        className="shell-panel shell-panel-strong relative mx-auto flex max-w-[1600px] items-center gap-3 overflow-visible rounded-[32px] px-3 py-3 sm:px-4"
+        className="shell-panel shell-panel-strong relative mx-auto flex max-w-[1600px] items-center gap-2 overflow-visible rounded-[32px] px-2.5 py-2.5 sm:px-3.5"
         animate={{ y: scrolled ? -2 : 0, scale: scrolled ? 0.996 : 1 }}
         transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
         style={{ boxShadow: scrolled ? "var(--shell-shadow-lg)" : "var(--shell-shadow-md)" }}
@@ -410,7 +416,7 @@ const Navbar = () => {
 
         <Link
           to="/"
-          className="group flex min-w-0 items-center gap-3 rounded-[26px] px-1 py-1"
+          className="group flex min-w-0 items-center gap-2 rounded-[26px] px-1 py-1"
           onClick={() => setIsMobileMenuOpen(false)}
         >
           <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[20px] border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(229,238,255,0.75))] shadow-[0_18px_38px_rgb(15_23_42_/_0.12)]">
@@ -431,12 +437,14 @@ const Navbar = () => {
             >
               Nexus<span className="text-[var(--theme-color)]">Hub</span>
             </motion.h1>
-            <p className="hidden truncate text-xs font-medium text-slate-500 md:block">{currentSection.caption}</p>
+            <p className="hidden max-w-[13rem] truncate text-xs font-medium text-slate-500 min-[1480px]:block">
+              {currentSection.caption}
+            </p>
           </div>
         </Link>
 
         <nav className="hidden min-w-0 flex-1 items-center lg:flex">
-          <div className="scrollbar-hide flex w-full items-center justify-start gap-1.5 overflow-x-auto rounded-[24px] border border-white/60 bg-white/52 p-2 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.82)] 2xl:justify-center 2xl:overflow-visible">
+          <div className="scrollbar-hide flex w-full items-center justify-start gap-0.5 overflow-x-auto rounded-[24px] border border-white/60 bg-white/52 p-1 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.82)] xl:justify-center xl:overflow-visible">
             {navLinks.map(
               (link) =>
                 link.visible && (
@@ -456,7 +464,7 @@ const Navbar = () => {
 
         <div className="ml-auto shrink-0 flex items-center gap-2 sm:gap-3">
           {user ? (
-            <span className="shell-chip hidden 2xl:inline-flex">
+            <span className="shell-chip hidden min-[1720px]:inline-flex">
               <span className="shell-chip-dot" />
               {roleLabel(user)}
             </span>
