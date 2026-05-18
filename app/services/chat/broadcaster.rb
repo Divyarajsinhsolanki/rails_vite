@@ -111,8 +111,10 @@ module Chat
             {
               id: attachment.id,
               url: Rails.application.routes.url_helpers.rails_blob_path(attachment, only_path: true),
+              download_url: Rails.application.routes.url_helpers.rails_blob_path(attachment, only_path: true, disposition: "attachment"),
               content_type: attachment.content_type,
-              filename: attachment.filename.to_s
+              filename: attachment.filename.to_s,
+              byte_size: attachment.byte_size
             }
           end,
           reactions: message.reaction_counts,

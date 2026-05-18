@@ -32,7 +32,7 @@ class Api::MessagesController < Api::BaseController
       user_name: message.user.full_name,
       user_profile_picture: message.user.profile_picture.attached? ? rails_blob_url(message.user.profile_picture, only_path: true) : nil,
       created_at: message.created_at,
-      attachments: message.attachments.map { |attachment| { id: attachment.id, url: rails_blob_url(attachment, only_path: true), content_type: attachment.content_type, filename: attachment.filename.to_s } },
+      attachments: message.attachments.map { |attachment| { id: attachment.id, url: rails_blob_url(attachment, only_path: true), download_url: rails_blob_url(attachment, only_path: true, disposition: "attachment"), content_type: attachment.content_type, filename: attachment.filename.to_s, byte_size: attachment.byte_size } },
       reactions: message.reaction_counts,
       reacted_emojis: message.reacted_emojis_for(current_user)
     }
