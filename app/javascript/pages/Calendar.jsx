@@ -143,6 +143,7 @@ const Calendar = () => {
   const [error, setError] = useState("");
   const [editingEventId, setEditingEventId] = useState(null);
   const [draggingEventId, setDraggingEventId] = useState(null);
+  const [showAdvancedCreateOptions, setShowAdvancedCreateOptions] = useState(false);
 
   const [filters, setFilters] = useState({
     visibility: "",
@@ -591,58 +592,79 @@ const Calendar = () => {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <section className="lg:col-span-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Create event</h2>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Create event</h2>
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Start with the essentials, then open advanced options only when needed.</p>
+            </div>
+          </div>
 
           <form className="mt-4 space-y-3" onSubmit={handleCreate}>
             <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="Event title" required className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm" />
-            <textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Description" rows={2} className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm" />
 
             <div className="grid grid-cols-2 gap-2">
               <input type="datetime-local" value={form.start_at} onChange={(e) => setForm((f) => ({ ...f, start_at: e.target.value }))} className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm" />
               <input type="datetime-local" value={form.end_at} onChange={(e) => setForm((f) => ({ ...f, end_at: e.target.value }))} className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm" />
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <select value={form.event_type} onChange={(e) => setForm((f) => ({ ...f, event_type: e.target.value }))} className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm">
-                {EVENT_TYPES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-              <select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))} className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm">
-                {STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}
-              </select>
-            </div>
+            <select value={form.event_type} onChange={(e) => setForm((f) => ({ ...f, event_type: e.target.value }))} className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm">
+              {EVENT_TYPES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
 
-            <div className="grid grid-cols-2 gap-2">
-              <select value={form.visibility} onChange={(e) => setForm((f) => ({ ...f, visibility: e.target.value }))} className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm">
-                {VISIBILITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-              <select value={form.recurrence_rule} onChange={(e) => setForm((f) => ({ ...f, recurrence_rule: e.target.value }))} className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm">
-                {RECURRENCE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </div>
+            <button
+              type="button"
+              onClick={() => setShowAdvancedCreateOptions((show) => !show)}
+              className="flex w-full items-center justify-between rounded-lg border border-dashed border-zinc-300 bg-zinc-50 px-3 py-2 text-left text-sm font-medium text-zinc-700 transition hover:border-blue-400 hover:bg-blue-50 dark:border-zinc-700 dark:bg-zinc-800/70 dark:text-zinc-200 dark:hover:border-blue-500 dark:hover:bg-blue-950/30"
+              aria-expanded={showAdvancedCreateOptions}
+              aria-controls="calendar-create-advanced-options"
+            >
+              <span>Advanced options</span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">{showAdvancedCreateOptions ? "Hide" : "Show"}</span>
+            </button>
 
-            {form.recurrence_rule !== "none" ? (
-              <input type="number" min="1" max="30" value={form.recurrence_count} onChange={(e) => setForm((f) => ({ ...f, recurrence_count: e.target.value }))} placeholder="Repeat count (max 30)" className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm" />
+            {showAdvancedCreateOptions ? (
+              <div id="calendar-create-advanced-options" className="space-y-3 rounded-xl border border-zinc-200 bg-zinc-50/80 p-3 dark:border-zinc-700 dark:bg-zinc-800/40">
+                <textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Description" rows={2} className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm" />
+
+                <div className="grid grid-cols-2 gap-2">
+                  <select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))} className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm">
+                    {STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}
+                  </select>
+                  <select value={form.visibility} onChange={(e) => setForm((f) => ({ ...f, visibility: e.target.value }))} className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm">
+                    {VISIBILITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                </div>
+
+                {form.visibility === "project" && (
+                  <select value={form.project_id} onChange={(e) => setForm((f) => ({ ...f, project_id: e.target.value }))} required className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm">
+                    <option value="">Select project</option>
+                    {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
+                  </select>
+                )}
+
+                <div className="grid grid-cols-2 gap-2">
+                  <select value={form.recurrence_rule} onChange={(e) => setForm((f) => ({ ...f, recurrence_rule: e.target.value }))} className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm">
+                    {RECURRENCE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                  {form.recurrence_rule !== "none" ? (
+                    <input type="number" min="1" max="30" value={form.recurrence_count} onChange={(e) => setForm((f) => ({ ...f, recurrence_count: e.target.value }))} placeholder="Repeat count" className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm" />
+                  ) : null}
+                </div>
+
+                <input value={form.location_or_meet_link} onChange={(e) => setForm((f) => ({ ...f, location_or_meet_link: e.target.value }))} placeholder="Meet link / location" className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm" />
+
+                <div className="grid grid-cols-2 gap-2">
+                  <select value={form.reminder_minutes} onChange={(e) => setForm((f) => ({ ...f, reminder_minutes: e.target.value }))} className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm">
+                    {REMINDER_OPTIONS.map((o) => <option key={o.value || "none"} value={o.value}>{o.label}</option>)}
+                  </select>
+                  <select value={form.reminder_channel} onChange={(e) => setForm((f) => ({ ...f, reminder_channel: e.target.value }))} className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm">
+                    <option value="in_app">In app</option>
+                    <option value="email">Email</option>
+                    <option value="slack">Slack</option>
+                  </select>
+                </div>
+              </div>
             ) : null}
-
-            {form.visibility === "project" && (
-              <select value={form.project_id} onChange={(e) => setForm((f) => ({ ...f, project_id: e.target.value }))} required className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm">
-                <option value="">Select project</option>
-                {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
-              </select>
-            )}
-
-            <input value={form.location_or_meet_link} onChange={(e) => setForm((f) => ({ ...f, location_or_meet_link: e.target.value }))} placeholder="Meet link / location" className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm" />
-
-            <div className="grid grid-cols-2 gap-2">
-              <select value={form.reminder_minutes} onChange={(e) => setForm((f) => ({ ...f, reminder_minutes: e.target.value }))} className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm">
-                {REMINDER_OPTIONS.map((o) => <option key={o.value || "none"} value={o.value}>{o.label}</option>)}
-              </select>
-              <select value={form.reminder_channel} onChange={(e) => setForm((f) => ({ ...f, reminder_channel: e.target.value }))} className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm">
-                <option value="in_app">In app</option>
-                <option value="email">Email</option>
-                <option value="slack">Slack</option>
-              </select>
-            </div>
 
             <button type="submit" disabled={saving} className="w-full rounded-lg bg-blue-600 hover:bg-blue-700 text-white py-2.5 text-sm font-semibold disabled:opacity-60">{saving ? "Saving..." : "Create event"}</button>
           </form>
