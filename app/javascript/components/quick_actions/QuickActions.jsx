@@ -1,10 +1,15 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  FiBookOpen,
+  FiCalendar,
+  FiCheckSquare,
+  FiFolderPlus,
+  FiMessageCircle,
   FiPenTool,
   FiUploadCloud,
-  FiFolderPlus,
   FiUsers,
+  FiZap,
 } from "react-icons/fi";
 
 const QuickActions = ({ onCreatePost }) => {
@@ -22,16 +27,46 @@ const QuickActions = ({ onCreatePost }) => {
       },
     },
     {
-      title: "Upload Media",
+      title: "Open Calendar",
+      description: "See reminders, events, and today’s plan.",
+      icon: <FiCalendar className="text-lg" />,
+      onClick: () => navigate("/calendar"),
+    },
+    {
+      title: "Momentum Hub",
+      description: "Review focus, birthdays, and daily wins.",
+      icon: <FiZap className="text-lg" />,
+      onClick: () => navigate("/momentum"),
+    },
+    {
+      title: "My Work Log",
+      description: "Capture hours, priorities, and notes.",
+      icon: <FiCheckSquare className="text-lg" />,
+      onClick: () => navigate("/worklog"),
+    },
+    {
+      title: "Team Chat",
+      description: "Continue conversations without leaving flow.",
+      icon: <FiMessageCircle className="text-lg" />,
+      onClick: () => navigate("/chat"),
+    },
+    {
+      title: "Knowledge Base",
+      description: "Open saved links and learning goals.",
+      icon: <FiBookOpen className="text-lg" />,
+      onClick: () => navigate("/knowledge"),
+    },
+    {
+      title: "Project Vault",
+      description: "Find credentials, URLs, docs, and updates.",
+      icon: <FiFolderPlus className="text-lg" />,
+      onClick: () => navigate("/vault"),
+    },
+    {
+      title: "PDF Lab",
       description: "Manage PDFs and shared resources.",
       icon: <FiUploadCloud className="text-lg" />,
       onClick: () => navigate("/pdf"),
-    },
-    {
-      title: "New Project",
-      description: "Kick off a collaboration space.",
-      icon: <FiFolderPlus className="text-lg" />,
-      onClick: () => navigate("/projects"),
     },
     {
       title: "Invite Teammates",
@@ -49,13 +84,13 @@ const QuickActions = ({ onCreatePost }) => {
           Jump straight into the work that matters most right now.
         </p>
       </div>
-      <div className="p-4 space-y-3">
+      <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-1">
         {actions.map((action) => (
           <button
             key={action.title}
             type="button"
             onClick={action.onClick}
-            className="group w-full flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-left transition-all hover:border-blue-200 hover:bg-white hover:shadow-md"
+            className="group flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-left transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:bg-white hover:shadow-md"
           >
             <div className="flex items-start gap-3">
               <span className="mt-1 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white">

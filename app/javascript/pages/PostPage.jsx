@@ -11,20 +11,102 @@ import QuickActions from "../components/quick_actions/QuickActions";
 
 // --- Icon Imports ---
 import {
-  FiMessageSquare, FiUsers, FiClock, FiCheckCircle,
-  FiAlertTriangle, FiBriefcase, FiPlus, FiLoader,
-  FiCheckSquare
+  FiArchive,
+  FiBell,
+  FiBookOpen,
+  FiCalendar,
+  FiCheckCircle,
+  FiCheckSquare,
+  FiClock,
+  FiFolder,
+  FiMessageCircle,
+  FiMessageSquare,
+  FiPlus,
+  FiSearch,
+  FiTrendingUp,
+  FiUsers,
+  FiZap,
+  FiAlertTriangle,
+  FiBriefcase,
+  FiLoader,
 } from "react-icons/fi";
 
 // --- Reusable Components ---
 
+const workspaceShortcuts = [
+  {
+    title: "Calendar",
+    description: "Events, reminders, and Google links",
+    to: "/calendar",
+    icon: FiCalendar,
+    accent: "from-sky-500 to-cyan-400",
+  },
+  {
+    title: "Momentum",
+    description: "Daily focus, wins, and team pulse",
+    to: "/momentum",
+    icon: FiZap,
+    accent: "from-amber-500 to-orange-400",
+  },
+  {
+    title: "Work Log",
+    description: "Hours, priorities, tags, and notes",
+    to: "/worklog",
+    icon: FiCheckSquare,
+    accent: "from-emerald-500 to-teal-400",
+  },
+  {
+    title: "Chat",
+    description: "Team conversations and task links",
+    to: "/chat",
+    icon: FiMessageCircle,
+    accent: "from-violet-500 to-fuchsia-400",
+  },
+  {
+    title: "Knowledge",
+    description: "Bookmarks, learning goals, and news",
+    to: "/knowledge",
+    icon: FiBookOpen,
+    accent: "from-indigo-500 to-blue-400",
+  },
+  {
+    title: "Vault",
+    description: "Project docs, credentials, and updates",
+    to: "/vault",
+    icon: FiArchive,
+    accent: "from-slate-600 to-slate-400",
+  },
+];
+
+const ShortcutCard = ({ shortcut }) => {
+  const Icon = shortcut.icon;
+
+  return (
+    <Link
+      to={shortcut.to}
+      className="group rounded-2xl border border-white/70 bg-white/90 p-4 shadow-sm transition-all hover:-translate-y-1 hover:border-[rgb(var(--theme-color-rgb)/0.35)] hover:shadow-xl"
+    >
+      <div className={`mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${shortcut.accent} text-white shadow-lg shadow-slate-200 transition-transform group-hover:scale-105`}>
+        <Icon className="text-xl" />
+      </div>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="font-bold text-slate-900">{shortcut.title}</h3>
+          <p className="mt-1 text-xs leading-5 text-slate-500">{shortcut.description}</p>
+        </div>
+        <span className="mt-1 text-xs font-semibold text-[var(--theme-color)] opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100">Open</span>
+      </div>
+    </Link>
+  );
+};
+
 const StatCard = ({ icon, label, value, color }) => (
-  <div className="bg-white p-4 rounded-xl border border-slate-200 flex items-center gap-4">
-    <div className={`p-3 rounded-lg ${color}`}>
+  <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+    <div className={`rounded-lg p-3 ${color}`}>
       {icon}
     </div>
     <div>
-      <p className="text-sm text-slate-500 font-medium">{label}</p>
+      <p className="text-sm font-medium text-slate-500">{label}</p>
       <p className="text-2xl font-bold text-slate-800">{value}</p>
     </div>
   </div>
@@ -215,16 +297,86 @@ const PostPage = () => {
   return (
     <>
       <Helmet>
-        <title>Posts</title>
-        <meta name="description" content="Latest posts and team updates" />
-        <meta property="og:title" content="Posts" />
-        <meta property="og:description" content="Latest posts and team updates" />
+        <title>Updates Hub</title>
+        <meta name="description" content="Team updates, shortcuts, tasks, and workspace activity" />
+        <meta property="og:title" content="Updates Hub" />
+        <meta property="og:description" content="Team updates, shortcuts, tasks, and workspace activity" />
         <meta property="og:type" content="website" />
       </Helmet>
-      <div className="min-h-screen bg-slate-50 font-sans">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/70 font-sans">
         <Toaster position="top-right" />
       
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="mx-auto max-w-8xl px-4 py-8 sm:px-6 lg:px-8">
+          <section className="mb-8 overflow-hidden rounded-[2rem] border border-white/70 bg-slate-950 shadow-2xl shadow-slate-200">
+            <div className="relative px-6 py-8 sm:px-8 lg:px-10">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.45),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.4),_transparent_35%)]" />
+              <div className="relative grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+                <div>
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-blue-100">
+                    <FiTrendingUp /> Updated workspace
+                  </span>
+                  <h1 className="mt-5 max-w-3xl text-4xl font-black tracking-tight text-white sm:text-5xl">
+                    Welcome back, {[user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'User'} — run your day from Updates.
+                  </h1>
+                  <p className="mt-4 max-w-2xl text-base leading-7 text-slate-200">
+                    The old updates feed is now a command center with posts, shortcuts, tasks, projects, birthdays, and quick entry points for the newest app features.
+                  </p>
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      onClick={handleQuickPost}
+                      className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-slate-900 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
+                    >
+                      <FiPlus /> Write update
+                    </button>
+                    <Link
+                      to="/notifications"
+                      className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/20"
+                    >
+                      <FiBell /> Check notifications
+                    </Link>
+                    <Link
+                      to="/projects"
+                      className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/20"
+                    >
+                      <FiFolder /> Projects
+                    </Link>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-3 rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                  <div className="rounded-2xl bg-white/95 p-4 text-center">
+                    <p className="text-3xl font-black text-slate-900">{stats.totalPosts}</p>
+                    <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Posts</p>
+                  </div>
+                  <div className="rounded-2xl bg-white/95 p-4 text-center">
+                    <p className="text-3xl font-black text-slate-900">{tasks.length}</p>
+                    <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Due Today</p>
+                  </div>
+                  <div className="rounded-2xl bg-white/95 p-4 text-center">
+                    <p className="text-3xl font-black text-slate-900">{projects.length}</p>
+                    <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Projects</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="mb-8 rounded-[2rem] border border-slate-200/80 bg-white/80 p-5 shadow-sm backdrop-blur">
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[var(--theme-color)]">Shortcuts</p>
+                <h2 className="text-2xl font-black text-slate-900">Jump to new features faster</h2>
+              </div>
+              <p className="max-w-xl text-sm text-slate-500">One-click access to the most useful areas added around updates: planning, logging, chat, knowledge, and vault tools.</p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+              {workspaceShortcuts.map((shortcut) => (
+                <ShortcutCard key={shortcut.title} shortcut={shortcut} />
+              ))}
+            </div>
+          </section>
+
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
         
         {/* Left Sidebar: At a Glance */}
         <aside className="lg:col-span-3">
@@ -280,16 +432,20 @@ const PostPage = () => {
 
         {/* Main Content Feed */}
         <div className="lg:col-span-6">
-            <header className="mb-8">
-                <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight">
-                    Welcome back, {[user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'User'}!
-                </h1>
-                <p className="text-slate-500 mt-2">
-                    Here's what's happening in your community today.
-                </p>
-            </header>
-            
             <main className="space-y-8">
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">Community feed</p>
+                      <h2 className="mt-1 text-2xl font-black text-slate-900">Share and read team updates</h2>
+                    </div>
+                    <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1.5"><FiMessageSquare /> Posts</span>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1.5"><FiSearch /> Comments</span>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1.5"><FiUsers /> Team pulse</span>
+                    </div>
+                  </div>
+                </div>
                 <div ref={postFormRef}>
                   <PostForm refreshPosts={refreshPosts} />
                 </div>
@@ -352,6 +508,7 @@ const PostPage = () => {
             </div>
         </aside>
 
+          </div>
         </div>
       </div>
     </>
