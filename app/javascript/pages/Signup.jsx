@@ -4,9 +4,29 @@ import { useNavigate } from "react-router-dom";
 import submitForm from "../utils/formSubmit";
 import { Toaster, toast } from "react-hot-toast";
 import SpinnerOverlay from "../components/ui/SpinnerOverlay";
+import WorkspaceOrb from "../components/landing/WorkspaceOrb";
+
+const signupMetrics = [
+  ["2 min", "Quick setup"],
+  ["SSO", "Google ready"],
+  ["Vault", "Secure profile"],
+];
+
+const signupFeatures = [
+  {
+    title: "Team Launch",
+    metric: "Ready",
+    copy: "Create your profile, join the workspace, and start planning from one premium command deck.",
+  },
+  {
+    title: "Smart Flow",
+    metric: "AI",
+    copy: "Unlock momentum, knowledge prompts, chat, tasks, and vault access with a focused account.",
+  },
+];
 
 const Signup = ({ switchToLogin }) => {
-  const { handleSignup, handleGoogleLogin } = useContext(AuthContext);
+  const { handleGoogleLogin } = useContext(AuthContext);
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -37,7 +57,9 @@ const Signup = ({ switchToLogin }) => {
     submissionData.append("auth[last_name]", formData.last_name);
     submissionData.append("auth[email]", formData.email);
     submissionData.append("auth[password]", formData.password);
-    submissionData.append("auth[profile_picture]", formData.profile_picture);
+    if (formData.profile_picture) {
+      submissionData.append("auth[profile_picture]", formData.profile_picture);
+    }
 
     try {
       await submitForm("/api/signup", "POST", submissionData);
@@ -54,147 +76,161 @@ const Signup = ({ switchToLogin }) => {
   };
 
   return (
-    <div className="flex min-h-full items-center justify-center">
+    <div className="min-h-full">
       <Toaster position="top-right" />
       {loading && <SpinnerOverlay />}
-      <div className="w-full max-w-md rounded-2xl border border-blue-100/70 bg-white/95 p-8 shadow-xl transition-transform hover:scale-[1.01]">
-        <h2 className="mb-8 text-center text-3xl font-bold text-slate-900">Create Account</h2>
-
-        {/* Signup Form */}
-        <form onSubmit={handleSubmit} className="space-y-5" encType="multipart/form-data">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1 required-label" htmlFor="first_name">
-                First Name
-              </label>
-              <input
-                id="first_name"
-                type="text"
-                name="first_name"
-                placeholder="First Name"
-                required
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder-gray-400"
-                value={formData.first_name}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1 required-label" htmlFor="last_name">
-                Last Name
-              </label>
-              <input
-                id="last_name"
-                type="text"
-                name="last_name"
-                placeholder="Last Name"
-                required
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder-gray-400"
-                value={formData.last_name}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1 required-label" htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              name="email"
-              placeholder="Email"
-              required
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder-gray-400"
-              value={formData.email}
-              onChange={handleChange}
-            />
-          </div>
-          
-          <div className="relative">
-            <label className="block text-sm font-semibold text-gray-700 mb-1 required-label" htmlFor="password">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              name="password"
-              placeholder="Password"
-              required
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder-gray-400"
-              value={formData.password}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="relative">
-            <label htmlFor="profile_picture" className="block text-sm font-medium text-gray-600 mb-2">
-              Profile Picture
-            </label>
-            <input
-              type="file"
-              id="profile_picture"
-              name="profile_picture"
-              accept="image/*"
-              title="Profile Picture"
-              onChange={handleChange}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-medium transition-all transform hover:scale-[1.01] shadow-md"
-          >
-            Sign Up
-          </button>
-        </form>
-
-        {/* Error Message */}
-        {error && (
-          <div className="mt-5 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg flex items-center gap-2">
-            ⚠️ {error}
-          </div>
-        )}
-
-        {/* Divider */}
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-200"></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">OR</span>
-          </div>
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 py-8 lg:flex-row lg:items-center lg:gap-10 xl:gap-14">
+        <div className="lg:w-[58%]">
+          <WorkspaceOrb
+            eyebrow="Start NexusHub"
+            title="Build your workspace identity in one polished flow."
+            description="Create an account to unlock sprints, conversations, knowledge signals, secure vaults, and a calmer daily operating rhythm."
+            metrics={signupMetrics}
+            featureCards={signupFeatures}
+          />
         </div>
 
-        {/* Google Signup Button */}
-        <button
-          onClick={async () => {
-            setLoading(true);
-            try {
-              await handleGoogleLogin();
-            } finally {
-              setLoading(false);
-            }
-          }}
-          className="w-full bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-lg font-medium transition-all flex items-center justify-center gap-2 shadow-md"
-        >
-          <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M12.545 10.239v3.821h5.445c-.712 2.315-2.647 3.972-5.445 3.972a6.033 6.033 0 110-12.064c1.835 0 3.456.705 4.691 1.942l3.099-3.101A10.113 10.113 0 0012.545 2C7.021 2 2.545 6.477 2.545 12s4.476 10 10 10c5.523 0 10-4.477 10-10a10.1 10.1 0 00-.167-1.785l-9.833-.006z"/>
-          </svg>
-          Sign up with Google
-        </button>
+        <div className="lg:w-[42%]">
+          <div className="w-full max-w-md rounded-3xl border border-white/60 bg-white/95 p-8 shadow-2xl shadow-slate-900/10 transition-transform duration-200 hover:-translate-y-1">
+            <h2 className="mb-1 text-center text-3xl font-bold text-slate-900">Create account</h2>
+            <p className="mb-8 text-center text-sm text-slate-500">Join the workspace and start your command deck.</p>
 
-        <p className="mt-6 text-center text-gray-600">
-          Already have an account?{" "}
-          <button
-            type="button"
-            onClick={switchToLogin}
-            className="text-blue-500 hover:text-blue-600 font-medium transition-colors"
-          >
-            Log in
-          </button>
-        </p>
+            <form onSubmit={handleSubmit} className="space-y-5" encType="multipart/form-data">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700 required-label" htmlFor="first_name">
+                    First name
+                  </label>
+                  <input
+                    id="first_name"
+                    type="text"
+                    name="first_name"
+                    placeholder="Ada"
+                    required
+                    className="w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-slate-800 placeholder-slate-400 shadow-sm transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    value={formData.first_name}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700 required-label" htmlFor="last_name">
+                    Last name
+                  </label>
+                  <input
+                    id="last_name"
+                    type="text"
+                    name="last_name"
+                    placeholder="Lovelace"
+                    required
+                    className="w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-slate-800 placeholder-slate-400 shadow-sm transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    value={formData.last_name}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-slate-700 required-label" htmlFor="email">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  name="email"
+                  placeholder="you@example.com"
+                  required
+                  className="w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-slate-800 placeholder-slate-400 shadow-sm transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  value={formData.email}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-slate-700 required-label" htmlFor="password">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  name="password"
+                  placeholder="Create a strong password"
+                  required
+                  className="w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-slate-800 placeholder-slate-400 shadow-sm transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  value={formData.password}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="profile_picture" className="mb-2 block text-sm font-semibold text-slate-700">
+                  Profile picture <span className="font-normal text-slate-400">optional</span>
+                </label>
+                <input
+                  type="file"
+                  id="profile_picture"
+                  name="profile_picture"
+                  accept="image/*"
+                  title="Profile Picture"
+                  onChange={handleChange}
+                  className="w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-sm text-slate-700 shadow-sm transition file:mr-4 file:rounded-lg file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3 font-semibold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              >
+                Sign Up
+              </button>
+            </form>
+
+            {error && (
+              <div className="mt-5 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+                ⚠️ {error}
+              </div>
+            )}
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-2 text-slate-500">OR</span>
+              </div>
+            </div>
+
+            <button
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  await handleGoogleLogin();
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-3 font-medium text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+            >
+              <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M12.545 10.239v3.821h5.445c-.712 2.315-2.647 3.972-5.445 3.972a6.033 6.033 0 110-12.064c1.835 0 3.456.705 4.691 1.942l3.099-3.101A10.113 10.113 0 0012.545 2C7.021 2 2.545 6.477 2.545 12s4.476 10 10 10c5.523 0 10-4.477 10-10a10.1 10.1 0 00-.167-1.785l-9.833-.006z"
+                />
+              </svg>
+              Sign up with Google
+            </button>
+
+            <p className="mt-6 text-center text-sm text-slate-600">
+              Already have an account?{" "}
+              <button
+                type="button"
+                onClick={switchToLogin}
+                className="font-semibold text-blue-600 transition hover:text-blue-700"
+              >
+                Log in
+              </button>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

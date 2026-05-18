@@ -168,20 +168,20 @@ const WorkspaceOrb = ({
         </div>
       </div>
 
-      <div className={`relative z-10 mt-7 grid gap-4 ${normalizedFeatures.length >= 4 ? "md:grid-cols-2 xl:grid-cols-4" : "md:grid-cols-2"}`}>
+      <div className="relative z-10 mt-7 grid gap-4 md:grid-cols-2">
         {normalizedFeatures.map((feature, index) => (
           <article
             key={feature.title}
-            className="landing-feature-card rounded-3xl border border-white/12 bg-white/[0.08] p-5 shadow-xl shadow-slate-950/20 backdrop-blur-md"
+            className="landing-feature-card min-w-0 rounded-3xl border border-white/12 bg-white/[0.08] p-5 shadow-xl shadow-slate-950/20 backdrop-blur-md"
             style={{ "--card-delay": `${index * 0.08}s` }}
           >
-            <div className="flex items-center justify-between gap-4">
-              <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-300">{feature.title}</h2>
-              <span className="rounded-full border border-cyan-200/25 bg-cyan-200/10 px-3 py-1 text-xs font-black text-cyan-100">
+            <div className="flex min-w-0 items-center justify-between gap-4">
+              <h2 className="min-w-0 break-words text-sm font-bold uppercase tracking-[0.16em] text-slate-300">{feature.title}</h2>
+              <span className="shrink-0 rounded-full border border-cyan-200/25 bg-cyan-200/10 px-3 py-1 text-xs font-black text-cyan-100">
                 {feature.metric}
               </span>
             </div>
-            <p className="mt-4 text-sm leading-6 text-slate-300">{feature.copy}</p>
+            <p className="mt-4 break-words text-sm leading-6 text-slate-300">{feature.copy}</p>
           </article>
         ))}
       </div>
