@@ -112,7 +112,7 @@ const AppRoutes = () => {
             path="/"
             element={
               <PrivateRoute>
-                <Calendar />
+                <PostPage />
               </PrivateRoute>
             }
           />

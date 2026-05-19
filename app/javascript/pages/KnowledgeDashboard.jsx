@@ -455,8 +455,8 @@ function KnowledgeDashboardContent() {
 
   return (
     <div className="min-h-screen pb-16 text-slate-900">
-      <div className="mx-auto max-w-[98%] space-y-6 px-4 pt-6 sm:px-6 lg:px-8">
-        <section className="shell-panel shell-panel-strong sticky top-[6rem] z-20 overflow-hidden rounded-[32px]">
+      <div className="mx-auto max-w-[98%] space-y-6 px-4 pt-10 sm:px-6 lg:px-8">
+        <section className="shell-panel shell-panel-strong sticky top-[6rem] z-20 mb-4 overflow-hidden rounded-[32px]">
           <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent" />
 
           <div className="space-y-4 p-4 sm:p-5 lg:p-6">
