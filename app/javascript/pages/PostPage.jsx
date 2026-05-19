@@ -23,7 +23,6 @@ import {
   FiMessageSquare,
   FiPlus,
   FiSearch,
-  FiTrendingUp,
   FiUsers,
   FiZap,
   FiAlertTriangle,
@@ -312,15 +311,9 @@ const PostPage = () => {
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.45),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.4),_transparent_35%)]" />
               <div className="relative grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
                 <div>
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-blue-100">
-                    <FiTrendingUp /> Updated workspace
-                  </span>
-                  <h1 className="mt-5 max-w-3xl text-4xl font-black tracking-tight text-white sm:text-5xl">
+                  <h1 className="max-w-3xl text-4xl font-black tracking-tight text-white sm:text-5xl">
                     Welcome back, {[user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'User'} — run your day from Updates.
                   </h1>
-                  <p className="mt-4 max-w-2xl text-base leading-7 text-slate-200">
-                    The old updates feed is now a command center with posts, shortcuts, tasks, projects, birthdays, and quick entry points for the newest app features.
-                  </p>
                   <div className="mt-6 flex flex-wrap gap-3">
                     <button
                       type="button"
