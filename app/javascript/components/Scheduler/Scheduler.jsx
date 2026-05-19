@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { DndContext, useDraggable, useDroppable, closestCenter } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { SchedulerAPI } from '../api';
@@ -52,7 +53,7 @@ function LoadingSpinner() {
 function Modal({ isOpen, onClose, title, children, panelClassName = 'max-w-2xl' }) {
   if (!isOpen) return null;
 
-  return (
+  const modalContent = (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 p-4 backdrop-blur-sm transition-opacity duration-300 ease-in-out">
       <div className="flex min-h-full items-start justify-center py-4">
         <div className={`bg-white rounded-xl shadow-2xl w-full ${panelClassName} max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col transform transition-all duration-300 ease-in-out scale-95 opacity-0 animate-modalShow`}>
@@ -73,6 +74,8 @@ function Modal({ isOpen, onClose, title, children, panelClassName = 'max-w-2xl' 
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
 
 // --- Main Scheduler Components ---
