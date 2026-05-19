@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { SchedulerAPI, getUsers, fetchProjects } from '../components/api';
 import { Toaster, toast } from 'react-hot-toast';
 import SpinnerOverlay from '../components/ui/SpinnerOverlay';
@@ -187,7 +188,7 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
         onUpdate(editedTask);
     };
 
-    return (
+    const modalContent = (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4 overflow-y-auto">
             <div className="relative bg-white rounded-xl shadow-2xl p-8 w-full max-w-4xl transform transition-all scale-100 opacity-100 overflow-y-auto max-h-[80vh]">
                 <button
@@ -544,6 +545,8 @@ const TaskDetailsModal = ({ task, developers, users, sprints, onClose, onUpdate,
             </div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 };
 
 // Add Task Modal Component
@@ -594,7 +597,7 @@ const AddTaskModal = ({ developers, users, onClose, onCreate, projectId, viewMod
         onCreate(newTask);
     };
 
-    return (
+    const modalContent = (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4 overflow-y-auto">
             <div className="relative bg-white rounded-xl shadow-2xl p-8 w-full max-w-4xl transform transition-all scale-100 opacity-100 overflow-y-auto max-h-[80vh]">
                 <button
@@ -938,6 +941,8 @@ const AddTaskModal = ({ developers, users, onClose, onCreate, projectId, viewMod
             </div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 };
 
 // Main Component
