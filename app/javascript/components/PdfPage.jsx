@@ -23,10 +23,13 @@ const PdfPage = () => {
   const [isError, setIsError] = useState(false);
   const [activeForm, setActiveForm] = useState(null);
   const [placementCoordinates, setPlacementCoordinates] = useState(null);
+  const [downloadName, setDownloadName] = useState("document.pdf");
 
   useEffect(() => {
     const storedPdf = localStorage.getItem("pdfUrl");
     if (storedPdf) setPdfUrl(storedPdf);
+    const storedDownloadName = localStorage.getItem("pdfDownloadName");
+    if (storedDownloadName) setDownloadName(storedDownloadName);
 
     const handlePdfUpdate = (event) => {
       const newUrl = event.detail;
@@ -55,6 +58,9 @@ const PdfPage = () => {
       const data = await response.json();
       setPdfUrl(data.pdf_url);
       localStorage.setItem("pdfUrl", data.pdf_url);
+      const nextDownloadName = data.download_filename || data.original_filename || file.name || "document.pdf";
+      setDownloadName(nextDownloadName);
+      localStorage.setItem("pdfDownloadName", nextDownloadName);
     } catch (error) {
       console.error(error);
       setUploadMessage("Upload failed.");
@@ -111,13 +117,25 @@ const PdfPage = () => {
             <Plus className="h-4 w-4" />
           </div>
           <h2 className="text-sm font-bold text-gray-800 truncate max-w-xs">{pdfUrl.split('/').pop()}</h2>
+          <input
+            type="text"
+            value={downloadName}
+            onChange={(event) => {
+              setDownloadName(event.target.value);
+              localStorage.setItem("pdfDownloadName", event.target.value);
+            }}
+            placeholder="Rename download file"
+            className="h-8 w-56 rounded-md border border-gray-200 px-2.5 text-xs text-gray-700 shadow-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+          />
         </div>
         <div className="flex items-center space-x-4">
-          <button onClick={() => { setPdfUrl(null); localStorage.removeItem("pdfUrl"); }} className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors">Close</button>
+          <button onClick={() => { setPdfUrl(null); localStorage.removeItem("pdfUrl"); localStorage.removeItem("pdfDownloadName"); }} className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors">Close</button>
           <button 
             onClick={() => {
               const cleanPath = (pdfUrl || "").split("?")[0].replace(/^\//, "");
-              const downloadUrl = cleanPath ? `/download_pdf?pdf_path=${encodeURIComponent(cleanPath)}` : "/download_pdf";
+              const requestedName = downloadName?.trim();
+              const nameParam = requestedName ? `&download_name=${encodeURIComponent(requestedName)}` : "";
+              const downloadUrl = cleanPath ? `/download_pdf?pdf_path=${encodeURIComponent(cleanPath)}${nameParam}` : `/download_pdf${nameParam ? `?${nameParam.slice(1)}` : ""}`;
               window.open(downloadUrl, "_blank");
             }}
             className="flex items-center px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-lg shadow-indigo-100 active:scale-95"
