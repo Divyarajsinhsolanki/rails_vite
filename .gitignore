@@ -59,3 +59,5 @@ node_modules
 /er.last
 
 pdf_master.log
+*.log.*
+pdf_master.log*

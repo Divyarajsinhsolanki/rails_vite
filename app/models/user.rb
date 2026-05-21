@@ -201,6 +201,7 @@ class User < ApplicationRecord
   end
 
   def assign_default_role
-    roles << Role.find_by(name: 'member') if roles.empty?
+    member_role = Role.find_by(name: 'member')
+    roles << member_role if roles.empty? && member_role.present?
   end
 end
