@@ -4,6 +4,7 @@ class PdfsController < ApplicationController
     if params[:pdf]
       session[:pdf_id] = SecureRandom.uuid
       session[:original_filename] = params[:pdf].original_filename
+      session[:download_filename] = params[:pdf].original_filename
       original_path = Rails.root.join('public', 'uploads', "#{session[:pdf_id]}_original.pdf")
       working_path = Rails.root.join('public', 'uploads', "#{session[:pdf_id]}_working.pdf")
 
@@ -12,7 +13,11 @@ class PdfsController < ApplicationController
       File.open(original_path, 'wb') { |file| file.write(params[:pdf].read) }
       FileUtils.cp(original_path, working_path)
 
-      render json: { pdf_url: "/uploads/#{session[:pdf_id]}_working.pdf" }, status: :ok
+      render json: {
+        pdf_url: "/uploads/#{session[:pdf_id]}_working.pdf",
+        original_filename: session[:original_filename],
+        download_filename: session[:download_filename]
+      }, status: :ok
     else
       render json: { error: "No file uploaded" }, status: :unprocessable_entity
     end
@@ -36,7 +41,7 @@ class PdfsController < ApplicationController
 
   def download
     working_path = download_path_from_session || download_path_from_param
-    file_name = session[:original_filename].presence || default_download_name(working_path)
+    file_name = requested_download_name.presence || session[:download_filename].presence || session[:original_filename].presence || default_download_name(working_path)
 
     if working_path.present? && File.exist?(working_path)
       send_file working_path, type: 'application/pdf', filename: file_name
@@ -48,6 +53,16 @@ class PdfsController < ApplicationController
   end
 
   private
+
+  def requested_download_name
+    return if params[:download_name].blank?
+
+    base_name = File.basename(params[:download_name].to_s.strip)
+    sanitized_name = base_name.gsub(/[^0-9A-Za-z. _-]/, '')
+    return if sanitized_name.blank?
+
+    sanitized_name.end_with?('.pdf') ? sanitized_name : "#{sanitized_name}.pdf"
+  end
 
   def download_path_from_session
     return if session[:pdf_id].blank?
