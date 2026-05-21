@@ -33,6 +33,7 @@ import EnglishPhraseCard from "../components/Knowledge/EnglishPhraseCard";
 import ImageOfTheDayCard from "../components/Knowledge/ImageOfTheDayCard";
 import DailyQuizCard from "../components/Knowledge/DailyQuizCard";
 import StudyReminderCard from "../components/Knowledge/StudyReminderCard";
+import Knowledge3DRoom from "../components/Knowledge3DRoom/Knowledge3DRoom";
 import { KnowledgeBookmarksProvider, useKnowledgeBookmarks } from "../context/KnowledgeBookmarksContext";
 
 // Category Tab Component
@@ -454,261 +455,27 @@ function KnowledgeDashboardContent() {
   });
 
   return (
-    <div className="min-h-screen pb-16 text-slate-900">
-      <div className="mx-auto max-w-[98%] space-y-6 px-4 pt-10 sm:px-6 lg:px-8">
-        <section className="shell-panel shell-panel-strong sticky top-[6rem] z-20 mb-4 overflow-hidden rounded-[32px]">
-          <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent" />
-
-          <div className="space-y-4 p-4 sm:p-5 lg:p-6">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-              <div className="max-w-3xl">
-                <div className="shell-chip mb-3">
-                  <span className="shell-chip-dot" />
-                  Knowledge Signal Matrix
-                </div>
-                <h1 className="text-2xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-3xl">
-                  Curated discovery with active memory built in.
-                </h1>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base">
-                  Search the deck, filter quickly, and move between saved collections and due reviews without the extra promo UI.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 xl:max-w-[32rem] xl:justify-end">
-                <span className="shell-chip">
-                  <span className="shell-chip-dot" />
-                  {currentDate}
-                </span>
-                <span className="shell-chip">
-                  <span className="shell-chip-dot" />
-                  {filteredCards.length} visible
-                </span>
-                <span className="shell-chip">
-                  <span className="shell-chip-dot" />
-                  Saved {savedCount}
-                </span>
-                <span className="shell-chip">
-                  <span className="shell-chip-dot" />
-                  Due {dueCount}
-                </span>
-                {filtersActive ? (
-                  <button
-                    type="button"
-                    onClick={() => setFilters({ reminderDue: false, hasNotes: false })}
-                    className="rounded-full border border-white/70 bg-white/72 px-3.5 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600 hover:bg-white hover:text-slate-950"
-                  >
-                    Clear filters
-                  </button>
-                ) : null}
-              </div>
-            </div>
-
-            <div className="grid gap-3 xl:grid-cols-[minmax(0,_1fr)_auto] xl:items-center">
-              <div className="relative">
-                <FiSearch className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search the knowledge deck..."
-                  className="w-full rounded-[22px] border border-white/70 bg-white/80 py-3 pl-12 pr-12 text-sm text-slate-700 outline-none ring-0 transition focus:border-sky-200 focus:bg-white focus:shadow-[0_18px_34px_rgb(15_23_42_/_0.08)]"
-                />
-                {searchQuery ? (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-                  >
-                    <FiX className="h-4 w-4" />
-                  </button>
-                ) : null}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 xl:justify-end">
-                {filterOptions.map((option) => {
-                  const isActive = filters[option.key];
-                  const IconComponent = option.icon;
-
-                  return (
-                    <button
-                      key={option.key}
-                      type="button"
-                      onClick={() =>
-                        setFilters((prev) => ({
-                          ...prev,
-                          [option.key]: !prev[option.key],
-                        }))
-                      }
-                      className={`inline-flex items-center gap-1.5 rounded-[18px] border px-3 py-2.5 text-sm font-semibold transition ${
-                        isActive
-                          ? "border-slate-950 bg-slate-950 text-white shadow-[0_18px_34px_rgb(15_23_42_/_0.18)]"
-                          : "border-white/70 bg-white/72 text-slate-600 hover:bg-white hover:text-slate-950"
-                      }`}
-                      aria-pressed={isActive}
-                    >
-                      <IconComponent className="h-4 w-4" />
-                      {option.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
-              {categories.map((cat, index) => (
-                <CategoryTab
-                  key={cat.id}
-                  category={cat}
-                  isActive={activeCategory === cat.id}
-                  onClick={() => setActiveCategory(cat.id)}
-                  index={index}
-                />
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <AnimatePresence>
-          {feedback ? (
-            <motion.div
-              initial={{ opacity: 0, y: -20, x: "-50%" }}
-              animate={{ opacity: 1, y: 0, x: "-50%" }}
-              exit={{ opacity: 0, y: -20, x: "-50%" }}
-              className="fixed left-1/2 top-24 z-50"
-            >
-              <div
-                className={`flex items-center gap-3 rounded-[22px] border px-5 py-3 shadow-[0_24px_64px_rgb(15_23_42_/_0.2)] backdrop-blur-xl ${
-                  feedback.type === "error"
-                    ? "border-rose-200 bg-rose-500 text-white"
-                    : feedback.type === "info"
-                      ? "border-sky-200 bg-sky-500 text-white"
-                      : "border-emerald-200 bg-emerald-500 text-white"
-                }`}
-              >
-                {feedback.type === "success" && <FiCheckCircle className="h-5 w-5" />}
-                {feedback.type === "error" && <FiX className="h-5 w-5" />}
-                {feedback.type === "info" && <FiBookmark className="h-5 w-5" />}
-                <span className="font-medium">{feedback.message}</span>
-                <button
-                  className="ml-2 rounded-lg p-1 hover:bg-white/20"
-                  onClick={() => setFeedback(null)}
-                >
-                  <FiX className="h-4 w-4" />
-                </button>
-              </div>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-
-        <main className="space-y-6">
-          <div className="px-1">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">Signal Overview</p>
-              <p className="mt-1 text-sm text-slate-600">
-                {filteredCards.length} card{filteredCards.length === 1 ? "" : "s"} in view
-                {hasSearch ? ` for "${searchQuery.trim()}"` : ""}
-                {filtersActive ? " with active filters applied" : ""}
-              </p>
-            </div>
-          </div>
-
-          {isLoading ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-              {[...Array(10)].map((_, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, scale: 0.96 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.3, delay: i * 0.04 }}
-                  className="overflow-hidden rounded-[28px] border border-white/70 bg-white/76 shadow-[0_20px_44px_rgb(15_23_42_/_0.08)]"
-                >
-                  <div className="h-1 bg-gradient-to-r from-sky-400 via-cyan-300 to-indigo-400" />
-                  <div className="space-y-4 p-5">
-                    <div className="h-6 animate-pulse rounded-xl bg-slate-100" />
-                    <div className="h-36 animate-pulse rounded-2xl bg-slate-100" />
-                    <div className="h-20 animate-pulse rounded-2xl bg-slate-50" />
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <motion.div layout className="columns-1 gap-6 sm:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5">
-              <AnimatePresence>
-                {filteredCards.map((item, index) => (
-                  <motion.div
-                    key={item.key}
-                    layout
-                    initial={{ opacity: 0, y: 24 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.94 }}
-                    transition={{ duration: 0.36, delay: index * 0.025 }}
-                    whileHover={{ y: -6, rotateX: 2, scale: 1.012 }}
-                    className="mb-6 break-inside-avoid"
-                  >
-                    <div className="group relative overflow-hidden rounded-[28px] border border-white/70 bg-white/76 shadow-[0_22px_52px_rgb(15_23_42_/_0.08)] backdrop-blur-xl transition-shadow duration-300 hover:shadow-[0_28px_64px_rgb(15_23_42_/_0.14)]">
-                      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-400 via-cyan-300 to-indigo-400 opacity-70 transition-opacity duration-300 group-hover:opacity-100" />
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.28),transparent_40%)] opacity-80" />
-
-                      <div className="relative">
-                        <item.Component {...item.props} />
-
-                        {item.bookmark ? (
-                          <SavedBookmarkFooter
-                            bookmark={item.bookmark}
-                            onRemove={() =>
-                              handleBookmarkToggle({
-                                cardType: item.bookmark.card_type,
-                                sourceId: item.bookmark.source_id,
-                                payload: item.bookmark.payload,
-                              })
-                            }
-                            onMarkReviewed={() => bookmarkHelpers.markReviewed(item.bookmark)}
-                          />
-                        ) : null}
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </motion.div>
-          )}
-
-          {filteredCards.length === 0 && !isLoading ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="shell-panel shell-panel-strong rounded-[32px] px-6 py-16 text-center"
-            >
-              <div className="relative inline-block">
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-sky-100 to-indigo-100 blur-2xl opacity-70" />
-                <div className="relative mb-6 text-7xl">{hasSearch || filtersActive ? "🔍" : "📚"}</div>
-              </div>
-              {hasSearch || filtersActive ? (
-                <>
-                  <h3 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">No matches found</h3>
-                  <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-                    Adjust the search or clear the active filters to reopen the full knowledge signal deck.
-                  </p>
-                  <button
-                    onClick={() => {
-                      setSearchQuery("");
-                      setFilters({ reminderDue: false, hasNotes: false });
-                    }}
-                    className="mt-6 rounded-full bg-slate-950 px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_34px_rgb(15_23_42_/_0.18)] hover:brightness-110"
-                  >
-                    Clear filters
-                  </button>
-                </>
-              ) : (
-                <>
-                  <h3 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950">No cards in this lane</h3>
-                  <p className="mt-2 text-sm text-slate-500">
-                    Switch categories above to move across the rest of the knowledge network.
-                  </p>
-                </>
-              )}
-            </motion.div>
-          ) : null}
-        </main>
+    <>
+      <Knowledge3DRoom
+        filteredCards={filteredCards}
+        categories={categories}
+        activeCategory={activeCategory}
+        setActiveCategory={setActiveCategory}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        filters={filters}
+        setFilters={setFilters}
+        isLoading={isLoading}
+        savedCount={savedCount}
+        dueCount={dueCount}
+        filteredCardsLength={filteredCards.length}
+        bookmarkHelpers={bookmarkHelpers}
+        handleBookmarkToggle={handleBookmarkToggle}
+        SavedBookmarkFallback={SavedBookmarkFallback}
+        SavedBookmarkFooter={SavedBookmarkFooter}
+        feedback={feedback}
+        setFeedback={setFeedback}
+      />
 
       {/* Premium Bookmark Modal */}
       <BookmarkModal
@@ -743,8 +510,7 @@ function KnowledgeDashboardContent() {
           }
         }}
       />
-    </div>
-  </div>
+    </>
   );
 }
 

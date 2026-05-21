@@ -36,6 +36,7 @@ import PageLoader from "./ui/PageLoader";
 import Chat from "../pages/Chat";
 import Notifications from "../pages/Notifications";
 import ObjectGallery from "../pages/ObjectGallery";
+import MetaverseLanding from "../pages/MetaverseLanding";
 import ChatLauncher from "./ChatLauncher";
 
 const routeTransitionProps = {
@@ -97,6 +98,7 @@ const AppRoutes = () => {
           <Route path="/contact" element={<Contact />} />
           <Route path="/legal" element={<Legal />} />
           <Route path="/3d-objects" element={<ObjectGallery />} />
+          <Route path="/metaverse-landing" element={<MetaverseLanding />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route
@@ -290,27 +292,32 @@ const AppRoutes = () => {
   );
 };
 
-const AppShell = () => (
-  <div className="shell-app flex min-h-screen flex-col">
-    <div className="shell-backdrop" aria-hidden="true">
-      <div className="shell-orb shell-orb-one" />
-      <div className="shell-orb shell-orb-two" />
-      <div className="shell-orb shell-orb-three" />
-      <div className="shell-rings" />
-    </div>
+const AppShell = () => {
+  const location = useLocation();
+  const isImmersiveRoute = location.pathname.startsWith("/knowledge");
 
-    <Navbar />
-
-    <main className="shell-main">
-      <div className="shell-main-stage">
-        <AppRoutes />
+  return (
+    <div className={`shell-app flex min-h-screen flex-col ${isImmersiveRoute ? "shell-app-immersive" : ""}`}>
+      <div className="shell-backdrop" aria-hidden="true">
+        <div className="shell-orb shell-orb-one" />
+        <div className="shell-orb shell-orb-two" />
+        <div className="shell-orb shell-orb-three" />
+        <div className="shell-rings" />
       </div>
-    </main>
 
-    <ChatLauncher />
-    <Footer />
-  </div>
-);
+      <Navbar />
+
+      <main className={`shell-main ${isImmersiveRoute ? "shell-main-immersive" : ""}`}>
+        <div className={`shell-main-stage ${isImmersiveRoute ? "shell-main-stage-immersive" : ""}`}>
+          <AppRoutes />
+        </div>
+      </main>
+
+      <ChatLauncher />
+      {isImmersiveRoute ? null : <Footer />}
+    </div>
+  );
+};
 
 const App = () => {
   return (

@@ -9,6 +9,7 @@ const routeTitles = {
   "/contact": "Contact",
   "/legal": "Legal",
   "/3d-objects": "3D Object Review",
+  "/metaverse-landing": "Metaverse Landing",
   "/pdf": "PDF",
   "/momentum": "Daily Momentum Hub",
   "/posts": "Posts",

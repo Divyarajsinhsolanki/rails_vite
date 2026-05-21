@@ -211,10 +211,27 @@ textarea {
   padding-bottom: 2rem;
 }
 
+.shell-app-immersive {
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+.shell-main-immersive {
+  min-height: 0;
+  padding-bottom: 0;
+}
+
 .shell-main-stage {
   width: min(100%, 1600px);
   margin: 0 auto;
   padding: 0 0.75rem;
+}
+
+.shell-main-stage.shell-main-stage-immersive {
+  width: 100%;
+  max-width: none;
+  padding: 0;
 }
 
 .shell-route-frame {
