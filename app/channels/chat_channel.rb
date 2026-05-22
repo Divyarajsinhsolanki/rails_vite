@@ -10,6 +10,7 @@ class ChatChannel < ApplicationCable::Channel
   def typing(data)
     conversation_id = data["conversation_id"]
     return unless conversation_id
+    return unless participant_in_conversation?(conversation_id)
 
     Chat::Broadcaster.broadcast_typing_indicator(conversation_id, current_user, data["is_typing"])
   end
@@ -18,7 +19,7 @@ class ChatChannel < ApplicationCable::Channel
     conversation_id = data["conversation_id"]
     return unless conversation_id
 
-    conversation = Conversation.find_by(id: conversation_id)
+    conversation = Conversation.for_user(current_user).find_by(id: conversation_id)
     return unless conversation
 
     participant = conversation.conversation_participants.find_by(user_id: current_user.id)
@@ -31,8 +32,15 @@ class ChatChannel < ApplicationCable::Channel
 
   def subscribe_to_conversation(conversation_id)
     conversation = Conversation.for_user(current_user).find_by(id: conversation_id)
-    reject unless conversation
+    unless conversation
+      reject
+      return
+    end
 
     stream_from Chat::Broadcaster.conversation_stream(conversation.id)
+  end
+
+  def participant_in_conversation?(conversation_id)
+    Conversation.for_user(current_user).exists?(id: conversation_id)
   end
 end

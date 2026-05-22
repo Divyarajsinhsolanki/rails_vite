@@ -13,14 +13,33 @@ import {
 } from "react-icons/fi";
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
-const MIN_ZOOM_OFFSET = -180;
-const MAX_ZOOM_OFFSET = 900;
+const INITIAL_ZOOM_OFFSET = -60;
+const DEFAULT_ZOOM_LIMITS = { min: -120, max: 260 };
 const INTERACTIVE_SELECTOR = "button, a, input, select, textarea, option, label, summary, [data-room-interactive]";
 
 const getZoomTranslateZ = (zoomOffset) =>
   `calc(var(--room-camera-z) ${zoomOffset < 0 ? "-" : "+"} ${Math.abs(zoomOffset).toFixed(1)}px)`;
 
 const isInteractiveTarget = (target) => target instanceof Element && Boolean(target.closest(INTERACTIVE_SELECTOR));
+
+const getResponsiveZoomLimits = () => {
+  if (typeof window === "undefined") return DEFAULT_ZOOM_LIMITS;
+
+  const width = window.innerWidth;
+  const isMobile = width <= 768;
+  const roomDepth = isMobile
+    ? clamp(width * 1.18, 520, 760)
+    : clamp(width * 0.56, 720, 1040);
+  const cameraZ = isMobile
+    ? clamp(width * 0.38, 180, 310)
+    : clamp(width * 0.25, 260, 460);
+  const nearWallSafety = isMobile ? 190 : 240;
+
+  return {
+    min: -Math.min(isMobile ? 80 : 145, cameraZ * 0.34),
+    max: Math.max(110, roomDepth - cameraZ - nearWallSafety),
+  };
+};
 
 const getCurrentWallName = ({ x, y }) => {
   if (x > 15) return "Ceiling";
@@ -56,8 +75,9 @@ export default function Knowledge3DRoom({
   const roomTransformRef = useRef(null);
   const targetRotationRef = useRef({ x: 0, y: 0 });
   const currentRotationRef = useRef({ x: 0, y: 0 });
-  const targetZoomRef = useRef(-80);
-  const currentZoomRef = useRef(-80);
+  const zoomLimitsRef = useRef(DEFAULT_ZOOM_LIMITS);
+  const targetZoomRef = useRef(INITIAL_ZOOM_OFFSET);
+  const currentZoomRef = useRef(INITIAL_ZOOM_OFFSET);
   const lastDisplayUpdateRef = useRef(0);
   const dragRef = useRef({ active: false, x: 0, y: 0 });
   const [rotation, setRotation] = useState({ x: 0, y: 0 }); // Start facing front wall
@@ -99,6 +119,11 @@ export default function Knowledge3DRoom({
     target.x = clamp(target.x + (delta.x || 0), -15, 25);
   }, []);
 
+  const clampZoom = useCallback((zoom) => {
+    const { min, max } = zoomLimitsRef.current;
+    return clamp(zoom, min, max);
+  }, []);
+
   // Animation loop
   useEffect(() => {
     let frameId;
@@ -127,6 +152,18 @@ export default function Knowledge3DRoom({
     animate();
     return () => cancelAnimationFrame(frameId);
   }, []);
+
+  useEffect(() => {
+    const syncZoomLimits = () => {
+      zoomLimitsRef.current = getResponsiveZoomLimits();
+      targetZoomRef.current = clampZoom(targetZoomRef.current);
+      currentZoomRef.current = clampZoom(currentZoomRef.current);
+    };
+
+    syncZoomLimits();
+    window.addEventListener("resize", syncZoomLimits);
+    return () => window.removeEventListener("resize", syncZoomLimits);
+  }, [clampZoom]);
 
   const handlePointerDown = (event) => {
     if (isInteractiveTarget(event.target)) return;
@@ -157,7 +194,7 @@ export default function Knowledge3DRoom({
     roomRef.current?.focus({ preventScroll: true });
 
     const delta = clamp(event.deltaY * -0.68, -170, 170);
-    targetZoomRef.current = clamp(targetZoomRef.current + delta, MIN_ZOOM_OFFSET, MAX_ZOOM_OFFSET);
+    targetZoomRef.current = clampZoom(targetZoomRef.current + delta);
   };
 
   const handleKeyDown = (event) => {

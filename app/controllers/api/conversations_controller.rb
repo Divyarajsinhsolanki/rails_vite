@@ -3,7 +3,7 @@ class Api::ConversationsController < Api::BaseController
 
   def index
     conversations = Conversation.for_user(current_user)
-      .includes(:participants, messages: [:user, :message_reactions])
+      .includes(:conversation_participants, :participants, messages: [:user, :message_reactions])
       .order(updated_at: :desc)
 
     render json: conversations.map { |conversation| serialize_conversation(conversation) }
@@ -11,7 +11,9 @@ class Api::ConversationsController < Api::BaseController
 
   def show
     participant = @conversation.conversation_participants.find_by(user_id: current_user.id)
-    participant&.update(last_read_at: Time.current)
+    if participant&.update(last_read_at: Time.current)
+      Chat::Broadcaster.broadcast_message_read(@conversation.id, current_user.id)
+    end
 
     render json: serialize_conversation(@conversation, include_messages: true)
   end
@@ -74,7 +76,17 @@ class Api::ConversationsController < Api::BaseController
       id: conversation.id,
       title: conversation.display_name(current_user),
       conversation_type: conversation.conversation_type,
-      participants: conversation.participants.map { |user| { id: user.id, name: user.full_name, profile_picture: (rails_blob_url(user.profile_picture, only_path: true) if user.profile_picture.attached?), last_seen_at: user.last_seen_at, online: user.last_seen_at.present? && user.last_seen_at >= 2.minutes.ago } },
+      participants: conversation.participants.map do |user|
+        participant = conversation.conversation_participants.find { |cp| cp.user_id == user.id } || conversation.conversation_participants.find_by(user_id: user.id)
+        {
+          id: user.id,
+          name: user.full_name,
+          profile_picture: (rails_blob_url(user.profile_picture, only_path: true) if user.profile_picture.attached?),
+          last_seen_at: user.last_seen_at,
+          last_read_at: participant&.last_read_at,
+          online: user.last_seen_at.present? && user.last_seen_at >= 2.minutes.ago
+        }
+      end,
       unread_count: unread_count,
       last_message_at: conversation.messages.maximum(:created_at),
       updated_at: conversation.updated_at

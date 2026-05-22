@@ -1412,12 +1412,12 @@ const Chat = () => {
   const sidebarEmpty = filteredConversations.direct.length === 0 && filteredConversations.group.length === 0;
 
   return (
-    <div className="h-[calc(100vh-64px)] w-full overflow-hidden bg-[linear-gradient(135deg,#eef6ff_0%,#f8fbff_45%,#f8f5ff_100%)] p-2 md:p-4 dark:bg-[linear-gradient(135deg,#09090b_0%,#111827_55%,#09090b_100%)]">
-      <div className="relative flex h-full w-full overflow-hidden rounded-[32px] border border-white/70 bg-white/30 shadow-[0_35px_90px_-45px_rgba(15,23,42,0.55)] backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/60">
+    <div className="flex h-full min-h-0 w-full overflow-hidden bg-[linear-gradient(135deg,#eef6ff_0%,#f8fbff_45%,#f8f5ff_100%)] p-1.5 md:p-3 dark:bg-[linear-gradient(135deg,#09090b_0%,#111827_55%,#09090b_100%)]">
+      <div className="relative flex min-h-0 h-full w-full overflow-hidden rounded-[24px] border border-white/70 bg-white/30 shadow-[0_35px_90px_-45px_rgba(15,23,42,0.55)] backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/60">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(125,211,252,0.24),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(96,165,250,0.14),transparent_24%)]" />
 
-        <aside className={`relative z-10 flex w-full flex-col border-r border-white/60 bg-white/74 backdrop-blur-2xl dark:border-zinc-800 dark:bg-zinc-950/72 md:w-[24rem] xl:w-[27rem] ${conversationId ? "hidden md:flex" : "flex"}`}>
-          <div className="border-b border-white/70 px-5 pb-5 pt-6 dark:border-zinc-800">
+        <aside className={`relative z-10 flex min-h-0 w-full flex-col border-r border-white/60 bg-white/74 backdrop-blur-2xl dark:border-zinc-800 dark:bg-zinc-950/72 md:w-[24rem] xl:w-[27rem] ${conversationId ? "hidden md:flex" : "flex"}`}>
+          <div className="border-b border-white/70 px-4 pb-4 pt-5 dark:border-zinc-800 md:px-5">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[11px] font-medium uppercase tracking-[0.32em] text-sky-500">Inbox</p>
@@ -1444,7 +1444,7 @@ const Chat = () => {
             </div>
           </div>
 
-          <div className="border-b border-white/70 px-5 py-4 dark:border-zinc-800">
+          <div className="border-b border-white/70 px-4 py-3 dark:border-zinc-800 md:px-5">
             <div className="relative">
               <FiSearch className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
@@ -1555,7 +1555,7 @@ const Chat = () => {
           </div>
         </aside>
 
-        <main className={`relative z-10 flex min-w-0 flex-1 flex-col ${!conversationId ? "hidden md:flex" : "flex"}`}>
+        <main className={`relative z-10 flex min-h-0 min-w-0 flex-1 flex-col ${!conversationId ? "hidden md:flex" : "flex"}`}>
           {conversationId && isConversationLoading ? (
             <div className="relative flex flex-1 items-center justify-center p-6 md:p-10">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(125,211,252,0.22),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.6),rgba(248,250,252,0.72))] dark:bg-[linear-gradient(180deg,rgba(9,9,11,0.72),rgba(17,24,39,0.82))]" />
@@ -1615,7 +1615,7 @@ const Chat = () => {
             </div>
           ) : (
             <>
-              <header className="relative z-20 border-b border-white/70 bg-white/70 px-4 py-4 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/72 md:px-6">
+              <header className="relative z-20 border-b border-white/70 bg-white/70 px-4 py-3 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/72 md:px-6">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex min-w-0 items-center gap-3">
                     <Link
@@ -1825,7 +1825,7 @@ const Chat = () => {
                     </div>
                   </div>
 
-                  <div className="border-t border-white/70 bg-white/76 px-4 py-4 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/76 md:px-6">
+                  <div className="border-t border-white/70 bg-white/76 px-4 py-3 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/76 md:px-6">
                     <div className="mx-auto max-w-4xl">
                       {attachments.length > 0 && (
                         <div className="scrollbar-hide mb-4 flex gap-3 overflow-x-auto pb-1">

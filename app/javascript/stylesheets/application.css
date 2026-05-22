@@ -217,9 +217,22 @@ textarea {
   overflow: hidden;
 }
 
+.shell-app-chat {
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
 .shell-main-immersive {
   min-height: 0;
   padding-bottom: 0;
+}
+
+.shell-main-chat {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  padding: 0.75rem 0 0;
 }
 
 .shell-main-stage {
@@ -234,8 +247,24 @@ textarea {
   padding: 0;
 }
 
+.shell-main-stage.shell-main-stage-chat {
+  display: flex;
+  flex: 1;
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  padding: 0 0.75rem 0.75rem;
+}
+
 .shell-route-frame {
   will-change: opacity, transform, filter;
+}
+
+.shell-main-stage-chat .shell-route-frame {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
 }
 
 .shell-panel {
@@ -986,6 +1015,14 @@ textarea {
 @media (max-width: 640px) {
   .shell-main-stage {
     padding: 0 0.5rem;
+  }
+
+  .shell-main-chat {
+    padding-top: 0.5rem;
+  }
+
+  .shell-main-stage.shell-main-stage-chat {
+    padding: 0 0.5rem 0.5rem;
   }
 
   .shell-rings {

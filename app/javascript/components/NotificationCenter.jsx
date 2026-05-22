@@ -4,6 +4,7 @@ import { Popover, Transition } from '@headlessui/react';
 import { fetchNotifications, markNotificationRead, markAllNotificationsRead } from './api';
 import { subscribeToUserChat } from '../lib/chatCable';
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'react-hot-toast';
 
 const NotificationCenter = () => {
   const [notifications, setNotifications] = useState([]);
@@ -20,6 +21,14 @@ const NotificationCenter = () => {
       if (payload?.type === "notification_received") {
         setNotifications(prev => [payload.notification, ...prev]);
         setUnreadCount(prev => prev + 1);
+        if (payload.notification?.message) {
+          toast(payload.notification.message, {
+            id: `notification-${payload.notification.id}`,
+            icon: payload.notification.action?.startsWith("chat")
+              ? <MessageSquare className="h-4 w-4 text-sky-200" />
+              : <Bell className="h-4 w-4 text-sky-200" />,
+          });
+        }
 
         // Show browser notification if permitted
         if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {

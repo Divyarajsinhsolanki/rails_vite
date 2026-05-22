@@ -223,7 +223,8 @@
   padding: clamp(190px, 18vh, 250px) clamp(620px, 35vw, 760px) clamp(220px, 20vh, 280px);
   gap: clamp(22px, 2vw, 34px);
   align-content: center;
-  backface-visibility: visible;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
   transform-origin: 50% 50%;
 }
 

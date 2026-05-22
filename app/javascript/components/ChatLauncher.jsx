@@ -1,14 +1,21 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { MessageCircle } from "lucide-react";
 import { fetchConversations } from "./api";
 import { subscribeToUserChat } from "../lib/chatCable";
+import { AuthContext } from "../context/AuthContext";
 
 const ChatLauncher = () => {
   const location = useLocation();
+  const { isAuthenticated } = useContext(AuthContext);
   const [conversations, setConversations] = useState([]);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setConversations([]);
+      return undefined;
+    }
+
     const load = async () => {
       try {
         const { data } = await fetchConversations();
@@ -27,12 +34,12 @@ const ChatLauncher = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [isAuthenticated]);
 
   const unreadCount = useMemo(() => conversations.reduce((count, conversation) => count + (conversation.unread_count || 0), 0), [conversations]);
   const isChatRoute = location.pathname.startsWith("/chat");
 
-  if (isChatRoute) return null;
+  if (!isAuthenticated || isChatRoute) return null;
 
   return (
     <Link to="/chat" className="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-900/25 hover:bg-blue-700">

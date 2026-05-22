@@ -8,6 +8,7 @@ class Api::MessagesController < Api::BaseController
     if message.save
       @conversation.touch
       @conversation.conversation_participants.where(user_id: current_user.id).update_all(last_read_at: Time.current)
+      Chat::Broadcaster.broadcast_message_read(@conversation.id, current_user.id)
       render json: serialize_message(message), status: :created
     else
       render json: { errors: message.errors.full_messages }, status: :unprocessable_entity

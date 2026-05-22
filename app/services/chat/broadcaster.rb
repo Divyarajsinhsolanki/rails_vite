@@ -82,6 +82,10 @@ module Chat
             action: notification.action,
             message: message,
             actor_avatar: notification.actor.profile_picture.attached? ? Rails.application.routes.url_helpers.rails_blob_path(notification.actor.profile_picture, only_path: true) : nil,
+            read_at: notification.read_at,
+            notifiable_type: notification.notifiable_type,
+            notifiable_id: notification.notifiable_id,
+            metadata: notification.metadata,
             created_at: notification.created_at
           }
         }

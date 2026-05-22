@@ -295,9 +295,10 @@ const AppRoutes = () => {
 const AppShell = () => {
   const location = useLocation();
   const isImmersiveRoute = location.pathname.startsWith("/knowledge");
+  const isChatRoute = location.pathname.startsWith("/chat");
 
   return (
-    <div className={`shell-app flex min-h-screen flex-col ${isImmersiveRoute ? "shell-app-immersive" : ""}`}>
+    <div className={`shell-app flex min-h-screen flex-col ${isImmersiveRoute ? "shell-app-immersive" : ""} ${isChatRoute ? "shell-app-chat" : ""}`}>
       <div className="shell-backdrop" aria-hidden="true">
         <div className="shell-orb shell-orb-one" />
         <div className="shell-orb shell-orb-two" />
@@ -307,14 +308,14 @@ const AppShell = () => {
 
       <Navbar />
 
-      <main className={`shell-main ${isImmersiveRoute ? "shell-main-immersive" : ""}`}>
-        <div className={`shell-main-stage ${isImmersiveRoute ? "shell-main-stage-immersive" : ""}`}>
+      <main className={`shell-main ${isImmersiveRoute ? "shell-main-immersive" : ""} ${isChatRoute ? "shell-main-chat" : ""}`}>
+        <div className={`shell-main-stage ${isImmersiveRoute ? "shell-main-stage-immersive" : ""} ${isChatRoute ? "shell-main-stage-chat" : ""}`}>
           <AppRoutes />
         </div>
       </main>
 
       <ChatLauncher />
-      {isImmersiveRoute ? null : <Footer />}
+      {isImmersiveRoute || isChatRoute ? null : <Footer />}
     </div>
   );
 };

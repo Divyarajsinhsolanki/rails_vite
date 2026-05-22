@@ -1,14 +1,18 @@
 const subscriptions = new Map();
 let socket;
 let reconnectTimer;
+let reconnectAttempts = 0;
+let intentionallyClosed = false;
 
 const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
 const socketUrl = `${wsProtocol}://${window.location.host}/cable`;
 const cableProtocols = ["actioncable-v1-json", "actioncable-unsupported"];
 
 const sendWhenOpen = (payload) => {
-  if (!socket || socket.readyState !== WebSocket.OPEN) return;
+  if (!socket || socket.readyState !== WebSocket.OPEN) return false;
+
   socket.send(JSON.stringify(payload));
+  return true;
 };
 
 const resubscribeAll = () => {
@@ -17,16 +21,31 @@ const resubscribeAll = () => {
   });
 };
 
+const clearReconnectTimer = () => {
+  if (!reconnectTimer) return;
+
+  clearTimeout(reconnectTimer);
+  reconnectTimer = null;
+};
+
+const scheduleReconnect = () => {
+  if (intentionallyClosed || subscriptions.size === 0) return;
+
+  clearReconnectTimer();
+  reconnectAttempts += 1;
+  reconnectTimer = setTimeout(connect, Math.min(1000 * reconnectAttempts, 5000));
+};
+
 const connect = () => {
+  if (subscriptions.size === 0) return;
   if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) return;
 
+  intentionallyClosed = false;
   socket = new WebSocket(socketUrl, cableProtocols);
 
   socket.onopen = () => {
-    if (reconnectTimer) {
-      clearTimeout(reconnectTimer);
-      reconnectTimer = null;
-    }
+    clearReconnectTimer();
+    reconnectAttempts = 0;
 
     resubscribeAll();
   };
@@ -42,11 +61,12 @@ const connect = () => {
   };
 
   socket.onclose = () => {
-    reconnectTimer = setTimeout(connect, 1000);
+    socket = null;
+    scheduleReconnect();
   };
 
   socket.onerror = () => {
-    socket.close();
+    socket?.close();
   };
 };
 
@@ -70,6 +90,13 @@ const subscribe = (params, received) => {
       if (remainingHandlers.length === 0) {
         subscriptions.delete(identifier);
         sendWhenOpen({ command: "unsubscribe", identifier });
+
+        if (subscriptions.size === 0 && socket) {
+          intentionallyClosed = true;
+          clearReconnectTimer();
+          socket.close();
+          socket = null;
+        }
       } else {
         subscriptions.set(identifier, remainingHandlers);
       }
