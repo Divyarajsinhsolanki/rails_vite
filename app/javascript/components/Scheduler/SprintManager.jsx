@@ -220,7 +220,7 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
         <motion.button
           whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
           onClick={() => openForm()}
-          className="mt-3 sm:mt-0 flex items-center gap-2 px-4 py-2 bg-[var(--theme-color)] text-white rounded-lg shadow-sm hover:brightness-110 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-50 focus:ring-[var(--theme-color)]"
+          className="mt-3 sm:mt-0 flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-50 focus:ring-blue-500"
         >
           <FiPlus /><span>New Sprint</span>
         </motion.button>
@@ -355,7 +355,7 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
                   <motion.button
                     type="submit"
                     disabled={isSubmitting || Number(formData.working_days_mask) === 0}
-                    className="px-4 py-2 bg-[var(--theme-color)] text-white rounded-md shadow-sm hover:brightness-110 transition disabled:bg-blue-300"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 transition disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed"
                     whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                   >
                     {isSubmitting ? 'Saving...' : (formData.id ? 'Update Sprint' : 'Create Sprint')}
