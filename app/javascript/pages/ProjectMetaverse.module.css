@@ -1,0 +1,656 @@
+.metaverseShell {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 720px;
+  margin-inline: calc(50% - 50vw);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 12%, rgb(56 189 248 / 0.2), transparent 30%),
+    radial-gradient(circle at 78% 64%, rgb(99 102 241 / 0.18), transparent 32%),
+    linear-gradient(135deg, rgb(15 23 42 / 0.92), rgb(8 13 24 / 0.96)),
+    #0b1523;
+  color: #e5edf7;
+  touch-action: none;
+}
+
+.metaverseShell::before,
+.metaverseShell::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  content: "";
+}
+
+.metaverseShell::before {
+  background:
+    linear-gradient(90deg, rgb(125 211 252 / 0.08) 1px, transparent 1px),
+    linear-gradient(180deg, rgb(125 211 252 / 0.06) 1px, transparent 1px);
+  background-size: 84px 84px;
+  mask-image: radial-gradient(circle at 50% 46%, black, transparent 72%);
+}
+
+.metaverseShell::after {
+  background:
+    radial-gradient(circle at 50% 78%, rgb(14 165 233 / 0.16), transparent 28%),
+    radial-gradient(circle at 50% 10%, rgb(255 255 255 / 0.12), transparent 22%);
+  mix-blend-mode: screen;
+}
+
+.roomCanvas,
+.cssLayer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.roomCanvas {
+  display: block;
+  pointer-events: none;
+}
+
+.cssLayer {
+  z-index: 3;
+  overflow: hidden;
+}
+
+.wallPanel {
+  overflow: hidden;
+  border: 1px solid #d7e0ea;
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at top left, rgb(56 189 248 / 0.1), transparent 34%),
+    linear-gradient(135deg, rgb(255 255 255 / 0.96), rgb(239 246 255 / 0.92)),
+    #f8fafc;
+  color: #0f172a;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.52) inset,
+    0 34px 92px rgb(2 6 23 / 0.34);
+  backface-visibility: hidden;
+  pointer-events: auto;
+}
+
+.moduleWall {
+  width: 560px;
+  height: 760px;
+}
+
+.controlWall {
+  width: 940px;
+  height: 860px;
+}
+
+.contentWall {
+  width: 2180px;
+  height: 1050px;
+  border-radius: 18px;
+}
+
+.chatWall {
+  width: 1720px;
+  height: 920px;
+  border-radius: 18px;
+}
+
+.moduleWallInner,
+.controlWallInner,
+.chatWallInner,
+.contentWallInner {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.moduleWallInner,
+.controlWallInner,
+.chatWallInner {
+  padding: 18px;
+}
+
+.chatWallInner {
+  padding: 0;
+}
+
+.wallHeader {
+  flex: 0 0 auto;
+  border-bottom: 1px solid #dbe4ee;
+  padding-bottom: 14px;
+}
+
+.wallHeader span,
+.contentWallHeader span {
+  display: block;
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.wallHeader h2,
+.contentWallHeader h1 {
+  margin: 6px 0 0;
+  color: #0f172a;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.wallHeader h2 {
+  font-size: 1.35rem;
+  line-height: 1.1;
+}
+
+.wallHeader p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.moduleList {
+  display: grid;
+  gap: 10px;
+  min-height: 0;
+  margin-top: 16px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.moduleButton,
+.moduleButtonActive {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  min-height: 66px;
+  border: 1px solid #dbe4ee;
+  border-left: 5px solid var(--module-color);
+  border-radius: 16px;
+  background: #ffffff;
+  color: #1e293b;
+  padding: 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.moduleButton:hover,
+.moduleButtonActive {
+  border-color: var(--module-color);
+  background: #eef8ff;
+  box-shadow: 0 14px 30px rgb(15 23 42 / 0.12);
+  transform: translateX(2px);
+}
+
+.moduleIndex {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  background: var(--module-color);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.moduleButton strong,
+.moduleButtonActive strong {
+  display: block;
+  overflow: hidden;
+  color: inherit;
+  font-size: 0.9rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.moduleButton small,
+.moduleButtonActive small {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contentWallHeader {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid #dbe4ee;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--module-color) 16%, #ffffff), #ffffff 46%),
+    #ffffff;
+  padding: 18px 24px;
+}
+
+.contentWallHeader h1 {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.contentMeta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.contentMeta span,
+.modeBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  border: 1px solid #dbe4ee;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #334155;
+  padding: 0 12px;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.contentViewport {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background:
+    radial-gradient(circle at 12% 8%, rgb(56 189 248 / 0.12), transparent 28%),
+    radial-gradient(circle at 90% 18%, rgb(99 102 241 / 0.1), transparent 24%),
+    linear-gradient(90deg, rgb(148 163 184 / 0.08) 1px, transparent 1px),
+    linear-gradient(180deg, rgb(148 163 184 / 0.08) 1px, transparent 1px),
+    linear-gradient(180deg, #f8fafc, #eef3f8);
+  background-size: auto, auto, 42px 42px, 42px 42px, auto;
+  padding: 14px;
+}
+
+.contentStack {
+  position: relative;
+  min-height: 100%;
+  transition: opacity 260ms ease, transform 260ms ease, filter 260ms ease;
+}
+
+.contentPane,
+.contentPaneActive {
+  min-height: 100%;
+  transition: opacity 260ms ease, transform 260ms ease, filter 260ms ease;
+}
+
+.contentPane {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(14px) scale(0.99);
+  filter: blur(2px);
+  visibility: hidden;
+}
+
+.contentPaneActive {
+  position: relative;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+  visibility: visible;
+}
+
+.contentViewport[data-switching="true"] .contentStack {
+  opacity: 0.04;
+  pointer-events: none;
+  transform: scale(0.985);
+  filter: blur(4px) saturate(0.72);
+}
+
+.contentViewport[data-switching="true"] :global(.animate-spin) {
+  opacity: 0;
+}
+
+.contentRefresh {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background:
+    radial-gradient(circle at 22% 14%, color-mix(in srgb, var(--module-color) 24%, transparent), transparent 34%),
+    radial-gradient(circle at 80% 78%, rgb(15 23 42 / 0.12), transparent 32%),
+    linear-gradient(135deg, color-mix(in srgb, var(--module-color) 12%, #ffffff), #f8fbff 46%, #edf4fb);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.7) inset,
+    0 30px 80px rgb(15 23 42 / 0.18);
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.985);
+  transition: opacity 180ms ease, transform 260ms ease;
+}
+
+.contentRefresh::before,
+.contentRefresh::after {
+  position: absolute;
+  content: "";
+}
+
+.contentRefresh::before {
+  inset: -44%;
+  background:
+    conic-gradient(
+      from 90deg,
+      transparent,
+      color-mix(in srgb, var(--module-color) 26%, transparent),
+      transparent 24%,
+      rgb(255 255 255 / 0.34),
+      transparent 38%
+    );
+  animation: moduleSweep 1.25s linear infinite;
+}
+
+.contentRefresh::after {
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent, rgb(255 255 255 / 0.78), transparent),
+    repeating-linear-gradient(90deg, rgb(15 23 42 / 0.08) 0 1px, transparent 1px 58px),
+    repeating-linear-gradient(180deg, rgb(15 23 42 / 0.06) 0 1px, transparent 1px 58px);
+  transform: translateX(-120%);
+  animation: moduleScan 880ms ease-out infinite;
+}
+
+.contentRefreshActive {
+  opacity: 1;
+  transform: scale(1);
+}
+
+@keyframes moduleSweep {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@keyframes moduleScan {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.contentViewport :global(.shell-panel),
+.contentViewport :global(.shell-panel-strong) {
+  box-shadow: 0 16px 34px rgb(15 23 42 / 0.08);
+}
+
+.controlGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.controlGrid div {
+  border: 1px solid #dbe4ee;
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgb(255 255 255 / 0.98), rgb(239 246 255 / 0.9)),
+    #ffffff;
+  padding: 12px;
+}
+
+.controlGrid small {
+  display: block;
+  color: #64748b;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.controlGrid strong {
+  display: block;
+  margin-top: 4px;
+  color: #0f172a;
+  font-size: 0.95rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.modeSwitch {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 16px;
+  border: 1px solid #dbe4ee;
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 6px;
+}
+
+.modeSwitch button {
+  min-height: 36px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #475569;
+  font-size: 0.76rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.modeSwitch .modeActive {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.modeBadge {
+  justify-content: center;
+  width: 100%;
+  margin-top: 16px;
+}
+
+.sprintManagerWrap {
+  flex: 1;
+  min-height: 0;
+  margin-top: 16px;
+  overflow-y: auto;
+  border: 1px solid #dbe4ee;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 8% 0%, rgb(56 189 248 / 0.12), transparent 30%),
+    #ffffff;
+  padding: 12px;
+}
+
+.sprintManagerWrap :global(.shell-panel),
+.sprintManagerWrap :global(.shell-panel-strong) {
+  box-shadow: none;
+}
+
+.chatEmbed {
+  flex: 1;
+  min-height: 0;
+  margin-top: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: inherit;
+  background: #ffffff;
+}
+
+.chatEmbed > :global(div) {
+  height: 100%;
+  min-height: 0;
+  padding: 0 !important;
+}
+
+.chatEmbed > :global(div > div) {
+  height: 100%;
+  border-radius: inherit;
+}
+
+.exitLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  margin-top: 16px;
+  border-radius: 14px;
+  background: #0f172a;
+  color: #ffffff;
+  padding: 0 12px;
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.emptyState {
+  display: grid;
+  min-height: 260px;
+  place-items: center;
+  border: 1px dashed #cbd5e1;
+  border-radius: 22px;
+  background: #ffffff;
+  padding: 28px;
+  text-align: center;
+}
+
+.emptyState p,
+.emptyState span {
+  margin: 0;
+}
+
+.emptyState p {
+  color: #0f172a;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.emptyState span {
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.settingsForm {
+  max-width: 880px;
+  color: #0f172a;
+}
+
+.settingsForm label {
+  display: block;
+  margin-bottom: 6px;
+  color: #334155;
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.settingsForm input,
+.settingsForm textarea {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #0f172a;
+  padding: 9px 11px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  outline: none;
+}
+
+.settingsForm textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.settingsForm > * + * {
+  margin-top: 16px;
+}
+
+.settingsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.settingsChecks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.settingsChecks label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  border: 1px solid #dbe4ee;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 10px 12px;
+}
+
+.settingsChecks input {
+  width: 16px;
+  height: 16px;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.formActions button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 14px;
+  background: #0f172a;
+  color: #ffffff;
+  padding: 0 16px;
+  font-size: 0.84rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.successMessage,
+.errorMessage {
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.successMessage {
+  color: #047857;
+}
+
+.errorMessage {
+  color: #be123c;
+}
+
+.metaverseNotice {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #e5edf7;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+@media (max-width: 900px) {
+  .wallPanel {
+    border-radius: 20px;
+  }
+}

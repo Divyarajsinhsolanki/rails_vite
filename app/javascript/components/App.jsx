@@ -37,6 +37,7 @@ import Chat from "../pages/Chat";
 import Notifications from "../pages/Notifications";
 import ObjectGallery from "../pages/ObjectGallery";
 import MetaverseLanding from "../pages/MetaverseLanding";
+import ProjectMetaverse from "../pages/ProjectMetaverse";
 import ChatLauncher from "./ChatLauncher";
 
 const routeTransitionProps = {
@@ -215,6 +216,14 @@ const AppRoutes = () => {
             }
           />
           <Route
+            path="/projects/:projectId/metaverse"
+            element={
+              <ProjectMemberRoute>
+                <ProjectMetaverse />
+              </ProjectMemberRoute>
+            }
+          />
+          <Route
             path="/users"
             element={
               <PrivateRoute>
@@ -294,7 +303,8 @@ const AppRoutes = () => {
 
 const AppShell = () => {
   const location = useLocation();
-  const isImmersiveRoute = location.pathname.startsWith("/knowledge");
+  const isProjectMetaverseRoute = /^\/projects\/[^/]+\/metaverse$/.test(location.pathname);
+  const isImmersiveRoute = location.pathname.startsWith("/knowledge") || isProjectMetaverseRoute;
   const isChatRoute = location.pathname.startsWith("/chat");
 
   return (
@@ -306,7 +316,7 @@ const AppShell = () => {
         <div className="shell-rings" />
       </div>
 
-      <Navbar />
+      {isProjectMetaverseRoute ? null : <Navbar />}
 
       <main className={`shell-main ${isImmersiveRoute ? "shell-main-immersive" : ""} ${isChatRoute ? "shell-main-chat" : ""}`}>
         <div className={`shell-main-stage ${isImmersiveRoute ? "shell-main-stage-immersive" : ""} ${isChatRoute ? "shell-main-stage-chat" : ""}`}>
@@ -314,7 +324,7 @@ const AppShell = () => {
         </div>
       </main>
 
-      <ChatLauncher />
+      {isProjectMetaverseRoute ? null : <ChatLauncher />}
       {isImmersiveRoute || isChatRoute ? null : <Footer />}
     </div>
   );

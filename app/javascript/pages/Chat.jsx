@@ -360,18 +360,22 @@ const StatCard = ({ icon, label, value, accentClass }) => (
   </div>
 );
 
-const ConversationItem = ({ conversation, currentUserId, isActive, searchQuery, previewText }) => {
+const ConversationItem = ({ conversation, currentUserId, isActive, searchQuery, previewText, onSelect }) => {
   const isUnread = conversation.unread_count > 0;
   const isDirect = conversation.conversation_type === "direct";
   const displayName = getConversationDisplayName(conversation, currentUserId);
   const displayImage = getConversationDisplayImage(conversation, currentUserId);
   const subtitle = isDirect ? "Direct message" : `${conversation.participants?.length || 0} members`;
   const conversationPreview = previewText || (isDirect ? "No messages yet" : "Create a room that keeps the whole group aligned");
+  const Item = onSelect ? "button" : Link;
+  const itemProps = onSelect
+    ? { type: "button", onClick: () => onSelect(conversation.id) }
+    : { to: `/chat/${conversation.id}` };
 
   return (
-    <Link
-      to={`/chat/${conversation.id}`}
-      className={`group relative block overflow-hidden rounded-[22px] border p-3.5 transition-all duration-200 ${
+    <Item
+      {...itemProps}
+      className={`group relative block overflow-hidden rounded-[22px] border p-3.5 transition-all duration-200 ${onSelect ? "w-full text-left" : ""} ${
         isActive
           ? "border-transparent bg-slate-950 text-white shadow-[0_22px_55px_-28px_rgba(15,23,42,0.95)]"
           : "border-white/70 bg-white/72 text-slate-700 shadow-[0_18px_45px_-34px_rgba(15,23,42,0.5)] hover:-translate-y-0.5 hover:border-slate-200 hover:bg-white/92 dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-slate-200 dark:hover:border-zinc-700 dark:hover:bg-zinc-900"
@@ -428,7 +432,7 @@ const ConversationItem = ({ conversation, currentUserId, isActive, searchQuery, 
           </div>
         </div>
       </div>
-    </Link>
+    </Item>
   );
 };
 
@@ -684,10 +688,12 @@ const MentionSuggestions = ({ suggestions, activeIndex, onSelect }) => {
   );
 };
 
-const Chat = () => {
-  const { conversationId } = useParams();
+const Chat = ({ embedded = false, initialConversationId = null }) => {
+  const { conversationId: routeConversationId } = useParams();
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
+  const [embeddedConversationId, setEmbeddedConversationId] = useState(initialConversationId);
+  const conversationId = embedded ? embeddedConversationId : routeConversationId;
 
   const messageListRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -720,6 +726,19 @@ const Chat = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUserIds, setSelectedUserIds] = useState([]);
   const [newGroupTitle, setNewGroupTitle] = useState("");
+
+  useEffect(() => {
+    if (embedded) setEmbeddedConversationId(initialConversationId);
+  }, [embedded, initialConversationId]);
+
+  const openConversation = useCallback((id) => {
+    if (!id) return;
+    if (embedded) {
+      setEmbeddedConversationId(String(id));
+      return;
+    }
+    navigate(`/chat/${id}`);
+  }, [embedded, navigate]);
 
   const deferredSideSearchQuery = useDeferredValue(sideSearchQuery);
   const deferredThreadSearchQuery = useDeferredValue(threadSearchQuery);
@@ -1370,7 +1389,7 @@ const Chat = () => {
       try {
         const { data } = await startDirectConversation(selectedUserIds[0]);
         setIsNewChatModalOpen(false);
-        navigate(`/chat/${data.id}`);
+        openConversation(data.id);
         fetchAllData();
       } catch (error) {
         console.error("Failed to start direct conversation", error);
@@ -1396,7 +1415,7 @@ const Chat = () => {
 
       setIsNewChatModalOpen(false);
       resetNewChatModal("group");
-      navigate(`/chat/${data.id}`);
+      openConversation(data.id);
       fetchAllData();
     } catch (error) {
       console.error("Failed to create group", error);
@@ -1514,6 +1533,7 @@ const Chat = () => {
                           isActive={Number(conversationId) === Number(conversation.id)}
                           searchQuery={deferredSideSearchQuery}
                           previewText={resolveChatMessageText(conversation.last_message || "", mentionLookups)}
+                          onSelect={embedded ? openConversation : undefined}
                         />
                       ))}
                     </div>
@@ -1545,6 +1565,7 @@ const Chat = () => {
                           isActive={Number(conversationId) === Number(conversation.id)}
                           searchQuery={deferredSideSearchQuery}
                           previewText={resolveChatMessageText(conversation.last_message || "", mentionLookups)}
+                          onSelect={embedded ? openConversation : undefined}
                         />
                       ))}
                     </div>
@@ -1586,7 +1607,7 @@ const Chat = () => {
                 <p className="mt-6 text-[11px] font-medium uppercase tracking-[0.34em] text-sky-500">Workspace Chat</p>
                 <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 dark:text-white">A cleaner inbox for fast team conversations</h2>
                 <p className="mt-4 text-sm leading-7 text-slate-500 dark:text-slate-400">
-                  Pick a conversation from the left, search your history, or start a new room with the people you need.
+                  Pick a conversation from the list, search your history, or start a new room with the people you need.
                 </p>
 
                 <div className="mt-8 grid gap-3 sm:grid-cols-3">
@@ -1618,12 +1639,22 @@ const Chat = () => {
               <header className="relative z-20 border-b border-white/70 bg-white/70 px-4 py-3 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/72 md:px-6">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex min-w-0 items-center gap-3">
-                    <Link
-                      to="/chat"
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 md:hidden"
-                    >
-                      <FiArrowLeft className="h-5 w-5" />
-                    </Link>
+                    {embedded ? (
+                      <button
+                        type="button"
+                        onClick={() => setEmbeddedConversationId(null)}
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 md:hidden"
+                      >
+                        <FiArrowLeft className="h-5 w-5" />
+                      </button>
+                    ) : (
+                      <Link
+                        to="/chat"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 md:hidden"
+                      >
+                        <FiArrowLeft className="h-5 w-5" />
+                      </Link>
+                    )}
 
                     {activeConversation.conversation_type === "direct" ? (
                       <Avatar name={activeConversationName} src={activeConversationImage} size="lg" />

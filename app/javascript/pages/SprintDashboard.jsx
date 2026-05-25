@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { fetchProjects, updateProject } from '../components/api';
-import { CalendarDaysIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
+import { CalendarDaysIcon, ChevronDownIcon, ChevronUpIcon, CubeTransparentIcon } from '@heroicons/react/24/outline';
 import SprintOverview from './SprintOverview';
 import Scheduler from '../components/Scheduler/Scheduler';
 import TodoBoard from '../components/TodoBoard/TodoBoard';
@@ -356,6 +356,14 @@ export default function SprintDashboard() {
                   <span className="sr-only">Current view mode: {viewModeLabel}</span>
                 </div>
               ) : null}
+
+              <Link
+                to={`/projects/${projectId}/metaverse?tab=${activeTab}`}
+                className="shell-button-secondary px-4 py-2.5"
+              >
+                <CubeTransparentIcon className="h-5 w-5" />
+                3D Mode
+              </Link>
 
               <button
                 type="button"

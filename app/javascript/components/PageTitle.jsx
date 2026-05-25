@@ -34,6 +34,7 @@ const pageTitleForPath = (pathname) => {
   if (routeTitles[pathname]) return routeTitles[pathname];
 
   if (/^\/projects\/[^/]+\/dashboard$/.test(pathname)) return "Sprint Dashboard";
+  if (/^\/projects\/[^/]+\/metaverse$/.test(pathname)) return "Project Metaverse";
   if (/^\/projects\/[^/]+\/issues$/.test(pathname)) return "Issue Tracker";
   if (/^\/departments\/[^/]+$/.test(pathname)) return "Department Details";
   if (/^\/profile\/[^/]+$/.test(pathname)) return "Profile";
