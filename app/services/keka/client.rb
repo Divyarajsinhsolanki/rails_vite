@@ -62,8 +62,15 @@ module Keka
       else
         { success: false, status: response.status, error: response.body.presence || response.reason_phrase }
       end
+    rescue Faraday::TimeoutError => e
+      Rails.logger.error("Keka::Client timeout error on #{path}: #{e.message}")
+      { success: false, error: "Request to Keka timed out", error_type: :timeout }
+    rescue Faraday::ConnectionFailed => e
+      Rails.logger.error("Keka::Client connection error on #{path}: #{e.message}")
+      { success: false, error: "Could not connect to Keka", error_type: :connection_failed }
     rescue Faraday::Error => e
-      { success: false, error: e.message }
+      Rails.logger.error("Keka::Client request error on #{path}: #{e.message}")
+      { success: false, error: e.message, error_type: :request_error }
     end
   end
 end

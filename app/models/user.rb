@@ -201,7 +201,13 @@ class User < ApplicationRecord
   end
 
   def assign_default_role
+    return unless roles.empty?
+
     member_role = Role.find_by(name: 'member')
-    roles << member_role if roles.empty? && member_role.present?
+    if member_role.present?
+      roles << member_role
+    else
+      Rails.logger.error("User##{id} default role assignment failed: role 'member' not found")
+    end
   end
 end
