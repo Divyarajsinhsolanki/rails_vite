@@ -24,6 +24,7 @@ gem "stimulus-rails"
 
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
+gem "rack-cors"
 
 # connection_pool 3.0.x has a Ruby 3.3 syntax issue in this app stack.
 gem "connection_pool", "~> 2.5"
