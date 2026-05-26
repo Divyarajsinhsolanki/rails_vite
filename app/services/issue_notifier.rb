@@ -8,9 +8,14 @@ class IssueNotifier
     @previous_assignee = previous_assignee
   end
 
+  SLACK_MAX_RETRIES = 3
+
   def notify
     send_email if email_targets.any?
-    send_slack if slack_webhook.present?
+
+    return unless slack_webhook.present?
+
+    send_slack
   end
 
   private
@@ -46,9 +51,36 @@ class IssueNotifier
     }
 
     uri = URI(slack_webhook)
-    Net::HTTP.post(uri, payload.to_json, { "Content-Type" => "application/json" })
-  rescue StandardError => e
-    Rails.logger.warn("IssueNotifier Slack error: #{e.message}")
+
+    with_slack_retries do
+      response = Net::HTTP.post(uri, payload.to_json, { "Content-Type" => "application/json" })
+      next if response.is_a?(Net::HTTPSuccess)
+
+      raise "Slack webhook returned #{response.code}: #{response.body.to_s.first(200)}"
+    end
+  end
+
+  def with_slack_retries
+    attempts = 0
+
+    begin
+      attempts += 1
+      yield
+    rescue StandardError => e
+      if attempts < SLACK_MAX_RETRIES
+        sleep(0.2 * attempts)
+        retry
+      end
+
+      AppEventLogger.error(
+        :application_errors,
+        source: self.class.name,
+        message: "IssueNotifier Slack delivery failed",
+        exception: e,
+        payload: { issue_id: issue.id, issue_key: issue.issue_key }
+      )
+      raise
+    end
   end
 
   def status_line
