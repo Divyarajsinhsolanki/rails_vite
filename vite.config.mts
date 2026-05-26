@@ -10,5 +10,11 @@ export default defineConfig({
         application: 'app/javascript/entrypoints/application.jsx'
       }
     }
+  },
+  server: {
+    watch: {
+      usePolling: true,
+      interval: 1000
+    }
   }
 });
