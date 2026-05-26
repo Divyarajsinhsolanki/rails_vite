@@ -71,28 +71,6 @@
     0 34px 92px rgb(2 6 23 / 0.34);
   backface-visibility: hidden;
   pointer-events: auto;
-  animation: wallEntrance 700ms cubic-bezier(0.16, 1, 0.3, 1) backwards,
-             wallFloat 3.5s ease-in-out infinite 700ms;
-}
-
-.wallPanel::after {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: 26px;
-  background: radial-gradient(
-    circle at var(--wall-glow-x, 50%) var(--wall-glow-y, 50%),
-    rgba(56, 189, 248, 0.08),
-    transparent 35%
-  );
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 400ms ease;
-  z-index: -1;
-}
-
-.wallPanel:hover::after {
-  opacity: 1;
 }
 
 .moduleWall {
@@ -142,18 +120,6 @@
   flex: 0 0 auto;
   border-bottom: 1px solid #dbe4ee;
   padding-bottom: 14px;
-  animation: headerSlideDown 500ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes headerSlideDown {
-  0% {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .wallHeader span,
@@ -212,42 +178,14 @@
   text-align: left;
   cursor: pointer;
   transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.moduleButton::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
-  transform: translateX(-100%);
-  opacity: 0;
-  transition: opacity 300ms ease;
-}
-
-.moduleButton:hover::before,
-.moduleButtonActive::before {
-  opacity: 1;
-  animation: moduleScanHover 600ms ease-out;
 }
 
 .moduleButton:hover,
 .moduleButtonActive {
   border-color: var(--module-color);
-  background: linear-gradient(135deg, #eef8ff, #e0f7ff);
-  box-shadow: 
-    0 14px 30px rgb(15 23 42 / 0.12),
-    0 0 20px color-mix(in srgb, var(--module-color) 20%, transparent);
+  background: #eef8ff;
+  box-shadow: 0 14px 30px rgb(15 23 42 / 0.12);
   transform: translateX(2px);
-}
-
-.moduleButtonActive {
-  background: linear-gradient(135deg, #e0f7ff, #d1f0ff);
-  box-shadow: 
-    0 18px 40px rgb(15 23 42 / 0.16),
-    0 0 32px color-mix(in srgb, var(--module-color) 28%, transparent),
-    inset 0 0 16px rgba(255, 255, 255, 0.6);
 }
 
 .moduleIndex {
@@ -262,24 +200,6 @@
   color: #ffffff;
   font-size: 0.72rem;
   font-weight: 900;
-  position: relative;
-  transition: all 300ms ease;
-}
-
-.moduleButtonActive .moduleIndex {
-  animation: indexPulse 2s ease-in-out infinite;
-  box-shadow: 0 0 12px var(--module-color);
-}
-
-@keyframes indexPulse {
-  0%, 100% {
-    transform: scale(1);
-    filter: drop-shadow(0 0 2px var(--module-color));
-  }
-  50% {
-    transform: scale(1.08);
-    filter: drop-shadow(0 0 8px var(--module-color));
-  }
 }
 
 .moduleButton strong,
@@ -312,42 +232,16 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  border-bottom: 2px solid transparent;
-  border-image: linear-gradient(90deg, var(--module-color), transparent) 1;
+  border-bottom: 1px solid #dbe4ee;
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--module-color) 8%, transparent), transparent),
-    linear-gradient(135deg, color-mix(in srgb, var(--module-color) 4%, #ffffff), #ffffff 46%),
+    linear-gradient(90deg, color-mix(in srgb, var(--module-color) 16%, #ffffff), #ffffff 46%),
     #ffffff;
   padding: 18px 24px;
-  animation: headerEntry 500ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes headerEntry {
-  0% {
-    opacity: 0;
-    background-position: -100% center;
-  }
-  100% {
-    opacity: 1;
-    background-position: 0 center;
-  }
 }
 
 .contentWallHeader h1 {
   font-size: 2rem;
   line-height: 1;
-  animation: titleSlideIn 400ms cubic-bezier(0.16, 1, 0.3, 1) 100ms backwards;
-}
-
-@keyframes titleSlideIn {
-  0% {
-    opacity: 0;
-    transform: translateX(-12px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
 }
 
 .contentMeta {
@@ -389,17 +283,13 @@
 .contentStack {
   position: relative;
   min-height: 100%;
-  transition: opacity 360ms cubic-bezier(0.16, 1, 0.3, 1), 
-              transform 360ms cubic-bezier(0.16, 1, 0.3, 1), 
-              filter 360ms ease;
+  transition: opacity 260ms ease, transform 260ms ease, filter 260ms ease;
 }
 
 .contentPane,
 .contentPaneActive {
   min-height: 100%;
-  transition: opacity 360ms cubic-bezier(0.16, 1, 0.3, 1), 
-              transform 360ms cubic-bezier(0.16, 1, 0.3, 1), 
-              filter 360ms ease;
+  transition: opacity 260ms ease, transform 260ms ease, filter 260ms ease;
 }
 
 .contentPane {
@@ -407,8 +297,8 @@
   inset: 0;
   opacity: 0;
   pointer-events: none;
-  transform: translateY(20px) scale(0.95);
-  filter: blur(3px);
+  transform: translateY(14px) scale(0.99);
+  filter: blur(2px);
   visibility: hidden;
 }
 
@@ -419,7 +309,6 @@
   transform: translateY(0) scale(1);
   filter: blur(0);
   visibility: visible;
-  animation: contentSlideIn 400ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .contentViewport[data-switching="true"] .contentStack {
@@ -449,14 +338,8 @@
     0 30px 80px rgb(15 23 42 / 0.18);
   opacity: 0;
   pointer-events: none;
-  transform: scale(0.98);
-  transition: opacity 220ms cubic-bezier(0.16, 1, 0.3, 1), 
-              transform 380ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.contentRefreshActive {
-  opacity: 1;
-  transform: scale(1);
+  transform: scale(0.985);
+  transition: opacity 180ms ease, transform 260ms ease;
 }
 
 .contentRefresh::before,
@@ -489,6 +372,11 @@
   animation: moduleScan 880ms ease-out infinite;
 }
 
+.contentRefreshActive {
+  opacity: 1;
+  transform: scale(1);
+}
+
 @keyframes moduleSweep {
   to {
     transform: rotate(1turn);
@@ -498,59 +386,6 @@
 @keyframes moduleScan {
   to {
     transform: translateX(100%);
-  }
-}
-
-@keyframes moduleScanHover {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(120%);
-  }
-}
-
-@keyframes wallEntrance {
-  0% {
-    opacity: 0;
-    transform: scale(0.92) translateY(8px);
-    filter: blur(8px);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-    filter: blur(0);
-  }
-}
-
-@keyframes contentSlideIn {
-  0% {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes floatingGlow {
-  0%, 100% {
-    opacity: 0.4;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.8;
-    transform: scale(1.05);
-  }
-}
-
-@keyframes wallFloat {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-2px);
   }
 }
 
@@ -573,36 +408,6 @@
     linear-gradient(135deg, rgb(255 255 255 / 0.98), rgb(239 246 255 / 0.9)),
     #ffffff;
   padding: 12px;
-  transition: all 260ms cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.controlGrid div::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    circle at var(--cell-glow-x, 50%) var(--cell-glow-y, 50%),
-    rgba(56, 189, 248, 0.12),
-    transparent 50%
-  );
-  opacity: 0;
-  transition: opacity 300ms ease;
-  pointer-events: none;
-}
-
-.controlGrid div:hover {
-  border-color: #38bdf8;
-  background:
-    linear-gradient(135deg, rgb(224, 247, 255 / 0.98), rgb(231, 245, 255 / 0.9)),
-    #f0f9ff;
-  box-shadow: 0 8px 24px rgba(56, 189, 248, 0.12);
-  transform: translateY(-2px);
-}
-
-.controlGrid div:hover::before {
-  opacity: 1;
 }
 
 .controlGrid small {
@@ -643,22 +448,11 @@
   font-size: 0.76rem;
   font-weight: 900;
   cursor: pointer;
-  transition: all 220ms cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.modeSwitch button:hover {
-  background: rgba(15, 23, 42, 0.08);
-  color: #0f172a;
-  transform: translateY(-1px);
 }
 
 .modeSwitch .modeActive {
-  background: linear-gradient(135deg, #0f172a, #1e293b);
+  background: #0f172a;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.24);
-  transform: translateY(-2px);
 }
 
 .modeBadge {

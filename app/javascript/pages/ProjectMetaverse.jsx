@@ -297,7 +297,6 @@ export default function ProjectMetaverse() {
   const shellRef = useRef(null);
   const canvasRef = useRef(null);
   const switchTimerRef = useRef(null);
-  const cameraAnimationRef = useRef(null);
   const selectedDate = useMemo(() => new Date(), []);
   const initialTab = searchParams.get("tab") || "overview";
   const [activeSection, setActiveSection] = useState(initialTab);
@@ -353,33 +352,6 @@ export default function ProjectMetaverse() {
 
     setActiveSection(nextSection);
     setSwitchingSection(true);
-
-    // Trigger camera animation
-    if (cameraAnimationRef.current) {
-      const wallRotations = {
-        overview: 0,
-        scheduler: 0,
-        todo: 0,
-        statistics: 0,
-        issues: 0,
-        sheet: 0,
-        vault: Math.PI,
-        settings: Math.PI,
-        chat: Math.PI,
-      };
-      
-      const targetYaw = wallRotations[nextSection] || 0;
-      const state = cameraAnimationRef.current;
-      
-      state.isAnimating = true;
-      state.progress = 0;
-      state.startPos.copy(state.camera.position);
-      state.endPos.copy(state.camera.position);
-      state.startRot.copy(state.camera.rotation);
-      state.endRot.y = targetYaw;
-      state.endRot.x = state.camera.rotation.x;
-      state.endRot.z = state.camera.rotation.z;
-    }
 
     const finishWhenReady = (attempt = 0) => {
       const pane = wallHosts?.content?.querySelector(`[data-metaverse-section="${nextSection}"]`);
@@ -539,53 +511,6 @@ export default function ProjectMetaverse() {
     const fillLight = new THREE.PointLight(0x7c3aed, 1.25, 24);
     fillLight.position.set(-5.6, 2.8, 0.5);
     scene.add(fillLight);
-
-    // Create accent light for dynamic effect
-    const accentLight = new THREE.PointLight(0x38bdf8, 0.8, 28);
-    accentLight.position.set(4.2, 2.2, -2.8);
-    scene.add(accentLight);
-
-    // Create particle system for depth
-    const particleCount = 28;
-    const particles = new THREE.BufferGeometry();
-    const particlePositions = new Float32Array(particleCount * 3);
-    const particleSizes = new Float32Array(particleCount);
-    
-    for (let i = 0; i < particleCount; i++) {
-      particlePositions[i * 3] = (Math.random() - 0.5) * 16;
-      particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 8 + 2;
-      particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 14;
-      particleSizes[i] = Math.random() * 1.5 + 0.5;
-    }
-    
-    particles.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
-    particles.setAttribute("size", new THREE.BufferAttribute(particleSizes, 1));
-    
-    const particleMaterial = new THREE.PointsMaterial({
-      size: 0.2,
-      sizeAttenuation: true,
-      color: 0x7dd3fc,
-      transparent: true,
-      opacity: 0.15,
-      fog: true,
-    });
-    
-    const particleSystem = new THREE.Points(particles, particleMaterial);
-    scene.add(particleSystem);
-
-    // Camera animation state
-    const cameraAnimationState = {
-      isAnimating: false,
-      progress: 0,
-      startPos: camera.position.clone(),
-      endPos: camera.position.clone(),
-      startRot: camera.rotation.clone(),
-      endRot: camera.rotation.clone(),
-      camera: camera,
-    };
-    
-    // Expose camera animation state to ref for module transitions
-    cameraAnimationRef.current = cameraAnimationState;
 
     const wallMaterial = (base, line, accent) =>
       new THREE.MeshStandardMaterial({
@@ -877,67 +802,15 @@ export default function ProjectMetaverse() {
       setCameraRotation();
     };
 
-    // Pre-allocate quaternions for camera animation to avoid creating new objects every frame
-    const tempQuat = new THREE.Quaternion();
-    const endQuat = new THREE.Quaternion();
-    let lastParticleUpdateTime = 0;
-    
     let frameId;
     const animate = () => {
       frameId = requestAnimationFrame(animate);
       const elapsed = performance.now() * 0.001;
-      
-      // Dynamic lighting
       keyLight.intensity = 2.12 + Math.sin(elapsed * 0.8) * 0.14;
-      accentLight.intensity = 0.8 + Math.sin(elapsed * 0.6 + 1) * 0.3;
-      
-      // Animate particles only every other frame to reduce overhead
-      if (Math.floor(performance.now() / 16) > lastParticleUpdateTime) {
-        lastParticleUpdateTime = Math.floor(performance.now() / 16);
-        particleSystem.rotation.x += 0.0002;
-        particleSystem.rotation.y += 0.0003;
-        const positionAttribute = particleSystem.geometry.getAttribute("position");
-        const positions = positionAttribute.array;
-        for (let i = 0; i < particleCount; i++) {
-          positions[i * 3 + 1] += Math.sin(elapsed * 0.3 + i) * 0.001;
-        }
-        positionAttribute.needsUpdate = true;
-      }
-      
-      // Animate particle material
-      particleMaterial.opacity = 0.15 + Math.sin(elapsed * 0.4) * 0.08;
-      
-      // Camera animation
-      if (cameraAnimationState.isAnimating) {
-        cameraAnimationState.progress += 0.04;
-        if (cameraAnimationState.progress >= 1) {
-          cameraAnimationState.progress = 1;
-          cameraAnimationState.isAnimating = false;
-        }
-        
-        // Smooth easing (cubic easing)
-        const t = cameraAnimationState.progress;
-        const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-        
-        camera.position.lerpVectors(
-          cameraAnimationState.startPos,
-          cameraAnimationState.endPos,
-          eased
-        );
-        
-        // Smooth rotation - reuse pre-allocated quaternions
-        tempQuat.setFromEuler(cameraAnimationState.startRot);
-        endQuat.setFromEuler(cameraAnimationState.endRot);
-        tempQuat.slerp(endQuat, eased);
-        camera.quaternion.copy(tempQuat);
-      }
-      
+      updateInteractiveWall();
       renderer.render(scene, camera);
       cssRenderer.render(cssScene, camera);
     };
-    
-    // Initialize interactive walls once, not every frame
-    updateInteractiveWall();
 
     resize();
     setCameraRotation();
