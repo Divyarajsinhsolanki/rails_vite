@@ -42,6 +42,27 @@ api.interceptors.response.use(
   }
 );
 
+
+const normalizeCollectionResponse = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== 'object') return [];
+
+  if (Array.isArray(payload.data)) return payload.data;
+  if (Array.isArray(payload.items)) return payload.items;
+  if (Array.isArray(payload.results)) return payload.results;
+  if (Array.isArray(payload.users)) return payload.users;
+  if (Array.isArray(payload.projects)) return payload.projects;
+  if (Array.isArray(payload.departments)) return payload.departments;
+
+  return [];
+};
+
+const withNormalizedCollection = (request) =>
+  request.then((response) => ({
+    ...response,
+    data: normalizeCollectionResponse(response?.data)
+  }));
+
 // SCHEDULER ENDPOINTS
 export const SchedulerAPI = {
   // Sprints
@@ -88,7 +109,7 @@ export const fetchKekaProfile = () => api.get("/keka/profile");
 export const refreshKekaProfile = () => api.post("/keka/refresh");
 export const requestPasswordReset = (email) => api.post("/password/forgot", { password: { email } });
 export const resetPassword = (payload) => api.post("/password/reset", { password: payload });
-export const getUsers = () => api.get('/users.json');
+export const getUsers = () => withNormalizedCollection(api.get('/users.json'));
 export const updatePresence = () => api.post('/users/presence');
 export const createUser = (data) => api.post('/users.json', { user: data });
 export const deleteUser = (id) => api.delete(`/users/${id}.json`);
@@ -96,7 +117,7 @@ export const updateUser = (id, data) =>
   api.patch(`/users/${id}.json`, data, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
-export const fetchDepartments = () => api.get('/departments.json');
+export const fetchDepartments = () => withNormalizedCollection(api.get('/departments.json'));
 export const createDepartment = (data) => api.post('/departments.json', { department: data });
 export const updateDepartment = (id, data) => api.patch(`/departments/${id}.json`, { department: data });
 export const deleteDepartment = (id) => api.delete(`/departments/${id}.json`);
@@ -182,7 +203,7 @@ export const createLearningCheckpoint = (data) => api.post('/learning_checkpoint
 export const updateLearningCheckpoint = (id, data) => api.patch(`/learning_checkpoints/${id}.json`, { learning_checkpoint: data });
 
 // PROJECT ENDPOINTS
-export const fetchProjects = () => api.get('/projects.json');
+export const fetchProjects = () => withNormalizedCollection(api.get('/projects.json'));
 export const createProject = (data) => api.post('/projects.json', { project: data });
 export const updateProject = (id, data) => api.patch(`/projects/${id}.json`, { project: data });
 export const deleteProject = (id) => api.delete(`/projects/${id}.json`);
