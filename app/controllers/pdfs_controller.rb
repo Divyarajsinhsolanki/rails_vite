@@ -1,7 +1,13 @@
 class PdfsController < ApplicationController
+  MAX_PDF_UPLOAD_SIZE = 50.megabytes
 
   def upload_pdf
     if params[:pdf]
+      if params[:pdf].size.to_i > MAX_PDF_UPLOAD_SIZE
+        render json: { error: 'File is too large. Maximum size is 50MB.' }, status: :payload_too_large
+        return
+      end
+
       session[:pdf_id] = SecureRandom.uuid
       session[:original_filename] = params[:pdf].original_filename
       session[:download_filename] = params[:pdf].original_filename
@@ -74,10 +80,12 @@ class PdfsController < ApplicationController
     return if params[:pdf_path].blank?
 
     requested_path = params[:pdf_path].to_s.sub(%r{\A/+}, '')
-    full_path = Rails.root.join('public', requested_path).cleanpath
-    public_root = Rails.root.join('public').to_s
+    return unless requested_path.match?(/\Auploads\/[0-9a-f\-]+_(?:original|working)\.pdf\z/i)
 
-    return unless full_path.to_s.start_with?(public_root)
+    full_path = Rails.root.join('public', requested_path).cleanpath
+    uploads_root = Rails.root.join('public', 'uploads').to_s
+
+    return unless full_path.to_s.start_with?(uploads_root)
     return unless File.extname(full_path.to_s).casecmp('.pdf').zero?
 
     full_path.to_s
