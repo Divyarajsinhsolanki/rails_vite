@@ -24,6 +24,7 @@ import {
   getUsers,
   updateDepartmentMembers,
   deleteDepartment,
+  normalizeCollectionResponse,
 } from "../components/api";
 import { AuthContext } from "../context/AuthContext";
 import PageLoader from "../components/ui/PageLoader";
@@ -90,7 +91,7 @@ const DepartmentDetails = () => {
       setNewName(deptRes.data.name);
       setNewDescription(deptRes.data.description || "");
       setNewManagerId(deptRes.data.manager_id || "");
-      setUsers(usersRes.data);
+      setUsers(normalizeCollectionResponse(usersRes.data));
     } catch (error) {
       toast.error("Failed to load department details.");
       navigate("/departments");

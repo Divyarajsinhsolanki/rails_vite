@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogIn, Search, Shield } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { getUsers, adminImpersonate } from "../components/api";
+import { getUsers, adminImpersonate, normalizeCollectionResponse } from "../components/api";
 import { AuthContext } from "../context/AuthContext";
 
 const AdminImpersonation = () => {
@@ -18,7 +18,7 @@ const AdminImpersonation = () => {
       setLoading(true);
       try {
         const { data } = await getUsers();
-        setUsers(Array.isArray(data) ? data : []);
+        setUsers(normalizeCollectionResponse(data));
       } catch (error) {
         console.error("Failed to fetch users", error);
         toast.error("Could not load users");

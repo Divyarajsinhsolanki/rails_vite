@@ -43,7 +43,7 @@ api.interceptors.response.use(
 );
 
 
-const normalizeCollectionResponse = (payload) => {
+export const normalizeCollectionResponse = (payload) => {
   if (Array.isArray(payload)) return payload;
   if (!payload || typeof payload !== 'object') return [];
 
@@ -53,6 +53,8 @@ const normalizeCollectionResponse = (payload) => {
   if (Array.isArray(payload.users)) return payload.users;
   if (Array.isArray(payload.projects)) return payload.projects;
   if (Array.isArray(payload.departments)) return payload.departments;
+  if (Array.isArray(payload.teams)) return payload.teams;
+  if (Array.isArray(payload.roles)) return payload.roles;
 
   return [];
 };
@@ -62,6 +64,9 @@ const withNormalizedCollection = (request) =>
     ...response,
     data: normalizeCollectionResponse(response?.data)
   }));
+
+const DEFAULT_COLLECTION_PER_PAGE = 1000;
+const collectionParams = (params = {}) => ({ per_page: DEFAULT_COLLECTION_PER_PAGE, ...params });
 
 // SCHEDULER ENDPOINTS
 export const SchedulerAPI = {
@@ -75,7 +80,7 @@ export const SchedulerAPI = {
   updateSprint: (id, data) => api.put(`/sprints/${id}.json`, { sprint: data }),
 
   // Developers
-  getDevelopers: (params = {}) => withNormalizedCollection(api.get("/developers.json", { params })),
+  getDevelopers: (params = {}) => withNormalizedCollection(api.get("/developers.json", { params: collectionParams(params) })),
 
   // Tasks
   getTasks: (params = {}) => withNormalizedCollection(api.get("/tasks.json", { params })),
@@ -109,7 +114,7 @@ export const fetchKekaProfile = () => api.get("/keka/profile");
 export const refreshKekaProfile = () => api.post("/keka/refresh");
 export const requestPasswordReset = (email) => api.post("/password/forgot", { password: { email } });
 export const resetPassword = (payload) => api.post("/password/reset", { password: payload });
-export const getUsers = () => withNormalizedCollection(api.get('/users.json'));
+export const getUsers = (params = {}) => withNormalizedCollection(api.get('/users.json', { params: collectionParams(params) }));
 export const updatePresence = () => api.post('/users/presence');
 export const createUser = (data) => api.post('/users.json', { user: data });
 export const deleteUser = (id) => api.delete(`/users/${id}.json`);
@@ -162,7 +167,7 @@ export const importIssuesFromSheet = (projectId, sheet = null) =>
   api.post('/issues/import_from_sheet.json', { project_id: projectId, ...(sheet ? { sheet } : {}) });
 
 // POST ENDPOINTS (existing)
-export const fetchPosts = (id) => api.get(id ? `/posts?user_id=${id}` : "/posts");
+export const fetchPosts = (id) => withNormalizedCollection(api.get('/posts', { params: id ? { user_id: id } : {} }));
 export const createPost = (d) =>
   api.post("/posts", d, { headers: { "Content-Type": "multipart/form-data" } });
 export const updatePost = (i, d) =>
@@ -182,7 +187,7 @@ export const updateItem = (id, d) => api.patch(`/items/${id}.json`, { item: d })
 export const deleteItem = (id) => api.delete(`/items/${id}.json`);
 
 // TEAM ENDPOINTS
-export const fetchTeams = () => api.get('/teams.json');
+export const fetchTeams = () => withNormalizedCollection(api.get('/teams.json'));
 export const createTeam = (data) => api.post('/teams.json', { team: data });
 export const updateTeam = (id, data) => api.patch(`/teams/${id}.json`, { team: data });
 export const deleteTeam = (id) => api.delete(`/teams/${id}.json`);
@@ -190,7 +195,7 @@ export const addTeamUser = (data) => api.post('/team_users.json', { team_user: d
 export const updateTeamUser = (id, data) => api.patch(`/team_users/${id}.json`, { team_user: data });
 export const deleteTeamUser = (id) => api.delete(`/team_users/${id}.json`);
 export const leaveTeam = (teamId) => api.delete(`/team_users/leave/${teamId}.json`);
-export const fetchRoles = () => api.get('/roles.json');
+export const fetchRoles = (params = {}) => withNormalizedCollection(api.get('/roles.json', { params: collectionParams(params) }));
 export const fetchTeamInsights = (teamId) => api.get(`/teams/${teamId}/insights.json`);
 export const createUserSkill = (data) => api.post('/user_skills.json', { user_skill: data });
 export const updateUserSkill = (id, data) => api.patch(`/user_skills/${id}.json`, { user_skill: data });
@@ -203,7 +208,7 @@ export const createLearningCheckpoint = (data) => api.post('/learning_checkpoint
 export const updateLearningCheckpoint = (id, data) => api.patch(`/learning_checkpoints/${id}.json`, { learning_checkpoint: data });
 
 // PROJECT ENDPOINTS
-export const fetchProjects = () => withNormalizedCollection(api.get('/projects.json'));
+export const fetchProjects = (params = {}) => withNormalizedCollection(api.get('/projects.json', { params: collectionParams(params) }));
 export const createProject = (data) => api.post('/projects.json', { project: data });
 export const updateProject = (id, data) => api.patch(`/projects/${id}.json`, { project: data });
 export const deleteProject = (id) => api.delete(`/projects/${id}.json`);
@@ -228,11 +233,11 @@ export const deleteProjectVaultItem = (projectId, id) => api.delete(`/projects/$
 export const fetchDailyMomentum = () => api.get('/daily_momentum');
 
 // WORK LOG ENDPOINTS
-export const fetchWorkPriorities = () => api.get('/work_priorities');
-export const fetchWorkCategories = () => api.get('/work_categories');
-export const fetchWorkTags = () => api.get('/work_tags');
+export const fetchWorkPriorities = () => withNormalizedCollection(api.get('/work_priorities', { params: collectionParams() }));
+export const fetchWorkCategories = () => withNormalizedCollection(api.get('/work_categories', { params: collectionParams() }));
+export const fetchWorkTags = () => withNormalizedCollection(api.get('/work_tags', { params: collectionParams() }));
 
-export const getWorkLogs = (params = {}) => withNormalizedCollection(api.get('/work_logs', { params }));
+export const getWorkLogs = (params = {}) => withNormalizedCollection(api.get('/work_logs', { params: collectionParams(params) }));
 export const createWorkLog = (data) => api.post('/work_logs', { work_log: data });
 export const updateWorkLog = (id, data) => api.put(`/work_logs/${id}`, { work_log: data });
 export const deleteWorkLog = (id) => api.delete(`/work_logs/${id}`);

@@ -21,7 +21,8 @@ import {
   createDepartment,
   updateDepartment,
   deleteDepartment,
-  getUsers
+  getUsers,
+  normalizeCollectionResponse
 } from '../components/api';
 import { AuthContext } from '../context/AuthContext';
 import PageLoader from '../components/ui/PageLoader';
@@ -107,8 +108,8 @@ const Departments = () => {
     setLoading(true);
     try {
       const [deptRes, usersRes] = await Promise.all([fetchDepartments(), getUsers()]);
-      setDepartments(deptRes.data || []);
-      setUsers(usersRes.data || []);
+      setDepartments(normalizeCollectionResponse(deptRes.data));
+      setUsers(normalizeCollectionResponse(usersRes.data));
     } catch (error) {
       toast.error("Failed to load departments.");
     } finally {

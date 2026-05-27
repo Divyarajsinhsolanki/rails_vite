@@ -4,9 +4,12 @@ import RubyPlugin from 'vite-plugin-ruby';
 
 export default defineConfig({
   plugins: [RubyPlugin()],
+  resolve: {
+    dedupe: ['react', 'react-dom']
+  },
   
   build: {
-    minify: 'terser',
+    minify: 'esbuild',
     sourcemap: false, // Disable in production for faster builds and smaller artifacts
     chunkSizeWarningLimit: 500,
     reportCompressedSize: false,
@@ -35,8 +38,8 @@ export default defineConfig({
           // PDF handling (will be lazy-loaded)
           'pdf': ['pdfjs-dist', 'react-pdf', '@react-pdf/renderer'],
           
-          // Firebase (consider lazy-loading later)
-          'firebase': ['firebase'],
+          // Firebase modules used by firebaseConfig.js/AuthContext.jsx
+          'firebase': ['firebase/app', 'firebase/auth'],
           
           // Utilities
           'utils': ['date-fns', 'jwt-decode', 'react-icons', 'react-draggable', 'react-dropzone', 'react-rnd']
@@ -49,7 +52,10 @@ export default defineConfig({
   optimizeDeps: {
     include: [
       'react',
+      'react/jsx-runtime',
+      'react/jsx-dev-runtime',
       'react-dom',
+      'react-dom/client',
       'react-router-dom',
       'axios',
       'framer-motion',
