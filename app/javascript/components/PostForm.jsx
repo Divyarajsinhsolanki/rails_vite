@@ -118,7 +118,7 @@ const PostForm = ({ refreshPosts }) => {
                   src={imagePreview}
                   alt="Preview"
                   className="w-full h-auto max-h-80 object-contain"
-                />
+                loading="lazy" />
                 <button
                   type="button"
                   onClick={removeImage}

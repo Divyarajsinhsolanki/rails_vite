@@ -350,7 +350,7 @@ const PostList = ({ posts, refreshPosts, onPostUpdate = () => {} }) => {
                 src={post.image_url} 
                 alt="Post content" 
                 className="w-full h-auto max-h-[500px] object-contain mx-auto" 
-              />
+              loading="lazy" />
             </div>
           )}
 

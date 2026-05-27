@@ -159,7 +159,7 @@ const NotificationCenter = () => {
                                 src={notification.actor_avatar}
                                 alt=""
                                 className="h-8 w-8 rounded-full object-cover border border-gray-200"
-                              />
+                              loading="lazy" />
                             )}
                             {!notification.actor_avatar && (
                               <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">

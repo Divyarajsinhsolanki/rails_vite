@@ -374,7 +374,7 @@ const Users = () => {
         {/* Banner */}
         <div className={`h-24 w-full bg-gradient-to-r ${randomGradient} relative`}>
             {user.cover_photo && (
-                <img src={user.cover_photo} alt="cover" className="w-full h-full object-cover opacity-80" />
+                <img src={user.cover_photo} alt="cover" className="w-full h-full object-cover opacity-80" loading="lazy" />
             )}
             {canEditUsers && (
               <button
@@ -396,6 +396,7 @@ const Users = () => {
                 src={user.profile_picture || `https://ui-avatars.com/api/?name=${user.first_name}+${user.last_name}&background=random`}
                 alt="Profile"
                 className="w-20 h-20 rounded-2xl object-cover border-4 border-white shadow-md bg-white"
+                loading="lazy"
                 onError={(e) => { e.target.src=`https://placehold.co/100x100?text=${user.first_name?.[0]}`; }}
               />
               <span className={`absolute bottom-0 right-0 w-4 h-4 border-2 border-white rounded-full ${user.online ? "bg-green-400" : "bg-gray-300"}`} title={user.online ? "Online" : "Offline"}></span>

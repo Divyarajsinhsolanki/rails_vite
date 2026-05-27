@@ -67,7 +67,7 @@ const UserFilterOrb = ({ user, index, selected, onToggle }) => {
                     }}
                 >
                     {user.profile_picture && user.profile_picture !== 'null' ? (
-                        <img src={user.profile_picture} alt="" className="h-full w-full object-cover" />
+                        <img src={user.profile_picture} alt="" className="h-full w-full object-cover" loading="lazy" />
                     ) : (
                         <span className="text-sm font-semibold text-slate-800 drop-shadow-[0_1px_0_rgba(255,255,255,0.75)]">{initial}</span>
                     )}

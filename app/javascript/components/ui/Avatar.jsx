@@ -11,7 +11,7 @@ const Avatar = ({ name, src, className = "" }) => {
         src={src}
         alt={altText}
         className={`rounded-full object-cover ${className}`.trim()}
-      />
+      loading="lazy" />
     );
   }
 

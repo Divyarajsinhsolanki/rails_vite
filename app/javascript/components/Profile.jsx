@@ -20,7 +20,7 @@ const Avatar = ({ name, src, size = 'md', color }) => {
         src={src}
         alt={name}
         className={`${sizes[size]} rounded-full object-cover border-2 border-white/80 shadow-sm`}
-      />
+      loading="lazy" />
     );
   }
   const initial = getAvatarInitial(name);
@@ -539,7 +539,7 @@ const Profile = () => {
                 src={user.cover_photo} 
                 alt="Cover" 
                 className="absolute inset-0 w-full h-full object-cover" 
-              />
+              loading="lazy" />
             )}
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,17,32,0.08),rgba(7,17,32,0.72))]" />
             <div className="absolute left-6 top-6 flex flex-wrap items-center gap-2">
@@ -574,7 +574,7 @@ const Profile = () => {
                     src={user.profile_picture}
                     alt="Profile"
                     className="h-32 w-32 rounded-full border-4 border-white/90 object-cover shadow-[0_26px_54px_rgb(15_23_42_/_0.18)] transition-all duration-300 group-hover:scale-[1.03] md:h-40 md:w-40"
-                  />
+                  loading="lazy" />
                 ) : (
                   <div
                     className="flex h-32 w-32 items-center justify-center rounded-full border-4 border-white/90 text-5xl font-bold shadow-[0_26px_54px_rgb(15_23_42_/_0.18)] transition-all duration-300 group-hover:scale-[1.03] md:h-40 md:w-40 md:text-6xl"
@@ -910,7 +910,7 @@ const Profile = () => {
                               src={post.image_url}
                               alt="Post"
                               className="w-full h-48 object-cover"
-                            />
+                            loading="lazy" />
                           )}
                           <div className="p-5">
                             <div className="flex items-center text-sm text-gray-500 mb-2">
@@ -1234,7 +1234,7 @@ const Profile = () => {
                                   src={m.profile_picture}
                                   alt={m.name}
                                   className="w-8 h-8 rounded-full border-2 border-white object-cover"
-                                />
+                                loading="lazy" />
                               ) : (
                                 <div
                                   key={m.id}
