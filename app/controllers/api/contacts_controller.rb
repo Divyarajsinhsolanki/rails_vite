@@ -1,9 +1,12 @@
+require 'json'
+require 'net/http'
+
 class Api::ContactsController < ApplicationController
   skip_before_action :verify_authenticity_token
 
   def create
     unless valid_captcha?
-      return render json: { errors: ['Invalid captcha answer'] }, status: :unprocessable_entity
+      return render json: { errors: ['reCAPTCHA verification failed'] }, status: :unprocessable_entity
     end
 
     contact = Contact.new(contact_params)
@@ -21,14 +24,24 @@ class Api::ContactsController < ApplicationController
   end
 
   def valid_captcha?
-    contact_params = params[:contact]
+    token = params.dig(:contact, :recaptcha_token).to_s
+    secret = ENV['RECAPTCHA_SECRET_KEY'].to_s
 
-    answer = contact_params&.dig(:captcha_answer)
-    num1 = contact_params&.dig(:captcha_num1)
-    num2 = contact_params&.dig(:captcha_num2)
+    return false if token.blank? || secret.blank?
 
-    return false if [answer, num1, num2].any?(&:blank?)
+    uri = URI('https://www.google.com/recaptcha/api/siteverify')
+    response = Net::HTTP.post_form(
+      uri,
+      secret: secret,
+      response: token,
+      remoteip: request.remote_ip
+    )
+    result = JSON.parse(response.body)
 
-    answer.to_i == num1.to_i + num2.to_i
+    result['success'] == true &&
+      result['action'] == 'contact_form_submit' &&
+      result['score'].to_f >= ENV.fetch('RECAPTCHA_MIN_SCORE', '0.5').to_f
+  rescue JSON::ParserError, StandardError
+    false
   end
 end

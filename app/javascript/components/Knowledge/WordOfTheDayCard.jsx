@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import BookmarkToggle from "./BookmarkToggle";
 
 const API_KEYS = {
-  WORDNIK: "YOUR_WORDNIK_KEY",
+  WORDNIK: import.meta.env.VITE_WORDNIK_API_KEY,
 };
 
 const fetchers = [

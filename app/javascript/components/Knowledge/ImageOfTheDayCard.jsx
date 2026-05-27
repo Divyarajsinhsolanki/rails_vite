@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import BookmarkToggle from "./BookmarkToggle";
 
+const NASA_API_KEY = import.meta.env.VITE_NASA_API_KEY || "DEMO_KEY";
+
 const fetchers = [
   () =>
-    fetch("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY")
+    fetch(`https://api.nasa.gov/planetary/apod?api_key=${NASA_API_KEY}`)
       .then((res) => res.json())
       .then((data) => {
         if (data?.url && data.media_type === "image")

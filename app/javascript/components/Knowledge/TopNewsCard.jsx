@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import BookmarkToggle from "./BookmarkToggle";
 
 const API_KEYS = {
-  GNEWS: "d098827abeb336616016d7585e1931e9",
-  NEWSAPI: "YOUR_NEWSAPI_KEY",
+  GNEWS: import.meta.env.VITE_GNEWS_API_KEY,
+  NEWSAPI: import.meta.env.VITE_NEWSAPI_KEY,
 };
 
 export default function TopNewsCard({
@@ -19,7 +19,7 @@ export default function TopNewsCard({
   const fetchers = useMemo(
     () => [
       () =>
-        fetch(`https://gnews.io/api/v4/top-headlines?lang=en&token=${API_KEYS.GNEWS}`)
+        fetch(`https://gnews.io/api/v4/top-headlines?lang=en&apikey=${API_KEYS.GNEWS}`)
           .then((res) => res.json())
           .then((data) => {
             if (data.articles && data.articles.length) return data.articles.slice(0, 5);

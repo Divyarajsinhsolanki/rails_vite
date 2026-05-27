@@ -36,7 +36,7 @@ This application showcases how to build a modern React front end on top of a Rub
    cp .env.example .env
    ```
 
-   Edit `.env` with your database credentials, JWT secret and any Google API tokens required by the services in `app/services`.
+   Edit `.env` with your database credentials, Rails key, and any third-party API tokens used by the Rails and Vite features.
 
 3. **Prepare the database**
 
@@ -68,8 +68,13 @@ The following values are referenced by the application or infrastructure configu
 - `DB_HOST` or `DATABASE_URL` (required): database connectivity.
 - `SMTP_ADDRESS`, `SMTP_PORT`, `SMTP_DOMAIN`, `SMTP_USERNAME`, `SMTP_PASSWORD` (optional): outbound email delivery.
 - `BASE_URL` (optional): base URL for mailer links.
+- `FRONTEND_URL` (optional): frontend URL used in reset password email links.
+- `CORS_ALLOWED_ORIGINS` (optional): comma-separated frontend origins allowed to call the Rails API.
 - `REDIS_URL` (optional): Action Cable Redis connection.
 - `SLACK_WEBHOOK_URL` (optional): issue notification hooks.
+- `VITE_RECAPTCHA_SITE_KEY`, `RECAPTCHA_SECRET_KEY`, `RECAPTCHA_MIN_SCORE` (optional): Google reCAPTCHA v3 verification for the contact form.
+- `VITE_GNEWS_API_KEY`, `VITE_NEWSAPI_KEY`, `VITE_FINANCIAL_MODELING_PREP_API_KEY`, `VITE_ALPHA_VANTAGE_API_KEY`, `VITE_NEWSDATA_API_KEY`, `VITE_GUARDIAN_API_KEY`, `VITE_WORDNIK_API_KEY`, `VITE_NASA_API_KEY` (optional): browser-side keys used by the Knowledge cards.
+- `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID`, `VITE_FIREBASE_MEASUREMENT_ID` (optional): Firebase web app config for Google sign-in.
 
 For Google Sheets integration, provide `config/google_service_account.json` with a service account key and share the target spreadsheet with that account.
 

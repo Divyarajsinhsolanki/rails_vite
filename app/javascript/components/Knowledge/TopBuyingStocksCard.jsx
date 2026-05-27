@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import BookmarkToggle from "./BookmarkToggle";
 
 const API_KEYS = {
-  FMP: "e5ye9VH06cq5TTNyyA6z2gd2S8pf9sBV",
-  ALPHA: "YOUR_ALPHA_VANTAGE_KEY",
+  FMP: import.meta.env.VITE_FINANCIAL_MODELING_PREP_API_KEY,
+  ALPHA: import.meta.env.VITE_ALPHA_VANTAGE_API_KEY,
 };
 
 const fetchers = [

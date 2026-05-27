@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import BookmarkToggle from "./BookmarkToggle";
 
 const API_KEYS = {
-  NEWSDATA: "YOUR_NEWSDATA_API_KEY",
+  NEWSDATA: import.meta.env.VITE_NEWSDATA_API_KEY,
 };
 
 const fetchers = [
