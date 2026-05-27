@@ -2,7 +2,7 @@ class Api::WorkPrioritiesController < Api::BaseController
   before_action :set_priority, only: [:update, :destroy]
 
   def index
-    render json: WorkPriority.all
+    render_paginated_collection(WorkPriority.order(:name))
   end
 
   def create

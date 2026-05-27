@@ -7,7 +7,7 @@ class Api::WorkLogsController < Api::BaseController
     if params[:from].present? && params[:to].present?
       logs = logs.where(log_date: params[:from]..params[:to])
     end
-    render json: logs.map { |log| serialize_log(log) }
+    render_paginated_collection(logs.order(log_date: :desc), serializer: method(:serialize_log))
   end
 
   def create

@@ -2,7 +2,7 @@ class Api::WorkCategoriesController < Api::BaseController
   before_action :set_category, only: [:update, :destroy]
 
   def index
-    render json: WorkCategory.all
+    render_paginated_collection(WorkCategory.order(:name))
   end
 
   def create

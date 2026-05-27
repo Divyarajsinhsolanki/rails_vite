@@ -1,7 +1,7 @@
 class Api::SkillsController < Api::BaseController
   def index
     skills = Skill.alphabetical
-    render json: skills.map { |skill| serialize(skill) }
+    render_paginated_collection(skills, serializer: method(:serialize))
   end
 
   private

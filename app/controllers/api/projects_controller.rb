@@ -6,7 +6,7 @@ class Api::ProjectsController < Api::BaseController
 
   def index
     projects = Project.includes(project_users: :user).order(:name)
-    render json: projects.map { |p| serialize_project(p) }
+    render_paginated_collection(projects, serializer: method(:serialize_project))
   end
 
   def create
