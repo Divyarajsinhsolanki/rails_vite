@@ -99,4 +99,27 @@ class Api::BaseController < ApplicationController
       AppEventLogger.error(channel, source: controller_action_source, message: message, exception: exception, payload: full_payload)
     end
   end
+
+  def render_paginated_collection(scope, serializer: nil, per_page: nil)
+    page = params[:page].to_i
+    page = 1 if page < 1
+    per = (params[:per_page] || per_page || 25).to_i
+    per = 25 if per < 1
+
+    paginated_scope = scope.respond_to?(:page) ? scope : Kaminari.paginate_array(Array(scope))
+    paginated = paginated_scope.page(page).per(per)
+    data = serializer ? paginated.map { |record| serializer.call(record) } : paginated
+
+    render json: {
+      data: data,
+      meta: {
+        current_page: paginated.current_page,
+        next_page: paginated.next_page,
+        prev_page: paginated.prev_page,
+        total_pages: paginated.total_pages,
+        total_count: paginated.total_count,
+        per_page: paginated.limit_value
+      }
+    }
+  end
 end

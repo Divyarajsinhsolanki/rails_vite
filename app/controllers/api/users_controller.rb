@@ -8,8 +8,8 @@ class Api::UsersController < Api::BaseController
 
   # GET /api/users.json
   def index
-    @users = User.order(created_at: :desc)
-    render json: @users.map { |user| serialize_user(user) }
+    users = User.order(created_at: :desc)
+    render_paginated_collection(users, serializer: method(:serialize_user))
   end
 
 

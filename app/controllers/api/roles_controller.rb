@@ -2,7 +2,7 @@ class Api::RolesController < Api::BaseController
   before_action :authorize_role_access!
 
   def index
-    render json: available_role_names
+    render_paginated_collection(available_role_names)
   end
 
   private

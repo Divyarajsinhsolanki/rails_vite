@@ -2,7 +2,7 @@ class Api::WorkTagsController < Api::BaseController
   before_action :set_tag, only: [:update, :destroy]
 
   def index
-    render json: WorkTag.all
+    render_paginated_collection(WorkTag.order(:name))
   end
 
   def create
