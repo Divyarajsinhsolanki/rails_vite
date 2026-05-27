@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -9,37 +9,37 @@ import ProjectMemberRoute from "../components/ProjectMemberRoute";
 
 import Navbar from "../components/Navbar";
 import Footer from "./Footer";
-import PostPage from "../pages/PostPage";
-import Profile from "../components/Profile";
-import KnowledgeDashboard from "../pages/KnowledgeDashboard";
-import Admin from "../components/Admin/Admin";
-import Users from "../pages/Users";
-import Teams from "../pages/Teams";
-import Projects from "../pages/Projects";
-import Contact from "../pages/Contact";
-import Vault from "../pages/Vault";
-import Legal from "../pages/Legal";
-import SprintDashboard from "../pages/SprintDashboard";
-import IssueTracker from "../pages/IssueTracker";
-import DailyMomentumHub from "../pages/DailyMomentumHub";
-import ForgotPassword from "../pages/ForgotPassword";
-import ResetPassword from "../pages/ResetPassword";
-import WorkLog from "../pages/WorkLog";
-import Settings from "../pages/Settings";
 import PageTitle from "./PageTitle";
-import Calendar from "../pages/Calendar";
-import AdminImpersonation from "../pages/AdminImpersonation";
-import Departments from "../pages/Departments";
-import DepartmentDetails from "../pages/DepartmentDetails";
 import PageLoader from "./ui/PageLoader";
-import Chat from "../pages/Chat";
-import Notifications from "../pages/Notifications";
-import ObjectGallery from "../pages/ObjectGallery";
-import MetaverseLanding from "../pages/MetaverseLanding";
-import ProjectMetaverse from "../pages/ProjectMetaverse";
 import ChatLauncher from "./ChatLauncher";
 
+const Admin = lazy(() => import("../components/Admin/Admin"));
+const AdminImpersonation = lazy(() => import("../pages/AdminImpersonation"));
+const Calendar = lazy(() => import("../pages/Calendar"));
+const Chat = lazy(() => import("../pages/Chat"));
+const Contact = lazy(() => import("../pages/Contact"));
+const DailyMomentumHub = lazy(() => import("../pages/DailyMomentumHub"));
+const DepartmentDetails = lazy(() => import("../pages/DepartmentDetails"));
+const Departments = lazy(() => import("../pages/Departments"));
+const ForgotPassword = lazy(() => import("../pages/ForgotPassword"));
+const IssueTracker = lazy(() => import("../pages/IssueTracker"));
+const KnowledgeDashboard = lazy(() => import("../pages/KnowledgeDashboard"));
+const Legal = lazy(() => import("../pages/Legal"));
+const MetaverseLanding = lazy(() => import("../pages/MetaverseLanding"));
+const Notifications = lazy(() => import("../pages/Notifications"));
+const ObjectGallery = lazy(() => import("../pages/ObjectGallery"));
 const PdfPage = lazy(() => import("./PdfPage"));
+const PostPage = lazy(() => import("../pages/PostPage"));
+const Profile = lazy(() => import("../components/Profile"));
+const ProjectMetaverse = lazy(() => import("../pages/ProjectMetaverse"));
+const Projects = lazy(() => import("../pages/Projects"));
+const ResetPassword = lazy(() => import("../pages/ResetPassword"));
+const Settings = lazy(() => import("../pages/Settings"));
+const SprintDashboard = lazy(() => import("../pages/SprintDashboard"));
+const Teams = lazy(() => import("../pages/Teams"));
+const Users = lazy(() => import("../pages/Users"));
+const Vault = lazy(() => import("../pages/Vault"));
+const WorkLog = lazy(() => import("../pages/WorkLog"));
 
 const routeTransitionProps = {
   initial: { opacity: 0, y: 18, scale: 0.992, filter: "blur(12px)" },
@@ -119,207 +119,209 @@ const AppRoutes = () => {
   return (
     <RouteTransitionLoader>
       <motion.div key={routeKey} className="shell-route-frame" {...routeTransitionProps}>
-        <Routes location={location}>
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/legal" element={<Legal />} />
-          <Route path="/3d-objects" element={<ObjectGallery />} />
-          <Route path="/metaverse-landing" element={<MetaverseLanding />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route
-            path="/projects/:projectId/issues"
-            element={
-              <ProjectMemberRoute>
-                <IssueTracker standalone />
-              </ProjectMemberRoute>
-            }
-          />
+        <Suspense fallback={<PageLoader title="Loading view" message="Preparing this screen..." />}>
+          <Routes location={location}>
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/legal" element={<Legal />} />
+            <Route path="/3d-objects" element={<ObjectGallery />} />
+            <Route path="/metaverse-landing" element={<MetaverseLanding />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route
+              path="/projects/:projectId/issues"
+              element={
+                <ProjectMemberRoute>
+                  <IssueTracker standalone />
+                </ProjectMemberRoute>
+              }
+            />
 
-          <Route
-            path="/"
-            element={
-              <PrivateRoute>
-                <PostPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/momentum"
-            element={
-              <PrivateRoute>
-                <DailyMomentumHub />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/pdf"
-            element={
-              <PrivateRoute>
-                <Suspense fallback={<PageLoader title="Loading PDF Workspace" message="Preparing document tools..." overlay />}><PdfPage /></Suspense>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/posts"
-            element={
-              <PrivateRoute>
-                <PostPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/vault"
-            element={
-              <PrivateRoute>
-                <Vault />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <PrivateRoute>
-                <Profile />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/profile/:userId"
-            element={
-              <PrivateRoute>
-                <Profile />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/knowledge"
-            element={
-              <PrivateRoute>
-                <KnowledgeDashboard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/worklog"
-            element={
-              <PrivateRoute>
-                <WorkLog />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/calendar"
-            element={
-              <PrivateRoute>
-                <Calendar />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/projects"
-            element={
-              <PrivateRoute>
-                <Projects />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/teams"
-            element={
-              <PrivateRoute>
-                <Teams />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/projects/:projectId/dashboard"
-            element={
-              <ProjectMemberRoute>
-                <SprintDashboard />
-              </ProjectMemberRoute>
-            }
-          />
-          <Route
-            path="/projects/:projectId/metaverse"
-            element={
-              <ProjectMemberRoute>
-                <ProjectMetaverse />
-              </ProjectMemberRoute>
-            }
-          />
-          <Route
-            path="/users"
-            element={
-              <PrivateRoute>
-                <Users />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/departments"
-            element={
-              <PrivateRoute>
-                <Departments />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/departments/:id"
-            element={
-              <PrivateRoute>
-                <DepartmentDetails />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin"
-            element={
-              <PrivateRoute ownerOnly>
-                <Admin />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin/login-as-user"
-            element={
-              <PrivateRoute ownerOnly>
-                <AdminImpersonation />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <PrivateRoute>
-                <Settings />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/chat"
-            element={
-              <PrivateRoute>
-                <Chat />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/chat/:conversationId"
-            element={
-              <PrivateRoute>
-                <Chat />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/notifications"
-            element={
-              <PrivateRoute>
-                <Notifications />
-              </PrivateRoute>
-            }
-          />
-        </Routes>
+            <Route
+              path="/"
+              element={
+                <PrivateRoute>
+                  <PostPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/momentum"
+              element={
+                <PrivateRoute>
+                  <DailyMomentumHub />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/pdf"
+              element={
+                <PrivateRoute>
+                  <PdfPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/posts"
+              element={
+                <PrivateRoute>
+                  <PostPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/vault"
+              element={
+                <PrivateRoute>
+                  <Vault />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <PrivateRoute>
+                  <Profile />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/profile/:userId"
+              element={
+                <PrivateRoute>
+                  <Profile />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/knowledge"
+              element={
+                <PrivateRoute>
+                  <KnowledgeDashboard />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/worklog"
+              element={
+                <PrivateRoute>
+                  <WorkLog />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/calendar"
+              element={
+                <PrivateRoute>
+                  <Calendar />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/projects"
+              element={
+                <PrivateRoute>
+                  <Projects />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/teams"
+              element={
+                <PrivateRoute>
+                  <Teams />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/projects/:projectId/dashboard"
+              element={
+                <ProjectMemberRoute>
+                  <SprintDashboard />
+                </ProjectMemberRoute>
+              }
+            />
+            <Route
+              path="/projects/:projectId/metaverse"
+              element={
+                <ProjectMemberRoute>
+                  <ProjectMetaverse />
+                </ProjectMemberRoute>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <PrivateRoute>
+                  <Users />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/departments"
+              element={
+                <PrivateRoute>
+                  <Departments />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/departments/:id"
+              element={
+                <PrivateRoute>
+                  <DepartmentDetails />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <PrivateRoute ownerOnly>
+                  <Admin />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin/login-as-user"
+              element={
+                <PrivateRoute ownerOnly>
+                  <AdminImpersonation />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <PrivateRoute>
+                  <Settings />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/chat"
+              element={
+                <PrivateRoute>
+                  <Chat />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/chat/:conversationId"
+              element={
+                <PrivateRoute>
+                  <Chat />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <PrivateRoute>
+                  <Notifications />
+                </PrivateRoute>
+              }
+            />
+          </Routes>
+        </Suspense>
       </motion.div>
     </RouteTransitionLoader>
   );

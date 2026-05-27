@@ -233,7 +233,7 @@ export const fetchSheetData = (params) => api.get('/sheet', { params });
 
 
 // CHAT ENDPOINTS
-export const fetchConversations = () => api.get('/conversations.json');
+export const fetchConversations = (params = {}) => api.get('/conversations.json', { params });
 export const fetchConversation = (id) => api.get(`/conversations/${id}.json`);
 export const createConversation = (data) => api.post('/conversations.json', { conversation: data, participant_ids: data.participant_ids || [] });
 export const startDirectConversation = (userId) => api.post('/conversations/start_direct', { user_id: userId });

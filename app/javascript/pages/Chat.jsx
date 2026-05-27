@@ -58,8 +58,58 @@ const NEW_CHAT_MODES = [
   { id: "direct", label: "Direct" },
   { id: "group", label: "Group" }
 ];
+const CONVERSATIONS_PAGE_SIZE = 30;
 
 const escapeRegExp = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const splitConversationList = (items = []) => {
+  const direct = [];
+  const group = [];
+
+  items.forEach((conversation) => {
+    if (conversation.conversation_type === "direct") direct.push(conversation);
+    else group.push(conversation);
+  });
+
+  return { direct, group };
+};
+
+const getConversationSortValue = (conversation) => {
+  const value = conversation?.updated_at || conversation?.last_message_at;
+  const timestamp = value ? new Date(value).getTime() : 0;
+  return Number.isFinite(timestamp) ? timestamp : 0;
+};
+
+const mergeConversationGroups = (previous, nextItems, replace = false) => {
+  if (replace) return splitConversationList(nextItems);
+
+  const conversationsById = new Map();
+
+  [...(previous.direct || []), ...(previous.group || [])].forEach((conversation) => {
+    conversationsById.set(Number(conversation.id), conversation);
+  });
+
+  nextItems.forEach((conversation) => {
+    conversationsById.set(Number(conversation.id), conversation);
+  });
+
+  return splitConversationList(
+    Array.from(conversationsById.values()).sort((left, right) => (
+      getConversationSortValue(right) - getConversationSortValue(left)
+    ))
+  );
+};
+
+const normalizeConversationResponse = (payload) => {
+  if (Array.isArray(payload)) {
+    return { conversations: payload, meta: null };
+  }
+
+  return {
+    conversations: Array.isArray(payload?.data) ? payload.data : [],
+    meta: payload?.meta || null
+  };
+};
 
 const getFullUserName = (person) => {
   const fullName = [person?.first_name, person?.last_name].filter(Boolean).join(" ").trim();
@@ -699,8 +749,12 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
   const fileInputRef = useRef(null);
   const composerTextareaRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const conversationLoadTokenRef = useRef(0);
 
   const [conversations, setConversations] = useState({ direct: [], group: [] });
+  const [conversationListMeta, setConversationListMeta] = useState(null);
+  const [isConversationListLoading, setIsConversationListLoading] = useState(false);
+  const [isConversationListLoadingMore, setIsConversationListLoadingMore] = useState(false);
   const [activeConversation, setActiveConversation] = useState(null);
   const [isConversationLoading, setIsConversationLoading] = useState(false);
   const [users, setUsers] = useState([]);
@@ -748,26 +802,85 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
     () => [...conversations.direct, ...conversations.group],
     [conversations]
   );
+  const totalConversationCount = conversationListMeta?.total_count ?? allConversations.length;
+  const conversationCountLabel = totalConversationCount > allConversations.length
+    ? `${allConversations.length} of ${totalConversationCount}`
+    : allConversations.length;
+  const conversationTypeCounts = conversationListMeta?.conversation_counts || {};
+  const directConversationCount = conversationTypeCounts.direct ?? conversations.direct.length;
+  const groupConversationCount = conversationTypeCounts.group ?? conversations.group.length;
+  const hasPendingConversationPages = isConversationListLoadingMore;
 
-  const totalUnreadCount = useMemo(
+  const loadedUnreadCount = useMemo(
     () => allConversations.reduce((total, conversation) => total + (conversation.unread_count || 0), 0),
     [allConversations]
   );
+  const totalUnreadCount = conversationListMeta?.unread_count ?? loadedUnreadCount;
 
-  const fetchAllData = useCallback(async () => {
+  const fetchAllData = useCallback(async ({ loadRemaining = true } = {}) => {
+    const loadToken = conversationLoadTokenRef.current + 1;
+    conversationLoadTokenRef.current = loadToken;
+
+    const applyConversationPage = (items, meta, replace = false) => {
+      if (conversationLoadTokenRef.current !== loadToken) return;
+
+      setConversations((previous) => mergeConversationGroups(previous, items, replace));
+      setConversationListMeta(meta);
+    };
+
     try {
-      const { data } = await fetchConversations();
-      const direct = [];
-      const group = [];
+      setIsConversationListLoading(true);
+      setIsConversationListLoadingMore(false);
 
-      (Array.isArray(data) ? data : []).forEach((conversation) => {
-        if (conversation.conversation_type === "direct") direct.push(conversation);
-        else group.push(conversation);
-      });
+      const { data } = await fetchConversations({ page: 1, per_page: CONVERSATIONS_PAGE_SIZE });
+      const { conversations: firstPageConversations, meta } = normalizeConversationResponse(data);
 
-      setConversations({ direct, group });
+      applyConversationPage(firstPageConversations, meta, loadRemaining);
+
+      if (!loadRemaining || !meta?.next_page) return;
+
+      const loadRemainingPages = async () => {
+        if (conversationLoadTokenRef.current !== loadToken) return;
+
+        setIsConversationListLoadingMore(true);
+
+        try {
+          let nextPage = meta.next_page;
+
+          while (nextPage && conversationLoadTokenRef.current === loadToken) {
+            const { data: pageData } = await fetchConversations({
+              page: nextPage,
+              per_page: CONVERSATIONS_PAGE_SIZE
+            });
+            const { conversations: pageConversations, meta: pageMeta } = normalizeConversationResponse(pageData);
+
+            applyConversationPage(pageConversations, pageMeta, false);
+            nextPage = pageMeta?.next_page;
+          }
+        } catch (error) {
+          console.error("Failed to load remaining conversations", error);
+        } finally {
+          if (conversationLoadTokenRef.current === loadToken) {
+            setIsConversationListLoadingMore(false);
+          }
+        }
+      };
+
+      const scheduleRemainingLoad = () => {
+        loadRemainingPages();
+      };
+
+      if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+        window.requestIdleCallback(scheduleRemainingLoad, { timeout: 1200 });
+      } else {
+        window.setTimeout(scheduleRemainingLoad, 120);
+      }
     } catch (error) {
       console.error("Failed to load conversations", error);
+    } finally {
+      if (conversationLoadTokenRef.current === loadToken) {
+        setIsConversationListLoading(false);
+      }
     }
   }, []);
 
@@ -894,7 +1007,7 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
   useEffect(() => {
     const userSub = subscribeToUserChat((payload) => {
       if (payload?.type === "conversation_refresh") {
-        fetchAllData();
+        fetchAllData({ loadRemaining: false });
 
         if (conversationId && Number(payload.conversation_id) === Number(conversationId)) {
           loadConversation(conversationId);
@@ -920,7 +1033,7 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
           };
         });
 
-        fetchAllData();
+        fetchAllData({ loadRemaining: false });
         markConversationAsRead(conversationId);
       }
 
@@ -1359,7 +1472,7 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
       setAttachments([]);
       setComposerSelection({ start: 0, end: 0 });
       setActiveMentionIndex(0);
-      fetchAllData();
+      fetchAllData({ loadRemaining: false });
     } catch (error) {
       console.error("Failed to send message", error);
     } finally {
@@ -1390,7 +1503,7 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
         const { data } = await startDirectConversation(selectedUserIds[0]);
         setIsNewChatModalOpen(false);
         openConversation(data.id);
-        fetchAllData();
+        fetchAllData({ loadRemaining: false });
       } catch (error) {
         console.error("Failed to start direct conversation", error);
       }
@@ -1416,7 +1529,7 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
       setIsNewChatModalOpen(false);
       resetNewChatModal("group");
       openConversation(data.id);
-      fetchAllData();
+      fetchAllData({ loadRemaining: false });
     } catch (error) {
       console.error("Failed to create group", error);
     }
@@ -1428,7 +1541,7 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
       ? `${activeConversation?.participants?.length || 0} members • updated ${activeConversation?.updated_at ? formatDistanceToNow(new Date(activeConversation.updated_at), { addSuffix: true }) : "recently"}`
       : activeConversationOtherParticipant?.job_title || "Private conversation";
 
-  const sidebarEmpty = filteredConversations.direct.length === 0 && filteredConversations.group.length === 0;
+  const sidebarEmpty = !isConversationListLoading && filteredConversations.direct.length === 0 && filteredConversations.group.length === 0;
 
   return (
     <div className="flex h-full min-h-0 w-full overflow-hidden bg-[linear-gradient(135deg,#eef6ff_0%,#f8fbff_45%,#f8f5ff_100%)] p-1.5 md:p-3 dark:bg-[linear-gradient(135deg,#09090b_0%,#111827_55%,#09090b_100%)]">
@@ -1442,7 +1555,9 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
                 <p className="text-[11px] font-medium uppercase tracking-[0.32em] text-sky-500">Inbox</p>
                 <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">Messages</h1>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  {allConversations.length} conversations across direct messages and group rooms
+                  {isConversationListLoading && allConversations.length === 0
+                    ? "Loading conversations..."
+                    : `${conversationCountLabel} conversations across direct messages and group rooms`}
                 </p>
               </div>
 
@@ -1458,8 +1573,8 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
 
             <div className="mt-5 grid grid-cols-3 gap-3">
               <StatCard icon={<FiMessageSquare className="h-4 w-4" />} label="Unread" value={totalUnreadCount} accentClass="bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-200" />
-              <StatCard icon={<FiZap className="h-4 w-4" />} label="Direct" value={conversations.direct.length} accentClass="bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-200" />
-              <StatCard icon={<FiUsers className="h-4 w-4" />} label="Groups" value={conversations.group.length} accentClass="bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-200" />
+              <StatCard icon={<FiZap className="h-4 w-4" />} label="Direct" value={directConversationCount} accentClass="bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-200" />
+              <StatCard icon={<FiUsers className="h-4 w-4" />} label="Groups" value={groupConversationCount} accentClass="bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-200" />
             </div>
           </div>
 
@@ -1493,7 +1608,21 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
           </div>
 
           <div className="scrollbar-hide relative flex-1 overflow-y-auto px-4 py-5">
-            {sidebarEmpty ? (
+            {isConversationListLoading && allConversations.length === 0 ? (
+              <div className="space-y-3 px-2">
+                {[1, 2, 3, 4].map((item) => (
+                  <div key={item} className="rounded-[22px] border border-white/70 bg-white/72 p-3.5 shadow-[0_18px_45px_-34px_rgba(15,23,42,0.5)] dark:border-zinc-800 dark:bg-zinc-900/80">
+                    <div className="flex items-start gap-3">
+                      <div className="h-11 w-11 animate-pulse rounded-full bg-slate-200 dark:bg-zinc-800" />
+                      <div className="min-w-0 flex-1 space-y-3">
+                        <div className="h-3 w-32 animate-pulse rounded-full bg-slate-200 dark:bg-zinc-800" />
+                        <div className="h-3 w-44 animate-pulse rounded-full bg-slate-100 dark:bg-zinc-900" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : sidebarEmpty ? (
               <div className="mx-2 rounded-[26px] border border-dashed border-slate-200 bg-white/80 p-6 text-center dark:border-zinc-800 dark:bg-zinc-900/70">
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-200">
                   <FiSearch className="h-6 w-6" />
@@ -1571,6 +1700,12 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
                     </div>
                   </section>
                 )}
+
+                {hasPendingConversationPages && (
+                  <div className="px-2 text-center text-xs font-medium text-slate-400 dark:text-slate-500">
+                    Loading more conversations...
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1613,7 +1748,7 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
                 <div className="mt-8 grid gap-3 sm:grid-cols-3">
                   <StatCard icon={<FiLayers className="h-4 w-4" />} label="Threads" value={allConversations.length} accentClass="bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-slate-200" />
                   <StatCard icon={<FiZap className="h-4 w-4" />} label="Unread" value={totalUnreadCount} accentClass="bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-200" />
-                  <StatCard icon={<FiUsers className="h-4 w-4" />} label="Teams" value={conversations.group.length} accentClass="bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-200" />
+                  <StatCard icon={<FiUsers className="h-4 w-4" />} label="Teams" value={groupConversationCount} accentClass="bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-200" />
                 </div>
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">

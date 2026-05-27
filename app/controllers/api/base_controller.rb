@@ -2,6 +2,7 @@ class Api::BaseController < ApplicationController
   protect_from_forgery with: :null_session
   before_action :set_request_context
   before_action :authenticate_user!
+  before_action :set_cache_headers, if: :cacheable_api_request?
 
   def authenticate_user!
     @current_user = jwt_cookie_user || devise_session_user
@@ -42,6 +43,20 @@ class Api::BaseController < ApplicationController
 
   def set_request_context
     Current.request_id = request.request_id
+  end
+
+  def cacheable_api_request?
+    request.get? && %w[index show].include?(action_name)
+  end
+
+  def set_cache_headers
+    response.headers['Cache-Control'] = 'private, max-age=0, must-revalidate'
+    response.headers['Vary'] = response.headers['Vary'].to_s
+      .split(',')
+      .map(&:strip)
+      .reject(&:blank?)
+      .union(%w[Cookie Authorization])
+      .join(', ')
   end
 
   def basic_request_context(extra = {})
