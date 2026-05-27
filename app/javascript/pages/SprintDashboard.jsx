@@ -54,6 +54,7 @@ export default function SprintDashboard() {
   const [sprint, setSprint] = useState(null);
   const [sprints, setSprints] = useState([]);
   const [project, setProject] = useState(null);
+  const [isProjectLoaded, setIsProjectLoaded] = useState(false);
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(false);
   const [viewMode, setViewMode] = useState('combined');
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(true);
@@ -73,12 +74,31 @@ export default function SprintDashboard() {
   const sheetEnabled = !!(project?.sheet_integration_enabled && project?.sheet_id);
 
   useEffect(() => {
-    if (!projectId) { setProject(null); return; }
-    fetchProjects().then(({ data }) => {
-      const list = Array.isArray(data) ? data : [];
-      const found = list.find(p => p.id === Number(projectId));
-      setProject(found || null);
-    });
+    if (!projectId) {
+      setProject(null);
+      setIsProjectLoaded(true);
+      return;
+    }
+
+    let mounted = true;
+    setIsProjectLoaded(false);
+    fetchProjects()
+      .then(({ data }) => {
+        if (!mounted) return;
+        const list = Array.isArray(data) ? data : [];
+        const found = list.find(p => p.id === Number(projectId));
+        setProject(found || null);
+      })
+      .catch(() => {
+        if (mounted) setProject(null);
+      })
+      .finally(() => {
+        if (mounted) setIsProjectLoaded(true);
+      });
+
+    return () => {
+      mounted = false;
+    };
   }, [projectId]);
 
   useEffect(() => {
@@ -98,10 +118,10 @@ export default function SprintDashboard() {
 
   // If sheet tab is active but integration is off, bounce back to overview.
   useEffect(() => {
-    if (activeTab === 'sheet' && !sheetEnabled) {
+    if (isProjectLoaded && activeTab === 'sheet' && !sheetEnabled) {
       setActiveTab('overview');
     }
-  }, [activeTab, sheetEnabled]);
+  }, [activeTab, isProjectLoaded, sheetEnabled]);
 
   // Fall back to dev-only when the project does not support QA mode.
   useEffect(() => {

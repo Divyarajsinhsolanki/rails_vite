@@ -562,6 +562,8 @@ ActiveRecord::Schema[7.1].define(version: 2027_04_19_000000) do
     t.jsonb "social_links", default: {}, null: false
     t.datetime "last_seen_at"
     t.string "avatar_color"
+    t.string "encrypted_keka_api_key"
+    t.string "encrypted_keka_api_key_iv"
     t.index ["availability_status"], name: "index_users_on_availability_status"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["department_id"], name: "index_users_on_department_id"

@@ -69,12 +69,13 @@ The following values are referenced by the application or infrastructure configu
 - `SMTP_ADDRESS`, `SMTP_PORT`, `SMTP_DOMAIN`, `SMTP_USERNAME`, `SMTP_PASSWORD` (optional): outbound email delivery.
 - `BASE_URL` (optional): base URL for mailer links.
 - `FRONTEND_URL` (optional): frontend URL used in reset password email links.
-- `CORS_ALLOWED_ORIGINS` (optional): comma-separated frontend origins allowed to call the Rails API.
+- `CORS_ALLOWED_ORIGINS`, `CORS_ALLOWED_PATH` (optional): frontend origins and API path allowed by CORS.
 - `REDIS_URL` (optional): Action Cable Redis connection.
 - `SLACK_WEBHOOK_URL` (optional): issue notification hooks.
 - `VITE_RECAPTCHA_SITE_KEY`, `RECAPTCHA_SECRET_KEY`, `RECAPTCHA_MIN_SCORE` (optional): Google reCAPTCHA v3 verification for the contact form.
 - `VITE_GNEWS_API_KEY`, `VITE_NEWSAPI_KEY`, `VITE_FINANCIAL_MODELING_PREP_API_KEY`, `VITE_ALPHA_VANTAGE_API_KEY`, `VITE_NEWSDATA_API_KEY`, `VITE_GUARDIAN_API_KEY`, `VITE_WORDNIK_API_KEY`, `VITE_NASA_API_KEY` (optional): browser-side keys used by the Knowledge cards.
-- `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID`, `VITE_FIREBASE_MEASUREMENT_ID` (optional): Firebase web app config for Google sign-in.
+- `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID`, `VITE_FIREBASE_MEASUREMENT_ID` (optional): Firebase web app config and server-side project id for Google sign-in.
+- `KEKA_API_KEY_ENCRYPTION_KEY` (optional): 32-byte key used to encrypt saved Keka API keys.
 
 For Google Sheets integration, provide `config/google_service_account.json` with a service account key and share the target spreadsheet with that account.
 

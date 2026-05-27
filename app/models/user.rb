@@ -6,7 +6,7 @@ class User < ApplicationRecord
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable, :confirmable
 
-  enum status: { invited: "invited", active: "active", locked: "locked" }, _default: "invited"
+  enum :status, { invited: "invited", active: "active", locked: "locked" }, default: "invited"
 
   LANDING_PAGES = %w[calendar posts profile vault knowledge worklog projects teams pdf users departments chat notifications].freeze
   AVAILABILITY_LABELS = {
@@ -64,11 +64,11 @@ class User < ApplicationRecord
                  key: ENV.fetch("KEKA_API_KEY_ENCRYPTION_KEY"),
                  algorithm: "aes-256-gcm"
 
-  enum availability_status: {
+  enum :availability_status, {
     available_now: 'available_now',
     available_soon: 'available_soon',
     fully_booked: 'fully_booked'
-  }, _default: 'available_now'
+  }, default: 'available_now'
 
   validates :first_name, presence: true
   validates :last_name, presence: true
