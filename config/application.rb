@@ -16,7 +16,7 @@ module RailsVite
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w(assets tasks))
     config.middleware.use ActionDispatch::Cookies
-    config.hosts << "10ac-122-170-1-30.ngrok-free.app"
+    config.hosts << ENV["ALLOWED_NGROK_HOST"] if Rails.env.development? && ENV["ALLOWED_NGROK_HOST"].present?
 
     # Configuration for the application, engines, and railties goes here.
     #

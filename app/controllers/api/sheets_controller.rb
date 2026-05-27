@@ -24,6 +24,6 @@ class Api::SheetsController < Api::BaseController
       exception: e,
       payload: { project_id: project&.id || params[:project_id], sheet_name: sheet_name, spreadsheet_id: project&.sheet_id }
     )
-    render json: { error: e.message }, status: :internal_server_error
+    render json: { error: "An unexpected error occurred" }, status: :internal_server_error
   end
 end
