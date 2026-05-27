@@ -1,4 +1,5 @@
 FirebaseIdToken.configure do |config|
-  config.project_ids = ['temppdfmodifier']
+  project_id = ENV.fetch('FIREBASE_PROJECT_ID')
+  config.project_ids = [project_id]
   config.redis = nil
 end
