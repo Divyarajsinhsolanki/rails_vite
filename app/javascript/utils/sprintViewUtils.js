@@ -80,8 +80,11 @@ export function getVisibleMembersForView({
   viewMode = "combined",
   records = [],
 } = {}) {
+  const safeMembers = Array.isArray(members) ? members : [];
+  const safeRecords = Array.isArray(records) ? records : [];
+
   const assignedIds = new Set(
-    records
+    safeRecords
       .map((record) => {
         const recordType = String(record?.type || "").toLowerCase();
         const preferredQaAssignee = record?.assigned_to_user ?? record?.assignedUser ?? record?.assigned_user?.id;
@@ -97,5 +100,5 @@ export function getVisibleMembersForView({
       .map((id) => String(id))
   );
 
-  return members.filter((member) => assignedIds.has(String(member.id)));
+  return safeMembers.filter((member) => assignedIds.has(String(member.id)));
 }

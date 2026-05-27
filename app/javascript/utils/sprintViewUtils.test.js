@@ -94,4 +94,23 @@ describe("sprintViewUtils", () => {
       }).map((member) => member.id)
     ).toEqual([1, 2]);
   });
+
+  it("gracefully handles non-array API payloads", () => {
+    expect(
+      getVisibleMembersForView({
+        members: { id: 1, name: "Dev One" },
+        viewMode: "dev",
+        records: [{ type: "Code", developer_id: 1 }],
+      })
+    ).toEqual([]);
+
+    expect(
+      getVisibleMembersForView({
+        members: [{ id: 1, name: "Dev One" }],
+        viewMode: "dev",
+        records: { id: "bad" },
+      })
+    ).toEqual([]);
+  });
+
 });
