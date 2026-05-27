@@ -25,6 +25,22 @@ class User < ApplicationRecord
     "digest" => false
   }.freeze
   AVATAR_COLOR_FORMAT = /\A#[0-9a-f]{6}\z/i
+  PUBLIC_JSON_EXCLUDED_ATTRIBUTES = %i[
+    encrypted_password
+    reset_password_token
+    reset_password_sent_at
+    remember_created_at
+    confirmation_token
+    confirmation_sent_at
+    unconfirmed_email
+    keka_base_url
+    keka_api_key
+    keka_employee_id
+    keka_profile_data
+    keka_last_synced_at
+    encrypted_keka_api_key
+    encrypted_keka_api_key_iv
+  ].freeze
 
   has_one_attached :profile_picture
   has_one_attached :cover_photo
@@ -148,6 +164,13 @@ class User < ApplicationRecord
       last_synced_at: keka_last_synced_at,
       data: keka_profile_data || {}
     }
+  end
+
+  def public_json(include_roles: false)
+    options = { except: PUBLIC_JSON_EXCLUDED_ATTRIBUTES }
+    options[:include] = { roles: { only: [:name] } } if include_roles
+
+    as_json(options)
   end
 
   def notification_preferences_with_defaults

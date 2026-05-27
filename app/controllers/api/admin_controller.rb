@@ -48,7 +48,7 @@ class Api::AdminController < Api::BaseController
     records = records.offset((page - 1) * per_page).limit(per_page)
 
     json_records = records.map do |record|
-      data = record.serializable_hash(except: [:image])
+      data = record.serializable_hash(except: serialization_excludes_for(record))
 
       if record.respond_to?(:image) && record.image.attached?
         data[:image_url] = url_for(record.image)
@@ -89,13 +89,19 @@ class Api::AdminController < Api::BaseController
   private
 
   def serialize_record(record)
-    data = record.serializable_hash(except: [:image])
+    data = record.serializable_hash(except: serialization_excludes_for(record))
   
     if record.respond_to?(:image) && record.image.attached?
       data[:image_url] = url_for(record.image)
     end
   
     data
+  end
+
+  def serialization_excludes_for(record)
+    excludes = [:image]
+    excludes += User::PUBLIC_JSON_EXCLUDED_ATTRIBUTES if record.is_a?(User)
+    excludes
   end
 
   def set_model

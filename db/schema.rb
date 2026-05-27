@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2027_04_19_000000) do
+ActiveRecord::Schema[7.1].define(version: 2027_05_27_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -553,7 +553,6 @@ ActiveRecord::Schema[7.1].define(version: 2027_04_19_000000) do
     t.bigint "department_id"
     t.jsonb "notification_preferences", default: {"digest"=>false, "update"=>true, "assigned"=>true, "commented"=>true}, null: false
     t.string "keka_base_url"
-    t.string "keka_api_key"
     t.string "keka_employee_id"
     t.jsonb "keka_profile_data", default: {}, null: false
     t.datetime "keka_last_synced_at"
