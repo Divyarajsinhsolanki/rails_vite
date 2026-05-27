@@ -76,6 +76,24 @@ describe("sprintViewUtils", () => {
     ).toEqual([2]);
   });
 
+  it("returns an empty list when members or records are not arrays", () => {
+    expect(
+      getVisibleMembersForView({
+        members: { id: 1 },
+        viewMode: "combined",
+        records: [{ type: "Code", developer_id: 1 }],
+      })
+    ).toEqual([]);
+
+    expect(
+      getVisibleMembersForView({
+        members: [{ id: 1, name: "Dev One" }],
+        viewMode: "combined",
+        records: { type: "Code", developer_id: 1 },
+      })
+    ).toEqual([]);
+  });
+
   it("uses assigned sprint members only in combined mode", () => {
     const members = [
       { id: 1, name: "Dev One" },
