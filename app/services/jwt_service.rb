@@ -11,9 +11,11 @@ class JwtService
     decoded.with_indifferent_access
   rescue JWT::ExpiredSignature => e
     Rails.logger.warn("JwtService.decode expired token: #{e.message}")
+    Rails.error.report(e, handled: true, context: { service: 'JwtService', operation: 'decode', token_state: 'expired' })
     { error: :expired_token }
   rescue JWT::DecodeError => e
     Rails.logger.warn("JwtService.decode invalid token: #{e.message}")
+    Rails.error.report(e, handled: true, context: { service: 'JwtService', operation: 'decode', token_state: 'invalid' })
     { error: :invalid_token }
   end
 end

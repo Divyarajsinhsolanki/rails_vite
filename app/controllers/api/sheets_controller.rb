@@ -1,5 +1,4 @@
 class Api::SheetsController < Api::BaseController
-  skip_before_action :authenticate_user!, only: [:show]
   around_action :log_sheet_request_exceptions
 
   def show
