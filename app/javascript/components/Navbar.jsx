@@ -143,7 +143,7 @@ const HolographicAvatar = ({ user }) => {
         src={user.profile_picture || `https://ui-avatars.com/api/?name=${user.email}&background=random`}
         alt="User avatar"
         className="relative z-10 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-      />
+      loading="lazy" />
       <div className="absolute inset-0 z-20 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.35),transparent_55%)]" />
       <div
         className="absolute inset-0 z-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
@@ -425,7 +425,7 @@ const Navbar = () => {
               src={logo}
               alt="NexusHub logo"
               className="relative z-10 h-8 w-auto transition-transform duration-500 group-hover:scale-110"
-            />
+            loading="lazy" />
           </span>
           <div className="min-w-0">
             <p className="text-[0.58rem] font-semibold uppercase tracking-[0.34em] text-slate-400">Nexus Shell</p>

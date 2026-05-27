@@ -333,7 +333,7 @@ const Avatar = ({ name, src, size = "md", className = "" }) => {
         src={src}
         alt={name}
         className={`rounded-full object-cover ring-2 ring-white/90 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.7)] ${currentSizeClass} ${className}`}
-      />
+      loading="lazy" />
     );
   }
 
@@ -454,7 +454,7 @@ const MessageAttachmentCard = ({ attachment, isMe, searchQuery }) => {
       <div className={`group/attachment relative overflow-hidden rounded-2xl border ${containerClass}`}>
         <a href={attachment.url} target="_blank" rel="noreferrer" className="block" title={`Open ${attachment.filename}`}>
           {isImage ? (
-            <img src={attachment.url} alt={attachment.filename} className="h-44 w-full object-cover" />
+            <img src={attachment.url} alt={attachment.filename} className="h-44 w-full object-cover" loading="lazy" />
           ) : (
             <video src={attachment.url} className="h-44 w-full bg-slate-950 object-cover" controls preload="metadata" />
           )}
@@ -1874,7 +1874,7 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
                               >
                                 {isImage && previewUrl ? (
                                   <div className="overflow-hidden rounded-2xl">
-                                    <img src={previewUrl} alt={file.name} className="h-24 w-full object-cover" />
+                                    <img src={previewUrl} alt={file.name} className="h-24 w-full object-cover" loading="lazy" />
                                   </div>
                                 ) : isVideo && previewUrl ? (
                                   <div className="overflow-hidden rounded-2xl">

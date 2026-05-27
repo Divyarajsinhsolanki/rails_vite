@@ -43,7 +43,7 @@ const Avatar = ({ name, src, size = 'md', className = '' }) => {
         src={src}
         alt={`${name}'s avatar`}
         className={`rounded-full object-cover ring-2 ring-white dark:ring-zinc-800 shadow-sm ${currentSizeClass} ${className}`}
-      />
+      loading="lazy" />
     );
   }
   const initial = name ? name.charAt(0).toUpperCase() : "?";

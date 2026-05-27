@@ -316,7 +316,7 @@ const IssueCard = ({ issue, onEdit, onDelete, isSelected, onSelect }) => {
             {/\.(mp4|webm|ogg)$/i.test(primaryAttachment.url) ? (
               <video src={primaryAttachment.url} className="h-full w-full object-cover" />
             ) : (
-              <img src={primaryAttachment.url} alt="Attachment" className="h-full w-full object-cover transition-transform group-hover/media:scale-105" />
+              <img src={primaryAttachment.url} alt="Attachment" className="h-full w-full object-cover transition-transform group-hover/media:scale-105" loading="lazy" />
             )}
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/media:opacity-100 transition-opacity flex items-center justify-center">
               <a href={primaryAttachment.url} target="_blank" rel="noopener noreferrer" className="bg-white px-4 py-2 rounded-lg text-xs font-bold shadow-lg">View Full</a>

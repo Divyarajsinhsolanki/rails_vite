@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AnimatePresence, motion } from "framer-motion";
@@ -9,7 +9,6 @@ import ProjectMemberRoute from "../components/ProjectMemberRoute";
 
 import Navbar from "../components/Navbar";
 import Footer from "./Footer";
-import PdfPage from "./PdfPage";
 import PostPage from "../pages/PostPage";
 import Profile from "../components/Profile";
 import KnowledgeDashboard from "../pages/KnowledgeDashboard";
@@ -39,6 +38,8 @@ import ObjectGallery from "../pages/ObjectGallery";
 import MetaverseLanding from "../pages/MetaverseLanding";
 import ProjectMetaverse from "../pages/ProjectMetaverse";
 import ChatLauncher from "./ChatLauncher";
+
+const PdfPage = lazy(() => import("./PdfPage"));
 
 const routeTransitionProps = {
   initial: { opacity: 0, y: 18, scale: 0.992, filter: "blur(12px)" },
@@ -154,7 +155,7 @@ const AppRoutes = () => {
             path="/pdf"
             element={
               <PrivateRoute>
-                <PdfPage />
+                <Suspense fallback={<PageLoader title="Loading PDF Workspace" message="Preparing document tools..." overlay />}><PdfPage /></Suspense>
               </PrivateRoute>
             }
           />

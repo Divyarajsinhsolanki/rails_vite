@@ -427,7 +427,7 @@ const Notifications = () => {
                                   src={notification.actor_avatar}
                                   alt=""
                                   className="h-12 w-12 rounded-[18px] border border-white/70 object-cover shadow-[0_12px_26px_rgb(15_23_42_/_0.08)]"
-                                />
+                                loading="lazy" />
                               ) : (
                                 <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-white/70 bg-white/90 shadow-[0_12px_26px_rgb(15_23_42_/_0.08)]">
                                   <Icon className="h-5 w-5 text-slate-700" />

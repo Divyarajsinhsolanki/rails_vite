@@ -178,7 +178,7 @@ const VaultItemCard = ({ item, onEdit, onDelete, onCopy, showPassword, togglePas
             {/\.(mp4|webm|mov)$/i.test(item.content) ? (
               <video src={item.content} controls className="w-full max-h-48 object-contain" />
             ) : (
-              <img src={item.content} alt={item.title} className="w-full max-h-48 object-contain" />
+              <img src={item.content} alt={item.title} className="w-full max-h-48 object-contain" loading="lazy" />
             )}
           </div>
         ) : isCredential ? (
