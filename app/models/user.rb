@@ -60,6 +60,10 @@ class User < ApplicationRecord
   has_many :calendar_events, dependent: :destroy
   belongs_to :department, optional: true
 
+  attr_encrypted :keka_api_key,
+                 key: ENV.fetch("KEKA_API_KEY_ENCRYPTION_KEY"),
+                 algorithm: "aes-256-gcm"
+
   enum availability_status: {
     available_now: 'available_now',
     available_soon: 'available_soon',
