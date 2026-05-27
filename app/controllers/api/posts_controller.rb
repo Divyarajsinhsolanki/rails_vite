@@ -6,10 +6,13 @@ class Api::PostsController < Api::BaseController
 
   def index
     if request.format.html?
+      # Optimize queries with includes and use existing pagination helper
       posts = Post.includes(:user, :image_attachment, :post_likes, comments: :user)
       posts = posts.where(user_id: params[:user_id]) if params[:user_id]
       posts = posts.order(created_at: :desc)
-      render json: posts.map { |post| serialize_post(post) }
+      
+      # Use the base controller's pagination helper
+      render_paginated_collection(posts, serializer: method(:serialize_post), per_page: 20)
     end
   end
 
@@ -71,13 +74,17 @@ class Api::PostsController < Api::BaseController
   end
 
   def serialize_post(post)
+    # Pre-calculate liked_by_current status from already-loaded likes to avoid extra queries
+    current_user_id = current_user&.id
+    liked_by_current = current_user_id && post.post_likes.any? { |like| like.user_id == current_user_id }
+    
     {
       id: post.id,
       message: post.message,
       image_url: post.image.attached? ? rails_blob_url(post.image, disposition: "attachment", only_path: true) : nil,
       created_at: post.created_at.iso8601,
       likes_count: post.post_likes.size,
-      liked_by_current_user: current_user.present? && post.post_likes.any? { |like| like.user_id == current_user.id },
+      liked_by_current_user: liked_by_current,
       comments_count: post.try(:comments_count) || post.comments.size,
       comments: serialize_comments(post),
       user: {

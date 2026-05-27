@@ -4,8 +4,7 @@ import {
   differenceInMinutes, addMinutes, isBefore, isAfter, eachDayOfInterval, startOfMonth,
   endOfMonth, eachWeekOfInterval, isSameMonth, isSameWeek
 } from 'date-fns';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js';
-import { Doughnut, Bar } from 'react-chartjs-2';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ClockIcon,
@@ -45,10 +44,6 @@ import {
   updateWorkNote
 } from '../components/api';
 
-// Register Chart.js components
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
-
-// --- Constants ---
 const POMODORO_DURATION = 30; // minutes
 const SHORT_BREAK_DURATION = 15; // minutes
 const LONG_BREAK_DURATION = 30; // minutes
@@ -1056,16 +1051,13 @@ const TimeSummaryWidget = ({ timeSummary, categories, priorities, weeklySummary,
   const totalHours = (timeSummary.totalMinutes / 60).toFixed(1);
   const themeColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-color').trim();
 
-  // Weekly chart data
-  const weeklyChartData = useMemo(() => ({
-    labels: weeklySummary.map(day => day.dayName),
-    datasets: [{
-      label: 'Minutes Worked',
-      data: weeklySummary.map(day => day.minutes),
-      backgroundColor: hexToRgba(themeColor, 0.8),
-      borderRadius: 4,
-    }]
-  }), [weeklySummary, themeColor]);
+  // Weekly chart data - formatted for recharts
+  const weeklyChartData = useMemo(() => 
+    weeklySummary.map(day => ({
+      name: day.dayName,
+      minutes: day.minutes
+    }))
+  , [weeklySummary]);
 
   return (
     <motion.div layout className="shell-panel shell-panel-strong rounded-[28px] p-6 shadow-[0_20px_44px_rgb(15_23_42_/_0.08)]">
@@ -1128,23 +1120,15 @@ const TimeSummaryWidget = ({ timeSummary, categories, priorities, weeklySummary,
         )
       ) : (
         <div className="h-64 rounded-[24px] border border-white/60 bg-white/56 p-3">
-          <Bar
-            data={weeklyChartData}
-            options={{
-              responsive: true,
-              maintainAspectRatio: false,
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  ticks: {
-                    callback: function (value) {
-                      return value + 'm';
-                    }
-                  }
-                }
-              }
-            }}
-          />
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={weeklyChartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis dataKey="name" stroke="rgb(100,116,139)" />
+              <YAxis stroke="rgb(100,116,139)" label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }} />
+              <Tooltip formatter={(value) => `${value}m`} contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.92)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '12px' }} />
+              <Bar dataKey="minutes" fill={themeColor} radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       )}
     </motion.div>

@@ -69,16 +69,16 @@ export const SchedulerAPI = {
   getLastSprint: (projectId) =>
     api.get("/sprints/last.json", { params: projectId ? { project_id: projectId } : {} }),
   getSprints: (projectId) =>
-    api.get("/sprints.json", { params: projectId ? { project_id: projectId } : {} }),
+    withNormalizedCollection(api.get("/sprints.json", { params: projectId ? { project_id: projectId } : {} })),
   createSprint: (projectId, data) =>
     api.post("/sprints.json", { sprint: { ...data, project_id: projectId } }),
   updateSprint: (id, data) => api.put(`/sprints/${id}.json`, { sprint: data }),
 
   // Developers
-  getDevelopers: (params = {}) => api.get("/developers.json", { params }),
+  getDevelopers: (params = {}) => withNormalizedCollection(api.get("/developers.json", { params })),
 
   // Tasks
-  getTasks: (params = {}) => api.get("/tasks.json", { params }),
+  getTasks: (params = {}) => withNormalizedCollection(api.get("/tasks.json", { params })),
   createTask: (data) => api.post("/tasks.json", { task: data }),
   updateTask: (id, data) => api.patch(`/tasks/${id}.json`, { task: data }),
   deleteTask: (id) => api.delete(`/tasks/${id}.json`),
@@ -86,7 +86,7 @@ export const SchedulerAPI = {
   toggleTaskStatus: (id, status) => api.patch(`/tasks/${id}.json`, { is_struck: status }),
 
   // Task Logs
-  getTaskLogs: (params = {}) => api.get('/task_logs.json', { params }),
+  getTaskLogs: (params = {}) => withNormalizedCollection(api.get('/task_logs.json', { params })),
   createTaskLog: (data) => api.post('/task_logs.json', { task_log: data }),
   bulkCreateTaskLogs: (entries) => api.post('/task_logs/bulk_create.json', { task_logs: entries }),
   updateTaskLog: (id, data) => api.patch(`/task_logs/${id}.json`, { task_log: data }),
@@ -148,7 +148,7 @@ const buildIssuePayload = (raw) => {
   return formData;
 };
 
-export const getIssues = (projectId) => api.get('/issues.json', { params: { project_id: projectId } });
+export const getIssues = (projectId) => withNormalizedCollection(api.get('/issues.json', { params: { project_id: projectId } }));
 export const createIssue = (data) => {
   const payload = buildIssuePayload(data);
   return api.post('/issues.json', payload, payload instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {});
@@ -232,7 +232,7 @@ export const fetchWorkPriorities = () => api.get('/work_priorities');
 export const fetchWorkCategories = () => api.get('/work_categories');
 export const fetchWorkTags = () => api.get('/work_tags');
 
-export const getWorkLogs = (params = {}) => api.get('/work_logs', { params });
+export const getWorkLogs = (params = {}) => withNormalizedCollection(api.get('/work_logs', { params }));
 export const createWorkLog = (data) => api.post('/work_logs', { work_log: data });
 export const updateWorkLog = (id, data) => api.put(`/work_logs/${id}`, { work_log: data });
 export const deleteWorkLog = (id) => api.delete(`/work_logs/${id}`);

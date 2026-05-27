@@ -59,7 +59,10 @@ group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
 
-  gem 'PdfMaster', path: ENV.fetch('PDF_MASTER_PATH', 'lib/PdfMaster')
+  gem 'PdfMaster', path: ENV.fetch('PDF_MASTER_PATH', '/home/divyarajs/rails_project/newgems/PdfMaster')
+  
+  # Query performance monitoring - detect N+1 queries
+  gem 'bullet'
 
   # Add speed badges [https://github.com/MiniProfiler/rack-mini-profiler]
   # gem "rack-mini-profiler"

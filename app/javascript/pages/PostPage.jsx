@@ -233,55 +233,57 @@ const PostPage = () => {
     if (!user) return;
     const today = new Date().toISOString().split('T')[0];
 
-    fetchProjects()
-      .then(async ({ data }) => {
-        const userProjects = Array.isArray(data)
-          ? data.filter((p) => p.users.some((u) => u.id === user.id))
-          : [];
+    // Run the main data fetches in parallel for performance
+    Promise.all([
+      fetchProjects(),
+      getUsers(),
+      SchedulerAPI.getTasks({ assigned_to_user: user.id })
+    ])
+      .then(([projectsResp, usersResp, tasksResp]) => {
+        const userData = usersResp.data;
+        const projectsData = Array.isArray(projectsResp.data) ? projectsResp.data : [];
+        const tasksData = Array.isArray(tasksResp.data) ? tasksResp.data : [];
+
+        // Filter user projects
+        const userProjects = projectsData.filter((p) =>
+          p.users.some((u) => u.id === user.id)
+        );
         setProjects(userProjects);
 
-        try {
-          const { data: taskData } = await SchedulerAPI.getTasks({ assigned_to_user: user.id });
-          const due = (Array.isArray(taskData) ? taskData : [])
-            .filter((t) => t.end_date === today && t.status !== 'completed')
-            .map((t) => ({
-              ...t,
-              project: userProjects.find((p) => p.id === t.project_id)
-            }));
-          const uniqueDue = due.filter(
-            (t, idx, arr) => idx === arr.findIndex((u) => u.id === t.id)
-          );
-          setTasks(uniqueDue);
-        } catch {
-          setTasks([]);
-        }
-      })
-      .catch(() => {
-        setProjects([]);
-        setTasks([]);
-      });
+        // Filter tasks due today
+        const due = tasksData
+          .filter((t) => t.end_date === today && t.status !== 'completed')
+          .map((t) => ({
+            ...t,
+            project: userProjects.find((p) => p.id === t.project_id)
+          }));
+        const uniqueDue = due.filter(
+          (t, idx, arr) => idx === arr.findIndex((u) => u.id === t.id)
+        );
+        setTasks(uniqueDue);
 
-    getUsers()
-      .then(({ data }) => {
-        const today = new Date();
-        const upcoming = (Array.isArray(data) ? data : [])
+        // Filter upcoming birthdays
+        const dateToday = new Date();
+        const upcoming = (Array.isArray(userData) ? userData : [])
           .filter((u) => u.date_of_birth)
           .map((u) => {
             const dob = new Date(u.date_of_birth);
-            const next = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());
-            if (next < today) next.setFullYear(next.getFullYear() + 1);
+            const next = new Date(dateToday.getFullYear(), dob.getMonth(), dob.getDate());
+            if (next < dateToday) next.setFullYear(next.getFullYear() + 1);
             return { ...u, nextBirthday: next };
           })
-          .filter((u) => (u.nextBirthday - today) / (1000 * 60 * 60 * 24) <= 30)
+          .filter((u) => (u.nextBirthday - dateToday) / (1000 * 60 * 60 * 24) <= 30)
           .sort((a, b) => a.nextBirthday - b.nextBirthday)
           .slice(0, 5);
         setBirthdays(upcoming);
       })
-      .catch(() => setBirthdays([]));
-  }, [user]);
+      .catch(() => {
+        setProjects([]);
+        setTasks([]);
+        setBirthdays([]);
+      });
 
-  useEffect(() => {
-    if (!user) return;
+    // Fetch general tasks separately (different filter)
     SchedulerAPI.getTasks({ type: 'general', assigned_to_user: user.id })
       .then(({ data }) => {
         const tasks = Array.isArray(data) ? data : [];

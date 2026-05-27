@@ -55,72 +55,14 @@ const routeTransitionProps = {
   },
 };
 
-const RouteTransitionLoader = ({ children }) => {
-  const location = useLocation();
-  const [isRouteLoading, setIsRouteLoading] = useState(false);
-  const startTimeRef = useRef(Date.now());
-  const hideTimerRef = useRef(null);
-
-  useEffect(() => {
-    if (hideTimerRef.current) {
-      clearTimeout(hideTimerRef.current);
-    }
-
-    setIsRouteLoading(true);
-    startTimeRef.current = Date.now();
-
-    hideTimerRef.current = setTimeout(() => {
-      const elapsed = Date.now() - startTimeRef.current;
-      const minDelay = Math.max(150 - elapsed, 0);
-
-      if (minDelay === 0) {
-        setIsRouteLoading(false);
-        return;
-      }
-
-      hideTimerRef.current = setTimeout(() => setIsRouteLoading(false), minDelay);
-    }, 0);
-
-    return () => {
-      if (hideTimerRef.current) {
-        clearTimeout(hideTimerRef.current);
-      }
-    };
-  }, [location.pathname, location.search]);
-
-  return (
-    <>
-      <AnimatePresence>
-        {isRouteLoading ? (
-          <motion.div
-            key={`route-loader-${location.pathname}${location.search}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <PageLoader
-              title="Switching Views"
-              message="Rebuilding the workspace for this screen..."
-              overlay
-            />
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-      {children}
-    </>
-  );
-};
-
 const AppRoutes = () => {
   const location = useLocation();
   const routeKey = `${location.pathname}${location.search}`;
 
   return (
-    <RouteTransitionLoader>
-      <motion.div key={routeKey} className="shell-route-frame" {...routeTransitionProps}>
-        <Suspense fallback={<PageLoader title="Loading view" message="Preparing this screen..." />}>
-          <Routes location={location}>
+    <motion.div key={routeKey} className="shell-route-frame" {...routeTransitionProps}>
+      <Suspense fallback={<PageLoader title="Loading view" message="Preparing this screen..." />}>
+        <Routes location={location}>
             <Route path="/contact" element={<Contact />} />
             <Route path="/legal" element={<Legal />} />
             <Route path="/3d-objects" element={<ObjectGallery />} />
@@ -323,8 +265,7 @@ const AppRoutes = () => {
           </Routes>
         </Suspense>
       </motion.div>
-    </RouteTransitionLoader>
-  );
+    );
 };
 
 const AppShell = () => {
