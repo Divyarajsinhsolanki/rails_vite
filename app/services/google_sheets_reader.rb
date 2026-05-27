@@ -44,5 +44,9 @@ class GoogleSheetsReader
 
   def ensure_spreadsheet_id!
     raise ArgumentError, 'Spreadsheet ID is missing' if @spreadsheet_id.blank?
+
+    @service.get_spreadsheet(@spreadsheet_id, fields: 'spreadsheetId')
+  rescue Google::Apis::ClientError => e
+    raise ArgumentError, "Spreadsheet ID is invalid or inaccessible: #{e.message}"
   end
 end
