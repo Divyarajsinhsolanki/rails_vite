@@ -151,17 +151,14 @@ const WorkLog = () => {
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        const { data: priorityData } = await fetchWorkPriorities();
+        const [{ data: priorityData }, { data: categoryData }, { data: tagData }] = await Promise.all([
+          fetchWorkPriorities(),
+          fetchWorkCategories(),
+          fetchWorkTags()
+        ]);
+
         setPriorities(priorityData.sort((a, b) => a.id - b.id));
-      } catch { }
-
-      try {
-        const { data: categoryData } = await fetchWorkCategories();
         setCategories(categoryData.sort((a, b) => a.id - b.id));
-      } catch { }
-
-      try {
-        const { data: tagData } = await fetchWorkTags();
         setTags(tagData.map(t => t.name));
       } catch { }
     };
@@ -170,22 +167,25 @@ const WorkLog = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const params = viewMode === 'weekly'
-          ? {
-            from: format(startOfWeek(selectedDate), 'yyyy-MM-dd'),
-            to: format(endOfWeek(selectedDate), 'yyyy-MM-dd')
-          }
-          : { date: format(selectedDate, 'yyyy-MM-dd') };
-        const { data } = await getWorkLogs(params);
-        setTasks(data.map(formatLog));
-      } catch { }
+      const params = viewMode === 'weekly'
+        ? {
+          from: format(startOfWeek(selectedDate), 'yyyy-MM-dd'),
+          to: format(endOfWeek(selectedDate), 'yyyy-MM-dd')
+        }
+        : { date: format(selectedDate, 'yyyy-MM-dd') };
+      const selectedDateKey = format(selectedDate, 'yyyy-MM-dd');
 
       try {
-        const { data: noteData } = await getWorkNote(format(selectedDate, 'yyyy-MM-dd'));
+        const [{ data: logsData }, { data: noteData }] = await Promise.all([
+          getWorkLogs(params),
+          getWorkNote(selectedDateKey)
+        ]);
+
+        setTasks(logsData.map(formatLog));
         setDailyNote(noteData.content || '');
         setNoteId(noteData.id || null);
       } catch {
+        setTasks([]);
         setDailyNote('');
         setNoteId(null);
       }
