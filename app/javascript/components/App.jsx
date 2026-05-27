@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AnimatePresence, motion } from "framer-motion";
@@ -57,11 +57,34 @@ const routeTransitionProps = {
 const RouteTransitionLoader = ({ children }) => {
   const location = useLocation();
   const [isRouteLoading, setIsRouteLoading] = useState(false);
+  const startTimeRef = useRef(Date.now());
+  const hideTimerRef = useRef(null);
 
   useEffect(() => {
+    if (hideTimerRef.current) {
+      clearTimeout(hideTimerRef.current);
+    }
+
     setIsRouteLoading(true);
-    const timer = setTimeout(() => setIsRouteLoading(false), 420);
-    return () => clearTimeout(timer);
+    startTimeRef.current = Date.now();
+
+    hideTimerRef.current = setTimeout(() => {
+      const elapsed = Date.now() - startTimeRef.current;
+      const minDelay = Math.max(150 - elapsed, 0);
+
+      if (minDelay === 0) {
+        setIsRouteLoading(false);
+        return;
+      }
+
+      hideTimerRef.current = setTimeout(() => setIsRouteLoading(false), minDelay);
+    }, 0);
+
+    return () => {
+      if (hideTimerRef.current) {
+        clearTimeout(hideTimerRef.current);
+      }
+    };
   }, [location.pathname, location.search]);
 
   return (
