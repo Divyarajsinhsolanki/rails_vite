@@ -89,7 +89,7 @@ const WorkspaceOrb = ({
 
   return (
     <section
-      className={`landing-hero-3d group relative isolate overflow-hidden rounded-[2rem] border border-white/15 bg-slate-950/70 p-5 text-white shadow-2xl shadow-cyan-950/40 backdrop-blur-xl sm:p-7 ${className}`}
+      className={`landing-hero-3d group relative isolate overflow-hidden rounded-2xl border border-slate-200/80 bg-white/85 p-5 text-slate-900 shadow-xl shadow-slate-900/10 backdrop-blur-xl sm:p-7 ${className}`}
       onMouseMove={handleMouseMove}
       onMouseLeave={resetTilt}
       style={{ "--tilt-x": `${tilt.y}deg`, "--tilt-y": `${tilt.x}deg` }}
@@ -97,31 +97,31 @@ const WorkspaceOrb = ({
     >
       <FloatingParticles />
 
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_10%,rgba(34,211,238,0.32),transparent_30%),radial-gradient(circle_at_82%_24%,rgba(168,85,247,0.28),transparent_28%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(15,23,42,0.72))]" />
-      <div className="absolute inset-x-10 top-6 h-px bg-gradient-to-r from-transparent via-cyan-200/70 to-transparent" />
-      <div className="absolute -bottom-24 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-cyan-400/20 blur-3xl" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_10%,rgba(34,211,238,0.18),transparent_30%),radial-gradient(circle_at_82%_24%,rgba(147,197,253,0.2),transparent_28%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(239,246,255,0.84))]" />
+      <div className="absolute inset-x-10 top-6 h-px bg-gradient-to-r from-transparent via-cyan-300/60 to-transparent" />
+      <div className="absolute -bottom-24 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-cyan-200/35 blur-3xl" />
 
       <div className="relative z-10 grid gap-7 lg:grid-cols-[1fr_0.95fr] lg:items-center">
         <div className="space-y-6">
-          <span className="inline-flex items-center gap-2 rounded-full border border-cyan-200/30 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.28em] text-cyan-100 shadow-lg shadow-cyan-950/20">
+          <span className="inline-flex items-center gap-2 rounded-full border border-cyan-200/70 bg-white/80 px-4 py-2 text-xs font-bold uppercase tracking-[0.28em] text-cyan-700 shadow-lg shadow-cyan-100/70">
             <span className="h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.9)]" />
             {eyebrow}
           </span>
 
           <div>
-            <h1 className="max-w-xl text-4xl font-black leading-[0.95] tracking-tight text-white sm:text-5xl xl:text-6xl">
+            <h1 className="max-w-xl text-4xl font-black leading-[0.95] tracking-tight text-slate-950 sm:text-5xl xl:text-6xl">
               {title}
             </h1>
-            <p className="mt-5 max-w-xl text-base leading-8 text-slate-300 sm:text-lg">
+            <p className="mt-5 max-w-xl text-base leading-8 text-slate-600 sm:text-lg">
               {description}
             </p>
           </div>
 
           <div className={`grid gap-3 ${normalizedMetrics.length >= 4 ? "sm:grid-cols-2 xl:grid-cols-4" : "sm:grid-cols-3"}`}>
             {normalizedMetrics.map(([value, label]) => (
-              <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.07] p-4 shadow-inner shadow-white/5">
-                <p className="text-2xl font-black text-cyan-100">{value}</p>
-                <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-slate-400">{label}</p>
+              <div key={label} className="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-inner shadow-cyan-50/80">
+                <p className="text-2xl font-black text-cyan-700">{value}</p>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-slate-500">{label}</p>
               </div>
             ))}
           </div>
@@ -172,16 +172,16 @@ const WorkspaceOrb = ({
         {normalizedFeatures.map((feature, index) => (
           <article
             key={feature.title}
-            className="landing-feature-card min-w-0 rounded-3xl border border-white/12 bg-white/[0.08] p-5 shadow-xl shadow-slate-950/20 backdrop-blur-md"
+            className="landing-feature-card min-w-0 rounded-2xl border border-slate-200/80 bg-white/75 p-5 shadow-lg shadow-slate-900/10 backdrop-blur-md"
             style={{ "--card-delay": `${index * 0.08}s` }}
           >
             <div className="flex min-w-0 items-center justify-between gap-4">
-              <h2 className="min-w-0 break-words text-sm font-bold uppercase tracking-[0.16em] text-slate-300">{feature.title}</h2>
-              <span className="shrink-0 rounded-full border border-cyan-200/25 bg-cyan-200/10 px-3 py-1 text-xs font-black text-cyan-100">
+              <h2 className="min-w-0 break-words text-sm font-bold uppercase tracking-[0.16em] text-slate-600">{feature.title}</h2>
+              <span className="shrink-0 rounded-full border border-cyan-200/80 bg-cyan-50 px-3 py-1 text-xs font-black text-cyan-700">
                 {feature.metric}
               </span>
             </div>
-            <p className="mt-4 break-words text-sm leading-6 text-slate-300">{feature.copy}</p>
+            <p className="mt-4 break-words text-sm leading-6 text-slate-600">{feature.copy}</p>
           </article>
         ))}
       </div>
