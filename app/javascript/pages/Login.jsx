@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { auth, getRedirectResult } from "../firebaseConfig";
 import { Toaster, toast } from "react-hot-toast";
 import SpinnerOverlay from "../components/ui/SpinnerOverlay";
@@ -54,18 +54,10 @@ const Login = ({ switchToSignup }) => {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 py-8 lg:flex-row lg:items-center lg:gap-10 xl:gap-14">
         <div className="lg:w-[58%]">
           <WorkspaceOrb />
-          <div className="mt-4 flex justify-center lg:justify-start">
-            <Link
-              to="/3d-objects"
-              className="inline-flex items-center rounded-full border border-cyan-200/30 bg-white/10 px-5 py-2 text-sm font-bold text-cyan-50 shadow-lg shadow-cyan-950/20 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/15"
-            >
-              Review more 3D object options
-            </Link>
-          </div>
         </div>
 
         <div className="lg:w-[42%]">
-          <div className="w-full max-w-md rounded-3xl border border-white/60 bg-white/95 p-8 shadow-2xl shadow-slate-900/10 transition-transform duration-200 hover:-translate-y-1">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200/80 bg-white/95 p-8 shadow-xl shadow-slate-900/10 transition-transform duration-200 hover:-translate-y-1">
             <h2 className="mb-1 text-center text-3xl font-bold text-slate-900">Welcome back</h2>
             <p className="mb-8 text-center text-sm text-slate-500">Sign in to continue where you left off.</p>
 

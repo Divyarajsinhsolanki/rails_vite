@@ -27,7 +27,6 @@ const KnowledgeDashboard = lazy(() => import("../pages/KnowledgeDashboard"));
 const Legal = lazy(() => import("../pages/Legal"));
 const MetaverseLanding = lazy(() => import("../pages/MetaverseLanding"));
 const Notifications = lazy(() => import("../pages/Notifications"));
-const ObjectGallery = lazy(() => import("../pages/ObjectGallery"));
 const PdfPage = lazy(() => import("./PdfPage"));
 const PostPage = lazy(() => import("../pages/PostPage"));
 const Profile = lazy(() => import("../components/Profile"));
@@ -65,7 +64,6 @@ const AppRoutes = () => {
         <Routes location={location}>
             <Route path="/contact" element={<Contact />} />
             <Route path="/legal" element={<Legal />} />
-            <Route path="/3d-objects" element={<ObjectGallery />} />
             <Route path="/metaverse-landing" element={<MetaverseLanding />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
