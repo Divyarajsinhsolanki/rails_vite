@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { SchedulerAPI, getIssues, createIssue, updateIssue, deleteIssue, importIssuesFromSheet } from "../components/api";
 import { Toaster, toast } from "react-hot-toast";
 import { SparklesIcon, ClipboardDocumentListIcon, LinkIcon, ShieldExclamationIcon, ExclamationTriangleIcon, CheckCircleIcon, ListBulletIcon, Squares2X2Icon, VideoCameraIcon, BellIcon, ClockIcon, BoltIcon, FireIcon, TrashIcon, UserGroupIcon, FunnelIcon } from "@heroicons/react/24/outline";
@@ -193,7 +193,21 @@ const StatCard = ({ icon: Icon, label, value, color, delay = 0, pulse = false })
   </motion.div>
 );
 
-const IssueCard = ({ issue, onEdit, onDelete, isSelected, onSelect }) => {
+const areIssueCardPropsEqual = (prev, next) =>
+  prev.issue === next.issue &&
+  prev.isSelected === next.isSelected &&
+  prev.onEdit === next.onEdit &&
+  prev.onDelete === next.onDelete &&
+  prev.onSelect === next.onSelect;
+
+const areKanbanCardPropsEqual = (prev, next) =>
+  prev.issue === next.issue &&
+  prev.index === next.index &&
+  prev.isSelected === next.isSelected &&
+  prev.onEdit === next.onEdit &&
+  prev.onSelect === next.onSelect;
+
+const IssueCard = React.memo(({ issue, onEdit, onDelete, isSelected, onSelect }) => {
   const badgeClass = {
     New: "bg-blue-50 text-blue-700",
     "In Progress": "bg-amber-50 text-amber-700",
@@ -368,9 +382,9 @@ const IssueCard = ({ issue, onEdit, onDelete, isSelected, onSelect }) => {
       </div>
     </motion.div>
   );
-};
+}, areIssueCardPropsEqual);
 
-const KanbanCard = ({ issue, onEdit, index, isSelected, onSelect }) => {
+const KanbanCard = React.memo(({ issue, onEdit, index, isSelected, onSelect }) => {
   const isCritical = issue.severity === "Critical";
   return (
     <Draggable draggableId={issue.id.toString()} index={index}>
@@ -450,7 +464,7 @@ const KanbanCard = ({ issue, onEdit, index, isSelected, onSelect }) => {
       )}
     </Draggable>
   );
-};
+}, areKanbanCardPropsEqual);
 
 const KanbanColumn = ({ status, issues, onEdit, selectedIssues, onSelectIssue }) => {
   const columnColor = {
@@ -1205,9 +1219,9 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
     { user: "Alex T.", text: "commented on ISS-9922", time: "3h ago", type: "comment" },
   ]);
 
-  const handleManualAction = (text, type = "update") => {
+  const handleManualAction = useCallback((text, type = "update") => {
     setMockActivities(prev => [{ user: "You", text, time: "Just now", type }, ...prev]);
-  };
+  }, []);
   const pageSize = 8;
 
   const uniqueValues = useMemo(() => {
@@ -1306,11 +1320,11 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
   );
   const allFilteredSelected = filteredIssueIds.length > 0 && selectedFilteredCount === filteredIssueIds.length;
 
-  const handleSelectIssue = (id) => {
+  const handleSelectIssue = useCallback((id) => {
     setSelectedIssues(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  };
+  }, []);
 
-  const handleToggleSelectAllFiltered = () => {
+  const handleToggleSelectAllFiltered = useCallback(() => {
     if (allFilteredSelected) {
       setSelectedIssues((prev) => prev.filter((id) => !filteredIssueIds.includes(id)));
       return;
@@ -1320,9 +1334,9 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
       const merged = new Set([...prev, ...filteredIssueIds]);
       return Array.from(merged);
     });
-  };
+  }, [allFilteredSelected, filteredIssueIds]);
 
-  const handleBulkUpdate = async (field, value) => {
+  const handleBulkUpdate = useCallback(async (field, value) => {
     const promises = selectedIssues.map(id => {
       // Send only the field being updated and the project_id
       return updateIssue(id, { [field]: value, project_id: projectId });
@@ -1337,9 +1351,9 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
     } catch (e) {
       toast.error("Bulk update failed");
     }
-  };
+  }, [handleManualAction, issues, projectId, selectedIssues]);
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = useCallback(async () => {
     if (!window.confirm(`Delete ${selectedIssues.length} issues?`)) return;
     const promises = selectedIssues.map(id => deleteIssue(id, projectId));
     try {
@@ -1351,9 +1365,9 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
     } catch (e) {
       toast.error("Bulk delete failed");
     }
-  };
+  }, [handleManualAction, projectId, selectedIssues]);
 
-  const handleSave = async (payload) => {
+  const handleSave = useCallback(async (payload) => {
     if (!projectId) {
       toast.error("Project not selected.");
       return;
@@ -1380,9 +1394,9 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
     } catch (error) {
       toast.error(error?.response?.data?.errors?.join(", ") || "Failed to save issue");
     }
-  };
+  }, [handleManualAction, projectId, sprint?.name]);
 
-  const handleDelete = async (issue) => {
+  const handleDelete = useCallback(async (issue) => {
     if (!window.confirm(`Delete issue #${issue.id}?`)) return;
     try {
       await deleteIssue(issue.id, projectId);
@@ -1392,9 +1406,9 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
     } catch (error) {
       toast.error("Failed to delete issue");
     }
-  };
+  }, [handleManualAction, projectId]);
 
-  const onDragEnd = async (result) => {
+  const onDragEnd = useCallback(async (result) => {
     const { destination, source, draggableId } = result;
     if (!destination) return;
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;
@@ -1417,9 +1431,9 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
       setIssues(prev => prev.map(i => i.id === issueId ? issueToUpdate : i));
       toast.error("Failed to update status");
     }
-  };
+  }, [handleManualAction, issues, projectId]);
 
-  const handleImportFromSheet = async () => {
+  const handleImportFromSheet = useCallback(async () => {
     if (!projectId || isImporting) return;
 
     setIsImporting(true);
@@ -1435,7 +1449,7 @@ const IssueTracker = ({ projectId, sprint, standalone = false }) => {
     } finally {
       setIsImporting(false);
     }
-  };
+  }, [handleManualAction, isImporting, projectId]);
 
   return (
     <div className="min-h-screen bg-slate-50/50 p-6">
