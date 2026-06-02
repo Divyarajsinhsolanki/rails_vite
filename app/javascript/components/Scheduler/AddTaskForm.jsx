@@ -1,10 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Combobox } from '@headlessui/react';
 
+const EMPTY_ARRAY = [];
+
 export default function AddTaskForm({ developers, dates, types, tasks, onAddTask }) {
+  const safeDevelopers = useMemo(() => Array.isArray(developers) ? developers : EMPTY_ARRAY, [developers]);
+  const safeDates = useMemo(() => Array.isArray(dates) ? dates : EMPTY_ARRAY, [dates]);
+  const safeTypes = useMemo(() => Array.isArray(types) ? types : EMPTY_ARRAY, [types]);
+  const safeTasks = useMemo(() => Array.isArray(tasks) ? tasks : EMPTY_ARRAY, [tasks]);
   const [formData, setFormData] = useState({ 
     developer_id: '', 
-    type: types[0] || 'Code', 
+    type: safeTypes[0] || 'Code',
     log_date: '', 
     task_id: '', 
     hours_logged: 1 
@@ -16,15 +22,15 @@ export default function AddTaskForm({ developers, dates, types, tasks, onAddTask
   useEffect(() => {
     setFormData(f => ({
       ...f,
-      log_date: dates[0] || f.log_date,
-      developer_id: developers[0]?.id ?? f.developer_id,
-      type: types[0] || f.type,
+      log_date: safeDates[0] || f.log_date,
+      developer_id: safeDevelopers[0]?.id ?? f.developer_id,
+      type: safeTypes[0] || f.type,
       hours_logged: f.hours_logged ?? 1
     }));
-  }, [dates, developers, types]);
+  }, [safeDates, safeDevelopers, safeTypes]);
 
   // Show loading state if developers not fetched yet
-  if (!developers.length) {
+  if (safeDevelopers.length === 0) {
     return <div className="p-4 bg-white border rounded">Loading developers...</div>;
   }
 
@@ -56,9 +62,9 @@ export default function AddTaskForm({ developers, dates, types, tasks, onAddTask
     // reset non-default fields
     setFormData(f => ({
       ...f,
-      log_date: dates[0] || '',
-      developer_id: developers[0]?.id || '',
-      type: types[0] || 'Code',
+      log_date: safeDates[0] || '',
+      developer_id: safeDevelopers[0]?.id || '',
+      type: safeTypes[0] || 'Code',
       task_id: '',
       hours_logged: 1
     }));
@@ -67,7 +73,7 @@ export default function AddTaskForm({ developers, dates, types, tasks, onAddTask
   };
 
   // Safely match tasks that may not have a task_id
-  const filteredTasks = tasks.filter(t =>
+  const filteredTasks = safeTasks.filter(t =>
     (t.task_id ?? '')
       .toString()
       .toLowerCase()
@@ -90,7 +96,7 @@ export default function AddTaskForm({ developers, dates, types, tasks, onAddTask
             onChange={handleChange}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            {dates.map(d => (
+            {safeDates.map(d => (
               <option key={d} value={d}>
                 {new Date(d).toLocaleDateString()}
               </option>
@@ -117,7 +123,7 @@ export default function AddTaskForm({ developers, dates, types, tasks, onAddTask
       <div>
           <label className="block text-sm font-medium text-gray-700 mb-2 required-label">👨‍💻 Developer</label>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {developers.map(developer => (
+          {safeDevelopers.map(developer => (
             <label 
               key={developer.id} 
               className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all ${
@@ -145,7 +151,7 @@ export default function AddTaskForm({ developers, dates, types, tasks, onAddTask
       <div>
           <label className="block text-sm font-medium text-gray-700 mb-2 required-label">🧩 Type</label>
         <div className="flex flex-wrap gap-3">
-          {types.map(type => (
+          {safeTypes.map(type => (
             <label 
               key={type} 
               className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all ${

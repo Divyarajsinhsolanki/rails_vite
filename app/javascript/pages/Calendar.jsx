@@ -65,25 +65,63 @@ const RECURRENCE_OPTIONS = [
   { value: "monthly", label: "Monthly" },
 ];
 
+const asRecordArray = (value) =>
+  Array.isArray(value) ? value.filter((item) => item && typeof item === "object") : [];
+
+const normalizeEvent = (event) => ({
+  ...event,
+  event_reminders: asRecordArray(event.event_reminders),
+});
+
+const normalizeProject = (project) => ({
+  ...project,
+  users: asRecordArray(project.users),
+});
+
+const dateTime = (value) => {
+  const time = new Date(value).getTime();
+  return Number.isFinite(time) ? time : null;
+};
+
+const compareDateValues = (a, b) => {
+  const timeA = dateTime(a);
+  const timeB = dateTime(b);
+  if (timeA === null && timeB === null) return 0;
+  if (timeA === null) return 1;
+  if (timeB === null) return -1;
+  return timeA - timeB;
+};
+
 const toInputDateTime = (date) => {
+  if (!(date instanceof Date) || !Number.isFinite(date.getTime())) return "";
   const pad = (n) => String(n).padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
 
-const toReadableDate = (isoString) =>
-  new Date(isoString).toLocaleDateString([], {
+const toReadableDate = (isoString) => {
+  const date = new Date(isoString);
+  if (!Number.isFinite(date.getTime())) return "—";
+  return date.toLocaleDateString([], {
     weekday: "short",
     month: "short",
     day: "numeric",
   });
+};
 
-const toReadableTime = (isoString) =>
-  new Date(isoString).toLocaleTimeString([], {
+const toReadableTime = (isoString) => {
+  const date = new Date(isoString);
+  if (!Number.isFinite(date.getTime())) return "—";
+  return date.toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
   });
+};
 
-const sameDay = (a, b) => new Date(a).toDateString() === new Date(b).toDateString();
+const sameDay = (a, b) => {
+  const timeA = dateTime(a);
+  const timeB = dateTime(b);
+  return timeA !== null && timeB !== null && new Date(timeA).toDateString() === new Date(timeB).toDateString();
+};
 
 const EVENT_TYPE_META = {
   meeting: {
@@ -128,7 +166,12 @@ const deadlineUrgency = (event) => {
   return "watch";
 };
 
-const minutesBetween = (start, end) => Math.max(0, Math.round((new Date(end) - new Date(start)) / 60000));
+const minutesBetween = (start, end) => {
+  const startTime = dateTime(start);
+  const endTime = dateTime(end);
+  if (startTime === null || endTime === null) return 0;
+  return Math.max(0, Math.round((endTime - startTime) / 60000));
+};
 
 const Calendar = () => {
   const now = new Date();
@@ -189,9 +232,17 @@ const Calendar = () => {
         fetchProjects(),
       ]);
 
-      setEvents(Array.isArray(eventsRes?.data?.data) ? eventsRes.data.data : []);
-      setInsights(eventsRes?.data?.insights || null);
-      setProjects(Array.isArray(projectsRes?.data) ? projectsRes.data : []);
+      const eventsPayload = eventsRes?.data;
+      const rawEvents = Array.isArray(eventsPayload?.data)
+        ? eventsPayload.data
+        : Array.isArray(eventsPayload)
+          ? eventsPayload
+          : [];
+      setEvents(asRecordArray(rawEvents).map(normalizeEvent));
+      setInsights(eventsPayload && typeof eventsPayload === "object" ? eventsPayload.insights || null : null);
+      const projectsPayload = projectsRes?.data;
+      const rawProjects = Array.isArray(projectsPayload?.data) ? projectsPayload.data : projectsPayload;
+      setProjects(asRecordArray(rawProjects).map(normalizeProject));
     } catch (e) {
       setError(e?.response?.data?.error || "Failed to load calendar data.");
     } finally {
@@ -208,11 +259,14 @@ const Calendar = () => {
     const query = filters.search.trim().toLowerCase();
     return events.filter((event) => {
       const matchesType = !filters.eventType || event.event_type === filters.eventType;
+      const searchableText = [
+        event.title,
+        event.description,
+        event.location_or_meet_link,
+      ].map((value) => `${value || ""}`.toLowerCase());
       const matchesSearch =
         !query ||
-        event.title?.toLowerCase().includes(query) ||
-        event.description?.toLowerCase().includes(query) ||
-        event.location_or_meet_link?.toLowerCase().includes(query);
+        searchableText.some((text) => text.includes(query));
       return matchesType && matchesSearch;
     });
   }, [events, filters.eventType, filters.search]);
@@ -220,16 +274,18 @@ const Calendar = () => {
   const grouped = useMemo(() => {
     const byDay = {};
     filteredEvents.forEach((event) => {
-      const key = new Date(event.start_at).toLocaleDateString();
+      const startTime = dateTime(event.start_at);
+      if (startTime === null) return;
+      const key = new Date(startTime).toLocaleDateString();
       if (!byDay[key]) byDay[key] = [];
       byDay[key].push(event);
     });
 
     return Object.entries(byDay)
-      .sort((a, b) => new Date(a[1][0].start_at) - new Date(b[1][0].start_at))
+      .sort((a, b) => compareDateValues(a[1]?.[0]?.start_at, b[1]?.[0]?.start_at))
       .map(([date, dayEvents]) => ({
         date,
-        events: dayEvents.sort((a, b) => new Date(a.start_at) - new Date(b.start_at)),
+        events: [...dayEvents].sort((a, b) => compareDateValues(a.start_at, b.start_at)),
       }));
   }, [filteredEvents]);
 
@@ -247,7 +303,10 @@ const Calendar = () => {
     const todayDate = new Date().toDateString();
     return {
       total: filteredEvents.length,
-      today: filteredEvents.filter((event) => new Date(event.start_at).toDateString() === todayDate).length,
+      today: filteredEvents.filter((event) => {
+        const startTime = dateTime(event.start_at);
+        return startTime !== null && new Date(startTime).toDateString() === todayDate;
+      }).length,
       withReminders: filteredEvents.filter((event) => Array.isArray(event.event_reminders) && event.event_reminders.length > 0).length,
       meetings: filteredEvents.filter((event) => event.event_type === "meeting").length,
     };
@@ -256,8 +315,11 @@ const Calendar = () => {
   const upcomingEvents = useMemo(() => {
     const current = new Date();
     return filteredEvents
-      .filter((event) => new Date(event.start_at) >= current)
-      .sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
+      .filter((event) => {
+        const startTime = dateTime(event.start_at);
+        return startTime !== null && startTime >= current.getTime();
+      })
+      .sort((a, b) => compareDateValues(a.start_at, b.start_at));
   }, [filteredEvents]);
 
   const nextEvent = upcomingEvents[0];
@@ -268,7 +330,7 @@ const Calendar = () => {
     const todayDate = new Date();
     return filteredEvents
       .filter((event) => sameDay(event.start_at, todayDate))
-      .sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
+      .sort((a, b) => compareDateValues(a.start_at, b.start_at));
   }, [filteredEvents]);
 
   const orbitingReminders = useMemo(() => {
@@ -401,6 +463,11 @@ const Calendar = () => {
     const oldStart = new Date(event.start_at);
     const oldEnd = new Date(event.end_at);
     const durationMs = oldEnd.getTime() - oldStart.getTime();
+    if (!Number.isFinite(durationMs)) {
+      setDraggingEventId(null);
+      setError("Cannot reschedule an event with invalid dates.");
+      return;
+    }
 
     const newStart = new Date(targetDay);
     newStart.setHours(oldStart.getHours(), oldStart.getMinutes(), 0, 0);

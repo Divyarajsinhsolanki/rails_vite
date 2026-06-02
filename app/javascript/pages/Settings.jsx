@@ -23,7 +23,7 @@ const landingPageOptions = [
   { value: "worklog", label: "Work Logs" },
   { value: "projects", label: "Projects Dashboard" },
   { value: "teams", label: "Teams Overview" },
-  { value: "pdf", label: "PDF Tools" },
+  { value: "pdf-master", label: "PDF Master" },
   { value: "users", label: "People Directory" },
   { value: "departments", label: "Departments" },
   { value: "chat", label: "Chat" },

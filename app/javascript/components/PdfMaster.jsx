@@ -6,15 +6,64 @@ import SidebarToolbar from "./SidebarToolbar";
 import { AnimatePresence, motion } from "framer-motion";
 
 import {
+  FileText,
   Upload,
   X,
   Loader2,
   Check,
   Download,
-  Plus
 } from "lucide-react";
 
-const PdfPage = () => {
+const getCsrfHeaders = () => {
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+  return csrfToken ? { "X-CSRF-Token": csrfToken } : {};
+};
+
+const getPdfFileName = (url) => {
+  const fileName = (url || "").split("?")[0].split("/").pop();
+  if (!fileName) return "Untitled PDF";
+
+  try {
+    return decodeURIComponent(fileName);
+  } catch {
+    return fileName;
+  }
+};
+
+const readStorage = (key) => {
+  try {
+    return window.localStorage.getItem(key);
+  } catch (error) {
+    console.warn(`localStorage read failed for ${key}:`, error);
+    return null;
+  }
+};
+
+const writeStorage = (key, value) => {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch (error) {
+    console.warn(`localStorage write failed for ${key}:`, error);
+  }
+};
+
+const removeStorage = (key) => {
+  try {
+    window.localStorage.removeItem(key);
+  } catch (error) {
+    console.warn(`localStorage remove failed for ${key}:`, error);
+  }
+};
+
+const uploadErrorMessage = (status, data, fallbackError) => {
+  if (status === 413) return data?.error || "File too large. Maximum upload size is 50MB.";
+  if (status === 415) return data?.error || "Invalid file type. Only PDF files are allowed.";
+  if (status === 422) return data?.error || "PDF upload was rejected. Please choose a valid PDF.";
+  if (status >= 500) return "PDF upload service is unavailable. Please try again.";
+  return data?.error || fallbackError?.message || "Upload failed.";
+};
+
+const PdfMaster = () => {
   const [pdfUrl, setPdfUrl] = useState(null);
   const [pdfUpdated, setPdfUpdated] = useState(0);
   const [uploading, setUploading] = useState(false);
@@ -26,15 +75,16 @@ const PdfPage = () => {
   const [downloadName, setDownloadName] = useState("document.pdf");
 
   useEffect(() => {
-    const storedPdf = localStorage.getItem("pdfUrl");
+    const storedPdf = readStorage("pdfUrl");
     if (storedPdf) setPdfUrl(storedPdf);
-    const storedDownloadName = localStorage.getItem("pdfDownloadName");
+    const storedDownloadName = readStorage("pdfDownloadName");
     if (storedDownloadName) setDownloadName(storedDownloadName);
 
     const handlePdfUpdate = (event) => {
       const newUrl = event.detail;
+      if (!newUrl) return;
       setPdfUrl(newUrl);
-      localStorage.setItem("pdfUrl", newUrl);
+      writeStorage("pdfUrl", newUrl);
       setPdfUpdated(prev => prev + 1);
     };
 
@@ -48,22 +98,28 @@ const PdfPage = () => {
     formData.append("pdf", file);
     setUploading(true);
     setShowUploadMessage(false);
+    setIsError(false);
     try {
       const response = await fetch("/upload_pdf", {
         method: "POST",
         body: formData,
-        headers: { "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content },
+        headers: getCsrfHeaders(),
       });
-      if (!response.ok) throw new Error("Upload failed");
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(uploadErrorMessage(response.status, data));
+      if (!data.pdf_url) throw new Error("Upload finished without a PDF URL.");
+
       setPdfUrl(data.pdf_url);
-      localStorage.setItem("pdfUrl", data.pdf_url);
+      writeStorage("pdfUrl", data.pdf_url);
       const nextDownloadName = data.download_filename || data.original_filename || file.name || "document.pdf";
       setDownloadName(nextDownloadName);
-      localStorage.setItem("pdfDownloadName", nextDownloadName);
+      writeStorage("pdfDownloadName", nextDownloadName);
+      setUploadMessage("Document ready in PDF Master.");
+      setIsError(false);
+      setShowUploadMessage(true);
     } catch (error) {
-      console.error(error);
-      setUploadMessage("Upload failed.");
+      console.error("PDF upload failed:", error);
+      setUploadMessage(uploadErrorMessage(error.status, null, error));
       setIsError(true);
       setShowUploadMessage(true);
     } finally {
@@ -72,9 +128,15 @@ const PdfPage = () => {
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop: (files) => handleFileUpload(files[0]),
+    onDrop: (files) => handleFileUpload(files?.[0]),
+    onDropRejected: () => {
+      setUploadMessage("Invalid file type. Only PDF files are allowed.");
+      setIsError(true);
+      setShowUploadMessage(true);
+    },
     accept: { 'application/pdf': ['.pdf'] },
     multiple: false,
+    disabled: uploading,
   });
 
   const handlePlacementChange = useCallback((coordinates) => {
@@ -91,19 +153,82 @@ const PdfPage = () => {
     handlePlacementChange(coordinates);
   }, [handlePlacementChange]);
 
+  const closePdf = () => {
+    setPdfUrl(null);
+    setActiveForm(null);
+    setPlacementCoordinates(null);
+    removeStorage("pdfUrl");
+    removeStorage("pdfDownloadName");
+  };
+
+  const startWithSample = () => {
+    const sampleUrl = "/documents/sample.pdf";
+    setPdfUrl(sampleUrl);
+    setDownloadName("sample.pdf");
+    writeStorage("pdfUrl", sampleUrl);
+    writeStorage("pdfDownloadName", "sample.pdf");
+  };
+
+  const feedbackToast = (
+    <AnimatePresence>
+      {showUploadMessage && (
+        <motion.div
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 50, opacity: 0 }}
+          className={`fixed bottom-8 left-1/2 z-[100] flex -translate-x-1/2 items-center gap-3 rounded-full px-6 py-3 text-xs font-bold text-white shadow-2xl ${isError ? 'bg-red-500' : 'bg-gray-900'}`}
+        >
+          {isError ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+          {uploadMessage}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
   if (!pdfUrl) {
     return (
-      <div className="h-screen bg-gray-50 flex flex-col items-center justify-center p-8 font-inter">
-        <div className="w-full max-w-2xl bg-white p-12 rounded-[40px] shadow-2xl border border-gray-100 flex flex-col items-center">
-          <h1 className="text-3xl font-black text-gray-900 mb-2">PDF Modifier</h1>
-          <p className="text-gray-400 mb-8 text-center">Drag and drop your file to enter the workspace.</p>
-          <div {...getRootProps()} className={`w-full p-12 rounded-3xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center ${isDragActive ? 'border-indigo-500 bg-indigo-50 drop-shadow-xl' : 'border-gray-200 hover:border-indigo-300 bg-gray-50'}`}>
-            <input {...getInputProps()} />
-            {uploading ? <Loader2 className="h-10 w-10 text-indigo-600 animate-spin" /> : <Upload className="h-10 w-10 text-indigo-600 mb-4" />}
-            <p className="font-bold text-gray-700">{uploading ? 'Processing Document...' : 'Drop PDF Here'}</p>
+      <div className="flex h-screen flex-col items-center justify-center bg-slate-50 p-8 font-inter">
+        <div className="w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-10 shadow-2xl shadow-slate-200/70">
+          <div className="mb-8 flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200">
+              <FileText className="h-6 w-6" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-black text-slate-950">PDF Master</h1>
+              <p className="text-sm text-slate-500">Upload a PDF to edit pages, text, signatures, stamps, and downloads.</p>
+            </div>
           </div>
-          <button onClick={() => setPdfUrl("/documents/sample.pdf")} className="mt-8 text-sm font-bold text-gray-400 hover:text-indigo-600 hover:underline">Or start with a sample PDF</button>
+
+          <div
+            {...getRootProps()}
+            aria-busy={uploading}
+            className={`flex w-full cursor-pointer flex-col items-center rounded-3xl border-2 border-dashed p-12 text-center transition-all ${uploading ? 'cursor-wait border-indigo-200 bg-indigo-50/70' : isDragActive ? 'border-indigo-500 bg-indigo-50 shadow-xl shadow-indigo-100' : 'border-slate-200 bg-slate-50 hover:border-indigo-300 hover:bg-white'}`}
+          >
+            <input {...getInputProps()} />
+            {uploading ? (
+              <>
+                <Loader2 className="mb-4 h-10 w-10 animate-spin text-indigo-600" />
+                <p className="font-bold text-slate-800">Preparing PDF Master workspace...</p>
+                <p className="mt-2 text-sm text-slate-500">Uploading and validating your document.</p>
+              </>
+            ) : (
+              <>
+                <Upload className="mb-4 h-10 w-10 text-indigo-600" />
+                <p className="font-bold text-slate-800">{isDragActive ? 'Release to upload' : 'Drop PDF here'}</p>
+                <p className="mt-2 text-sm text-slate-500">or click to choose a file</p>
+              </>
+            )}
+          </div>
+
+          <button
+            onClick={startWithSample}
+            disabled={uploading}
+            className="mt-8 text-sm font-bold text-slate-400 transition-colors hover:text-indigo-600 hover:underline disabled:pointer-events-none disabled:opacity-50"
+          >
+            Start with a sample PDF
+          </button>
         </div>
+        {feedbackToast}
       </div>
     );
   }
@@ -114,22 +239,25 @@ const PdfPage = () => {
       <header className="h-14 border-b border-gray-100 flex items-center justify-between px-6 bg-white shrink-0 z-30">
         <div className="flex items-center space-x-4">
           <div className="bg-indigo-600 text-white p-1.5 rounded-lg shadow-lg shadow-indigo-200">
-            <Plus className="h-4 w-4" />
+            <FileText className="h-4 w-4" />
           </div>
-          <h2 className="text-sm font-bold text-gray-800 truncate max-w-xs">{pdfUrl.split('/').pop()}</h2>
+          <div className="min-w-0">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500">PDF Master</p>
+            <h2 className="max-w-xs truncate text-sm font-bold text-gray-800">{getPdfFileName(pdfUrl)}</h2>
+          </div>
           <input
             type="text"
             value={downloadName}
             onChange={(event) => {
               setDownloadName(event.target.value);
-              localStorage.setItem("pdfDownloadName", event.target.value);
+              writeStorage("pdfDownloadName", event.target.value);
             }}
             placeholder="Rename download file"
             className="h-8 w-56 rounded-md border border-gray-200 px-2.5 text-xs text-gray-700 shadow-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
           />
         </div>
         <div className="flex items-center space-x-4">
-          <button onClick={() => { setPdfUrl(null); localStorage.removeItem("pdfUrl"); localStorage.removeItem("pdfDownloadName"); }} className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors">Close</button>
+          <button onClick={closePdf} className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors">Close</button>
           <button 
             onClick={() => {
               const cleanPath = (pdfUrl || "").split("?")[0].replace(/^\//, "");
@@ -190,22 +318,9 @@ const PdfPage = () => {
         </main>
       </div>
 
-      {/* 🔔 Floating Toast Feedback */}
-      <AnimatePresence>
-        {showUploadMessage && (
-          <motion.div
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 50, opacity: 0 }}
-            className={`fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full shadow-2xl text-white font-bold text-xs z-[100] flex items-center gap-3 ${isError ? 'bg-red-500' : 'bg-gray-900'}`}
-          >
-            {isError ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
-            {uploadMessage}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {feedbackToast}
     </div>
   );
 };
 
-export default PdfPage;
+export default PdfMaster;

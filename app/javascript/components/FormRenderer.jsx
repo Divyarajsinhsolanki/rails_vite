@@ -101,6 +101,14 @@ const FormRenderer = ({ activeForm, setActiveForm, setPdfUpdated, setPdfUrl, pdf
         { name: "end_page", type: "number", label: "End Page" },
       ],
     },
+    extractPages: {
+      title: "Extract Pages",
+      endpoint: "/split_pdf",
+      formFields: [
+        { name: "start_page", type: "number", label: "Start Page" },
+        { name: "end_page", type: "number", label: "End Page" },
+      ],
+    },
     encryptPdf: {
       title: "Encrypt PDF",
       endpoint: "/encrypt_pdf",

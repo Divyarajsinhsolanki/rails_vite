@@ -66,7 +66,7 @@ const SidebarToolbar = ({ activeTool, setActiveTool }) => {
         <div className="h-8 w-8 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg shadow-lg flex items-center justify-center text-white font-bold text-xl">
           P
         </div>
-        <span className="hidden lg:block ml-3 font-bold text-xl text-gray-800 tracking-tight">PDF Mod</span>
+        <span className="hidden lg:block ml-3 font-bold text-xl text-gray-800 tracking-tight">PDF Master</span>
       </div>
 
       <div className="flex-1 overflow-y-auto py-4 scrollbar-thin scrollbar-thumb-gray-200">

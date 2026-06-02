@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
+const EMPTY_ARRAY = [];
+
 const numberOrZero = (value) => {
   const numericValue = Number(value);
   return Number.isFinite(numericValue) ? numericValue : 0;
@@ -148,13 +150,14 @@ const sortTasks = (left, right) => {
 };
 
 const resolveSuggestedDeveloperId = (task, developers, viewMode) => {
-  const availableIds = new Set(developers.map((developer) => String(developer.id)));
+  const safeDevelopers = Array.isArray(developers) ? developers : EMPTY_ARRAY;
+  const availableIds = new Set(safeDevelopers.map((developer) => String(developer.id)));
   const candidateIds = viewMode === 'qa'
     ? [task?.assigned_to_user, task?.assigned_user?.id, task?.developer_id, task?.developer?.id]
     : [task?.developer_id, task?.developer?.id, task?.assigned_to_user, task?.assigned_user?.id];
 
   const matchingId = candidateIds.find((candidateId) => candidateId && availableIds.has(String(candidateId)));
-  return matchingId ? String(matchingId) : (developers[0] ? String(developers[0].id) : '');
+  return matchingId ? String(matchingId) : (safeDevelopers[0] ? String(safeDevelopers[0].id) : '');
 };
 
 export default function BulkLogForm({
@@ -167,6 +170,11 @@ export default function BulkLogForm({
   onSubmit,
   onCancel
 }) {
+  const safeTasks = useMemo(() => Array.isArray(tasks) ? tasks : EMPTY_ARRAY, [tasks]);
+  const safeExistingLogs = useMemo(() => Array.isArray(existingLogs) ? existingLogs : EMPTY_ARRAY, [existingLogs]);
+  const safeDevelopers = useMemo(() => Array.isArray(developers) ? developers : EMPTY_ARRAY, [developers]);
+  const safeDates = useMemo(() => Array.isArray(dates) ? dates : EMPTY_ARRAY, [dates]);
+  const safeTypes = useMemo(() => Array.isArray(types) ? types : EMPTY_ARRAY, [types]);
   const [logDate, setLogDate] = useState('');
   const [logType, setLogType] = useState('');
   const [maxHoursPerDay, setMaxHoursPerDay] = useState('8');
@@ -176,8 +184,8 @@ export default function BulkLogForm({
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const loggedHoursByTask = buildLoggedHoursByTask(existingLogs);
-    const nextRows = [...tasks]
+    const loggedHoursByTask = buildLoggedHoursByTask(safeExistingLogs);
+    const nextRows = [...safeTasks]
       .sort(sortTasks)
       .map((task) => {
         const plannedHours = pickPlannedHours(task);
@@ -193,20 +201,20 @@ export default function BulkLogForm({
           plannedHours,
           loggedHours,
           remainingHours,
-          developerId: resolveSuggestedDeveloperId(task, developers, viewMode),
+          developerId: resolveSuggestedDeveloperId(task, safeDevelopers, viewMode),
           hours: suggestedHours > 0 ? String(suggestedHours) : '',
           selected: suggestedHours > 0
         };
       });
 
     setRows(nextRows);
-    setLogDate(resolveDefaultLogDate(dates));
-    setLogType(resolveDefaultLogType(viewMode, types));
+    setLogDate(resolveDefaultLogDate(safeDates));
+    setLogType(resolveDefaultLogType(viewMode, safeTypes));
     setMaxHoursPerDay('8');
-    setApplyDeveloperId(developers[0] ? String(developers[0].id) : '');
+    setApplyDeveloperId(safeDevelopers[0] ? String(safeDevelopers[0].id) : '');
     setShowOnlyRemaining(true);
     setError('');
-  }, [tasks, existingLogs, developers, dates, types, viewMode]);
+  }, [safeTasks, safeExistingLogs, safeDevelopers, safeDates, safeTypes, viewMode]);
 
   const visibleRows = useMemo(
     () => rows.filter((row) => !showOnlyRemaining || row.selected || row.remainingHours > 0),
@@ -226,13 +234,13 @@ export default function BulkLogForm({
   const distributionPreview = useMemo(
     () => buildDistributionPlan({
       rows,
-      dates,
+      dates: safeDates,
       startDate: logDate,
       maxHoursPerDay,
-      existingLogs,
+      existingLogs: safeExistingLogs,
       logType
     }),
-    [rows, dates, logDate, maxHoursPerDay, existingLogs, logType]
+    [rows, safeDates, logDate, maxHoursPerDay, safeExistingLogs, logType]
   );
 
   const remainingTaskCount = useMemo(
@@ -331,7 +339,7 @@ export default function BulkLogForm({
     await onSubmit(distributionPreview.entries);
   };
 
-  if (!developers.length) {
+  if (safeDevelopers.length === 0) {
     return (
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
         No members are available in this view. Switch the sprint toggle or add matching project members first.
@@ -339,7 +347,7 @@ export default function BulkLogForm({
     );
   }
 
-  if (!tasks.length) {
+  if (safeTasks.length === 0) {
     return (
       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
         No sprint tasks are available for bulk logging in the current view.
@@ -357,7 +365,7 @@ export default function BulkLogForm({
             onChange={(event) => setLogDate(event.target.value)}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
           >
-            {dates.map((date) => (
+            {safeDates.map((date) => (
               <option key={date} value={date}>
                 {new Date(date).toLocaleDateString()}
               </option>
@@ -372,7 +380,7 @@ export default function BulkLogForm({
             onChange={(event) => setLogType(event.target.value)}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
           >
-            {types.map((type) => (
+            {safeTypes.map((type) => (
               <option key={type} value={type}>{type}</option>
             ))}
           </select>
@@ -399,7 +407,7 @@ export default function BulkLogForm({
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
             >
               <option value="">Select member</option>
-              {developers.map((developer) => (
+              {safeDevelopers.map((developer) => (
                 <option key={developer.id} value={developer.id}>{developer.name}</option>
               ))}
             </select>
@@ -544,7 +552,7 @@ export default function BulkLogForm({
                       className="w-full min-w-[180px] rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                     >
                       <option value="">Select member</option>
-                      {developers.map((developer) => (
+                      {safeDevelopers.map((developer) => (
                         <option key={developer.id} value={developer.id}>{developer.name}</option>
                       ))}
                     </select>

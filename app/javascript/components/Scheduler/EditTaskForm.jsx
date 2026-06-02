@@ -1,24 +1,30 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Combobox } from '@headlessui/react';
 
+const EMPTY_ARRAY = [];
+
 const STATUS_OPTIONS = [
   { value: 'todo', label: 'To do', icon: '📝' },
   { value: 'completed', label: 'Completed', icon: '✅' }
 ];
 
 export default function EditTaskForm({ task, developers, dates, types, tasks, onSave, onCancel }) {
-  const fallbackType = types[0] || 'Code';
+  const safeDevelopers = useMemo(() => Array.isArray(developers) ? developers : EMPTY_ARRAY, [developers]);
+  const safeDates = useMemo(() => Array.isArray(dates) ? dates : EMPTY_ARRAY, [dates]);
+  const safeTypes = useMemo(() => Array.isArray(types) ? types : EMPTY_ARRAY, [types]);
+  const safeTasks = useMemo(() => Array.isArray(tasks) ? tasks : EMPTY_ARRAY, [tasks]);
+  const fallbackType = safeTypes[0] || 'Code';
   const initialTaskId = task?.task?.id ?? task?.task_id ?? '';
 
   const initialSelectedTask = useMemo(
-    () => tasks.find(t => String(t.id) === String(initialTaskId)) || null,
-    [tasks, initialTaskId]
+    () => safeTasks.find(t => String(t.id) === String(initialTaskId)) || null,
+    [safeTasks, initialTaskId]
   );
 
   const [formData, setFormData] = useState({
     id: task.id,
-    log_date: task.log_date || dates[0] || '',
-    developer_id: task.developer_id || developers[0]?.id || '',
+    log_date: task.log_date || safeDates[0] || '',
+    developer_id: task.developer_id || safeDevelopers[0]?.id || '',
     task_id: initialSelectedTask?.id || initialTaskId || '',
     hours_logged: task.hours_logged || 1,
     type: task.type || fallbackType,
@@ -26,24 +32,24 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
   });
   const [taskQuery, setTaskQuery] = useState('');
   const [selectedTask, setSelectedTask] = useState(initialSelectedTask);
-  const availableTypes = types.length ? types : [fallbackType];
+  const availableTypes = safeTypes.length ? safeTypes : [fallbackType];
 
   useEffect(() => {
     const nextTaskId = task?.task?.id ?? task?.task_id ?? '';
-    const nextSelectedTask = tasks.find(t => String(t.id) === String(nextTaskId)) || null;
+    const nextSelectedTask = safeTasks.find(t => String(t.id) === String(nextTaskId)) || null;
 
     setSelectedTask(nextSelectedTask);
     setTaskQuery(nextSelectedTask ? '' : (task?.task?.task_id ?? ''));
     setFormData({
       id: task.id,
-      log_date: task.log_date || dates[0] || '',
-      developer_id: task.developer_id || developers[0]?.id || '',
+      log_date: task.log_date || safeDates[0] || '',
+      developer_id: task.developer_id || safeDevelopers[0]?.id || '',
       task_id: nextSelectedTask?.id || nextTaskId || '',
       hours_logged: task.hours_logged || 1,
       type: task.type || fallbackType,
       status: task.status || 'todo'
     });
-  }, [task, developers, dates, tasks, fallbackType]);
+  }, [task, safeDevelopers, safeDates, safeTasks, fallbackType]);
 
   const handleChange = event => {
     const { name, type, value: rawValue } = event.target;
@@ -74,7 +80,7 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
     });
   };
 
-  const filteredTasks = tasks.filter(t =>
+  const filteredTasks = safeTasks.filter(t =>
     (t.task_id ?? '')
       .toString()
       .toLowerCase()
@@ -85,7 +91,7 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
     setFormData(prev => ({ ...prev, status: statusValue }));
   };
 
-  if (!developers.length) {
+  if (safeDevelopers.length === 0) {
     return <div className="p-6 bg-white border border-gray-200 rounded-2xl">Loading developers...</div>;
   }
 
@@ -105,7 +111,7 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
             required
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)] focus:border-transparent"
           >
-            {dates.map(d => (
+            {safeDates.map(d => (
               <option key={d} value={d}>
                 {new Date(d).toLocaleDateString()}
               </option>
@@ -131,7 +137,7 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2 required-label">👨‍💻 Developer</label>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {developers.map(developer => (
+          {safeDevelopers.map(developer => (
             <label
               key={developer.id}
               className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all ${

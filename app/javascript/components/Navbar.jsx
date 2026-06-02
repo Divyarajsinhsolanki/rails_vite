@@ -86,8 +86,8 @@ const resolveSection = (pathname) => {
     },
     {
       match: (value) => value.startsWith("/pdf"),
-      label: "Document Studio",
-      caption: "Focused PDF editing and markup",
+      label: "PDF Master",
+      caption: "Focused PDF editing, markup, and export",
     },
     {
       match: (value) => value.startsWith("/settings"),
@@ -381,7 +381,7 @@ const Navbar = () => {
     { to: "/worklog", label: "Work Log", icon: FiClock, visible: !!user },
     { to: "/chat", label: "Chat", icon: FiMessageSquare, visible: !!user },
     { to: "/vault", label: "Vault", icon: FiMenu, visible: !!user },
-    { to: "/pdf", label: "PDF Lab", icon: FiFileText, visible: !!user },
+    { to: "/pdf-master", label: "PDF Master", icon: FiFileText, visible: !!user },
     { to: "/teams", label: "Teams", icon: FiUsers, visible: !!user },
   ];
 

@@ -33,8 +33,8 @@ api.interceptors.response.use(
       try {
         await api.post("/refresh");
         return api(config);
-      } catch {
-        // silent
+      } catch (refreshError) {
+        console.warn("Token refresh failed:", refreshError?.message || refreshError);
       }
     }
 

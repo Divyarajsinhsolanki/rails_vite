@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useParams, useSearchParams } from "react-router-dom";
-import { fetchProjects, updateProject } from "../components/api";
+import { fetchProjects, SchedulerAPI, updateProject } from "../components/api";
 import { loadThree } from "../lib/threeLoader";
 import PageLoader from "../components/ui/PageLoader";
 import SprintOverview from "./SprintOverview";
@@ -32,6 +32,23 @@ const PROJECT_SECTIONS = [
 ];
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+const asRecordArray = (value) =>
+  Array.isArray(value) ? value.filter((item) => item && typeof item === "object") : [];
+
+const dateTime = (value) => {
+  const time = new Date(value).getTime();
+  return Number.isFinite(time) ? time : null;
+};
+
+const compareEndDates = (a, b) => {
+  const endA = dateTime(a?.end_date);
+  const endB = dateTime(b?.end_date);
+  if (endA === null && endB === null) return 0;
+  if (endA === null) return 1;
+  if (endB === null) return -1;
+  return endA - endB;
+};
 
 const calculateWorkingDays = (start, end, workingDaysMask = 62) => {
   if (!start || !end) return 0;
@@ -410,15 +427,25 @@ export default function ProjectMetaverse() {
     if (!projectId) return undefined;
 
     setLoading(true);
-    Promise.all([
-      fetchProjects().then(({ data }) => (Array.isArray(data) ? data : [])),
-      fetch(`/api/sprints.json?project_id=${projectId}`).then((response) => response.json()),
-    ])
-      .then(([projects, sprintData]) => {
+    const loadProjectRoom = async () => {
+      try {
+        const projects = await fetchProjects()
+          .then(({ data }) => asRecordArray(Array.isArray(data?.data) ? data.data : data))
+          .catch((error) => {
+            console.error("Failed to load metaverse projects:", error);
+            return [];
+          });
+        const sprintData = await SchedulerAPI.getSprints(projectId)
+          .then((response) => response?.data)
+          .catch((error) => {
+            console.error("Sprints load failed:", error);
+            return [];
+          });
+
         if (cancelled) return;
         const foundProject = projects.find((item) => item.id === Number(projectId)) || null;
-        const sprintList = Array.isArray(sprintData) ? sprintData : [];
-        const sorted = [...sprintList].sort((a, b) => new Date(a.end_date) - new Date(b.end_date));
+        const rawSprints = Array.isArray(sprintData?.data) ? sprintData.data : sprintData;
+        const sorted = asRecordArray(rawSprints).sort(compareEndDates);
         const today = new Date();
         const currentSprint =
           sorted.find((item) => today >= new Date(item.start_date) && today <= new Date(item.end_date)) ||
@@ -431,10 +458,20 @@ export default function ProjectMetaverse() {
         setSprint(currentSprint);
         setSprintId(currentSprint?.id || null);
         if (!foundProject?.qa_mode_enabled) setViewMode("dev");
-      })
-      .finally(() => {
+      } catch (error) {
+        console.error("Failed to prepare metaverse data:", error);
+        if (!cancelled) {
+          setProject(null);
+          setSprints([]);
+          setSprint(null);
+          setSprintId(null);
+        }
+      } finally {
         if (!cancelled) setLoading(false);
-      });
+      }
+    };
+
+    loadProjectRoom();
 
     return () => {
       cancelled = true;

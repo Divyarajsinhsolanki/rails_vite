@@ -10,9 +10,23 @@ import {
     FiCheckCircle, FiXCircle, FiPhone, FiExternalLink, FiMail, FiBriefcase
 } from 'react-icons/fi';
 
+const asRecordArray = (value) =>
+    Array.isArray(value) ? value.filter((item) => item && typeof item === "object") : [];
+
+const usersForProject = (project) => asRecordArray(project?.users);
+
+const normalizeProject = (project) => ({
+    ...project,
+    users: usersForProject(project),
+});
+
+const normalizeProjects = (value) =>
+    asRecordArray(Array.isArray(value?.data) ? value.data : value).map(normalizeProject);
+
 // --- Premium UI Components ---
 
 const Avatar = ({ name, src, size = 'md', className = '' }) => {
+    const displayName = typeof name === "string" ? name : `${name || ""}`;
     const sizeClasses = {
         sm: "w-7 h-7 text-xs",
         md: "w-9 h-9 text-sm",
@@ -25,12 +39,12 @@ const Avatar = ({ name, src, size = 'md', className = '' }) => {
         return (
             <img
                 src={src}
-                alt={`${name} 's avatar`}
+                alt={`${displayName || "User"}'s avatar`}
                 className={`rounded-full object-cover ring-2 ring-white dark:ring-zinc-800 shadow-sm ${currentSizeClass} ${className}`}
             loading="lazy" />
         );
     }
-    const initial = name ? name.charAt(0).toUpperCase() : "?";
+    const initial = displayName ? displayName.charAt(0).toUpperCase() : "?";
     const colors = [
         'bg-gradient-to-br from-violet-400 to-violet-600',
         'bg-gradient-to-br from-blue-400 to-blue-600',
@@ -38,7 +52,7 @@ const Avatar = ({ name, src, size = 'md', className = '' }) => {
         'bg-gradient-to-br from-amber-400 to-amber-600',
         'bg-gradient-to-br from-rose-400 to-rose-600',
     ];
-    const colorIndex = name ? name.charCodeAt(0) % colors.length : 0;
+    const colorIndex = displayName ? displayName.charCodeAt(0) % colors.length : 0;
 
     return (
         <div className={`rounded-full ${colors[colorIndex]} text-white flex items-center justify-center font-bold ring-2 ring-white dark:ring-zinc-800 shadow-sm ${currentSizeClass} ${className}`}>
@@ -47,9 +61,10 @@ const Avatar = ({ name, src, size = 'md', className = '' }) => {
     );
 };
 
-const AvatarStack = ({ members, max = 4 }) => {
-    const visible = members.slice(0, max);
-    const remaining = members.length - max;
+const AvatarStack = ({ members = [], max = 4 }) => {
+    const safeMembers = asRecordArray(members);
+    const visible = safeMembers.slice(0, max);
+    const remaining = safeMembers.length - max;
     return (
         <div className="flex items-center -space-x-2">
             {visible.map((member, i) => (
@@ -73,7 +88,7 @@ const AvatarStack = ({ members, max = 4 }) => {
 };
 
 
-const MemberProfileHoverCard = ({ member, compact = false }) => {
+const MemberProfileHoverCard = ({ member = {}, compact = false }) => {
     const socials = member.social_links || {};
     const wrapperClass = compact
         ? "group relative inline-flex z-10 hover:z-[1200] focus-within:z-[1200]"
@@ -440,7 +455,7 @@ const Projects = () => {
         setIsLoading(true);
         try {
             const { data } = await fetchProjects();
-            const validProjects = Array.isArray(data) ? data : [];
+            const validProjects = normalizeProjects(data);
             setProjects(validProjects);
             // After loading, ensure selectedProjectId is still valid or reset it
             if (selectedProjectId && !validProjects.some((p) => p.id === selectedProjectId)) {
@@ -494,8 +509,10 @@ const Projects = () => {
             let nearestUpcoming = null;
             let fallbackNearest = null;
 
-            tasks.forEach((task) => {
-                const status = (task.status || "").toLowerCase().replace(/-/g, "_");
+            const safeTasks = asRecordArray(tasks);
+
+            safeTasks.forEach((task) => {
+                const status = `${task.status || ""}`.toLowerCase().replace(/-/g, "_");
                 if (status === "todo" || status === "to_do") {
                     stats.todo += 1;
                 } else if (status === "in_progress") {
@@ -524,7 +541,7 @@ const Projects = () => {
                 }
             });
 
-            stats.total = tasks.length;
+            stats.total = safeTasks.length;
             const selectedDueDate = nearestUpcoming || fallbackNearest;
             stats.nextDueDate = selectedDueDate ? selectedDueDate.toISOString() : null;
 
@@ -547,7 +564,7 @@ const Projects = () => {
                 }
                 const { data } = await SchedulerAPI.getTasks(params);
                 if (!isMounted) return;
-                const tasks = Array.isArray(data) ? data : [];
+                const tasks = asRecordArray(data);
                 setProjectTasks(tasks);
                 setProjectTaskStats(computeTaskStats(tasks));
             } catch (error) {
@@ -592,7 +609,7 @@ const Projects = () => {
 
         setProjectMembersForm((prev) => {
             const existingUserIds = new Set(prev.map((member) => member.user_id));
-            const newMembers = projectMemberFormUsers
+            const newMembers = asRecordArray(projectMemberFormUsers)
                 .filter((selectedUser) => !existingUserIds.has(selectedUser.id))
                 .map((selectedUser) => ({
                     user_id: selectedUser.id,
@@ -670,7 +687,9 @@ const Projects = () => {
         const action = editingId ? updateProject(editingId, payload) : createProject(payload);
         try {
             const { data } = await action;
-            setSelectedProjectId(data.id);
+            if (data && typeof data === "object" && data.id) {
+                setSelectedProjectId(data.id);
+            }
             resetAndCloseForms();
             await loadProjects(); // Reload to get the latest data
             setNotification({ message: `Project ${editingId ? 'updated' : 'created'} successfully!`, type: "success" });
@@ -698,7 +717,7 @@ const Projects = () => {
             qa_mode_enabled: project.qa_mode_enabled || false,
         });
         setProjectMembersForm(
-            (project.users || []).map((member) => ({
+            usersForProject(project).map((member) => ({
                 user_id: member.id,
                 name: member.name,
                 email: member.email,
@@ -771,7 +790,7 @@ const Projects = () => {
 
         try {
             await Promise.all(
-                selectedUsersToAdd.map((u) =>
+                asRecordArray(selectedUsersToAdd).map((u) =>
                     addProjectUser({
                         project_id: selectedProjectId,
                         user_id: u.id,
@@ -867,11 +886,12 @@ const Projects = () => {
     };
 
     // Derived State for rendering
-    const filteredProjects = projects.filter((p) =>
-        `${p.name} ${p.description || ''} ${p.users.map((u) => u.name).join(" ")}`
+    const filteredProjects = projects.filter((p) => {
+        const projectUsers = usersForProject(p);
+        return `${p?.name || ""} ${p?.description || ""} ${projectUsers.map((u) => u.name || "").join(" ")}`
             .toLowerCase()
-            .includes(searchQuery.toLowerCase())
-    );
+            .includes(searchQuery.toLowerCase());
+    });
 
     const groupedProjects = filteredProjects.reduce((acc, project) => {
         const status = project.status || 'running'; // Default to 'running' if status is not set
@@ -883,6 +903,7 @@ const Projects = () => {
     const projectStatuses = ['running', 'upcoming', 'completed']; // Define order for display
 
     const selectedProject = projects.find((p) => p.id === selectedProjectId);
+    const selectedProjectUsers = usersForProject(selectedProject);
     const viewModeLabel = projectViewMode === "qa" ? "QA mode" : projectViewMode === "combined" ? "Combined mode" : "Dev mode";
     const taskScopeLabel = projectViewMode === "qa" ? "QA tasks" : projectViewMode === "dev" ? "dev tasks" : "project tasks";
     const cycleProjectViewMode = () => {
@@ -949,31 +970,34 @@ const Projects = () => {
                                         {status}
                                     </h3>
                                     <div className="space-y-2">
-                                        {groupedProjects[status].map((project) => (
-                                            <motion.button
-                                                key={project.id}
-                                                onClick={() => handleSelectProject(project.id)}
-                                                whileHover={{ scale: 1.02 }}
-                                                whileTap={{ scale: 0.98 }}
-                                                className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${selectedProjectId === project.id
-                                                    ? 'bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 border-violet-200 dark:border-violet-800 shadow-md'
-                                                    : 'bg-white dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-700/50 hover:border-zinc-200 dark:hover:border-zinc-600 hover:shadow-md'
-                                                    }`}
-                                            >
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <h4 className={`font-semibold ${selectedProjectId === project.id ? 'text-violet-700 dark:text-violet-300' : 'text-zinc-800 dark:text-white'}`}>
-                                                        {project.name}
-                                                    </h4>
-                                                    <FiChevronRight className={`w-4 h-4 transition-transform ${selectedProjectId === project.id ? 'text-violet-500 translate-x-1' : 'text-zinc-400'}`} />
-                                                </div>
-                                                <div className="flex items-center justify-between">
-                                                    <AvatarStack members={project.users} max={3} />
-                                                    <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                                                        {project.users.length} member{project.users.length !== 1 ? 's' : ''}
-                                                    </span>
-                                                </div>
-                                            </motion.button>
-                                        ))}
+                                        {groupedProjects[status].map((project) => {
+                                            const projectUsers = usersForProject(project);
+                                            return (
+                                                <motion.button
+                                                    key={project.id}
+                                                    onClick={() => handleSelectProject(project.id)}
+                                                    whileHover={{ scale: 1.02 }}
+                                                    whileTap={{ scale: 0.98 }}
+                                                    className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${selectedProjectId === project.id
+                                                        ? 'bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 border-violet-200 dark:border-violet-800 shadow-md'
+                                                        : 'bg-white dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-700/50 hover:border-zinc-200 dark:hover:border-zinc-600 hover:shadow-md'
+                                                        }`}
+                                                >
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <h4 className={`font-semibold ${selectedProjectId === project.id ? 'text-violet-700 dark:text-violet-300' : 'text-zinc-800 dark:text-white'}`}>
+                                                            {project.name}
+                                                        </h4>
+                                                        <FiChevronRight className={`w-4 h-4 transition-transform ${selectedProjectId === project.id ? 'text-violet-500 translate-x-1' : 'text-zinc-400'}`} />
+                                                    </div>
+                                                    <div className="flex items-center justify-between">
+                                                        <AvatarStack members={projectUsers} max={3} />
+                                                        <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                                                            {projectUsers.length} member{projectUsers.length !== 1 ? 's' : ''}
+                                                        </span>
+                                                    </div>
+                                                </motion.button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )
@@ -1385,7 +1409,7 @@ const Projects = () => {
                                     <div className="rounded-xl border border-slate-200 bg-white/80 p-4 shadow-sm">
                                         <p className="text-xs uppercase tracking-wide text-slate-500">Members</p>
                                         <div className="mt-2 flex items-center justify-between">
-                                            <span className="text-2xl font-semibold text-slate-900">{selectedProject.users.length}</span>
+                                            <span className="text-2xl font-semibold text-slate-900">{selectedProjectUsers.length}</span>
                                             <FiUsers className="h-6 w-6 text-[var(--theme-color)]" />
                                         </div>
                                         <p className="text-xs text-slate-500">Collaborators assigned to this project.</p>
@@ -1430,12 +1454,12 @@ const Projects = () => {
                                     <div className="rounded-2xl border border-slate-200 bg-white/85 p-6 shadow-sm">
                                         <div className="mb-5 flex items-center justify-between">
                                             <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                                                <FiUsers className="h-5 w-5 text-[var(--theme-color)]" /> Members ({selectedProject.users.length})
+                                                <FiUsers className="h-5 w-5 text-[var(--theme-color)]" /> Members ({selectedProjectUsers.length})
                                             </h3>
                                         </div>
-                                        {selectedProject.users.length > 0 ? (
+                                        {selectedProjectUsers.length > 0 ? (
                                             <ul className="space-y-4">
-                                                {selectedProject.users.map((member) => (
+                                                {selectedProjectUsers.map((member) => (
                                                     <li
                                                         key={member.project_user_id}
                                                         className="flex items-start justify-between gap-4 rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm transition-all duration-200 hover:shadow-md"
@@ -1547,7 +1571,7 @@ const Projects = () => {
                                                     <UserMultiSelect
                                                         selectedUsers={selectedUsersToAdd}
                                                         setSelectedUsers={setSelectedUsersToAdd}
-                                                        excludedIds={selectedProject.users.map((u) => u.id)}
+                                                        excludedIds={selectedProjectUsers.map((u) => u.id)}
                                                     />
                                                 </div>
                                                 <div>
@@ -1653,44 +1677,47 @@ const Projects = () => {
                                             <p className="text-[var(--theme-color)] text-sm">Click on any project in the sidebar to manage its members and edit its information.</p>
                                         </div>
                                     </div>
-                                    {projects.map((project) => (
-                                        <div key={project.id} className="border border-gray-200 rounded-xl shadow-md p-6 bg-white flex flex-col justify-between transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg cursor-pointer"
-                                            onClick={() => handleSelectProject(project.id)}
-                                        >
-                                            <div className="mb-4">
-                                                <div className="flex justify-between items-start mb-1">
-                                                    <h3 className="text-xl font-bold text-gray-900">{project.name}</h3>
-                                                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${project.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                                        project.status === 'upcoming' ? 'bg-yellow-100 text-yellow-700' :
-                                                            'bg-blue-100 text-blue-700' // Default for 'running' or undefined
-                                                        }`}>
-                                                        {project.status || 'Running'}
-                                                    </span>
+                                    {projects.map((project) => {
+                                        const projectUsers = usersForProject(project);
+                                        return (
+                                            <div key={project.id} className="border border-gray-200 rounded-xl shadow-md p-6 bg-white flex flex-col justify-between transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg cursor-pointer"
+                                                onClick={() => handleSelectProject(project.id)}
+                                            >
+                                                <div className="mb-4">
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <h3 className="text-xl font-bold text-gray-900">{project.name}</h3>
+                                                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${project.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                                            project.status === 'upcoming' ? 'bg-yellow-100 text-yellow-700' :
+                                                                'bg-blue-100 text-blue-700' // Default for 'running' or undefined
+                                                            }`}>
+                                                            {project.status || 'Running'}
+                                                        </span>
+                                                    </div>
+                                                    {project.description && (
+                                                        <p className="text-sm text-gray-600 line-clamp-3">{project.description}</p>
+                                                    )}
+                                                    <div className="flex items-center gap-2 text-sm text-gray-500 mt-3">
+                                                        {project.start_date && <span className="flex items-center gap-1"><FiCalendar className="w-4 h-4" />{project.start_date}</span>}
+                                                        {project.end_date && <span className="flex items-center gap-1"><FiChevronRight className="w-4 h-4" />{project.end_date}</span>}
+                                                    </div>
                                                 </div>
-                                                {project.description && (
-                                                    <p className="text-sm text-gray-600 line-clamp-3">{project.description}</p>
-                                                )}
-                                                <div className="flex items-center gap-2 text-sm text-gray-500 mt-3">
-                                                    {project.start_date && <span className="flex items-center gap-1"><FiCalendar className="w-4 h-4" />{project.start_date}</span>}
-                                                    {project.end_date && <span className="flex items-center gap-1"><FiChevronRight className="w-4 h-4" />{project.end_date}</span>}
+                                                <div className="flex items-center -space-x-2 mb-4">
+                                                    {projectUsers.slice(0, 4).map((member) => (
+                                                        <MemberProfileHoverCard key={member.id} member={member} compact />
+                                                    ))}
+                                                    {projectUsers.length > 4 && (
+                                                        <span className="text-sm text-gray-500 ml-4 font-medium">+{projectUsers.length - 4} more</span>
+                                                    )}
+                                                    {projectUsers.length === 0 && (
+                                                        <span className="text-sm text-gray-500 italic">No members yet</span>
+                                                    )}
                                                 </div>
+                                                <button className="self-start text-base text-[var(--theme-color)] hover:underline flex items-center gap-1">
+                                                    View Details <FiChevronRight className="w-4 h-4" />
+                                                </button>
                                             </div>
-                                            <div className="flex items-center -space-x-2 mb-4">
-                                                {project.users.slice(0, 4).map((member) => (
-                                                    <MemberProfileHoverCard key={member.id} member={member} compact />
-                                                ))}
-                                                {project.users.length > 4 && (
-                                                    <span className="text-sm text-gray-500 ml-4 font-medium">+{project.users.length - 4} more</span>
-                                                )}
-                                                {project.users.length === 0 && (
-                                                    <span className="text-sm text-gray-500 italic">No members yet</span>
-                                                )}
-                                            </div>
-                                            <button className="self-start text-base text-[var(--theme-color)] hover:underline flex items-center gap-1">
-                                                View Details <FiChevronRight className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             ) : (
                                 <div className="text-center h-full flex flex-col items-center justify-center min-h-[70vh]">

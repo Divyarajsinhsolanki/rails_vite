@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -27,7 +27,7 @@ const KnowledgeDashboard = lazy(() => import("../pages/KnowledgeDashboard"));
 const Legal = lazy(() => import("../pages/Legal"));
 const MetaverseLanding = lazy(() => import("../pages/MetaverseLanding"));
 const Notifications = lazy(() => import("../pages/Notifications"));
-const PdfPage = lazy(() => import("./PdfPage"));
+const PdfMaster = lazy(() => import("./PdfMaster"));
 const PostPage = lazy(() => import("../pages/PostPage"));
 const Profile = lazy(() => import("../components/Profile"));
 const ProjectMetaverse = lazy(() => import("../pages/ProjectMetaverse"));
@@ -94,9 +94,13 @@ const AppRoutes = () => {
             />
             <Route
               path="/pdf"
+              element={<Navigate to="/pdf-master" replace />}
+            />
+            <Route
+              path="/pdf-master"
               element={
                 <PrivateRoute>
-                  <PdfPage />
+                  <PdfMaster />
                 </PrivateRoute>
               }
             />

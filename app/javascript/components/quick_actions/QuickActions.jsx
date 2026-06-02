@@ -63,10 +63,10 @@ const QuickActions = ({ onCreatePost }) => {
       onClick: () => navigate("/vault"),
     },
     {
-      title: "PDF Lab",
-      description: "Manage PDFs and shared resources.",
+      title: "PDF Master",
+      description: "Edit, organize, and export PDFs.",
       icon: <FiUploadCloud className="text-lg" />,
-      onClick: () => navigate("/pdf"),
+      onClick: () => navigate("/pdf-master"),
     },
     {
       title: "Invite Teammates",

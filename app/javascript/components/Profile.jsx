@@ -7,20 +7,30 @@ import { AuthContext } from '../context/AuthContext';
 import { COLOR_MAP } from '/utils/theme';
 import { buildAvatarStyle, getAvatarInitial, normalizeAvatarColor } from '/utils/avatar';
 
+const asRecordArray = (value) =>
+  Array.isArray(value) ? value.filter((item) => item && typeof item === "object") : [];
+
 const Avatar = ({ name, src, size = 'md', color }) => {
+  const [imageFailed, setImageFailed] = useState(false);
   const sizes = {
     sm: 'w-8 h-8',
     md: 'w-12 h-12',
     lg: 'w-16 h-16'
   };
-  
-  if (src) {
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [src]);
+
+  if (src && !imageFailed) {
     return (
       <img
         src={src}
         alt={name}
         className={`${sizes[size]} rounded-full object-cover border-2 border-white/80 shadow-sm`}
-      loading="lazy" />
+        loading="lazy"
+        onError={() => setImageFailed(true)}
+      />
     );
   }
   const initial = getAvatarInitial(name);
@@ -336,19 +346,20 @@ const Profile = () => {
   const kekaTotalHours = extractNumber(kekaTimesheets, ["totalHours", "totalHoursWorked", "total_hours"]);
   const kekaTotalMinutes = extractNumber(kekaTimesheets, ["totalMinutes", "total_minutes"]);
   const kekaHoursDisplay = kekaTotalHours ?? (kekaTotalMinutes ? (kekaTotalMinutes / 60).toFixed(2) : null);
+  const taskRecords = useMemo(() => asRecordArray(tasks), [tasks]);
   const completedTasks = useMemo(
-    () => tasks.filter((task) => {
+    () => taskRecords.filter((task) => {
       const normalizedStatus = (task.status || '').toLowerCase();
       return normalizedStatus === 'completed' || normalizedStatus === 'done';
     }),
-    [tasks]
+    [taskRecords]
   );
   const incompleteTasks = useMemo(
-    () => tasks.filter((task) => {
+    () => taskRecords.filter((task) => {
       const normalizedStatus = (task.status || '').toLowerCase();
       return normalizedStatus !== 'completed' && normalizedStatus !== 'done';
     }),
-    [tasks]
+    [taskRecords]
   );
   const generalTasks = useMemo(
     () => incompleteTasks.filter((t) => t.type === 'general'),
@@ -363,33 +374,33 @@ const Profile = () => {
     [nonGeneralTasks, todayStr]
   );
   const dueTodayAllTasks = useMemo(
-    () => tasks.filter((t) => {
+    () => taskRecords.filter((t) => {
       const normalizedStatus = (t.status || '').toLowerCase();
       if (normalizedStatus === 'completed' || normalizedStatus === 'done') return false;
       const dueDate = t.end_date || t.due_date;
       return dueDate === todayStr;
     }),
-    [tasks, todayStr]
+    [taskRecords, todayStr]
   );
   const otherTasks = useMemo(
     () => nonGeneralTasks.filter((t) => (t.end_date || t.due_date) !== todayStr),
     [nonGeneralTasks, todayStr]
   );
   const overdueTasks = useMemo(
-    () => tasks.filter((task) => {
+    () => taskRecords.filter((task) => {
       const normalizedStatus = (task.status || '').toLowerCase();
       if (normalizedStatus === 'completed' || normalizedStatus === 'done') return false;
       const dueDate = task.end_date || task.due_date;
       return dueDate && dueDate < todayStr;
     }),
-    [tasks, todayStr]
+    [taskRecords, todayStr]
   );
   const activeTasks = incompleteTasks.length;
   const taskStats = useMemo(
     () => [
       {
         label: 'Total Tasks',
-        value: tasks.length,
+        value: taskRecords.length,
         tone: 'text-gray-700',
         accent: 'bg-gray-100 text-gray-700',
       },
@@ -418,7 +429,7 @@ const Profile = () => {
         accent: 'bg-orange-100 text-orange-700',
       }
     ],
-    [activeTasks, completedTasks.length, dueTodayAllTasks.length, overdueTasks.length, tasks.length]
+    [activeTasks, completedTasks.length, dueTodayAllTasks.length, overdueTasks.length, taskRecords.length]
   );
 
   const sortedCompletedTasks = useMemo(() => {
@@ -1173,33 +1184,36 @@ const Profile = () => {
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">My Teams</h2>
                 {teams.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {teams.map((team) => (
-                      <div key={team.id} className="border border-gray-100 rounded-lg p-6 hover:shadow-md transition bg-white">
-                        <div className="flex items-center mb-4">
-                          <div className="flex -space-x-2">
-                            {team.users.slice(0,3).map((m) => (
-                              <Avatar key={m.id} name={m.name} src={m.profile_picture} color={m.avatar_color} />
-                            ))}
-                            {team.users.length > 3 && (
-                              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs text-gray-500 border-2 border-white">
-                                +{team.users.length - 3}
-                              </div>
-                            )}
+                    {teams.map((team) => {
+                      const teamUsers = asRecordArray(team?.users);
+                      return (
+                        <div key={team.id} className="border border-gray-100 rounded-lg p-6 hover:shadow-md transition bg-white">
+                          <div className="flex items-center mb-4">
+                            <div className="flex -space-x-2">
+                              {teamUsers.slice(0,3).map((m) => (
+                                <Avatar key={m.id} name={m.name} src={m.profile_picture} color={m.avatar_color} />
+                              ))}
+                              {teamUsers.length > 3 && (
+                                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs text-gray-500 border-2 border-white">
+                                  +{teamUsers.length - 3}
+                                </div>
+                              )}
+                            </div>
+                            <div className="ml-4">
+                              <h3 className="font-bold text-gray-800">{team.name}</h3>
+                              <span className="text-xs text-gray-500">{team.role}</span>
+                            </div>
                           </div>
-                          <div className="ml-4">
-                            <h3 className="font-bold text-gray-800">{team.name}</h3>
-                            <span className="text-xs text-gray-500">{team.role}</span>
-                          </div>
+                          <div className="text-sm text-gray-500 mb-2">{teamUsers.length} members</div>
+                          <button
+                            onClick={() => navigate('/teams', { state: { teamId: team.id } })}
+                            className="mt-4 w-full py-2 text-sm font-medium text-[var(--theme-color)] hover:text-[var(--theme-color)] border border-[rgb(var(--theme-color-rgb)/0.2)] rounded-lg hover:bg-[rgb(var(--theme-color-rgb)/0.1)] transition"
+                          >
+                            View Team
+                          </button>
                         </div>
-                        <div className="text-sm text-gray-500 mb-2">{team.users.length} members</div>
-                        <button
-                          onClick={() => navigate('/teams', { state: { teamId: team.id } })}
-                          className="mt-4 w-full py-2 text-sm font-medium text-[var(--theme-color)] hover:text-[var(--theme-color)] border border-[rgb(var(--theme-color-rgb)/0.2)] rounded-lg hover:bg-[rgb(var(--theme-color-rgb)/0.1)] transition"
-                        >
-                          View Team
-                        </button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-12">
@@ -1218,53 +1232,41 @@ const Profile = () => {
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">My Projects</h2>
                 {projects.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {projects.map((project) => (
-                      <div key={project.id} className="border border-gray-100 rounded-lg p-6 hover:shadow-md transition bg-white">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="font-bold text-gray-800">{project.name}</h3>
-                          <span className="text-xs px-2 py-1 bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)] rounded-full">{project.role}</span>
-                        </div>
-                        <p className="text-sm text-gray-500 mb-6 line-clamp-2">{project.description || 'No description provided.'}</p>
-                        <div className="flex justify-between items-center">
-                          <div className="flex -space-x-2">
-                            {project.members.slice(0,3).map((m) => (
-                              m.profile_picture ? (
-                                <img
-                                  key={m.id}
-                                  src={m.profile_picture}
-                                  alt={m.name}
-                                  className="w-8 h-8 rounded-full border-2 border-white object-cover"
-                                loading="lazy" />
-                              ) : (
-                                <div
-                                  key={m.id}
-                                  className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-xs font-medium"
-                                  style={buildAvatarStyle(m.avatar_color)}
-                                >
-                                  {getAvatarInitial(m.name)}
+                    {projects.map((project) => {
+                      const projectMembers = asRecordArray(project?.members);
+                      return (
+                        <div key={project.id} className="border border-gray-100 rounded-lg p-6 hover:shadow-md transition bg-white">
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-bold text-gray-800">{project.name}</h3>
+                            <span className="text-xs px-2 py-1 bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)] rounded-full">{project.role}</span>
+                          </div>
+                          <p className="text-sm text-gray-500 mb-6 line-clamp-2">{project.description || 'No description provided.'}</p>
+                          <div className="flex justify-between items-center">
+                            <div className="flex -space-x-2">
+                              {projectMembers.slice(0,3).map((m) => (
+                                <Avatar key={m.id} name={m.name} src={m.profile_picture} color={m.avatar_color} size="sm" />
+                              ))}
+                              {projectMembers.length > 3 && (
+                                <div className="w-8 h-8 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center text-xs text-gray-500">
+                                  +{projectMembers.length - 3}
                                 </div>
-                              )
-                            ))}
-                            {project.members.length > 3 && (
-                              <div className="w-8 h-8 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center text-xs text-gray-500">
-                                +{project.members.length - 3}
+                              )}
+                            </div>
+                            {project.end_date && (
+                              <div className="text-xs text-gray-500">
+                                Due {new Date(project.end_date).toLocaleDateString()}
                               </div>
                             )}
                           </div>
-                          {project.end_date && (
-                            <div className="text-xs text-gray-500">
-                              Due {new Date(project.end_date).toLocaleDateString()}
-                            </div>
-                          )}
+                          <button
+                            onClick={() => navigate(`/projects/${project.id}/dashboard`)}
+                            className="mt-4 w-full py-2 text-sm font-medium text-[var(--theme-color)] hover:text-[var(--theme-color)] border border-[rgb(var(--theme-color-rgb)/0.2)] rounded-lg hover:bg-[rgb(var(--theme-color-rgb)/0.1)] transition"
+                          >
+                            View Project
+                          </button>
                         </div>
-                        <button
-                          onClick={() => navigate(`/projects/${project.id}/dashboard`)}
-                          className="mt-4 w-full py-2 text-sm font-medium text-[var(--theme-color)] hover:text-[var(--theme-color)] border border-[rgb(var(--theme-color-rgb)/0.2)] rounded-lg hover:bg-[rgb(var(--theme-color-rgb)/0.1)] transition"
-                        >
-                          View Project
-                        </button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-12">

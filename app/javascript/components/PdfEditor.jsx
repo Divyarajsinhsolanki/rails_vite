@@ -23,7 +23,7 @@ import {
 
 const PdfEditor = ({ setPdfUpdated, setPdfUrl, pdfPath, activeForm, setActiveForm, placementCoordinates, setPlacementCoordinates }) => {
   // PdfEditor now acts solely as the container for the FormRenderer in the right panel.
-  // The tool selection is handled by SidebarToolbar in the parent PdfPage.
+  // The tool selection is handled by SidebarToolbar in the parent PdfMaster.
 
   if (!activeForm) {
     return (

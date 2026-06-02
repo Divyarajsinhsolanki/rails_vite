@@ -23,8 +23,8 @@ class Issue < ApplicationRecord
 
   validates :issue_key, presence: true, uniqueness: true
   validates :title, presence: true
-  validates :status, inclusion: { in: STATUSES }, allow_blank: true
-  validates :severity, inclusion: { in: SEVERITIES }, allow_blank: true
+  validates :status, inclusion: { in: STATUSES }
+  validates :severity, inclusion: { in: SEVERITIES }
 
   before_validation :ensure_issue_key
   before_validation :normalize_status_and_severity
@@ -37,8 +37,19 @@ class Issue < ApplicationRecord
   end
 
   def normalize_status_and_severity
-    self.status = status.presence || 'New'
-    self.severity = severity.presence || 'Medium'
+    self.status = canonical_enum_value(status, STATUSES, 'New')
+    self.severity = canonical_enum_value(severity, SEVERITIES, 'Medium')
+  end
+
+  def canonical_enum_value(value, allowed_values, fallback)
+    normalized = value.to_s.strip
+    return fallback if normalized.blank?
+
+    allowed_values.find { |allowed_value| enum_key(allowed_value) == enum_key(normalized) } || normalized
+  end
+
+  def enum_key(value)
+    value.to_s.tr('_-', ' ').squish.downcase
   end
 
   def notify_assignment_or_status_change
@@ -49,4 +60,3 @@ class Issue < ApplicationRecord
     IssueNotifierJob.perform_later(id, previous_status, previous_assignee)
   end
 end
-

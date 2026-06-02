@@ -1,7 +1,21 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { Loader2 } from "lucide-react";
 
 const placementFieldNames = new Set(["x", "y", "page_number"]);
+
+const getCsrfHeaders = () => {
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+  return csrfToken ? { "X-CSRF-Token": csrfToken } : {};
+};
+
+const writeStorage = (key, value) => {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch (error) {
+    console.warn(`localStorage write failed for ${key}:`, error);
+  }
+};
 
 const FormComponent = ({
   setActiveForm,
@@ -20,6 +34,7 @@ const FormComponent = ({
   );
   const [formData, setFormData] = useState(initialFormData);
   const [errorMessage, setErrorMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const hasPlacementFields = formFields.some((field) => placementFieldNames.has(field.name));
 
   useEffect(() => {
@@ -89,6 +104,7 @@ const FormComponent = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage("");
+    setSubmitting(true);
 
     try {
       const request = buildRequest();
@@ -96,7 +112,7 @@ const FormComponent = ({
         method: "POST",
         headers: {
           ...(request.headers || {}),
-          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content,
+          ...getCsrfHeaders(),
         },
         body: request.body,
       });
@@ -106,7 +122,7 @@ const FormComponent = ({
 
       if (data.pdf_url && setPdfUrl) {
         setPdfUrl(data.pdf_url);
-        localStorage.setItem("pdfUrl", data.pdf_url);
+        writeStorage("pdfUrl", data.pdf_url);
       }
 
       setPdfUpdated((prev) => prev + 1);
@@ -114,6 +130,8 @@ const FormComponent = ({
     } catch (error) {
       console.error(error);
       setErrorMessage(error.message || "Request failed");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -149,6 +167,7 @@ const FormComponent = ({
               placeholder={field.placeholder}
               value={field.type === "file" ? undefined : formData[field.name] || ""}
               onChange={handleChange}
+              disabled={submitting}
               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -159,7 +178,20 @@ const FormComponent = ({
         )}
 
         <input type="hidden" name="pdf_path" value={pdfPath} />
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded w-full hover:bg-blue-700">Submit</button>
+        <button
+          type="submit"
+          disabled={submitting}
+          className="flex w-full items-center justify-center rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-wait disabled:opacity-70"
+        >
+          {submitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Applying...
+            </>
+          ) : (
+            "Apply"
+          )}
+        </button>
       </form>
     </motion.div>
   );

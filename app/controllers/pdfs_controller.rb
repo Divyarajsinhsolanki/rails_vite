@@ -8,6 +8,11 @@ class PdfsController < ApplicationController
         return
       end
 
+      unless valid_pdf_upload?(params[:pdf])
+        render json: { error: 'Invalid file type. Only PDF files are allowed.' }, status: :unsupported_media_type
+        return
+      end
+
       session[:pdf_id] = SecureRandom.uuid
       session[:original_filename] = params[:pdf].original_filename
       session[:download_filename] = params[:pdf].original_filename
@@ -60,6 +65,17 @@ class PdfsController < ApplicationController
 
   private
 
+  def valid_pdf_upload?(upload)
+    return false unless File.extname(upload.original_filename.to_s).casecmp('.pdf').zero?
+
+    upload.rewind if upload.respond_to?(:rewind)
+    header = upload.read(4)
+    upload.rewind if upload.respond_to?(:rewind)
+    header == '%PDF'
+  rescue
+    false
+  end
+
   def requested_download_name
     return if params[:download_name].blank?
 
@@ -92,7 +108,7 @@ class PdfsController < ApplicationController
   end
 
   def default_download_name(path)
-    return "pdf_modifier.pdf" if path.blank?
+    return "pdf_master.pdf" if path.blank?
 
     File.basename(path)
   end

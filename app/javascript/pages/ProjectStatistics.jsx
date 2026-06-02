@@ -28,6 +28,11 @@ const STATUS_COLORS = {
   completed: 'bg-emerald-100 text-emerald-700',
 };
 
+const asRecordArray = (value) =>
+  Array.isArray(value) ? value.filter((item) => item && typeof item === 'object') : [];
+
+const recordsFromPayload = (value) => asRecordArray(Array.isArray(value?.data) ? value.data : value);
+
 const formatDate = (dateString) => {
   if (!dateString) return '—';
   try {
@@ -121,13 +126,13 @@ const ProjectStatistics = ({ projectId }) => {
     setError(null);
 
     Promise.all([
-      SchedulerAPI.getTasks({ project_id: projectId }).then((res) => res.data || []),
-      SchedulerAPI.getSprints(projectId).then((res) => res.data || []),
+      SchedulerAPI.getTasks({ project_id: projectId }).then((res) => res?.data),
+      SchedulerAPI.getSprints(projectId).then((res) => res?.data),
     ])
       .then(([taskData, sprintData]) => {
         if (cancelled) return;
-        setTasks(Array.isArray(taskData) ? taskData : []);
-        setSprints(Array.isArray(sprintData) ? sprintData : []);
+        setTasks(recordsFromPayload(taskData));
+        setSprints(recordsFromPayload(sprintData));
       })
       .catch(() => {
         if (cancelled) return;
@@ -143,9 +148,12 @@ const ProjectStatistics = ({ projectId }) => {
     };
   }, [projectId]);
 
+  const taskRecords = useMemo(() => asRecordArray(tasks), [tasks]);
+  const sprintRecords = useMemo(() => asRecordArray(sprints), [sprints]);
+
   const summary = useMemo(() => {
     const now = new Date();
-    if (!tasks.length) {
+    if (taskRecords.length === 0) {
       return {
         total: 0,
         completed: 0,
@@ -156,7 +164,7 @@ const ProjectStatistics = ({ projectId }) => {
       };
     }
 
-    const counts = tasks.reduce((acc, task) => {
+    const counts = taskRecords.reduce((acc, task) => {
       const status = task.status || 'todo';
       acc[status] = (acc[status] || 0) + 1;
       if (status !== 'completed' && task.end_date) {
@@ -168,7 +176,7 @@ const ProjectStatistics = ({ projectId }) => {
       return acc;
     }, { todo: 0, inprogress: 0, completed: 0, overdue: 0 });
 
-    const total = tasks.length;
+    const total = taskRecords.length;
     const completionRate = total ? Math.round((counts.completed / total) * 100) : 0;
 
     return {
@@ -179,12 +187,12 @@ const ProjectStatistics = ({ projectId }) => {
       overdue: counts.overdue,
       completionRate,
     };
-  }, [tasks]);
+  }, [taskRecords]);
 
   const sprintBreakdown = useMemo(() => {
-    if (!sprints.length) return [];
+    if (sprintRecords.length === 0 && taskRecords.length === 0) return [];
 
-    const taskGroups = tasks.reduce((acc, task) => {
+    const taskGroups = taskRecords.reduce((acc, task) => {
       const key = task.sprint_id || 'unscheduled';
       if (!acc[key]) {
         acc[key] = { total: 0, completed: 0, inProgress: 0, todo: 0 };
@@ -197,7 +205,7 @@ const ProjectStatistics = ({ projectId }) => {
       return acc;
     }, {});
 
-    const scheduledSprints = sprints
+    const scheduledSprints = sprintRecords
       .map((sprint) => {
         const metrics = taskGroups[sprint.id] || { total: 0, completed: 0, inProgress: 0, todo: 0 };
         const completionRate = metrics.total ? Math.round((metrics.completed / metrics.total) * 100) : 0;
@@ -251,12 +259,12 @@ const ProjectStatistics = ({ projectId }) => {
       };
 
     return unscheduledSprint ? [...scheduledSprints, unscheduledSprint] : scheduledSprints;
-  }, [sprints, tasks]);
+  }, [sprintRecords, taskRecords]);
 
   const userBreakdown = useMemo(() => {
-    if (!tasks.length) return [];
+    if (taskRecords.length === 0) return [];
 
-    const groups = tasks.reduce((acc, task) => {
+    const groups = taskRecords.reduce((acc, task) => {
       const user = task.assigned_user;
       const key = user?.id || 'unassigned';
       if (!acc[key]) {
@@ -285,12 +293,12 @@ const ProjectStatistics = ({ projectId }) => {
         completionRate: entry.total ? Math.round((entry.completed / entry.total) * 100) : 0,
       }))
       .sort((a, b) => b.total - a.total);
-  }, [tasks]);
+  }, [taskRecords]);
 
   const upcomingMilestones = useMemo(() => {
     const now = new Date();
-    if (!tasks.length) return [];
-    const upcoming = tasks
+    if (taskRecords.length === 0) return [];
+    const upcoming = taskRecords
       .filter((task) => task.end_date && new Date(task.end_date) >= now)
       .sort((a, b) => new Date(a.end_date) - new Date(b.end_date))
       .slice(0, 5);
@@ -304,10 +312,10 @@ const ProjectStatistics = ({ projectId }) => {
       sprintId: task.sprint_id,
       daysUntil: calculateDaysBetween(new Date().toISOString(), task.end_date),
     }));
-  }, [tasks]);
+  }, [taskRecords]);
 
   const averageCycleTime = useMemo(() => {
-    const durations = tasks
+    const durations = taskRecords
       .filter((task) => task.status === 'completed' && task.start_date && task.end_date)
       .map((task) => calculateDaysBetween(task.start_date, task.end_date))
       .filter((value) => typeof value === 'number' && value >= 0);
@@ -315,7 +323,7 @@ const ProjectStatistics = ({ projectId }) => {
     if (!durations.length) return null;
     const sum = durations.reduce((total, value) => total + value, 0);
     return Math.round(sum / durations.length);
-  }, [tasks]);
+  }, [taskRecords]);
 
   const statusDistribution = useMemo(() => [
     { status: 'completed', count: summary.completed, color: 'bg-emerald-500', label: 'Completed' },
@@ -379,7 +387,7 @@ const ProjectStatistics = ({ projectId }) => {
   const atRiskTasks = useMemo(() => {
     const now = new Date();
 
-    return tasks
+    return taskRecords
       .map((task) => {
         if (!task.end_date) return null;
         if (task.status === 'completed') return null;
@@ -412,10 +420,10 @@ const ProjectStatistics = ({ projectId }) => {
         }
         return 0;
       });
-  }, [tasks]);
+  }, [taskRecords]);
 
   const recentlyCompletedMilestones = useMemo(() =>
-    tasks
+    taskRecords
       .filter((task) => task.status === 'completed' && task.end_date)
       .sort((a, b) => new Date(b.end_date) - new Date(a.end_date))
       .slice(0, 5)
@@ -425,7 +433,7 @@ const ProjectStatistics = ({ projectId }) => {
         completedOn: formatDate(task.end_date),
         sprintId: task.sprint_id,
       })),
-    [tasks]);
+    [taskRecords]);
 
   const milestoneSummary = useMemo(() => ({
     upcoming: upcomingMilestones.length,
@@ -460,7 +468,7 @@ const ProjectStatistics = ({ projectId }) => {
     );
   }
 
-  if (!tasks.length) {
+  if (taskRecords.length === 0) {
     return (
       <div className="bg-gradient-to-br from-gray-50 to-white border border-dashed border-gray-300 rounded-3xl p-12 text-center">
         <ChartBarIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />

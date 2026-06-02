@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
+import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import DraggableOverlay from "./DraggableOverlay";
 import { 
   Plus,
-  FilePlus, 
   FileMinus, 
   Copy, 
   RotateCcw, 
@@ -12,19 +12,45 @@ import {
   ChevronLeft,
   ChevronRight,
   ZoomIn,
-  ZoomOut
+  ZoomOut,
+  AlertCircle
 } from "lucide-react";
 
-// Set worker URL to the specific version required by react-pdf 9.2.1
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@4.8.69/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+
+const PdfLoadingState = ({ message = "Loading PDF..." }) => (
+  <div className="flex min-h-[520px] min-w-[360px] flex-col items-center justify-center rounded-sm bg-white px-10 text-center shadow-[0_35px_100px_-15px_rgba(0,0,0,0.15)]">
+    <Loader2 className="mb-4 h-8 w-8 animate-spin text-indigo-600" />
+    <p className="text-sm font-bold text-slate-800">{message}</p>
+    <p className="mt-1 text-xs text-slate-500">Preparing pages, scale, and placement tools.</p>
+  </div>
+);
+
+const PdfErrorState = ({ message }) => (
+  <div className="flex min-h-[360px] min-w-[360px] flex-col items-center justify-center rounded-sm border border-red-100 bg-red-50 px-10 text-center text-red-700 shadow-[0_35px_100px_-15px_rgba(0,0,0,0.12)]">
+    <AlertCircle className="mb-4 h-8 w-8" />
+    <p className="text-sm font-bold">PDF could not be loaded</p>
+    <p className="mt-2 text-xs">{message || "Check the file path and try uploading again."}</p>
+  </div>
+);
+
+const getCsrfHeaders = () => {
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+  return csrfToken ? { "X-CSRF-Token": csrfToken } : {};
+};
 
 const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, placementCoordinates, onCancelTool, setPdfUpdated }) => {
+  const lastPdfPathRef = useRef(null);
+  const loadSequenceRef = useRef(0);
+  const [documentLoadId, setDocumentLoadId] = useState(0);
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
   const [pageWidth, setPageWidth] = useState(null);
   const [pageHeight, setPageHeight] = useState(null);
   const [processing, setProcessing] = useState(false);
+  const [documentError, setDocumentError] = useState("");
+  const [actionError, setActionError] = useState("");
   const placementTools = new Set(["addText", "addSignature", "addStamp"]);
   const shouldShowOverlay = placementTools.has(activeTool);
 
@@ -41,11 +67,17 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, p
   useEffect(() => {
     // Only reset to Page 1 if the actual FILE changed, not just a cache-bust update
     const currentPath = pdfUrl?.split("?")[0];
-    if (window.lastPdfPath !== currentPath) {
+    const nextLoadId = loadSequenceRef.current + 1;
+    loadSequenceRef.current = nextLoadId;
+    setDocumentLoadId(nextLoadId);
+
+    if (lastPdfPathRef.current !== currentPath) {
       setPageNumber(1);
-      window.lastPdfPath = currentPath;
+      lastPdfPathRef.current = currentPath;
     }
     setNumPages(null);
+    setDocumentError("");
+    setActionError("");
   }, [pdfUrl]);
 
   useEffect(() => {
@@ -69,17 +101,27 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, p
     setPageNumber(clampedPage => Math.min(Math.max(1, requestedPage), maxPage));
   }, [shouldShowOverlay, placementCoordinates?.pageNumber, numPages]);
 
-  function onDocumentLoadSuccess({ numPages }) {
+  function onDocumentLoadSuccess({ numPages }, loadId = documentLoadId) {
+    if (loadId !== loadSequenceRef.current) return;
     setNumPages(numPages);
+    setDocumentError("");
   }
 
-  function onPageLoadSuccess({ width, height }) {
+  function onPageLoadSuccess({ width, height }, loadId = documentLoadId) {
+    if (loadId !== loadSequenceRef.current) return;
     setPageWidth(width);
     setPageHeight(height);
   }
 
+  const handleDocumentLoadError = (error, loadId = documentLoadId) => {
+    if (loadId !== loadSequenceRef.current) return;
+    console.error("PDF load failed:", error);
+    setDocumentError(error?.message || "Unable to load this PDF.");
+  };
+
   const handleQuickAction = async (endpoint, params = {}) => {
     setProcessing(true);
+    setActionError("");
     const formData = new FormData();
     // Clean URL and map to public path for the backend
     const cleanPath = pdfUrl.split("?")[0].replace(/^\//, "public/");
@@ -93,23 +135,22 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, p
       const response = await fetch(endpoint, {
         method: "POST",
         body: formData,
-        headers: {
-          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content,
-        },
+        headers: getCsrfHeaders(),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        // If the server returned a specific new PDF URL, use it
-        if (data.pdf_url) {
-          // This will trigger the parent's update flow if we add a call here
-          window.dispatchEvent(new CustomEvent("pdf-updated", { detail: data.pdf_url }));
-        } else {
-          setPdfUpdated(prev => prev + 1);
-        }
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || "PDF action failed.");
+      }
+
+      if (data.pdf_url) {
+        window.dispatchEvent(new CustomEvent("pdf-updated", { detail: data.pdf_url }));
+      } else {
+        setPdfUpdated(prev => prev + 1);
       }
     } catch (error) {
       console.error("Action failed:", error);
+      setActionError(error.message || "PDF action failed.");
     } finally {
       setProcessing(false);
     }
@@ -156,6 +197,13 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, p
         </div>
       </div>
 
+      {actionError && (
+        <div className="mx-6 mt-3 flex shrink-0 items-center gap-2 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+          <AlertCircle className="h-4 w-4" />
+          {actionError}
+        </div>
+      )}
+
       {/* 📄 PDF Workspace */}
       <div className="flex-1 w-full flex justify-center items-start overflow-hidden p-6 gap-8 relative group">
         
@@ -166,6 +214,11 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, p
               key={pdfUrl}
               file={pdfUrl}
               onLoadSuccess={onDocumentLoadSuccess}
+              onLoadError={handleDocumentLoadError}
+              onSourceError={handleDocumentLoadError}
+              loading={<PdfLoadingState message="Loading PDF Master workspace..." />}
+              error={<PdfErrorState message={documentError} />}
+              noData={<PdfErrorState message="No PDF file was provided." />}
               className="flex justify-center"
             >
               <div className="relative">
@@ -173,6 +226,9 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, p
                   pageNumber={pageNumber}
                   scale={scale}
                   onLoadSuccess={onPageLoadSuccess}
+                  onLoadError={handleDocumentLoadError}
+                  onRenderError={handleDocumentLoadError}
+                  loading={<PdfLoadingState message={`Rendering page ${pageNumber}...`} />}
                   renderTextLayer={false}
                   renderAnnotationLayer={false}
                 />
@@ -241,7 +297,7 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, p
 
           <button
             onClick={() => handleQuickAction("/remove_page", { position: pageNumber })}
-            disabled={processing || numPages <= 1}
+            disabled={processing || (numPages || 0) <= 1}
             className="flex flex-col items-center justify-center w-12 h-12 text-red-500 hover:bg-red-600 hover:text-white rounded-xl transition-all"
             title="Remove Page"
           >
