@@ -51,7 +51,7 @@ class PdfsController < ApplicationController
   end
 
   def download
-    working_path = download_path_from_session || download_path_from_param
+    working_path = download_path_from_param || download_path_from_session
     file_name = requested_download_name.presence || session[:download_filename].presence || session[:original_filename].presence || default_download_name(working_path)
 
     if working_path.present? && File.exist?(working_path)
@@ -67,6 +67,7 @@ class PdfsController < ApplicationController
 
   def valid_pdf_upload?(upload)
     return false unless File.extname(upload.original_filename.to_s).casecmp('.pdf').zero?
+    return false unless valid_pdf_content_type?(upload.content_type)
 
     upload.rewind if upload.respond_to?(:rewind)
     header = upload.read(4)
@@ -74,6 +75,10 @@ class PdfsController < ApplicationController
     header == '%PDF'
   rescue
     false
+  end
+
+  def valid_pdf_content_type?(content_type)
+    content_type.to_s == 'application/pdf'
   end
 
   def requested_download_name
@@ -95,14 +100,14 @@ class PdfsController < ApplicationController
   def download_path_from_param
     return if params[:pdf_path].blank?
 
-    requested_path = params[:pdf_path].to_s.sub(%r{\A/+}, '')
-    return unless requested_path.match?(/\Auploads\/[0-9a-f\-]+_(?:original|working)\.pdf\z/i)
-
+    requested_path = params[:pdf_path].to_s.split('?').first.to_s.strip.sub(%r{\A/+}, '')
+    requested_path = requested_path.sub(%r{\Apublic/}, '')
     full_path = Rails.root.join('public', requested_path).cleanpath
-    uploads_root = Rails.root.join('public', 'uploads').to_s
+    allowed_roots = %w[uploads documents].map { |directory| Rails.root.join('public', directory).cleanpath.to_s }
 
-    return unless full_path.to_s.start_with?(uploads_root)
+    return unless allowed_roots.any? { |root| full_path.to_s == root || full_path.to_s.start_with?("#{root}/") }
     return unless File.extname(full_path.to_s).casecmp('.pdf').zero?
+    return unless File.exist?(full_path)
 
     full_path.to_s
   end

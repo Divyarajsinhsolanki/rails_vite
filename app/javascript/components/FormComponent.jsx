@@ -1,8 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { CheckCircle2, FileUp, Loader2, MapPin, X } from "lucide-react";
+import { fetchWithTimeout } from "../utils/request";
 
 const placementFieldNames = new Set(["x", "y", "page_number"]);
+const MAX_PDF_FILE_SIZE_BYTES = 50 * 1024 * 1024;
+const MAX_IMAGE_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
 const getCsrfHeaders = () => {
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
@@ -17,6 +20,76 @@ const writeStorage = (key, value) => {
   }
 };
 
+const isBlank = (value) => value === undefined || value === null || String(value).trim() === "";
+
+const fieldDisplayName = (field) => field.label || field.placeholder || field.name;
+
+const fileValidationError = (field, file) => {
+  const accept = field.accept || "";
+  const acceptsPdf = accept.includes("pdf");
+  const maxSize = acceptsPdf ? MAX_PDF_FILE_SIZE_BYTES : MAX_IMAGE_FILE_SIZE_BYTES;
+  const maxSizeLabel = acceptsPdf ? "50MB" : "10MB";
+
+  if (file.size > maxSize) return `${fieldDisplayName(field)} must be ${maxSizeLabel} or smaller.`;
+
+  if (acceptsPdf) {
+    const validPdf = file.type === "application/pdf" || file.name?.toLowerCase().endsWith(".pdf");
+    return validPdf ? "" : `${fieldDisplayName(field)} must be a PDF file.`;
+  }
+
+  if (accept.includes("image")) {
+    const validImage = ["image/png", "image/jpeg"].includes(file.type) || /\.(png|jpe?g)$/i.test(file.name || "");
+    return validImage ? "" : `${fieldDisplayName(field)} must be a PNG or JPG image.`;
+  }
+
+  return "";
+};
+
+const validateField = (field, value) => {
+  const required = field.required !== false;
+  const label = fieldDisplayName(field);
+
+  if (field.type === "file") {
+    if (!value) return required ? `${label} is required.` : "";
+    return fileValidationError(field, value);
+  }
+
+  if (required && isBlank(value)) return `${label} is required.`;
+  if (!required && isBlank(value)) return "";
+
+  if (field.type === "number") {
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue)) return `${label} must be a valid number.`;
+
+    if (field.min !== undefined && numericValue < Number(field.min)) {
+      return `${label} must be at least ${field.min}.`;
+    }
+
+    if (field.max !== undefined && numericValue > Number(field.max)) {
+      return `${label} must be ${field.max} or less.`;
+    }
+  }
+
+  return "";
+};
+
+const validateFormData = (formFields, formData) => {
+  for (const field of formFields) {
+    const error = validateField(field, formData[field.name]);
+    if (error) return error;
+  }
+
+  if ("start_page" in formData && "end_page" in formData) {
+    const startPage = Number(formData.start_page);
+    const endPage = Number(formData.end_page);
+    if (Number.isFinite(startPage) && Number.isFinite(endPage) && endPage < startPage) {
+      return "End Page must be greater than or equal to Start Page.";
+    }
+  }
+
+  return "";
+};
+
 const FormComponent = ({
   setActiveForm,
   setPdfUpdated,
@@ -29,7 +102,7 @@ const FormComponent = ({
   setPlacementCoordinates,
 }) => {
   const initialFormData = useMemo(
-    () => formFields.reduce((acc, field) => ({ ...acc, [field.name]: "" }), { pdf_path: pdfPath }),
+    () => formFields.reduce((acc, field) => ({ ...acc, [field.name]: field.defaultValue ?? "" }), { pdf_path: pdfPath }),
     [formFields, pdfPath]
   );
   const [formData, setFormData] = useState(initialFormData);
@@ -38,7 +111,8 @@ const FormComponent = ({
   const hasPlacementFields = formFields.some((field) => placementFieldNames.has(field.name));
 
   useEffect(() => {
-    setFormData((prev) => ({ ...initialFormData, ...prev, pdf_path: pdfPath }));
+    setFormData(initialFormData);
+    setErrorMessage("");
   }, [initialFormData, pdfPath]);
 
   useEffect(() => {
@@ -104,11 +178,18 @@ const FormComponent = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage("");
+
+    const validationError = validateFormData(formFields, formData);
+    if (validationError) {
+      setErrorMessage(validationError);
+      return;
+    }
+
     setSubmitting(true);
 
     try {
       const request = buildRequest();
-      const response = await fetch(endpoint, {
+      const response = await fetchWithTimeout(endpoint, {
         method: "POST",
         headers: {
           ...(request.headers || {}),
@@ -135,63 +216,116 @@ const FormComponent = ({
     }
   };
 
+  const renderField = (field, index) => {
+    const baseInputClass = "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400";
+    const value = formData[field.name] || "";
+
+    return (
+      <div key={index} className={`flex flex-col ${field.type === "textarea" ? "md:col-span-2" : ""}`}>
+        <label className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-500">
+          {field.label || field.placeholder}
+        </label>
+        {field.type === "textarea" ? (
+          <textarea
+            name={field.name}
+            rows={3}
+            required={field.required !== false}
+            placeholder={field.placeholder}
+            value={value}
+            onChange={handleChange}
+            disabled={submitting}
+            className={`${baseInputClass} resize-none`}
+          />
+        ) : (
+          <input
+            type={field.type}
+            name={field.name}
+            min={field.min}
+            max={field.max}
+            step={field.step || (field.type === "number" ? "1" : undefined)}
+            accept={field.accept}
+            required={field.required !== false}
+            placeholder={field.placeholder}
+            value={field.type === "file" ? undefined : value}
+            onChange={handleChange}
+            disabled={submitting}
+            className={`${baseInputClass} ${field.type === "file" ? "cursor-pointer file:mr-3 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-indigo-700 hover:file:bg-indigo-100" : ""} ${field.type === "color" ? "h-10 p-1" : ""}`}
+          />
+        )}
+      </div>
+    );
+  };
+
   return (
     <motion.div
-      className="w-full bg-white p-6 rounded shadow-lg"
-      initial={{ opacity: 0, x: 30 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 30 }}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
+      className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <h3 className="text-sm font-bold text-gray-900">{title}</h3>
-          {hasPlacementFields && (
-            <p className="text-xs text-gray-500">
-              Drag the marker on the PDF or type X/Y/page values here. Both controls stay in sync.
-            </p>
-          )}
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+              {hasPlacementFields ? <MapPin className="h-4 w-4" /> : <FileUp className="h-4 w-4" />}
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-slate-900">{title}</h3>
+              <p className="text-xs text-slate-500">
+                {hasPlacementFields
+                  ? "Drag the marker on the PDF or refine the placement values here."
+                  : "Set the values for this PDF action and apply it to the current file."}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActiveForm(null)}
+            disabled={submitting}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+            title="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
-        {formFields.map((field, index) => (
-          <div key={index} className="flex flex-col">
-            <label className="mb-1 text-sm font-medium text-gray-700">
-              {field.label || field.placeholder}
-            </label>
-            <input
-              type={field.type}
-              name={field.name}
-              min={field.min}
-              max={field.max}
-              step={field.step || (field.type === "number" ? "1" : undefined)}
-              placeholder={field.placeholder}
-              value={field.type === "file" ? undefined : formData[field.name] || ""}
-              onChange={handleChange}
-              disabled={submitting}
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        ))}
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+          {formFields.map(renderField)}
+        </div>
 
         {errorMessage && (
-          <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{errorMessage}</p>
+          <p className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{errorMessage}</p>
         )}
 
         <input type="hidden" name="pdf_path" value={pdfPath} />
-        <button
-          type="submit"
-          disabled={submitting}
-          className="flex w-full items-center justify-center rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-wait disabled:opacity-70"
-        >
-          {submitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Applying...
-            </>
-          ) : (
-            "Apply"
-          )}
-        </button>
+        <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-end">
+          <button
+            type="button"
+            onClick={() => setActiveForm(null)}
+            disabled={submitting}
+            className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-indigo-100 transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-70"
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Applying...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                Apply {title}
+              </>
+            )}
+          </button>
+        </div>
       </form>
     </motion.div>
   );

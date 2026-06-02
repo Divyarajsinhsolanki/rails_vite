@@ -3,6 +3,7 @@ import Draggable from "react-draggable";
 import { Check, X } from "lucide-react";
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+const safeDimension = (value) => (Number.isFinite(Number(value)) && Number(value) > 0 ? Number(value) : 0);
 
 /**
  * Allows users to place elements (Text, Stamps, Signatures) on top of the PDF page.
@@ -25,36 +26,48 @@ const DraggableOverlay = ({
 
   const markerWidth = 120;
   const markerHeight = 90;
+  const safeScale = Number.isFinite(scale) && scale > 0 ? scale : 1;
+
+  const getMaxPosition = () => ({
+    x: Math.max(0, safeDimension(pageWidth) - markerWidth),
+    y: Math.max(0, safeDimension(pageHeight) - markerHeight),
+  });
+
+  const clampPosition = (nextPosition) => {
+    const maxPosition = getMaxPosition();
+
+    return {
+      x: clamp(Number(nextPosition.x) || 0, 0, maxPosition.x),
+      y: clamp(Number(nextPosition.y) || 0, 0, maxPosition.y),
+    };
+  };
 
   useEffect(() => {
-    if (pageWidth && pageHeight) {
-      setBounds({
-        left: 0,
-        top: 0,
-        right: Math.max(0, pageWidth - markerWidth),
-        bottom: Math.max(0, pageHeight - markerHeight),
-      });
-    } else {
-      setBounds("parent");
-    }
+    const maxPosition = getMaxPosition();
+    setBounds({
+      left: 0,
+      top: 0,
+      right: maxPosition.x,
+      bottom: maxPosition.y,
+    });
   }, [pageWidth, pageHeight]);
 
   useEffect(() => {
     if (!placementCoordinates) return;
 
-    const maxX = Math.max(0, (pageWidth || 0) - markerWidth);
-    const maxY = Math.max(0, (pageHeight || 0) - markerHeight);
-    const nextX = clamp((Number(placementCoordinates.x) || 0) * scale, 0, maxX || Infinity);
-    const nextY = clamp((Number(placementCoordinates.y) || 0) * scale, 0, maxY || Infinity);
+    const maxPosition = getMaxPosition();
+    const nextX = clamp(Math.max(0, Number(placementCoordinates.x) || 0) * safeScale, 0, maxPosition.x);
+    const nextY = clamp(Math.max(0, Number(placementCoordinates.y) || 0) * safeScale, 0, maxPosition.y);
 
     setPosition({ x: nextX, y: nextY });
-  }, [placementCoordinates, scale, pageWidth, pageHeight]);
+  }, [placementCoordinates, safeScale, pageWidth, pageHeight]);
 
   const emitPosition = (nextPosition) => {
+    const boundedPosition = clampPosition(nextPosition);
     const nextCoordinates = {
-      x: Math.round(nextPosition.x / scale),
-      y: Math.round(nextPosition.y / scale),
-      scale,
+      x: Math.round(boundedPosition.x / safeScale),
+      y: Math.round(boundedPosition.y / safeScale),
+      scale: safeScale,
     };
 
     onPlacementChange?.(nextCoordinates);
@@ -62,7 +75,7 @@ const DraggableOverlay = ({
   };
 
   const handleDrag = (e, data) => {
-    const nextPosition = { x: data.x, y: data.y };
+    const nextPosition = clampPosition({ x: data.x, y: data.y });
     setPosition(nextPosition);
     emitPosition(nextPosition);
   };
@@ -84,13 +97,13 @@ const DraggableOverlay = ({
         handle=".handle"
       >
         <div ref={nodeRef} className="pointer-events-auto absolute flex flex-col items-center group">
-          <div className="handle cursor-move bg-[var(--theme-color)] bg-opacity-90 text-white p-2 rounded shadow-lg flex items-center gap-2 select-none hover:bg-opacity-100 transition-all">
+          <div className="handle cursor-move rounded-lg bg-indigo-600 px-3 py-2 text-white shadow-lg shadow-indigo-200 flex items-center gap-2 select-none transition-all hover:bg-indigo-700">
             <span className="text-sm font-bold capitalize">{activeTool.replace(/([A-Z])/g, ' $1').trim()}</span>
           </div>
 
-          <div className="mt-2 border-2 border-dashed border-[var(--theme-color)] bg-[rgba(var(--theme-color-rgb),0.1)] p-2 rounded min-w-[100px] min-h-[40px] flex items-center justify-center">
-            <span className="text-xs text-[var(--theme-color)] opacity-70">
-              X {Math.round(position.x / scale)}, Y {Math.round(position.y / scale)}
+          <div className="mt-2 flex min-h-[44px] min-w-[112px] items-center justify-center rounded-lg border-2 border-dashed border-indigo-400 bg-indigo-50/80 p-2 shadow-sm">
+            <span className="text-xs font-bold text-indigo-700">
+              X {Math.round(position.x / safeScale)}, Y {Math.round(position.y / safeScale)}
             </span>
           </div>
 

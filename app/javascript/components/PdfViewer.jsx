@@ -1,7 +1,8 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
-import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+import pdfWorkerUrl from "react-pdf/node_modules/pdfjs-dist/build/pdf.worker.min.mjs?url";
 import DraggableOverlay from "./DraggableOverlay";
+import { fetchWithTimeout } from "../utils/request";
 import { 
   Plus,
   FileMinus, 
@@ -42,6 +43,7 @@ const getCsrfHeaders = () => {
 const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, placementCoordinates, onCancelTool, setPdfUpdated }) => {
   const lastPdfPathRef = useRef(null);
   const loadSequenceRef = useRef(0);
+  const actionInFlightRef = useRef(false);
   const [documentLoadId, setDocumentLoadId] = useState(0);
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
@@ -51,7 +53,7 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, p
   const [processing, setProcessing] = useState(false);
   const [documentError, setDocumentError] = useState("");
   const [actionError, setActionError] = useState("");
-  const placementTools = new Set(["addText", "addSignature", "addStamp"]);
+  const placementTools = new Set(["addText", "addSignature", "addStamp", "addWatermark"]);
   const shouldShowOverlay = placementTools.has(activeTool);
 
   const changePage = (requestedPage) => {
@@ -92,6 +94,23 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, p
   }, [shouldShowOverlay, placementCoordinates?.pageNumber, pageNumber]);
 
   useEffect(() => {
+    if (!shouldShowOverlay || !pageWidth || !pageHeight) return;
+    if (
+      placementCoordinates?.x !== undefined &&
+      placementCoordinates?.y !== undefined &&
+      placementCoordinates?.pageNumber !== undefined
+    ) {
+      return;
+    }
+
+    onPlacementChange?.({
+      x: Math.round(pageWidth * 0.15),
+      y: Math.round(pageHeight * 0.15),
+      pageNumber,
+    });
+  }, [shouldShowOverlay, pageWidth, pageHeight, pageNumber, placementCoordinates?.x, placementCoordinates?.y, placementCoordinates?.pageNumber]);
+
+  useEffect(() => {
     if (!shouldShowOverlay || !placementCoordinates?.pageNumber) return;
 
     const requestedPage = Number(placementCoordinates.pageNumber);
@@ -120,6 +139,8 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, p
   };
 
   const handleQuickAction = async (endpoint, params = {}) => {
+    if (actionInFlightRef.current) return;
+    actionInFlightRef.current = true;
     setProcessing(true);
     setActionError("");
     const formData = new FormData();
@@ -132,7 +153,7 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, p
     });
 
     try {
-      const response = await fetch(endpoint, {
+      const response = await fetchWithTimeout(endpoint, {
         method: "POST",
         body: formData,
         headers: getCsrfHeaders(),
@@ -152,6 +173,7 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, p
       console.error("Action failed:", error);
       setActionError(error.message || "PDF action failed.");
     } finally {
+      actionInFlightRef.current = false;
       setProcessing(false);
     }
   };
@@ -201,6 +223,13 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, p
         <div className="mx-6 mt-3 flex shrink-0 items-center gap-2 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
           <AlertCircle className="h-4 w-4" />
           {actionError}
+        </div>
+      )}
+
+      {processing && (
+        <div className="mx-6 mt-3 flex shrink-0 items-center gap-2 rounded-lg border border-indigo-100 bg-indigo-50 px-3 py-2 text-xs font-bold text-indigo-700">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Applying PDF change...
         </div>
       )}
 

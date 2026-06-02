@@ -58,12 +58,13 @@ export default defineConfig({
       'framer-motion',
       '@hello-pangea/dnd',
       'date-fns',
-      'lucide-react'
+      'lucide-react',
+      'react-pdf',
+      'warning'
     ],
     exclude: [
       'three', // Will be lazy-loaded
       'pdfjs-dist', // Will be lazy-loaded
-      'react-pdf', // Will be lazy-loaded
       'firebase' // Consider lazy-loading in future
     ]
   },

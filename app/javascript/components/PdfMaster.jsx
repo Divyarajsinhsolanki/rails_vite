@@ -4,6 +4,7 @@ import PdfEditor from "./PdfEditor";
 import PdfViewer from "./PdfViewer";
 import SidebarToolbar from "./SidebarToolbar";
 import { AnimatePresence, motion } from "framer-motion";
+import { fetchWithTimeout, PDF_UPLOAD_TIMEOUT_MS } from "../utils/request";
 
 import {
   FileText,
@@ -18,6 +19,8 @@ const getCsrfHeaders = () => {
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
   return csrfToken ? { "X-CSRF-Token": csrfToken } : {};
 };
+
+const MAX_PDF_UPLOAD_SIZE_BYTES = 50 * 1024 * 1024;
 
 const getPdfFileName = (url) => {
   const fileName = (url || "").split("?")[0].split("/").pop();
@@ -60,7 +63,47 @@ const uploadErrorMessage = (status, data, fallbackError) => {
   if (status === 415) return data?.error || "Invalid file type. Only PDF files are allowed.";
   if (status === 422) return data?.error || "PDF upload was rejected. Please choose a valid PDF.";
   if (status >= 500) return "PDF upload service is unavailable. Please try again.";
+  if (fallbackError?.name === "RequestTimeoutError") return "Upload timed out. Please try again with a smaller PDF or check your connection.";
   return data?.error || fallbackError?.message || "Upload failed.";
+};
+
+const validatePdfFile = (file) => {
+  if (!file) return "Choose a PDF file to upload.";
+  if (file.size > MAX_PDF_UPLOAD_SIZE_BYTES) return "File too large. Maximum upload size is 50MB.";
+
+  const hasPdfType = file.type === "application/pdf";
+  const hasPdfExtension = file.name?.toLowerCase().endsWith(".pdf");
+  if (!hasPdfType && !hasPdfExtension) return "Invalid file type. Only PDF files are allowed.";
+
+  return "";
+};
+
+const normalizePlacementCoordinates = (coordinates, previous) => {
+  const next = { ...(previous || {}) };
+
+  if (coordinates.x !== undefined) {
+    const x = Number(coordinates.x);
+    if (Number.isFinite(x)) next.x = Math.max(0, Math.round(x));
+  }
+
+  if (coordinates.y !== undefined) {
+    const y = Number(coordinates.y);
+    if (Number.isFinite(y)) next.y = Math.max(0, Math.round(y));
+  }
+
+  if (coordinates.pageNumber !== undefined) {
+    const pageNumber = Number(coordinates.pageNumber);
+    if (Number.isFinite(pageNumber)) next.pageNumber = Math.max(1, Math.round(pageNumber));
+  } else if (!next.pageNumber) {
+    next.pageNumber = 1;
+  }
+
+  if (coordinates.scale !== undefined) {
+    const scale = Number(coordinates.scale);
+    if (Number.isFinite(scale) && scale > 0) next.scale = scale;
+  }
+
+  return next;
 };
 
 const PdfMaster = () => {
@@ -92,19 +135,31 @@ const PdfMaster = () => {
     return () => window.removeEventListener("pdf-updated", handlePdfUpdate);
   }, []);
 
+  useEffect(() => {
+    setPlacementCoordinates(null);
+  }, [activeForm]);
+
   const handleFileUpload = async (file) => {
     if (!file) return;
+    const validationMessage = validatePdfFile(file);
+    if (validationMessage) {
+      setUploadMessage(validationMessage);
+      setIsError(true);
+      setShowUploadMessage(true);
+      return;
+    }
+
     const formData = new FormData();
     formData.append("pdf", file);
     setUploading(true);
     setShowUploadMessage(false);
     setIsError(false);
     try {
-      const response = await fetch("/upload_pdf", {
+      const response = await fetchWithTimeout("/upload_pdf", {
         method: "POST",
         body: formData,
         headers: getCsrfHeaders(),
-      });
+      }, PDF_UPLOAD_TIMEOUT_MS);
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(uploadErrorMessage(response.status, data));
       if (!data.pdf_url) throw new Error("Upload finished without a PDF URL.");
@@ -129,24 +184,23 @@ const PdfMaster = () => {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: (files) => handleFileUpload(files?.[0]),
-    onDropRejected: () => {
-      setUploadMessage("Invalid file type. Only PDF files are allowed.");
+    onDropRejected: (rejections) => {
+      const firstError = rejections?.[0]?.errors?.[0];
+      const message = firstError?.code === "file-too-large"
+        ? "File too large. Maximum upload size is 50MB."
+        : "Invalid file type. Only PDF files are allowed.";
+      setUploadMessage(message);
       setIsError(true);
       setShowUploadMessage(true);
     },
     accept: { 'application/pdf': ['.pdf'] },
+    maxSize: MAX_PDF_UPLOAD_SIZE_BYTES,
     multiple: false,
     disabled: uploading,
   });
 
   const handlePlacementChange = useCallback((coordinates) => {
-    setPlacementCoordinates((previous) => ({
-      ...(previous || {}),
-      ...coordinates,
-      x: coordinates.x === undefined ? previous?.x : coordinates.x,
-      y: coordinates.y === undefined ? previous?.y : coordinates.y,
-      pageNumber: coordinates.pageNumber || previous?.pageNumber || 1,
-    }));
+    setPlacementCoordinates((previous) => normalizePlacementCoordinates(coordinates, previous));
   }, []);
 
   const handleConfirmPosition = useCallback((coordinates) => {
@@ -215,7 +269,7 @@ const PdfMaster = () => {
               <>
                 <Upload className="mb-4 h-10 w-10 text-indigo-600" />
                 <p className="font-bold text-slate-800">{isDragActive ? 'Release to upload' : 'Drop PDF here'}</p>
-                <p className="mt-2 text-sm text-slate-500">or click to choose a file</p>
+                <p className="mt-2 text-sm text-slate-500">or click to choose a PDF up to 50MB</p>
               </>
             )}
           </div>
