@@ -32,8 +32,8 @@ export default defineConfig({
           // Heavy 3D library (will be lazy-loaded, but grouped if loaded)
           'three-bundle': ['three'],
           
-          // DnD kit (consolidated to single library)
-          'dnd': ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
+          // Drag and drop (consolidated to single library)
+          'dnd': ['@hello-pangea/dnd'],
           
           // PDF handling (will be lazy-loaded)
           'pdf': ['pdfjs-dist', 'react-pdf', '@react-pdf/renderer'],
@@ -59,8 +59,7 @@ export default defineConfig({
       'react-router-dom',
       'axios',
       'framer-motion',
-      '@dnd-kit/core',
-      '@dnd-kit/sortable',
+      '@hello-pangea/dnd',
       'date-fns',
       'lucide-react'
     ],
