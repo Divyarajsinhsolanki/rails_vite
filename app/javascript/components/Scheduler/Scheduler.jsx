@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { DndContext, useDraggable, useDroppable, closestCenter } from '@dnd-kit/core';
-import { CSS } from '@dnd-kit/utilities';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { SchedulerAPI } from '../api';
 import { Toaster, toast } from 'react-hot-toast';
 import SpinnerOverlay from '../ui/SpinnerOverlay';
@@ -80,17 +79,8 @@ function Modal({ isOpen, onClose, title, children, panelClassName = 'max-w-2xl' 
 
 // --- Main Scheduler Components ---
 
-function TaskCard({ task, onEdit, onTaskUpdate, onDuplicate }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id });
+function TaskCard({ task, index, onEdit, onTaskUpdate, onDuplicate }) {
   const [copied, setCopied] = useState(false);
-
-  const style = {
-    transform: CSS.Translate.toString(transform),
-    // **FIX 2: Increased z-index for dragging item**
-    zIndex: isDragging ? 9999 : 'auto',
-    opacity: isDragging ? 0.8 : 1,
-    boxShadow: isDragging ? '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' : '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-  };
 
   const typeColors = {
     'Code': 'bg-green-50 border-green-300 text-green-800',
@@ -151,70 +141,81 @@ function TaskCard({ task, onEdit, onTaskUpdate, onDuplicate }) {
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`p-2.5 mb-2 border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-150 ${cardColor} ${task.status === 'completed' ? 'opacity-70' : ''}`}
-    >
-      <div className="flex items-start justify-between">
-        <div className="flex items-start min-w-0">
-          <span {...listeners} {...attributes} className="cursor-move p-1 mr-2 text-gray-400 hover:text-gray-700" title="Drag task">
-            <Bars3Icon className="h-5 w-5" />
-          </span>
-          <div>
-            {task.task?.task_url || task.task_url ? (
-              <a
-                href={task.task?.task_url || task.task_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className={`font-semibold text-sm hover:underline ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-indigo-600'} break-all`}
-                title={`Open: ${task.task?.task_id || task.task_id}`}
-              >
-                {task.task?.task_id || task.task_id}
-              </a>
-            ) : (
-              <span className={`font-semibold text-sm ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-800'} break-all`}>
-                {task.task?.task_id || task.task_id}
+    <Draggable draggableId={String(task.id)} index={index}>
+      {(provided, snapshot) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          className={`p-2.5 mb-2 border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-150 ${cardColor} ${task.status === 'completed' ? 'opacity-70' : ''}`}
+          style={{
+            ...provided.draggableProps.style,
+            zIndex: snapshot.isDragging ? 9999 : 'auto',
+            opacity: snapshot.isDragging ? 0.8 : 1,
+            boxShadow: snapshot.isDragging
+              ? '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+              : '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+          }}
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex items-start min-w-0">
+              <span {...provided.dragHandleProps} className="cursor-move p-1 mr-2 text-gray-400 hover:text-gray-700" title="Drag task">
+                <Bars3Icon className="h-5 w-5" />
               </span>
-            )}
-            <div className="text-xs text-gray-500 mt-0.5">
-              <span>{task.hours_logged}h</span>
-              <span className="mx-1">|</span>
-              <span>{task.type}</span>
+              <div>
+                {task.task?.task_url || task.task_url ? (
+                  <a
+                    href={task.task?.task_url || task.task_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className={`font-semibold text-sm hover:underline ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-indigo-600'} break-all`}
+                    title={`Open: ${task.task?.task_id || task.task_id}`}
+                  >
+                    {task.task?.task_id || task.task_id}
+                  </a>
+                ) : (
+                  <span className={`font-semibold text-sm ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-800'} break-all`}>
+                    {task.task?.task_id || task.task_id}
+                  </span>
+                )}
+                <div className="text-xs text-gray-500 mt-0.5">
+                  <span>{task.hours_logged}h</span>
+                  <span className="mx-1">|</span>
+                  <span>{task.type}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
+              <button onClick={toggleStrike} title={task.status === 'completed' ? "Mark as not done" : "Mark as done"} className="p-1 text-gray-500 hover:text-green-600 rounded-full hover:bg-gray-100 transition-colors">
+                {task.status === 'completed' ? <CheckCircleSolidIcon className="h-5 w-5 text-green-600" /> : <CheckCircleIcon className="h-5 w-5" />}
+              </button>
+              <button onClick={(e) => { e.stopPropagation(); onEdit(); }} title="Edit task" className="p-1 text-gray-500 hover:text-[var(--theme-color)] rounded-full hover:bg-gray-100 transition-colors">
+                <PencilIcon className="h-5 w-5" />
+              </button>
+              {task.task?.task_url && (
+                <button onClick={copyLink} title="Copy task link" className="p-1 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-gray-100 transition-colors relative">
+                  <LinkIcon className="h-5 w-5" />
+                  {copied && <CheckCircleSolidIcon className="h-3 w-3 text-green-500 absolute -top-1 -right-1" />}
+                </button>
+              )}
+              <button onClick={duplicateTask} title="Copy log" className="p-1 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-gray-100 transition-colors">
+                <DocumentDuplicateIcon className="h-5 w-5" />
+              </button>
+              <button onClick={deleteTask} title="Delete task" className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100 transition-colors">
+                <TrashIcon className="h-5 w-5" />
+              </button>
             </div>
           </div>
         </div>
-
-        <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
-          <button onClick={toggleStrike} title={task.status === 'completed' ? "Mark as not done" : "Mark as done"} className="p-1 text-gray-500 hover:text-green-600 rounded-full hover:bg-gray-100 transition-colors">
-            {task.status === 'completed' ? <CheckCircleSolidIcon className="h-5 w-5 text-green-600" /> : <CheckCircleIcon className="h-5 w-5" />}
-          </button>
-          <button onClick={(e) => { e.stopPropagation(); onEdit(); }} title="Edit task" className="p-1 text-gray-500 hover:text-[var(--theme-color)] rounded-full hover:bg-gray-100 transition-colors">
-            <PencilIcon className="h-5 w-5" />
-          </button>
-          {task.task?.task_url && (
-            <button onClick={copyLink} title="Copy task link" className="p-1 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-gray-100 transition-colors relative">
-              <LinkIcon className="h-5 w-5" />
-              {copied && <CheckCircleSolidIcon className="h-3 w-3 text-green-500 absolute -top-1 -right-1" />}
-            </button>
-          )}
-          <button onClick={duplicateTask} title="Copy log" className="p-1 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-gray-100 transition-colors">
-            <DocumentDuplicateIcon className="h-5 w-5" />
-          </button>
-          <button onClick={deleteTask} title="Delete task" className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100 transition-colors">
-            <TrashIcon className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
-    </div>
+      )}
+    </Draggable>
   );
 }
 
 
 function TaskCell({ date, devId, tasksInCell, setEditingTask, handleTaskUpdate, totalHoursInCell, onDuplicate }) {
   const droppableId = `${date}:${devId}`;
-  const { setNodeRef, isOver } = useDroppable({ id: droppableId });
 
   const cellCapacity = 8;
   const hoursPercentage = Math.min((totalHoursInCell / cellCapacity) * 100, 100);
@@ -223,26 +224,35 @@ function TaskCell({ date, devId, tasksInCell, setEditingTask, handleTaskUpdate, 
   else if (totalHoursInCell > cellCapacity * 0.75) capacityColor = 'bg-yellow-100';
 
 
+  const visibleTasks = tasksInCell.filter(t => !t.deleted);
+
   return (
-    <td
-      ref={setNodeRef}
-      className={`p-2 border border-gray-200 align-top min-w-[200px] relative transition-colors duration-150 ease-in-out ${isOver ? 'bg-[rgb(var(--theme-color-rgb)/0.1)] outline outline-2 outline-[var(--theme-color)]' : 'bg-white hover:bg-gray-50'}`}
-      style={{ minHeight: '100px' }}
-    >
-      <div className={`absolute bottom-0 left-0 right-0 h-1 ${capacityColor} opacity-70 transition-all duration-300`} style={{ width: `${hoursPercentage}%` }} title={`${totalHoursInCell}h / ${cellCapacity}h`}></div>
-      {tasksInCell.filter(t => !t.deleted).map(task => (
-        <TaskCard
-          key={task.id}
-          task={task}
-          onEdit={() => setEditingTask(task)}
-          onTaskUpdate={handleTaskUpdate}
-          onDuplicate={onDuplicate}
-        />
-      ))}
-      {tasksInCell.filter(t => !t.deleted).length === 0 && (
-        <div className="text-center text-gray-400 text-xs mt-4">Drop tasks here</div>
+    <Droppable droppableId={droppableId}>
+      {(provided, snapshot) => (
+        <td
+          ref={provided.innerRef}
+          {...provided.droppableProps}
+          className={`p-2 border border-gray-200 align-top min-w-[200px] relative transition-colors duration-150 ease-in-out ${snapshot.isDraggingOver ? 'bg-[rgb(var(--theme-color-rgb)/0.1)] outline outline-2 outline-[var(--theme-color)]' : 'bg-white hover:bg-gray-50'}`}
+          style={{ minHeight: '100px' }}
+        >
+          <div className={`absolute bottom-0 left-0 right-0 h-1 ${capacityColor} opacity-70 transition-all duration-300`} style={{ width: `${hoursPercentage}%` }} title={`${totalHoursInCell}h / ${cellCapacity}h`}></div>
+          {visibleTasks.map((task, index) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              index={index}
+              onEdit={() => setEditingTask(task)}
+              onTaskUpdate={handleTaskUpdate}
+              onDuplicate={onDuplicate}
+            />
+          ))}
+          {provided.placeholder}
+          {visibleTasks.length === 0 && (
+            <div className="text-center text-gray-400 text-xs mt-4">Drop tasks here</div>
+          )}
+        </td>
       )}
-    </td>
+    </Droppable>
   );
 }
 
@@ -449,27 +459,27 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, projectMember
     });
   }, []);
 
-  const handleDragEnd = async (event) => {
-    const { active, over } = event;
-    if (!active || !over || active.id === over.id) return;
+  const handleDragEnd = async (result) => {
+    const { draggableId, destination, source } = result;
+    if (!destination || (source.droppableId === destination.droppableId && source.index === destination.index)) return;
 
-    const taskId = active.id;
-    const [newDate, newDevIdStr] = over.id.split(':');
+    const taskId = draggableId;
+    const [newDate, newDevIdStr] = destination.droppableId.split(':');
     const newDevId = parseInt(newDevIdStr, 10);
 
-    const originalTask = tasks.find(t => t.id === taskId);
+    const originalTask = tasks.find(t => String(t.id) === taskId);
     if (!originalTask) return;
 
     const updatedTaskData = { ...originalTask, log_date: newDate, developer_id: newDevId };
 
-    setTasks(prev => prev.map(t => (t.id === taskId ? updatedTaskData : t)));
+    setTasks(prev => prev.map(t => (String(t.id) === taskId ? updatedTaskData : t)));
 
     try {
       const { data: moved } = await SchedulerAPI.updateTaskLog(taskId, { log_date: newDate, developer_id: newDevId });
-      setTasks(prev => prev.map(t => t.id === taskId ? moved : t));
+      setTasks(prev => prev.map(t => String(t.id) === taskId ? moved : t));
     } catch (error) {
       console.error("Error moving task:", error);
-      setTasks(prev => prev.map(t => t.id === taskId ? original : t));
+      setTasks(prev => prev.map(t => String(t.id) === taskId ? originalTask : t));
       toast.error(`Error: Could not move task. ${error.message}`);
     }
   };
@@ -570,7 +580,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, projectMember
   const stickyTableHeaderOffset = mainHeaderHeight > 0 ? `${mainHeaderHeight}px` : '4rem'; // Default to 4rem (64px) if height not yet calculated
 
   return (
-    <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
+    <DragDropContext onDragEnd={handleDragEnd}>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 flex flex-col">
         <Toaster position="top-right" />
         {processing && <SpinnerOverlay />}
@@ -805,7 +815,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, projectMember
             background: #94a3b8;
         }
       `}</style>
-    </DndContext>
+    </DragDropContext>
   );
 }
 

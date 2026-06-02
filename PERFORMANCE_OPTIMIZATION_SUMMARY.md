@@ -19,7 +19,7 @@
 
 2. **Cleaned [package.json](package.json):**
    - Converted chart.js + react-chartjs-2 to recharts (single charting library)
-   - Kept @dnd-kit for drag-drop (kept @hello-pangea/dnd as fallback for now - migration in progress)
+   - Consolidated drag-and-drop on @hello-pangea/dnd and removed @dnd-kit duplicates
    - Removed duplicate charting imports
    - Deduped transitive dependencies
 
@@ -170,7 +170,6 @@ Promise.all([
 - [ ] Verify PDF & Three.js lazy loading on actual pages
 
 ### Medium Term (2-4 weeks)
-- [ ] Migrate @hello-pangea/dnd to @dnd-kit completely (now keeping as fallback)
 - [ ] Add Firebase lazy loading (currently loads globally)
 - [ ] Implement Service Worker for offline support
 - [ ] Add image lazy loading (`loading="lazy"`) to posts and components
@@ -216,7 +215,7 @@ Promise.all([
 
 ## ⚠️ Important Notes
 
-- **Drag-drop Library Consolidation**: Kept @hello-pangea/dnd as fallback for stability. Can migrate to @dnd-kit fully after thorough testing
+- **Drag-drop Library Consolidation**: Drag-and-drop now uses @hello-pangea/dnd as the single shared library.
 - **PDF Lazy Loading**: Created wrapper but not integrated into PdfPage yet (PdfPage is already route-level lazy loaded)
 - **Three.js Lazy Loading**: Created wrapper but can be integrated at component level if needed
 - **Cache Headers**: HTTP caching not yet fully configured (can add via Rails cache_control)
