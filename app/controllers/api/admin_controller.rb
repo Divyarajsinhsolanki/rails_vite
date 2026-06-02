@@ -3,24 +3,7 @@ class Api::AdminController < Api::BaseController
   before_action :set_model, except: [:tables]
   
   def tables
-    Rails.application.eager_load!
-  
-    not_needed_tables = %w[
-      ApplicationRecord
-      ActiveStorage::Blob
-      ActiveStorage::Attachment
-      ActiveStorage::VariantRecord
-      ActionText::RichText
-      ActionText::EncryptedRichText
-      ActionMailbox::InboundEmail
-      ActionMailbox::Record
-      ActiveStorage::Record
-      ActionText::Record
-    ]
-  
-    models = ActiveRecord::Base.descendants.map(&:name).uniq - not_needed_tables
-  
-    render json: models
+    render json: admin_model_names
   end
 
   def meta
@@ -87,6 +70,27 @@ class Api::AdminController < Api::BaseController
   end
 
   private
+
+  def admin_model_names
+    Rails.cache.fetch("api_admin_model_names", expires_in: 12.hours) do
+      Rails.application.eager_load!
+
+      not_needed_tables = %w[
+        ApplicationRecord
+        ActiveStorage::Blob
+        ActiveStorage::Attachment
+        ActiveStorage::VariantRecord
+        ActionText::RichText
+        ActionText::EncryptedRichText
+        ActionMailbox::InboundEmail
+        ActionMailbox::Record
+        ActiveStorage::Record
+        ActionText::Record
+      ]
+
+      ActiveRecord::Base.descendants.map(&:name).uniq - not_needed_tables
+    end
+  end
 
   def serialize_record(record)
     data = record.serializable_hash(except: serialization_excludes_for(record))
