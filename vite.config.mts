@@ -29,9 +29,6 @@ export default defineConfig({
           // Data visualization (separate to lazy-load)
           'charts': ['recharts'],
           
-          // Heavy 3D library (will be lazy-loaded, but grouped if loaded)
-          'three-bundle': ['three'],
-          
           // Drag and drop (consolidated to single library)
           'dnd': ['@hello-pangea/dnd'],
           

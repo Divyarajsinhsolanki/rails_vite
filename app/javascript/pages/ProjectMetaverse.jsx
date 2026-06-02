@@ -1,9 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useParams, useSearchParams } from "react-router-dom";
-import * as THREE from "three";
-import { CSS3DObject, CSS3DRenderer } from "three/examples/jsm/renderers/CSS3DRenderer.js";
 import { fetchProjects, updateProject } from "../components/api";
+import { loadThree } from "../lib/threeLoader";
 import PageLoader from "../components/ui/PageLoader";
 import SprintOverview from "./SprintOverview";
 import Scheduler from "../components/Scheduler/Scheduler";
@@ -53,7 +52,7 @@ const formatDateRange = (start, end) => {
   return `${new Date(start).toLocaleDateString("en-US", options)} - ${new Date(end).toLocaleDateString("en-US", options)}`;
 };
 
-const makeWallTexture = (base, line, accent = "rgba(56, 189, 248, 0.28)") => {
+const makeWallTexture = (THREE, base, line, accent = "rgba(56, 189, 248, 0.28)") => {
   const canvas = document.createElement("canvas");
   canvas.width = 1024;
   canvas.height = 1024;
@@ -308,6 +307,8 @@ export default function ProjectMetaverse() {
   const [sprint, setSprint] = useState(null);
   const [viewMode, setViewMode] = useState("combined");
   const [loading, setLoading] = useState(true);
+  const [threeModules, setThreeModules] = useState(null);
+  const [threeError, setThreeError] = useState(null);
 
   const wallHosts = useMemo(() => {
     if (typeof document === "undefined") return null;
@@ -342,6 +343,32 @@ export default function ProjectMetaverse() {
     return () => {
       if (switchTimerRef.current?.reveal) window.clearTimeout(switchTimerRef.current.reveal);
       if (switchTimerRef.current?.finish) window.clearTimeout(switchTimerRef.current.finish);
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    Promise.all([
+      loadThree(),
+      import("three/examples/jsm/renderers/CSS3DRenderer.js"),
+    ])
+      .then(([THREE, css3d]) => {
+        if (cancelled) return;
+        setThreeModules({
+          THREE,
+          CSS3DObject: css3d.CSS3DObject,
+          CSS3DRenderer: css3d.CSS3DRenderer,
+        });
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        console.error("Failed to load Three.js metaverse modules:", error);
+        setThreeError(error);
+      });
+
+    return () => {
+      cancelled = true;
     };
   }, []);
 
@@ -466,7 +493,8 @@ export default function ProjectMetaverse() {
   useEffect(() => {
     const shell = shellRef.current;
     const canvas = canvasRef.current;
-    if (loading || !project || !shell || !canvas || !wallHosts) return undefined;
+    if (loading || !project || !shell || !canvas || !wallHosts || !threeModules) return undefined;
+    const { THREE, CSS3DObject, CSS3DRenderer } = threeModules;
 
     wallHosts.modules.className = `${styles.wallPanel} ${styles.moduleWall}`;
     wallHosts.content.className = `${styles.wallPanel} ${styles.contentWall}`;
@@ -514,7 +542,7 @@ export default function ProjectMetaverse() {
 
     const wallMaterial = (base, line, accent) =>
       new THREE.MeshStandardMaterial({
-        map: makeWallTexture(base, line, accent),
+        map: makeWallTexture(THREE, base, line, accent),
         roughness: 0.86,
         metalness: 0.02,
         side: THREE.FrontSide,
@@ -554,7 +582,7 @@ export default function ProjectMetaverse() {
     const floor = new THREE.Mesh(
       new THREE.PlaneGeometry(ROOM_WIDTH, ROOM_DEPTH),
       new THREE.MeshStandardMaterial({
-        map: makeWallTexture(["#aebdcc", "#7f909f"], "rgba(15, 23, 42, 0.18)"),
+        map: makeWallTexture(THREE, ["#aebdcc", "#7f909f"], "rgba(15, 23, 42, 0.18)"),
         roughness: 0.8,
         metalness: 0.04,
         side: THREE.FrontSide,
@@ -853,7 +881,7 @@ export default function ProjectMetaverse() {
       });
       renderer.dispose();
     };
-  }, [loading, project, wallHosts]);
+  }, [loading, project, threeModules, wallHosts]);
 
   const emptyState = (
     <div className={styles.emptyState}>
@@ -918,6 +946,18 @@ export default function ProjectMetaverse() {
         <div className={styles.metaverseNotice}>Project not found.</div>
       </div>
     );
+  }
+
+  if (threeError) {
+    return (
+      <div className={styles.metaverseShell}>
+        <div className={styles.metaverseNotice}>Unable to load the 3D project room.</div>
+      </div>
+    );
+  }
+
+  if (!threeModules) {
+    return <PageLoader title="Project metaverse" message="Loading 3D engine..." />;
   }
 
   return (

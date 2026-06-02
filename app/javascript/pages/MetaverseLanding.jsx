@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import * as THREE from "three";
+import { useThree } from "../lib/threeLoader";
 import { FiArrowDown, FiArrowLeft, FiArrowRight, FiArrowUp, FiArrowUpRight, FiCpu, FiGlobe, FiLayers, FiShield, FiZap } from "react-icons/fi";
 
 const particles = Array.from({ length: 42 }, (_, index) => ({
@@ -57,10 +57,11 @@ const roomHotspots = {
 
 const ThreeOrb = () => {
   const mountRef = useRef(null);
+  const { THREE } = useThree();
 
   useEffect(() => {
     const mount = mountRef.current;
-    if (!mount) return undefined;
+    if (!mount || !THREE) return undefined;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
@@ -192,15 +193,16 @@ const ThreeOrb = () => {
       });
       renderer.dispose();
     };
-  }, []);
+  }, [THREE]);
 
   return <div ref={mountRef} className="h-full min-h-[300px] w-full" aria-label="Floating metaverse orb" />;
 };
 
 const ThreeRoom = () => {
   const mountRef = useRef(null);
+  const { THREE } = useThree();
   const selectedRef = useRef("portal");
-  const playerRef = useRef(new THREE.Vector3(0, 0, 4.2));
+  const playerRef = useRef(null);
   const keysRef = useRef({});
   const interactiveRef = useRef([]);
   const hoverRef = useRef(null);
@@ -212,16 +214,18 @@ const ThreeRoom = () => {
   };
 
   const nudge = (axis, amount) => {
+    if (!THREE || !playerRef.current) return;
     if (axis === "x") playerRef.current.x = THREE.MathUtils.clamp(playerRef.current.x + amount, -4.6, 4.6);
     if (axis === "z") playerRef.current.z = THREE.MathUtils.clamp(playerRef.current.z + amount, -1.8, 5.2);
   };
 
   useEffect(() => {
     const mount = mountRef.current;
-    if (!mount) return undefined;
+    if (!mount || !THREE) return undefined;
 
     interactiveRef.current = [];
     hoverRef.current = null;
+    playerRef.current = new THREE.Vector3(0, 0, 4.2);
 
     const scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(0x070b1f, 0.035);
@@ -481,7 +485,7 @@ const ThreeRoom = () => {
       });
       renderer.dispose();
     };
-  }, []);
+  }, [THREE]);
 
   const selected = roomHotspots[selectedKey] || roomHotspots.portal;
 

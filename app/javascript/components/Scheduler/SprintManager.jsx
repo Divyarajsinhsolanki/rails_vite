@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { FiEdit2, FiTrash2, FiPlus, FiX, FiCalendar, FiChevronLeft, FiChevronRight, FiAlertTriangle } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -207,6 +208,8 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
     );
   }
 
+  const portalTarget = typeof document !== 'undefined' ? document.body : null;
+
   return (
     <div className="bg-slate-50 text-slate-800 p-4 sm:p-6 rounded-2xl font-sans border border-slate-200 shadow-sm">
       {/* Header */}
@@ -284,118 +287,134 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
       </div>
 
       {/* --- MODALS --- */}
-      <AnimatePresence>
-        {formVisible && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
-            onClick={() => setFormVisible(false)}
-          >
+      {portalTarget && createPortal(
+        <AnimatePresence>
+          {formVisible && (
             <motion.div
-              initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col"
-              onClick={e => e.stopPropagation()}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[1000] overflow-y-auto bg-black/50 p-4 backdrop-blur-sm"
+              onClick={() => setFormVisible(false)}
             >
-              <form onSubmit={handleSubmit} className="flex flex-col min-h-0">
-                <div className="p-6 overflow-y-auto">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold text-slate-800">{formData.id ? 'Edit Sprint' : 'Create New Sprint'}</h3>
-                    <button type="button" onClick={() => setFormVisible(false)} className="p-1.5 rounded-full hover:bg-slate-100 text-slate-500"><FiX size={20} /></button>
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600 mb-1 required-label">Sprint Name</label>
-                      <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="e.g., Summer Release" required className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] transition"/>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-600 mb-1 required-label">Start Date</label>
-                        <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} required className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] transition"/>
+              <div className="flex min-h-full items-start justify-center py-4 sm:items-center">
+                <motion.div
+                  initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0 }}
+                  className="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
+                  onClick={e => e.stopPropagation()}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="sprint-form-title"
+                >
+                  <form onSubmit={handleSubmit} className="flex max-h-[calc(100dvh-2rem)] min-h-0 flex-col">
+                    <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-6">
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 id="sprint-form-title" className="text-lg font-bold text-slate-800">{formData.id ? 'Edit Sprint' : 'Create New Sprint'}</h3>
+                        <button type="button" onClick={() => setFormVisible(false)} className="p-1.5 rounded-full hover:bg-slate-100 text-slate-500"><FiX size={20} /></button>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-600 mb-1 required-label">End Date</label>
-                        <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} required className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] transition"/>
-                      </div>
-                    </div>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-600 mb-1 required-label">Sprint Name</label>
+                          <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="e.g., Summer Release" required className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] transition"/>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                          <div>
+                            <label className="block text-sm font-medium text-slate-600 mb-1 required-label">Start Date</label>
+                            <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} required className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] transition"/>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-slate-600 mb-1 required-label">End Date</label>
+                            <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} required className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] transition"/>
+                          </div>
+                        </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600 mb-2 required-label">Working Days</label>
-                      <div className="grid grid-cols-2 gap-3">
-                        {[
-                          { label: 'Sun', idx: 0 },
-                          { label: 'Mon', idx: 1 },
-                          { label: 'Tue', idx: 2 },
-                          { label: 'Wed', idx: 3 },
-                          { label: 'Thu', idx: 4 },
-                          { label: 'Fri', idx: 5 },
-                          { label: 'Sat', idx: 6 },
-                        ].map((d) => (
-                          <label key={d.idx} className="flex items-center gap-2 text-sm text-slate-700">
-                            <input
-                              type="checkbox"
-                              checked={isWorkingDay(formData.working_days_mask, d.idx)}
-                              onChange={() =>
-                                setFormData(prev => ({
-                                  ...prev,
-                                  working_days_mask: toggleWorkingDay(prev.working_days_mask, d.idx),
-                                }))
-                              }
-                              className="h-4 w-4 rounded border-slate-300 text-[var(--theme-color)] focus:ring-[var(--theme-color)]"
-                            />
-                            <span>{d.label}</span>
-                          </label>
-                        ))}
+                        <div>
+                          <label className="block text-sm font-medium text-slate-600 mb-2 required-label">Working Days</label>
+                          <div className="grid grid-cols-2 gap-3">
+                            {[
+                              { label: 'Sun', idx: 0 },
+                              { label: 'Mon', idx: 1 },
+                              { label: 'Tue', idx: 2 },
+                              { label: 'Wed', idx: 3 },
+                              { label: 'Thu', idx: 4 },
+                              { label: 'Fri', idx: 5 },
+                              { label: 'Sat', idx: 6 },
+                            ].map((d) => (
+                              <label key={d.idx} className="flex items-center gap-2 text-sm text-slate-700">
+                                <input
+                                  type="checkbox"
+                                  checked={isWorkingDay(formData.working_days_mask, d.idx)}
+                                  onChange={() =>
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      working_days_mask: toggleWorkingDay(prev.working_days_mask, d.idx),
+                                    }))
+                                  }
+                                  className="h-4 w-4 rounded border-slate-300 text-[var(--theme-color)] focus:ring-[var(--theme-color)]"
+                                />
+                                <span>{d.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                          <p className="text-xs text-slate-500 mt-2">Select which days are counted as working days for this sprint.</p>
+                        </div>
                       </div>
-                      <p className="text-xs text-slate-500 mt-2">Select which days are counted as working days for this sprint.</p>
                     </div>
-                  </div>
-                </div>
-                <div className="bg-slate-50 px-6 py-4 flex justify-end gap-3 rounded-b-xl border-t border-slate-200 shrink-0">
-                  <motion.button type="button" onClick={() => setFormVisible(false)} className="px-4 py-2 bg-white text-slate-700 rounded-md border border-slate-300 hover:bg-slate-100 transition" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>Cancel</motion.button>
-                  <motion.button
-                    type="submit"
-                    disabled={isSubmitting || Number(formData.working_days_mask) === 0}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 transition disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed"
-                    whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                  >
-                    {isSubmitting ? 'Saving...' : (formData.id ? 'Update Sprint' : 'Create Sprint')}
-                  </motion.button>
-                </div>
-              </form>
+                    <div className="flex shrink-0 justify-end gap-3 rounded-b-xl border-t border-slate-200 bg-slate-50 px-5 py-4 sm:px-6">
+                      <motion.button type="button" onClick={() => setFormVisible(false)} className="px-4 py-2 bg-white text-slate-700 rounded-md border border-slate-300 hover:bg-slate-100 transition" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>Cancel</motion.button>
+                      <motion.button
+                        type="submit"
+                        disabled={isSubmitting || Number(formData.working_days_mask) === 0}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 transition disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed"
+                        whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                      >
+                        {isSubmitting ? 'Saving...' : (formData.id ? 'Update Sprint' : 'Create Sprint')}
+                      </motion.button>
+                    </div>
+                  </form>
+                </motion.div>
+              </div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        portalTarget
+      )}
       
-      <AnimatePresence>
-        {deleteCandidate && (
-           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
-            onClick={() => setDeleteCandidate(null)}
-          >
+      {portalTarget && createPortal(
+        <AnimatePresence>
+          {deleteCandidate && (
             <motion.div
-              initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-xl shadow-2xl w-full max-w-sm"
-              onClick={e => e.stopPropagation()}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[1000] overflow-y-auto bg-black/50 p-4 backdrop-blur-sm"
+              onClick={() => setDeleteCandidate(null)}
             >
-              <div className="p-6 text-center">
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-                  <FiAlertTriangle size={24} className="text-red-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-slate-800 mt-4">Delete Sprint</h3>
-                <p className="text-sm text-slate-500 mt-2">Are you sure you want to delete <strong className="text-slate-700">"{deleteCandidate.name}"</strong>? This action is permanent.</p>
-              </div>
-              <div className="bg-slate-50 px-6 py-4 flex justify-center gap-3 rounded-b-xl border-t border-slate-200">
-                <motion.button onClick={() => setDeleteCandidate(null)} className="w-full px-4 py-2 bg-white text-slate-700 rounded-md border border-slate-300 hover:bg-slate-100 transition" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>Cancel</motion.button>
-                <motion.button onClick={() => handleDelete(deleteCandidate.id)} disabled={isSubmitting} className="w-full px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition disabled:bg-red-300" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  {isSubmitting ? 'Deleting...' : 'Delete'}
-                </motion.button>
+              <div className="flex min-h-full items-center justify-center py-4">
+                <motion.div
+                  initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0 }}
+                  className="bg-white rounded-xl shadow-2xl w-full max-w-sm"
+                  onClick={e => e.stopPropagation()}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="delete-sprint-title"
+                >
+                  <div className="p-6 text-center">
+                    <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+                      <FiAlertTriangle size={24} className="text-red-600" />
+                    </div>
+                    <h3 id="delete-sprint-title" className="text-lg font-semibold text-slate-800 mt-4">Delete Sprint</h3>
+                    <p className="text-sm text-slate-500 mt-2">Are you sure you want to delete <strong className="text-slate-700">"{deleteCandidate.name}"</strong>? This action is permanent.</p>
+                  </div>
+                  <div className="bg-slate-50 px-6 py-4 flex justify-center gap-3 rounded-b-xl border-t border-slate-200">
+                    <motion.button onClick={() => setDeleteCandidate(null)} className="w-full px-4 py-2 bg-white text-slate-700 rounded-md border border-slate-300 hover:bg-slate-100 transition" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>Cancel</motion.button>
+                    <motion.button onClick={() => handleDelete(deleteCandidate.id)} disabled={isSubmitting} className="w-full px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition disabled:bg-red-300" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      {isSubmitting ? 'Deleting...' : 'Delete'}
+                    </motion.button>
+                  </div>
+                </motion.div>
               </div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        portalTarget
+      )}
     </div>
   );
 }
