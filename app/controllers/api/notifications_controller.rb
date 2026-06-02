@@ -9,6 +9,7 @@ class Api::NotificationsController < Api::BaseController
 
     current_page = requested_page
     total_count = notifications_scope.count
+    unread_count = current_user.notifications.unread.count
     notifications = notifications_scope.offset((current_page - 1) * PAGE_SIZE).limit(PAGE_SIZE)
 
     render json: {
@@ -29,7 +30,7 @@ class Api::NotificationsController < Api::BaseController
       meta: {
         total_pages: total_pages(total_count),
         current_page: current_page,
-        unread_count: current_user.notifications.unread.count
+        unread_count: unread_count
       }
     }
   end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2027_05_27_000000) do
+ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -284,6 +284,7 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_27_000000) do
     t.datetime "updated_at", null: false
     t.index ["actor_id"], name: "index_notifications_on_actor_id"
     t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable"
+    t.index ["recipient_id", "read_at"], name: "index_notifications_on_recipient_id_and_read_at"
     t.index ["recipient_id"], name: "index_notifications_on_recipient_id"
   end
 
@@ -292,6 +293,7 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_27_000000) do
     t.bigint "post_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["post_id", "user_id"], name: "index_post_likes_on_post_id_and_user_id", unique: true
     t.index ["post_id"], name: "index_post_likes_on_post_id"
     t.index ["user_id", "post_id"], name: "index_post_likes_on_user_id_and_post_id", unique: true
     t.index ["user_id"], name: "index_post_likes_on_user_id"
@@ -304,6 +306,7 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_27_000000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "comments_count", default: 0, null: false
+    t.index ["created_at"], name: "index_posts_on_created_at"
     t.index ["user_id"], name: "index_posts_on_user_id"
   end
 
