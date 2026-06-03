@@ -144,8 +144,7 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, p
     setProcessing(true);
     setActionError("");
     const formData = new FormData();
-    // Clean URL and map to public path for the backend
-    const cleanPath = pdfUrl.split("?")[0].replace(/^\//, "public/");
+    const cleanPath = pdfUrl.split("?")[0];
     formData.append("pdf_path", cleanPath);
     
     Object.entries(params).forEach(([key, value]) => {

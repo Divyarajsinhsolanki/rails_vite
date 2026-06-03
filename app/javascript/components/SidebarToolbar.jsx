@@ -1,24 +1,19 @@
 import React from "react";
 import {
   FileText,
-  Plus,
-  Minus,
-  Link,
   FileSliders,
-  RotateCw,
   Droplet,
-  FilePlus,
+  Images,
+  TextQuote,
   Type,
   Hash,
   Signature,
   Stamp,
   Lock,
   Unlock,
+  Shield,
   Split,
-  Combine,
-  X,
-  ChevronRight,
-  ChevronLeft
+  Combine
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -43,6 +38,7 @@ const SidebarToolbar = ({ activeTool, setActiveTool }) => {
       category: "Pages",
       items: [
         { id: "extractPages", label: "Extract", icon: FileSliders },
+        { id: "addPageNumbers", label: "Page Numbers", icon: Hash },
       ],
     },
     {
@@ -50,8 +46,14 @@ const SidebarToolbar = ({ activeTool, setActiveTool }) => {
       items: [
         { id: "mergePdf", label: "Merge", icon: Combine },
         { id: "splitPdf", label: "Split", icon: Split },
+        { id: "splitBySize", label: "Split by Size", icon: Split },
+        { id: "compressPdf", label: "Compress", icon: FileSliders },
+        { id: "updateMetadata", label: "Metadata", icon: FileText },
+        { id: "exportImages", label: "Export Images", icon: Images },
+        { id: "extractText", label: "Extract Text", icon: TextQuote },
+        { id: "protectPdf", label: "Protect", icon: Shield },
         { id: "encryptPdf", label: "Encrypt", icon: Lock },
-        //   { id: "decryptPdf", label: "Decrypt", icon: Unlock }, 
+        { id: "decryptPdf", label: "Decrypt", icon: Unlock },
       ],
     },
   ];

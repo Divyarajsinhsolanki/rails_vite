@@ -15,6 +15,8 @@ Rails.application.routes.draw do
   post "/upload_pdf", to: "pdfs#upload_pdf"
   post "/reset_pdf", to: "pdfs#reset"
   get  "/download_pdf", to: "pdfs#download"
+  get  "/pdf_file/:token", to: "pdfs#show", as: :pdf_file
+  get  "/pdf_artifact/:token", to: "pdfs#artifact", as: :pdf_artifact
 
   post "/api/update_pdf", to: "pdf_modifiers#update_pdf"
 
@@ -35,9 +37,18 @@ Rails.application.routes.draw do
 
   post "/merge_pdf", to: "pdf_modifiers#merge_pdf"
   post "/split_pdf", to: "pdf_modifiers#split_pdf"
+  post "/split_by_size", to: "pdf_modifiers#split_by_size"
+  post "/compress_pdf", to: "pdf_modifiers#compress_pdf"
+  post "/update_metadata", to: "pdf_modifiers#update_metadata"
+  post "/add_page_numbers", to: "pdf_modifiers#add_page_numbers"
+  post "/export_to_images", to: "pdf_modifiers#export_to_images"
+  post "/extract_text", to: "pdf_modifiers#extract_text"
+  post "/undo_pdf", to: "pdf_modifiers#undo_pdf"
+  post "/redo_pdf", to: "pdf_modifiers#redo_pdf"
 
   post "/encrypt_pdf", to: "pdf_modifiers#encrypt_pdf"
   post "/decrypt_pdf", to: "pdf_modifiers#decrypt_pdf"
+  post "/protect_pdf", to: "pdf_modifiers#protect_pdf"
 
   # React now handles the /sheet route. Data is provided via the API below.
 

@@ -1,53 +1,82 @@
 class PdfsController < ApplicationController
+  include PdfStorage
+
   MAX_PDF_UPLOAD_SIZE = 50.megabytes
 
   def upload_pdf
-    if params[:pdf]
-      if params[:pdf].size.to_i > MAX_PDF_UPLOAD_SIZE
-        render json: { error: 'File is too large. Maximum size is 50MB.' }, status: :payload_too_large
-        return
-      end
+    cleanup_stale_pdf_files!
 
-      unless valid_pdf_upload?(params[:pdf])
-        render json: { error: 'Invalid file type. Only PDF files are allowed.' }, status: :unsupported_media_type
-        return
-      end
-
-      session[:pdf_id] = SecureRandom.uuid
-      session[:original_filename] = params[:pdf].original_filename
-      session[:download_filename] = params[:pdf].original_filename
-      original_path = Rails.root.join('public', 'uploads', "#{session[:pdf_id]}_original.pdf")
-      working_path = Rails.root.join('public', 'uploads', "#{session[:pdf_id]}_working.pdf")
-
-
-      FileUtils.mkdir_p(File.dirname(original_path))
-      File.open(original_path, 'wb') { |file| file.write(params[:pdf].read) }
-      FileUtils.cp(original_path, working_path)
-
-      render json: {
-        pdf_url: "/uploads/#{session[:pdf_id]}_working.pdf",
-        original_filename: session[:original_filename],
-        download_filename: session[:download_filename]
-      }, status: :ok
-    else
+    unless params[:pdf]
       render json: { error: "No file uploaded" }, status: :unprocessable_entity
+      return
     end
+
+    if params[:pdf].size.to_i > MAX_PDF_UPLOAD_SIZE
+      render json: { error: 'File is too large. Maximum size is 50MB.' }, status: :payload_too_large
+      return
+    end
+
+    unless valid_pdf_upload?(params[:pdf])
+      render json: { error: 'Invalid file type. Only PDF files are allowed.' }, status: :unsupported_media_type
+      return
+    end
+
+    session[:pdf_id] = SecureRandom.uuid
+    session[:original_filename] = sanitized_pdf_filename(params[:pdf].original_filename)
+    session[:download_filename] = session[:original_filename]
+
+    original_path = pdf_private_root.join("#{session[:pdf_id]}_original.pdf").cleanpath
+    working_path = pdf_private_root.join("#{session[:pdf_id]}_working.pdf").cleanpath
+
+    params[:pdf].rewind if params[:pdf].respond_to?(:rewind)
+    locked_write(original_path) { |file| file.write(params[:pdf].read) }
+    params[:pdf].rewind if params[:pdf].respond_to?(:rewind)
+    validate_output_pdf!(original_path)
+
+    locked_copy(original_path, working_path)
+    validate_output_pdf!(working_path)
+
+    session[:pdf_original_path] = original_path.to_s
+    session[:pdf_working_path] = working_path.to_s
+    pdf_url = register_pdf_file!(working_path, filename: session[:download_filename], mark_current: true)
+
+    render json: {
+      pdf_url: pdf_url,
+      original_filename: session[:original_filename],
+      download_filename: session[:download_filename]
+    }, status: :ok
   end
 
   def reset
-    if session[:pdf_id].present?
-      original_path = Rails.root.join('public', 'uploads', "#{session[:pdf_id]}_original.pdf")
-      working_path = Rails.root.join('public', 'uploads', "#{session[:pdf_id]}_working.pdf")
+    original_path = session[:pdf_original_path]
+    working_path = session[:pdf_working_path]
 
-      if File.exist?(original_path)
-        FileUtils.cp(original_path, working_path) # Restore original copy
-        render json: { success: true, message: 'PDF reset to original' }
-      else
-        render json: { success: false, message: 'Original PDF not found' }
-      end
+    if original_path.present? && working_path.present? && File.exist?(original_path)
+      locked_copy(original_path, working_path)
+      validate_output_pdf!(working_path)
+      pdf_url = register_pdf_file!(working_path, filename: session[:download_filename] || session[:original_filename], mark_current: true)
+      render json: { success: true, message: 'PDF reset to original', pdf_url: pdf_url }
+    elsif session[:pdf_id].present?
+      render json: { success: false, message: 'Original PDF not found' }
     else
       render json: { success: false, message: 'No active session' }
     end
+  end
+
+  def show
+    record = pdf_record_for_token!(params[:token])
+    response.headers['Cache-Control'] = 'private, no-store'
+    send_file record['path'], type: 'application/pdf', filename: record['filename'], disposition: 'inline'
+  rescue => e
+    render json: { error: e.message }, status: :not_found
+  end
+
+  def artifact
+    record = pdf_artifact_record_for_token!(params[:token])
+    response.headers['Cache-Control'] = 'private, no-store'
+    send_file record['path'], type: record['content_type'], filename: record['filename'], disposition: 'inline'
+  rescue => e
+    render json: { error: e.message }, status: :not_found
   end
 
   def download
@@ -92,24 +121,22 @@ class PdfsController < ApplicationController
   end
 
   def download_path_from_session
-    return if session[:pdf_id].blank?
+    return if session[:pdf_working_path].blank?
 
-    Rails.root.join('public', 'uploads', "#{session[:pdf_id]}_working.pdf").to_s
+    path = normalize_pdf_path(session[:pdf_working_path])
+    return unless path_inside?(path, pdf_private_root.cleanpath)
+    return unless File.exist?(path)
+
+    path.to_s
   end
 
   def download_path_from_param
     return if params[:pdf_path].blank?
 
-    requested_path = params[:pdf_path].to_s.split('?').first.to_s.strip.sub(%r{\A/+}, '')
-    requested_path = requested_path.sub(%r{\Apublic/}, '')
-    full_path = Rails.root.join('public', requested_path).cleanpath
-    allowed_roots = %w[uploads documents].map { |directory| Rails.root.join('public', directory).cleanpath.to_s }
+    token = token_from_pdf_reference(params[:pdf_path])
+    return pdf_path_from_token!(token) if token.present?
 
-    return unless allowed_roots.any? { |root| full_path.to_s == root || full_path.to_s.start_with?("#{root}/") }
-    return unless File.extname(full_path.to_s).casecmp('.pdf').zero?
-    return unless File.exist?(full_path)
-
-    full_path.to_s
+    legacy_public_pdf_path(params[:pdf_path])
   end
 
   def default_download_name(path)

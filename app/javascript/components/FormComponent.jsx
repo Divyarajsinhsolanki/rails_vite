@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, FileUp, Loader2, MapPin, X } from "lucide-react";
+import { CheckCircle2, ExternalLink, FileUp, Loader2, MapPin, X } from "lucide-react";
 import { fetchWithTimeout } from "../utils/request";
 
 const placementFieldNames = new Set(["x", "y", "page_number"]);
@@ -70,6 +70,14 @@ const validateField = (field, value) => {
     }
   }
 
+  if (field.minLength !== undefined && String(value).length < Number(field.minLength)) {
+    return `${label} must be at least ${field.minLength} characters.`;
+  }
+
+  if (field.maxLength !== undefined && String(value).length > Number(field.maxLength)) {
+    return `${label} must be ${field.maxLength} characters or fewer.`;
+  }
+
   return "";
 };
 
@@ -107,12 +115,18 @@ const FormComponent = ({
   );
   const [formData, setFormData] = useState(initialFormData);
   const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [resultLinks, setResultLinks] = useState([]);
+  const [extractedText, setExtractedText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const hasPlacementFields = formFields.some((field) => placementFieldNames.has(field.name));
 
   useEffect(() => {
     setFormData(initialFormData);
     setErrorMessage("");
+    setSuccessMessage("");
+    setResultLinks([]);
+    setExtractedText("");
   }, [initialFormData, pdfPath]);
 
   useEffect(() => {
@@ -178,6 +192,9 @@ const FormComponent = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage("");
+    setSuccessMessage("");
+    setResultLinks([]);
+    setExtractedText("");
 
     const validationError = validateFormData(formFields, formData);
     if (validationError) {
@@ -201,12 +218,28 @@ const FormComponent = ({
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "Request failed");
 
-      if (data.pdf_url && setPdfUrl) {
-        setPdfUrl(data.pdf_url);
-        writeStorage("pdfUrl", data.pdf_url);
+      const pdfUrls = Array.isArray(data.pdf_urls) ? data.pdf_urls : [];
+      const artifactUrls = Array.isArray(data.urls) ? data.urls : [];
+      const nextPdfUrl = data.pdf_url || pdfUrls[0];
+      if (nextPdfUrl && setPdfUrl) {
+        setPdfUrl(nextPdfUrl);
+        writeStorage("pdfUrl", nextPdfUrl);
       }
 
       setPdfUpdated((prev) => prev + 1);
+      if (typeof data.text === "string") {
+        setSuccessMessage(data.message || "Text extracted successfully.");
+        setExtractedText(data.text);
+        setResultLinks(data.url ? [data.url] : []);
+        return;
+      }
+
+      if (pdfUrls.length > 1 || artifactUrls.length || data.url) {
+        setSuccessMessage(data.message || "PDF action completed.");
+        setResultLinks(pdfUrls.length > 1 ? pdfUrls : artifactUrls.length ? artifactUrls : [data.url]);
+        return;
+      }
+
       setActiveForm(null);
     } catch (error) {
       console.error(error);
@@ -231,11 +264,28 @@ const FormComponent = ({
             rows={3}
             required={field.required !== false}
             placeholder={field.placeholder}
+            minLength={field.minLength}
+            maxLength={field.maxLength}
             value={value}
             onChange={handleChange}
             disabled={submitting}
             className={`${baseInputClass} resize-none`}
           />
+        ) : field.type === "select" ? (
+          <select
+            name={field.name}
+            required={field.required !== false}
+            value={value}
+            onChange={handleChange}
+            disabled={submitting}
+            className={baseInputClass}
+          >
+            {field.options?.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         ) : (
           <input
             type={field.type}
@@ -243,6 +293,8 @@ const FormComponent = ({
             min={field.min}
             max={field.max}
             step={field.step || (field.type === "number" ? "1" : undefined)}
+            minLength={field.minLength}
+            maxLength={field.maxLength}
             accept={field.accept}
             required={field.required !== false}
             placeholder={field.placeholder}
@@ -296,6 +348,33 @@ const FormComponent = ({
 
         {errorMessage && (
           <p className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{errorMessage}</p>
+        )}
+
+        {successMessage && (
+          <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-3 text-sm text-emerald-800">
+            <p className="font-bold">{successMessage}</p>
+            {extractedText && (
+              <textarea
+                readOnly
+                value={extractedText}
+                className="mt-3 h-44 w-full resize-y rounded-lg border border-emerald-200 bg-white p-3 font-mono text-xs leading-relaxed text-slate-700 outline-none"
+              />
+            )}
+            <div className="mt-2 flex flex-wrap gap-2">
+              {resultLinks.map((url, index) => (
+                <a
+                  key={url}
+                  href={url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs font-bold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100"
+                >
+                  {extractedText ? "Download Text" : `File ${index + 1}`}
+                  <ExternalLink className="ml-1.5 h-3 w-3" />
+                </a>
+              ))}
+            </div>
+          </div>
         )}
 
         <input type="hidden" name="pdf_path" value={pdfPath} />

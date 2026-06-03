@@ -70,9 +70,24 @@ export default defineConfig({
   },
   
   server: {
-    // Use native file watchers instead of polling for better performance
+    // This workspace can exceed Linux inotify limits when Rails, esbuild,
+    // and Vite all watch files at once. Polling keeps Vite stable in dev.
     watch: {
-      usePolling: false
+      usePolling: true,
+      interval: 1000,
+      ignored: [
+        '**/.git/**',
+        '**/node_modules/**',
+        '**/public/vite/**',
+        '**/public/vite-dev/**',
+        '**/public/uploads/**',
+        '**/public/documents/**',
+        '**/public/temp_uploads/**',
+        '**/storage/**',
+        '**/tmp/**',
+        '**/log/**',
+        '**/vendor/**'
+      ]
     }
   }
 });

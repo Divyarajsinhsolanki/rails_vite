@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
+import { Document, Page, pdfjs } from "react-pdf";
+import pdfWorkerUrl from "react-pdf/node_modules/pdfjs-dist/build/pdf.worker.min.mjs?url";
 import PdfEditor from "./PdfEditor";
 import PdfViewer from "./PdfViewer";
 import SidebarToolbar from "./SidebarToolbar";
@@ -13,7 +15,11 @@ import {
   Loader2,
   Check,
   Download,
+  Undo2,
+  Redo2,
 } from "lucide-react";
+
+pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 const getCsrfHeaders = () => {
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
@@ -21,6 +27,8 @@ const getCsrfHeaders = () => {
 };
 
 const MAX_PDF_UPLOAD_SIZE_BYTES = 50 * 1024 * 1024;
+const PDF_LIBRARY_STORAGE_KEY = "pdfLibrary";
+const MAX_PDF_LIBRARY_ITEMS = 12;
 
 const getPdfFileName = (url) => {
   const fileName = (url || "").split("?")[0].split("/").pop();
@@ -47,6 +55,24 @@ const writeStorage = (key, value) => {
     window.localStorage.setItem(key, value);
   } catch (error) {
     console.warn(`localStorage write failed for ${key}:`, error);
+  }
+};
+
+const readJsonStorage = (key, fallbackValue) => {
+  try {
+    const value = window.localStorage.getItem(key);
+    return value ? JSON.parse(value) : fallbackValue;
+  } catch (error) {
+    console.warn(`localStorage JSON read failed for ${key}:`, error);
+    return fallbackValue;
+  }
+};
+
+const writeJsonStorage = (key, value) => {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn(`localStorage JSON write failed for ${key}:`, error);
   }
 };
 
@@ -106,6 +132,29 @@ const normalizePlacementCoordinates = (coordinates, previous) => {
   return next;
 };
 
+const PdfPreviewCard = ({ item, isActive, onOpen }) => (
+  <button
+    type="button"
+    onClick={() => onOpen(item)}
+    className={`group flex min-w-36 flex-col overflow-hidden rounded-lg border bg-white text-left shadow-sm transition hover:border-indigo-300 hover:shadow-md ${isActive ? "border-indigo-400 ring-2 ring-indigo-100" : "border-slate-200"}`}
+    title={item.name}
+  >
+    <div className="flex h-28 w-full items-center justify-center overflow-hidden bg-slate-100">
+      <Document
+        file={item.url}
+        loading={<FileText className="h-8 w-8 text-slate-300" />}
+        error={<FileText className="h-8 w-8 text-slate-300" />}
+        noData={<FileText className="h-8 w-8 text-slate-300" />}
+      >
+        <Page pageNumber={1} width={128} renderTextLayer={false} renderAnnotationLayer={false} />
+      </Document>
+    </div>
+    <div className="w-full px-2.5 py-2">
+      <p className="truncate text-xs font-bold text-slate-700 group-hover:text-indigo-700">{item.name}</p>
+    </div>
+  </button>
+);
+
 const PdfMaster = () => {
   const [pdfUrl, setPdfUrl] = useState(null);
   const [pdfUpdated, setPdfUpdated] = useState(0);
@@ -116,18 +165,22 @@ const PdfMaster = () => {
   const [activeForm, setActiveForm] = useState(null);
   const [placementCoordinates, setPlacementCoordinates] = useState(null);
   const [downloadName, setDownloadName] = useState("document.pdf");
+  const [pdfLibrary, setPdfLibrary] = useState([]);
 
   useEffect(() => {
     const storedPdf = readStorage("pdfUrl");
     if (storedPdf) setPdfUrl(storedPdf);
     const storedDownloadName = readStorage("pdfDownloadName");
     if (storedDownloadName) setDownloadName(storedDownloadName);
+    const storedLibrary = readJsonStorage(PDF_LIBRARY_STORAGE_KEY, []);
+    if (Array.isArray(storedLibrary)) setPdfLibrary(storedLibrary.filter((item) => item?.url));
 
     const handlePdfUpdate = (event) => {
       const newUrl = event.detail;
       if (!newUrl) return;
       setPdfUrl(newUrl);
       writeStorage("pdfUrl", newUrl);
+      addPdfToLibrary({ url: newUrl, name: getPdfFileName(newUrl) });
       setPdfUpdated(prev => prev + 1);
     };
 
@@ -139,42 +192,109 @@ const PdfMaster = () => {
     setPlacementCoordinates(null);
   }, [activeForm]);
 
-  const handleFileUpload = async (file) => {
-    if (!file) return;
+  const addPdfToLibrary = useCallback((item) => {
+    if (!item?.url) return;
+
+    setPdfLibrary((previous) => {
+      const withoutDuplicate = previous.filter((existing) => existing.url !== item.url);
+      const next = [
+        { url: item.url, name: item.name || getPdfFileName(item.url), addedAt: Date.now() },
+        ...withoutDuplicate,
+      ].slice(0, MAX_PDF_LIBRARY_ITEMS);
+      writeJsonStorage(PDF_LIBRARY_STORAGE_KEY, next);
+      return next;
+    });
+  }, []);
+
+  const openLibraryPdf = useCallback((item) => {
+    if (!item?.url) return;
+
+    setPdfUrl(item.url);
+    setDownloadName(item.name || getPdfFileName(item.url));
+    setActiveForm(null);
+    setPlacementCoordinates(null);
+    writeStorage("pdfUrl", item.url);
+    writeStorage("pdfDownloadName", item.name || getPdfFileName(item.url));
+  }, []);
+
+  const uploadSinglePdf = async (file) => {
     const validationMessage = validatePdfFile(file);
-    if (validationMessage) {
-      setUploadMessage(validationMessage);
-      setIsError(true);
-      setShowUploadMessage(true);
-      return;
-    }
+    if (validationMessage) throw new Error(validationMessage);
 
     const formData = new FormData();
     formData.append("pdf", file);
+
+    const response = await fetchWithTimeout("/upload_pdf", {
+      method: "POST",
+      body: formData,
+      headers: getCsrfHeaders(),
+    }, PDF_UPLOAD_TIMEOUT_MS);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(uploadErrorMessage(response.status, data));
+    if (!data.pdf_url) throw new Error("Upload finished without a PDF URL.");
+
+    return {
+      url: data.pdf_url,
+      name: data.download_filename || data.original_filename || file.name || "document.pdf",
+    };
+  };
+
+  const applyUploadedPdf = (item) => {
+    setPdfUrl(item.url);
+    writeStorage("pdfUrl", item.url);
+    setDownloadName(item.name);
+    writeStorage("pdfDownloadName", item.name);
+    addPdfToLibrary(item);
+  };
+
+  const handleFileUpload = async (file) => {
+    if (!file) return;
+
     setUploading(true);
     setShowUploadMessage(false);
     setIsError(false);
     try {
-      const response = await fetchWithTimeout("/upload_pdf", {
-        method: "POST",
-        body: formData,
-        headers: getCsrfHeaders(),
-      }, PDF_UPLOAD_TIMEOUT_MS);
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(uploadErrorMessage(response.status, data));
-      if (!data.pdf_url) throw new Error("Upload finished without a PDF URL.");
-
-      setPdfUrl(data.pdf_url);
-      writeStorage("pdfUrl", data.pdf_url);
-      const nextDownloadName = data.download_filename || data.original_filename || file.name || "document.pdf";
-      setDownloadName(nextDownloadName);
-      writeStorage("pdfDownloadName", nextDownloadName);
+      const item = await uploadSinglePdf(file);
+      applyUploadedPdf(item);
       setUploadMessage("Document ready in PDF Master.");
       setIsError(false);
       setShowUploadMessage(true);
     } catch (error) {
       console.error("PDF upload failed:", error);
-      setUploadMessage(uploadErrorMessage(error.status, null, error));
+      setUploadMessage(error.message || "Upload failed.");
+      setIsError(true);
+      setShowUploadMessage(true);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleMultipleFiles = async (files) => {
+    const pdfFiles = Array.from(files || []);
+    if (!pdfFiles.length) return;
+
+    setUploading(true);
+    setShowUploadMessage(false);
+    setIsError(false);
+    const uploaded = [];
+
+    try {
+      for (const file of pdfFiles) {
+        uploaded.push(await uploadSinglePdf(file));
+      }
+
+      uploaded.forEach(addPdfToLibrary);
+      applyUploadedPdf(uploaded[0]);
+      setUploadMessage(`${uploaded.length} PDF${uploaded.length === 1 ? "" : "s"} uploaded. Open any file from the preview grid.`);
+      setIsError(false);
+      setShowUploadMessage(true);
+    } catch (error) {
+      console.error("Batch PDF upload failed:", error);
+      if (uploaded.length) {
+        uploaded.forEach(addPdfToLibrary);
+        applyUploadedPdf(uploaded[0]);
+      }
+      setUploadMessage(error.message || "Batch upload failed.");
       setIsError(true);
       setShowUploadMessage(true);
     } finally {
@@ -183,7 +303,7 @@ const PdfMaster = () => {
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop: (files) => handleFileUpload(files?.[0]),
+    onDrop: (files) => handleMultipleFiles(files),
     onDropRejected: (rejections) => {
       const firstError = rejections?.[0]?.errors?.[0];
       const message = firstError?.code === "file-too-large"
@@ -195,7 +315,7 @@ const PdfMaster = () => {
     },
     accept: { 'application/pdf': ['.pdf'] },
     maxSize: MAX_PDF_UPLOAD_SIZE_BYTES,
-    multiple: false,
+    multiple: true,
     disabled: uploading,
   });
 
@@ -206,6 +326,35 @@ const PdfMaster = () => {
   const handleConfirmPosition = useCallback((coordinates) => {
     handlePlacementChange(coordinates);
   }, [handlePlacementChange]);
+
+  const handleHistoryAction = async (endpoint) => {
+    setShowUploadMessage(false);
+    setIsError(false);
+
+    try {
+      const response = await fetchWithTimeout(endpoint, {
+        method: "POST",
+        headers: getCsrfHeaders(),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "History action failed.");
+      if (!data.pdf_url) throw new Error("History action did not return a PDF.");
+
+      const nextName = downloadName || getPdfFileName(data.pdf_url);
+      setPdfUrl(data.pdf_url);
+      writeStorage("pdfUrl", data.pdf_url);
+      addPdfToLibrary({ url: data.pdf_url, name: nextName });
+      setPdfUpdated((prev) => prev + 1);
+      setUploadMessage(data.message || "PDF history updated.");
+      setIsError(false);
+      setShowUploadMessage(true);
+    } catch (error) {
+      console.error("PDF history action failed:", error);
+      setUploadMessage(error.message || "History action failed.");
+      setIsError(true);
+      setShowUploadMessage(true);
+    }
+  };
 
   const closePdf = () => {
     setPdfUrl(null);
@@ -268,11 +417,24 @@ const PdfMaster = () => {
             ) : (
               <>
                 <Upload className="mb-4 h-10 w-10 text-indigo-600" />
-                <p className="font-bold text-slate-800">{isDragActive ? 'Release to upload' : 'Drop PDF here'}</p>
-                <p className="mt-2 text-sm text-slate-500">or click to choose a PDF up to 50MB</p>
+                <p className="font-bold text-slate-800">{isDragActive ? 'Release to upload' : 'Drop PDFs here'}</p>
+                <p className="mt-2 text-sm text-slate-500">or click to choose one or more PDFs up to 50MB each</p>
               </>
             )}
           </div>
+
+          {pdfLibrary.length > 0 && (
+            <div className="mt-8 border-t border-slate-100 pt-6">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-xs font-black uppercase tracking-wide text-slate-500">Recent PDFs</h2>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {pdfLibrary.slice(0, 6).map((item) => (
+                  <PdfPreviewCard key={item.url} item={item} isActive={false} onOpen={openLibraryPdf} />
+                ))}
+              </div>
+            </div>
+          )}
 
           <button
             onClick={startWithSample}
@@ -311,6 +473,22 @@ const PdfMaster = () => {
           />
         </div>
         <div className="flex items-center space-x-4">
+          <div className="flex items-center rounded-lg border border-gray-200 bg-white p-1">
+            <button
+              onClick={() => handleHistoryAction("/undo_pdf")}
+              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-50 hover:text-indigo-600"
+              title="Undo"
+            >
+              <Undo2 className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => handleHistoryAction("/redo_pdf")}
+              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-50 hover:text-indigo-600"
+              title="Redo"
+            >
+              <Redo2 className="h-4 w-4" />
+            </button>
+          </div>
           <button onClick={closePdf} className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors">Close</button>
           <button 
             onClick={() => {
@@ -333,6 +511,21 @@ const PdfMaster = () => {
         <SidebarToolbar activeTool={activeForm} setActiveTool={setActiveForm} />
         
         <main className="flex-1 flex flex-col bg-gray-50/50 overflow-hidden relative">
+          {pdfLibrary.length > 1 && (
+            <div className="shrink-0 border-b border-gray-100 bg-white/80 px-4 py-3">
+              <div className="flex gap-3 overflow-x-auto pb-1">
+                {pdfLibrary.map((item) => (
+                  <PdfPreviewCard
+                    key={item.url}
+                    item={item}
+                    isActive={(pdfUrl || "").split("?")[0] === item.url}
+                    onOpen={openLibraryPdf}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Component Action Bar (Add Text Inputs etc) */}
           <AnimatePresence>
             {activeForm && (
