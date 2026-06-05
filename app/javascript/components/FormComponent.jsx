@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, ExternalLink, FileUp, Loader2, MapPin, X } from "lucide-react";
+import { CheckCircle2, Download, ExternalLink, FileUp, Loader2, MapPin, X } from "lucide-react";
 import { fetchWithTimeout } from "../utils/request";
 
 const placementFieldNames = new Set(["x", "y", "page_number"]);
@@ -21,6 +21,74 @@ const writeStorage = (key, value) => {
 };
 
 const isBlank = (value) => value === undefined || value === null || String(value).trim() === "";
+
+const withArtifactDownload = (url) => {
+  if (!url) return "";
+
+  try {
+    const artifactUrl = new URL(url, window.location.origin);
+    artifactUrl.searchParams.set("download", "1");
+    return `${artifactUrl.pathname}${artifactUrl.search}`;
+  } catch {
+    return url.includes("?") ? `${url}&download=1` : `${url}?download=1`;
+  }
+};
+
+const withPdfDownload = (url) => {
+  if (!url) return "";
+
+  try {
+    const downloadUrl = new URL("/download_pdf", window.location.origin);
+    downloadUrl.searchParams.set("pdf_path", url.split("?")[0]);
+    return `${downloadUrl.pathname}${downloadUrl.search}`;
+  } catch {
+    return `/download_pdf?pdf_path=${encodeURIComponent(url.split("?")[0])}`;
+  }
+};
+
+const normalizeArtifact = (artifact, index, fallbackType = "") => {
+  const url = typeof artifact === "string" ? artifact : artifact?.url;
+  if (!url) return null;
+
+  const contentType = typeof artifact === "string" ? fallbackType : artifact.content_type || fallbackType;
+  const downloadUrl = contentType === "application/pdf" ? withPdfDownload(url) : withArtifactDownload(url);
+  const pageLabel = artifact?.page_number ? `Page ${artifact.page_number}` : `File ${index + 1}`;
+
+  return {
+    url,
+    downloadUrl: artifact?.download_url || downloadUrl,
+    filename: artifact?.filename || pageLabel,
+    label: artifact?.label || pageLabel,
+    contentType,
+  };
+};
+
+const buildArtifacts = (data) => {
+  if (Array.isArray(data.artifacts)) {
+    return data.artifacts.map((artifact, index) => normalizeArtifact(artifact, index)).filter(Boolean);
+  }
+
+  const artifactUrls = Array.isArray(data.urls) ? data.urls : [];
+  const fallbackArtifacts = artifactUrls.map((url, index) => normalizeArtifact(url, index)).filter(Boolean);
+
+  if (data.url) {
+    fallbackArtifacts.push(
+      normalizeArtifact(
+        {
+          url: data.url,
+          download_url: data.download_url,
+          filename: data.filename,
+          content_type: data.content_type,
+          label: "Extracted text",
+        },
+        fallbackArtifacts.length,
+        data.content_type || "text/plain"
+      )
+    );
+  }
+
+  return fallbackArtifacts;
+};
 
 const fieldDisplayName = (field) => field.label || field.placeholder || field.name;
 
@@ -116,7 +184,7 @@ const FormComponent = ({
   const [formData, setFormData] = useState(initialFormData);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [resultLinks, setResultLinks] = useState([]);
+  const [resultArtifacts, setResultArtifacts] = useState([]);
   const [extractedText, setExtractedText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const hasPlacementFields = formFields.some((field) => placementFieldNames.has(field.name));
@@ -125,7 +193,7 @@ const FormComponent = ({
     setFormData(initialFormData);
     setErrorMessage("");
     setSuccessMessage("");
-    setResultLinks([]);
+    setResultArtifacts([]);
     setExtractedText("");
   }, [initialFormData, pdfPath]);
 
@@ -193,7 +261,7 @@ const FormComponent = ({
     e.preventDefault();
     setErrorMessage("");
     setSuccessMessage("");
-    setResultLinks([]);
+    setResultArtifacts([]);
     setExtractedText("");
 
     const validationError = validateFormData(formFields, formData);
@@ -220,6 +288,7 @@ const FormComponent = ({
 
       const pdfUrls = Array.isArray(data.pdf_urls) ? data.pdf_urls : [];
       const artifactUrls = Array.isArray(data.urls) ? data.urls : [];
+      const artifacts = buildArtifacts(data);
       const nextPdfUrl = data.pdf_url || pdfUrls[0];
       if (nextPdfUrl && setPdfUrl) {
         setPdfUrl(nextPdfUrl);
@@ -230,13 +299,17 @@ const FormComponent = ({
       if (typeof data.text === "string") {
         setSuccessMessage(data.message || "Text extracted successfully.");
         setExtractedText(data.text);
-        setResultLinks(data.url ? [data.url] : []);
+        setResultArtifacts(artifacts);
         return;
       }
 
-      if (pdfUrls.length > 1 || artifactUrls.length || data.url) {
+      if (pdfUrls.length > 1 || artifactUrls.length || data.url || artifacts.length) {
         setSuccessMessage(data.message || "PDF action completed.");
-        setResultLinks(pdfUrls.length > 1 ? pdfUrls : artifactUrls.length ? artifactUrls : [data.url]);
+        setResultArtifacts(
+          pdfUrls.length > 1
+            ? pdfUrls.map((url, index) => normalizeArtifact(url, index, "application/pdf")).filter(Boolean)
+            : artifacts
+        );
         return;
       }
 
@@ -360,20 +433,46 @@ const FormComponent = ({
                 className="mt-3 h-44 w-full resize-y rounded-lg border border-emerald-200 bg-white p-3 font-mono text-xs leading-relaxed text-slate-700 outline-none"
               />
             )}
-            <div className="mt-2 flex flex-wrap gap-2">
-              {resultLinks.map((url, index) => (
-                <a
-                  key={url}
-                  href={url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs font-bold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100"
-                >
-                  {extractedText ? "Download Text" : `File ${index + 1}`}
-                  <ExternalLink className="ml-1.5 h-3 w-3" />
-                </a>
-              ))}
-            </div>
+            {resultArtifacts.length > 0 && (
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {resultArtifacts.map((artifact, index) => {
+                  const isImage = artifact.contentType?.startsWith("image/");
+                  const label = artifact.label || artifact.filename || `File ${index + 1}`;
+
+                  return (
+                    <div key={`${artifact.url}-${index}`} className="rounded-lg border border-emerald-200 bg-white p-2">
+                      {isImage && (
+                        <a href={artifact.url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-md border border-slate-100 bg-slate-50">
+                          <img src={artifact.url} alt={artifact.filename || label} className="h-32 w-full object-contain" />
+                        </a>
+                      )}
+                      <p className="mt-2 truncate text-xs font-bold text-slate-700" title={artifact.filename || label}>
+                        {artifact.filename || label}
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <a
+                          href={artifact.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center rounded-md border border-emerald-200 bg-white px-2.5 py-1.5 text-xs font-bold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-50"
+                        >
+                          Open
+                          <ExternalLink className="ml-1.5 h-3 w-3" />
+                        </a>
+                        <a
+                          href={artifact.downloadUrl}
+                          download={artifact.filename}
+                          className="inline-flex items-center rounded-md bg-emerald-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-emerald-700"
+                        >
+                          Download
+                          <Download className="ml-1.5 h-3 w-3" />
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 

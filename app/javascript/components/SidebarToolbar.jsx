@@ -7,6 +7,11 @@ import {
   TextQuote,
   Type,
   Hash,
+  Plus,
+  Trash2,
+  Copy,
+  RotateCcw,
+  RotateCw,
   Signature,
   Stamp,
   Lock,
@@ -37,6 +42,11 @@ const SidebarToolbar = ({ activeTool, setActiveTool }) => {
     {
       category: "Pages",
       items: [
+        { id: "addPage", label: "Add Page", icon: Plus },
+        { id: "removePage", label: "Remove Page", icon: Trash2 },
+        { id: "duplicatePage", label: "Duplicate Page", icon: Copy },
+        { id: "rotateLeft", label: "Rotate Left", icon: RotateCcw },
+        { id: "rotateRight", label: "Rotate Right", icon: RotateCw },
         { id: "extractPages", label: "Extract", icon: FileSliders },
         { id: "addPageNumbers", label: "Page Numbers", icon: Hash },
       ],

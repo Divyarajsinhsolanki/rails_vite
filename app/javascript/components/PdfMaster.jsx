@@ -29,9 +29,12 @@ const getCsrfHeaders = () => {
 const MAX_PDF_UPLOAD_SIZE_BYTES = 50 * 1024 * 1024;
 const PDF_LIBRARY_STORAGE_KEY = "pdfLibrary";
 const MAX_PDF_LIBRARY_ITEMS = 12;
+const PDF_HISTORY_ACTION_TIMEOUT_MS = 30000;
+
+const normalizePdfUrl = (url) => (url || "").split("?")[0];
 
 const getPdfFileName = (url) => {
-  const fileName = (url || "").split("?")[0].split("/").pop();
+  const fileName = normalizePdfUrl(url).split("/").pop();
   if (!fileName) return "Untitled PDF";
 
   try {
@@ -132,6 +135,25 @@ const normalizePlacementCoordinates = (coordinates, previous) => {
   return next;
 };
 
+const normalizePdfLibraryItems = (items) => {
+  const seen = new Set();
+  const normalizedItems = [];
+
+  for (const item of Array.isArray(items) ? items : []) {
+    const url = normalizePdfUrl(item?.url);
+    if (!url || seen.has(url)) continue;
+
+    seen.add(url);
+    normalizedItems.push({
+      ...item,
+      url,
+      name: item?.name || getPdfFileName(url),
+    });
+  }
+
+  return normalizedItems.slice(0, MAX_PDF_LIBRARY_ITEMS);
+};
+
 const PdfPreviewCard = ({ item, isActive, onOpen }) => (
   <button
     type="button"
@@ -172,8 +194,8 @@ const PdfMaster = () => {
     if (storedPdf) setPdfUrl(storedPdf);
     const storedDownloadName = readStorage("pdfDownloadName");
     if (storedDownloadName) setDownloadName(storedDownloadName);
-    const storedLibrary = readJsonStorage(PDF_LIBRARY_STORAGE_KEY, []);
-    if (Array.isArray(storedLibrary)) setPdfLibrary(storedLibrary.filter((item) => item?.url));
+    const storedLibrary = normalizePdfLibraryItems(readJsonStorage(PDF_LIBRARY_STORAGE_KEY, []));
+    if (storedLibrary.length) setPdfLibrary(storedLibrary);
 
     const handlePdfUpdate = (event) => {
       const newUrl = event.detail;
@@ -193,12 +215,13 @@ const PdfMaster = () => {
   }, [activeForm]);
 
   const addPdfToLibrary = useCallback((item) => {
-    if (!item?.url) return;
+    const normalizedUrl = normalizePdfUrl(item?.url);
+    if (!normalizedUrl) return;
 
     setPdfLibrary((previous) => {
-      const withoutDuplicate = previous.filter((existing) => existing.url !== item.url);
+      const withoutDuplicate = previous.filter((existing) => normalizePdfUrl(existing.url) !== normalizedUrl);
       const next = [
-        { url: item.url, name: item.name || getPdfFileName(item.url), addedAt: Date.now() },
+        { url: normalizedUrl, name: item.name || getPdfFileName(normalizedUrl), addedAt: Date.now() },
         ...withoutDuplicate,
       ].slice(0, MAX_PDF_LIBRARY_ITEMS);
       writeJsonStorage(PDF_LIBRARY_STORAGE_KEY, next);
@@ -207,14 +230,15 @@ const PdfMaster = () => {
   }, []);
 
   const openLibraryPdf = useCallback((item) => {
-    if (!item?.url) return;
+    const normalizedUrl = normalizePdfUrl(item?.url);
+    if (!normalizedUrl) return;
 
-    setPdfUrl(item.url);
-    setDownloadName(item.name || getPdfFileName(item.url));
+    setPdfUrl(normalizedUrl);
+    setDownloadName(item.name || getPdfFileName(normalizedUrl));
     setActiveForm(null);
     setPlacementCoordinates(null);
-    writeStorage("pdfUrl", item.url);
-    writeStorage("pdfDownloadName", item.name || getPdfFileName(item.url));
+    writeStorage("pdfUrl", normalizedUrl);
+    writeStorage("pdfDownloadName", item.name || getPdfFileName(normalizedUrl));
   }, []);
 
   const uploadSinglePdf = async (file) => {
@@ -240,11 +264,12 @@ const PdfMaster = () => {
   };
 
   const applyUploadedPdf = (item) => {
-    setPdfUrl(item.url);
-    writeStorage("pdfUrl", item.url);
+    const normalizedUrl = normalizePdfUrl(item.url);
+    setPdfUrl(normalizedUrl);
+    writeStorage("pdfUrl", normalizedUrl);
     setDownloadName(item.name);
     writeStorage("pdfDownloadName", item.name);
-    addPdfToLibrary(item);
+    addPdfToLibrary({ ...item, url: normalizedUrl });
   };
 
   const handleFileUpload = async (file) => {
@@ -276,24 +301,37 @@ const PdfMaster = () => {
     setUploading(true);
     setShowUploadMessage(false);
     setIsError(false);
-    const uploaded = [];
 
     try {
-      for (const file of pdfFiles) {
-        uploaded.push(await uploadSinglePdf(file));
-      }
+      const results = await Promise.allSettled(pdfFiles.map((file) => uploadSinglePdf(file)));
+      const successful = [];
+      const failed = [];
 
-      uploaded.forEach(addPdfToLibrary);
-      applyUploadedPdf(uploaded[0]);
-      setUploadMessage(`${uploaded.length} PDF${uploaded.length === 1 ? "" : "s"} uploaded. Open any file from the preview grid.`);
-      setIsError(false);
+      results.forEach((result, index) => {
+        if (result.status === "fulfilled") {
+          successful.push(result.value);
+        } else {
+          failed.push({
+            file: pdfFiles[index]?.name || `PDF ${index + 1}`,
+            error: result.reason?.message || "Upload failed.",
+          });
+        }
+      });
+
+      successful.forEach(addPdfToLibrary);
+      if (successful.length) applyUploadedPdf(successful[0]);
+
+      if (failed.length) {
+        const firstFailure = failed[0];
+        setUploadMessage(`${successful.length} uploaded, ${failed.length} failed. ${firstFailure.file}: ${firstFailure.error}`);
+        setIsError(true);
+      } else {
+        setUploadMessage(`${successful.length} PDF${successful.length === 1 ? "" : "s"} uploaded. Open any file from the preview grid.`);
+        setIsError(false);
+      }
       setShowUploadMessage(true);
     } catch (error) {
       console.error("Batch PDF upload failed:", error);
-      if (uploaded.length) {
-        uploaded.forEach(addPdfToLibrary);
-        applyUploadedPdf(uploaded[0]);
-      }
       setUploadMessage(error.message || "Batch upload failed.");
       setIsError(true);
       setShowUploadMessage(true);
@@ -335,7 +373,7 @@ const PdfMaster = () => {
       const response = await fetchWithTimeout(endpoint, {
         method: "POST",
         headers: getCsrfHeaders(),
-      });
+      }, PDF_HISTORY_ACTION_TIMEOUT_MS);
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "History action failed.");
       if (!data.pdf_url) throw new Error("History action did not return a PDF.");
@@ -430,7 +468,7 @@ const PdfMaster = () => {
               </div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {pdfLibrary.slice(0, 6).map((item) => (
-                  <PdfPreviewCard key={item.url} item={item} isActive={false} onOpen={openLibraryPdf} />
+                  <PdfPreviewCard key={normalizePdfUrl(item.url)} item={item} isActive={false} onOpen={openLibraryPdf} />
                 ))}
               </div>
             </div>
@@ -492,11 +530,12 @@ const PdfMaster = () => {
           <button onClick={closePdf} className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors">Close</button>
           <button 
             onClick={() => {
-              const cleanPath = (pdfUrl || "").split("?")[0].replace(/^\//, "");
+              const url = new URL("/download_pdf", window.location.origin);
+              const cleanPath = normalizePdfUrl(pdfUrl);
               const requestedName = downloadName?.trim();
-              const nameParam = requestedName ? `&download_name=${encodeURIComponent(requestedName)}` : "";
-              const downloadUrl = cleanPath ? `/download_pdf?pdf_path=${encodeURIComponent(cleanPath)}${nameParam}` : `/download_pdf${nameParam ? `?${nameParam.slice(1)}` : ""}`;
-              window.open(downloadUrl, "_blank");
+              if (cleanPath) url.searchParams.set("pdf_path", cleanPath);
+              if (requestedName) url.searchParams.set("download_name", requestedName);
+              window.open(`${url.pathname}${url.search}`, "_blank");
             }}
             className="flex items-center px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-lg shadow-indigo-100 active:scale-95"
           >
@@ -516,9 +555,9 @@ const PdfMaster = () => {
               <div className="flex gap-3 overflow-x-auto pb-1">
                 {pdfLibrary.map((item) => (
                   <PdfPreviewCard
-                    key={item.url}
+                    key={normalizePdfUrl(item.url)}
                     item={item}
-                    isActive={(pdfUrl || "").split("?")[0] === item.url}
+                    isActive={normalizePdfUrl(pdfUrl) === normalizePdfUrl(item.url)}
                     onOpen={openLibraryPdf}
                   />
                 ))}

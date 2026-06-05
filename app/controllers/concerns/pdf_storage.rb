@@ -5,6 +5,10 @@ require 'hexapdf'
 module PdfStorage
   extend ActiveSupport::Concern
 
+  included do
+    before_action :discard_legacy_pdf_cookie_records
+  end
+
   PDF_PRIVATE_ROOT = Rails.root.join('storage', 'pdf_master').freeze
   PDF_TOKEN_TTL = 24.hours
   PDF_SESSION_KEY = 'pdf_master_files'.freeze
@@ -13,6 +17,7 @@ module PdfStorage
   PDF_ALLOWED_PUBLIC_ROOTS = %w[uploads documents temp_uploads].freeze
   PDF_MAX_SESSION_FILES = 40
   PDF_MAX_SESSION_ARTIFACTS = 120
+  PDF_MAX_FILENAME_STEM_LENGTH = 80
   PDF_ALLOWED_ARTIFACT_TYPES = {
     '.png' => 'image/png',
     '.jpg' => 'image/jpeg',
@@ -43,29 +48,21 @@ module PdfStorage
   end
 
   def session_pdf_files
-    session[PDF_SESSION_KEY] ||= {}
+    raw_files = session[PDF_SESSION_KEY]
+    raw_files.is_a?(Hash) ? raw_files : {}
   end
 
   def session_pdf_artifacts
-    session[PDF_ARTIFACT_SESSION_KEY] ||= {}
+    raw_artifacts = session[PDF_ARTIFACT_SESSION_KEY]
+    raw_artifacts.is_a?(Hash) ? raw_artifacts : {}
   end
 
   def prune_pdf_session!
-    now = Time.current.to_i
-    files = session_pdf_files
-    files.delete_if do |_token, record|
-      record.blank? || record['path'].blank? || record['expires_at'].to_i <= now
-    end
-    session[PDF_SESSION_KEY] = files
+    session.delete(PDF_SESSION_KEY)
   end
 
   def prune_pdf_artifacts!
-    now = Time.current.to_i
-    artifacts = session_pdf_artifacts
-    artifacts.delete_if do |_token, record|
-      record.blank? || record['path'].blank? || record['expires_at'].to_i <= now
-    end
-    session[PDF_ARTIFACT_SESSION_KEY] = artifacts
+    session.delete(PDF_ARTIFACT_SESSION_KEY)
   end
 
   def register_pdf_file!(path, filename: nil, mark_current: true, allow_encrypted: false)
@@ -89,7 +86,7 @@ module PdfStorage
 
     if mark_current
       session[PDF_ACTIVE_TOKEN_KEY] = token
-      session[:pdf_working_path] = private_path.to_s
+      session[:pdf_working_path] = private_storage_path_value(private_path)
       session[:download_filename] = record['filename']
     end
 
@@ -315,15 +312,17 @@ module PdfStorage
     base_name = File.basename(filename.to_s.strip)
     sanitized_name = base_name.gsub(/[^0-9A-Za-z. _-]/, '')
     sanitized_name = 'document.pdf' if sanitized_name.blank?
-    sanitized_name.end_with?('.pdf') ? sanitized_name : "#{sanitized_name}.pdf"
+    sanitized_name = sanitized_name.end_with?('.pdf') ? sanitized_name : "#{sanitized_name}.pdf"
+    stem = File.basename(sanitized_name, '.pdf')[0, PDF_MAX_FILENAME_STEM_LENGTH].presence || 'document'
+    "#{stem}.pdf"
   end
 
   def sanitized_artifact_filename(filename, fallback_extension)
     base_name = File.basename(filename.to_s.strip)
     sanitized_name = base_name.gsub(/[^0-9A-Za-z. _-]/, '')
     extension = File.extname(sanitized_name).presence || fallback_extension
-    sanitized_name = "pdf_artifact#{extension}" if sanitized_name.blank?
-    sanitized_name.end_with?(extension) ? sanitized_name : "#{sanitized_name}#{extension}"
+    stem = File.basename(sanitized_name, extension)[0, PDF_MAX_FILENAME_STEM_LENGTH].presence || 'pdf_artifact'
+    "#{stem}#{extension}"
   end
 
   def locked_write(path)
@@ -342,5 +341,10 @@ module PdfStorage
       source_file.flock(File::LOCK_SH)
       locked_write(target) { |target_file| IO.copy_stream(source_file, target_file) }
     end
+  end
+
+  def discard_legacy_pdf_cookie_records
+    session.delete(PDF_SESSION_KEY)
+    session.delete(PDF_ARTIFACT_SESSION_KEY)
   end
 end

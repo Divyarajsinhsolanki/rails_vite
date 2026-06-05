@@ -29,10 +29,7 @@ const protectionLevels = [
   { value: "high", label: "High" },
 ];
 
-const FormRenderer = ({ activeForm, setActiveForm, setPdfUpdated, setPdfUrl, pdfPath, placementCoordinates, setPlacementCoordinates }) => {
-  // ... (formConfigs remains unchanged) ...
-
-  const formConfigs = {
+const formConfigs = {
     addText: {
       title: "Add Text",
       endpoint: "/add_text",
@@ -182,7 +179,7 @@ const FormRenderer = ({ activeForm, setActiveForm, setPdfUpdated, setPdfUrl, pdf
       title: "Export Images",
       endpoint: "/export_to_images",
       formFields: [
-        { name: "format", type: "select", label: "Image Format", defaultValue: "png", options: imageExportFormats },
+        { name: "image_format", type: "select", label: "Image Format", defaultValue: "png", options: imageExportFormats },
         { name: "dpi", type: "number", label: "DPI", min: "72", max: "200", defaultValue: "144" },
       ],
     },
@@ -209,8 +206,9 @@ const FormRenderer = ({ activeForm, setActiveForm, setPdfUpdated, setPdfUrl, pdf
       endpoint: "/decrypt_pdf",
       formFields: [{ name: "password", type: "password", label: "Enter Password" }],
     },
-  };
+};
 
+const FormRenderer = ({ activeForm, setActiveForm, setPdfUpdated, setPdfUrl, pdfPath, placementCoordinates, setPlacementCoordinates }) => {
   const config = formConfigs[activeForm];
 
   if (!config) return null;

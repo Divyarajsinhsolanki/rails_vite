@@ -8,6 +8,8 @@ require 'timeout'
 class PdfModifiersController < ApplicationController
   include PdfStorage
 
+  before_action :migrate_pdf_history_cookie_to_file!
+
   MAX_AUXILIARY_UPLOAD_SIZE = 10.megabytes
   MAX_MERGE_UPLOAD_SIZE = 50.megabytes
   MAX_WATERMARK_TEXT_LENGTH = 100
@@ -22,6 +24,7 @@ class PdfModifiersController < ApplicationController
   PDF_HISTORY_LIMIT = 20
   PDF_HISTORY_KEY = 'pdf_master_history'.freeze
   PDF_REDO_KEY = 'pdf_master_redo'.freeze
+  PDF_HISTORY_STORE_KEY = 'pdf_master_history_store_id'.freeze
   MAX_IMAGE_PIXEL_DIMENSION = 2_000
   MIN_IMAGE_PIXEL_DIMENSION = 8
   MIN_IMAGE_ASPECT_RATIO = 0.2
@@ -74,9 +77,11 @@ class PdfModifiersController < ApplicationController
     path = safe_pdf_path(params[:pdf_path])
     history_path = pdf_history_snapshot(path, 'add_page')
     position = validated_insert_position!(path, params[:position])
-    new_path = PdfMaster.add_page(path, position)
+    output_path = mutable_pdf_copy(path, 'add_page')
+    PdfMaster.add_page(output_path.to_s, position)
+    validate_output_pdf!(output_path)
 
-    render_pdf_result('Page added successfully.', new_path, fallback_path: path, history_path: history_path)
+    render_pdf_result('Page added successfully.', output_path, fallback_path: path, history_path: history_path)
   rescue => e
     render_pdf_error(e)
   end
@@ -87,9 +92,11 @@ class PdfModifiersController < ApplicationController
 
     history_path = pdf_history_snapshot(path, 'remove_page')
     position = validated_page_number!(path, params[:position])
-    new_path = PdfMaster.remove_page(path, position)
+    output_path = mutable_pdf_copy(path, 'remove_page')
+    PdfMaster.remove_page(output_path.to_s, position)
+    validate_output_pdf!(output_path)
 
-    render_pdf_result('Page removed successfully.', new_path, fallback_path: path, history_path: history_path)
+    render_pdf_result('Page removed successfully.', output_path, fallback_path: path, history_path: history_path)
   rescue => e
     render_pdf_error(e)
   end
@@ -98,9 +105,11 @@ class PdfModifiersController < ApplicationController
     path = safe_pdf_path(params[:pdf_path])
     history_path = pdf_history_snapshot(path, 'duplicate_page')
     page_number = validated_page_number!(path, params[:page_number])
-    new_path = PdfMaster.duplicate_pages(path, page_number)
+    output_path = mutable_pdf_copy(path, 'duplicate_page')
+    PdfMaster.duplicate_pages(output_path.to_s, page_number)
+    validate_output_pdf!(output_path)
 
-    render_pdf_result('Page duplicated successfully.', new_path, fallback_path: path, history_path: history_path)
+    render_pdf_result('Page duplicated successfully.', output_path, fallback_path: path, history_path: history_path)
   rescue => e
     render_pdf_error(e)
   end
@@ -110,9 +119,11 @@ class PdfModifiersController < ApplicationController
     history_path = pdf_history_snapshot(path, 'replace_text')
     old_text = required_string!(params[:old_text], 'Text to replace')
     new_text = required_string!(params[:new_text], 'Replacement text')
-    new_path = PdfMaster.replace_text(path, old_text, new_text)
+    output_path = mutable_pdf_copy(path, 'replace_text')
+    replacements = replace_text_in_pdf_streams!(output_path, old_text, new_text)
+    message = replacements.positive? ? 'Text replaced successfully.' : 'No matching text found. PDF was left unchanged.'
 
-    render_pdf_result('Text replaced successfully.', new_path, fallback_path: path, history_path: history_path)
+    render_pdf_result(message, output_path, fallback_path: path, history_path: history_path)
   rescue => e
     render_pdf_error(e)
   end
@@ -188,9 +199,11 @@ class PdfModifiersController < ApplicationController
     path = safe_pdf_path(params[:pdf_path])
     history_path = pdf_history_snapshot(path, 'rotate_left')
     page_number = validated_page_number!(path, params[:page_number])
-    new_path = PdfMaster.rotate_page(path, 270, page_number)
+    output_path = mutable_pdf_copy(path, 'rotate_left')
+    PdfMaster.rotate_page(output_path.to_s, 270, page_number)
+    validate_output_pdf!(output_path)
 
-    render_pdf_result('Page rotated left successfully.', new_path, fallback_path: path, history_path: history_path)
+    render_pdf_result('Page rotated left successfully.', output_path, fallback_path: path, history_path: history_path)
   rescue => e
     render_pdf_error(e)
   end
@@ -199,9 +212,11 @@ class PdfModifiersController < ApplicationController
     path = safe_pdf_path(params[:pdf_path])
     history_path = pdf_history_snapshot(path, 'rotate_right')
     page_number = validated_page_number!(path, params[:page_number])
-    new_path = PdfMaster.rotate_page(path, 90, page_number)
+    output_path = mutable_pdf_copy(path, 'rotate_right')
+    PdfMaster.rotate_page(output_path.to_s, 90, page_number)
+    validate_output_pdf!(output_path)
 
-    render_pdf_result('Page rotated right successfully.', new_path, fallback_path: path, history_path: history_path)
+    render_pdf_result('Page rotated right successfully.', output_path, fallback_path: path, history_path: history_path)
   rescue => e
     render_pdf_error(e)
   end
@@ -337,23 +352,33 @@ class PdfModifiersController < ApplicationController
 
   def export_to_images
     path = safe_pdf_path(params[:pdf_path])
-    format_config = validated_image_export_format(params[:format])
+    format_config = validated_image_export_format(params[:image_format].presence || params[:format])
     dpi = (validated_optional_number(params[:dpi], label: 'DPI', min: 72, max: MAX_IMAGE_EXPORT_DPI) || 144).to_i
     page_count = pdf_page_count(path)
     raise StandardError, "Cannot export more than #{MAX_IMAGE_EXPORT_PAGES} pages to images at once." if page_count > MAX_IMAGE_EXPORT_PAGES
 
     output_paths = export_pdf_images(path, format_config, dpi)
-    urls = output_paths.each_with_index.map do |output_path, index|
-      register_pdf_artifact!(
+    artifacts = output_paths.each_with_index.map do |output_path, index|
+      filename = image_export_filename(path, index + 1, format_config[:extension])
+      url = register_pdf_artifact!(
         output_path,
-        filename: image_export_filename(path, index + 1, format_config[:extension]),
+        filename: filename,
         content_type: format_config[:content_type]
       )
+
+      {
+        url: url,
+        download_url: artifact_download_url(url),
+        filename: filename,
+        content_type: format_config[:content_type],
+        page_number: index + 1
+      }
     end
 
     render json: {
-      message: "PDF converted to #{urls.length} #{format_config[:extension].delete('.').upcase} image#{'s' unless urls.length == 1}.",
-      urls: urls
+      message: "PDF converted to #{artifacts.length} #{format_config[:extension].delete('.').upcase} image#{'s' unless artifacts.length == 1}.",
+      urls: artifacts.map { |artifact| artifact[:url] },
+      artifacts: artifacts
     }, status: :ok
   rescue => e
     render_pdf_error(e)
@@ -364,12 +389,16 @@ class PdfModifiersController < ApplicationController
     text = extract_pdf_text(path)
     artifact_path = private_artifact_path('text', "#{File.basename(path, '.pdf')}_text.txt")
     locked_write(artifact_path) { |file| file.write(text) }
-    text_url = register_pdf_artifact!(artifact_path, filename: File.basename(artifact_path), content_type: 'text/plain')
+    filename = File.basename(artifact_path)
+    text_url = register_pdf_artifact!(artifact_path, filename: filename, content_type: 'text/plain')
 
     render json: {
       message: 'Text extracted successfully.',
       text: display_extracted_text(text),
       url: text_url,
+      download_url: artifact_download_url(text_url),
+      filename: filename,
+      content_type: 'text/plain',
       truncated: text.length > MAX_EXTRACT_TEXT_CHARS
     }, status: :ok
   rescue => e
@@ -483,6 +512,13 @@ class PdfModifiersController < ApplicationController
     full_path.to_s
   end
 
+  def mutable_pdf_copy(path, prefix)
+    output_path = private_output_path(prefix, File.basename(path))
+    locked_copy(path, output_path)
+    validate_output_pdf!(output_path)
+    output_path
+  end
+
   def required_string!(value, label)
     string_value = value.to_s.strip
     raise StandardError, "#{label} is required." if string_value.blank?
@@ -561,6 +597,57 @@ class PdfModifiersController < ApplicationController
   def merge_pdf_uploads
     merge_keys = params.keys.select { |key| key.to_s.match?(/\Apdf\d+\z/) && params[key].present? }
     merge_keys.sort_by { |key| key.to_s.delete_prefix('pdf').to_i }.map { |key| params[key] }
+  end
+
+  def replace_text_in_pdf_streams!(path, old_text, new_text)
+    replacements = 0
+    temp_output_path = pdf_private_root.join('temp', "replace_text_#{SecureRandom.hex(12)}.pdf").cleanpath
+
+    HexaPDF::Document.open(path.to_s) do |document|
+      document.pages.each do |page|
+        page_replacements = replace_text_on_page!(page, old_text, new_text)
+        replacements += page_replacements
+      end
+
+      FileUtils.mkdir_p(temp_output_path.dirname)
+      document.write(temp_output_path.to_s, optimize: true)
+    end
+
+    locked_copy(temp_output_path, path)
+    validate_output_pdf!(path)
+    replacements
+  ensure
+    delete_temp_upload(temp_output_path)
+  end
+
+  def replace_text_on_page!(page, old_text, new_text)
+    contents = page.contents
+    return 0 if contents.blank?
+
+    if contents.respond_to?(:stream)
+      replace_text_in_stream!(contents, old_text, new_text)
+    elsif contents.is_a?(String)
+      updated_content, count = replace_text_in_string(contents, old_text, new_text)
+      page.contents = updated_content if count.positive?
+      count
+    else
+      Array(contents).sum do |content_stream|
+        content_stream.respond_to?(:stream) ? replace_text_in_stream!(content_stream, old_text, new_text) : 0
+      end
+    end
+  end
+
+  def replace_text_in_stream!(content_stream, old_text, new_text)
+    updated_content, count = replace_text_in_string(content_stream.stream.to_s, old_text, new_text)
+    content_stream.stream = updated_content if count.positive?
+    count
+  end
+
+  def replace_text_in_string(content, old_text, new_text)
+    count = content.scan(old_text).length
+    return [content, 0] if count.zero?
+
+    [content.gsub(old_text, new_text), count]
   end
 
   def validated_metadata!
@@ -759,6 +846,10 @@ class PdfModifiersController < ApplicationController
     "#{File.basename(original_path, '.pdf')}_page_#{page_number}#{extension}"
   end
 
+  def artifact_download_url(url)
+    "#{url}#{url.include?('?') ? '&' : '?'}download=1"
+  end
+
   def private_artifact_path(prefix, filename)
     ensure_pdf_private_root!
     extension = File.extname(filename.to_s).presence || '.txt'
@@ -772,12 +863,30 @@ class PdfModifiersController < ApplicationController
     "#{text[0, MAX_EXTRACT_TEXT_CHARS]}\n\n[Text truncated in preview. Use the download link for the full extraction.]"
   end
 
+  def migrate_pdf_history_cookie_to_file!
+    legacy_history = session[PDF_HISTORY_KEY]
+    legacy_redo = session[PDF_REDO_KEY]
+
+    if legacy_history.is_a?(Array) || legacy_redo.is_a?(Array)
+      current_state = read_pdf_history_state
+      if current_state['history'].empty? && current_state['redo'].empty?
+        write_pdf_history_state!(
+          'history' => history_entries_from(legacy_history),
+          'redo' => history_entries_from(legacy_redo)
+        )
+      end
+    end
+
+    session.delete(PDF_HISTORY_KEY)
+    session.delete(PDF_REDO_KEY)
+  end
+
   def pdf_history
-    session[PDF_HISTORY_KEY] ||= []
+    pdf_history_state['history']
   end
 
   def pdf_redo_stack
-    session[PDF_REDO_KEY] ||= []
+    pdf_history_state['redo']
   end
 
   def pdf_history_snapshot(path, operation, allow_encrypted: false)
@@ -807,30 +916,84 @@ class PdfModifiersController < ApplicationController
   end
 
   def push_pdf_history!(entry, clear_redo: true)
-    session[PDF_HISTORY_KEY] = (pdf_history + [entry]).last(PDF_HISTORY_LIMIT)
-    session[PDF_REDO_KEY] = [] if clear_redo
+    state = pdf_history_state
+    state['history'] = (history_entries_from(state['history']) + [entry]).last(PDF_HISTORY_LIMIT)
+    state['redo'] = [] if clear_redo
+    write_pdf_history_state!(state)
   end
 
   def push_pdf_redo!(entry)
-    session[PDF_REDO_KEY] = (pdf_redo_stack + [entry]).last(PDF_HISTORY_LIMIT)
+    state = pdf_history_state
+    state['redo'] = (history_entries_from(state['redo']) + [entry]).last(PDF_HISTORY_LIMIT)
+    write_pdf_history_state!(state)
   end
 
   def pop_pdf_history!
-    history = pdf_history
+    state = pdf_history_state
+    history = history_entries_from(state['history'])
     raise StandardError, 'No operations to undo.' if history.empty?
 
     entry = history.pop
-    session[PDF_HISTORY_KEY] = history
+    state['history'] = history
+    write_pdf_history_state!(state)
     entry
   end
 
   def pop_pdf_redo!
-    redo_stack = pdf_redo_stack
+    state = pdf_history_state
+    redo_stack = history_entries_from(state['redo'])
     raise StandardError, 'No operations to redo.' if redo_stack.empty?
 
     entry = redo_stack.pop
-    session[PDF_REDO_KEY] = redo_stack
+    state['redo'] = redo_stack
+    write_pdf_history_state!(state)
     entry
+  end
+
+  def pdf_history_state
+    @pdf_history_state ||= read_pdf_history_state
+  end
+
+  def read_pdf_history_state
+    record_path = pdf_history_record_path
+    return default_pdf_history_state unless File.exist?(record_path)
+
+    parsed = JSON.parse(File.read(record_path))
+    {
+      'history' => history_entries_from(parsed['history']),
+      'redo' => history_entries_from(parsed['redo'])
+    }
+  rescue JSON::ParserError
+    default_pdf_history_state
+  end
+
+  def write_pdf_history_state!(state)
+    normalized_state = {
+      'history' => history_entries_from(state['history']).last(PDF_HISTORY_LIMIT),
+      'redo' => history_entries_from(state['redo']).last(PDF_HISTORY_LIMIT),
+      'updated_at' => Time.current.to_i
+    }
+
+    locked_write(pdf_history_record_path) { |file| file.write(normalized_state.to_json) }
+    @pdf_history_state = normalized_state
+  end
+
+  def default_pdf_history_state
+    { 'history' => [], 'redo' => [] }
+  end
+
+  def history_entries_from(value)
+    Array(value).select { |entry| entry.is_a?(Hash) }.last(PDF_HISTORY_LIMIT)
+  end
+
+  def pdf_history_record_path
+    ensure_pdf_private_root!
+    pdf_private_root.join('history_records', "#{pdf_history_store_id}.json").cleanpath
+  end
+
+  def pdf_history_store_id
+    session[PDF_HISTORY_STORE_KEY] = SecureRandom.hex(16) if session[PDF_HISTORY_STORE_KEY].blank?
+    session[PDF_HISTORY_STORE_KEY].to_s.gsub(/[^0-9A-Za-z_-]/, '')
   end
 
   def register_history_pdf!(path, filename, allow_encrypted)

@@ -1,11 +1,13 @@
 class Api::ProjectsController < Api::BaseController
   include Rails.application.routes.url_helpers
+  PROJECT_USER_INCLUDES = { user: [:department, { profile_picture_attachment: :blob }] }.freeze
+
   before_action :set_project, only: [:update, :destroy]
   before_action :authorize_manager!, only: [:create, :update, :destroy]
   around_action :log_project_dashboard_exceptions
 
   def index
-    projects = Project.includes(project_users: :user).order(:name)
+    projects = Project.includes(project_users: PROJECT_USER_INCLUDES).order(:name)
     render_paginated_collection(projects, serializer: method(:serialize_project))
   end
 
@@ -126,7 +128,7 @@ class Api::ProjectsController < Api::BaseController
       issue_sheet_id: project.issue_sheet_id,
       issue_sheet_name: project.issue_sheet_name,
       qa_mode_enabled: project.try(:qa_mode_enabled) || false,
-      users: project.project_users.includes(:user).sort_by { |pu| [pu.role.to_s, pu.user&.full_name.to_s] }.map do |pu|
+      users: project_users_for(project).sort_by { |pu| [pu.role.to_s, pu.user&.full_name.to_s] }.map do |pu|
         {
           id: pu.user_id,
           project_user_id: pu.id,
@@ -148,5 +150,11 @@ class Api::ProjectsController < Api::BaseController
         }
       end
     }
+  end
+
+  def project_users_for(project)
+    return project.project_users if project.association(:project_users).loaded?
+
+    project.project_users.includes(PROJECT_USER_INCLUDES)
   end
 end

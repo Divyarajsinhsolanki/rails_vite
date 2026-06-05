@@ -2,6 +2,9 @@ class PdfsController < ApplicationController
   include PdfStorage
 
   MAX_PDF_UPLOAD_SIZE = 50.megabytes
+  LEGACY_PDF_HISTORY_SESSION_KEYS = %w[pdf_master_history pdf_master_redo].freeze
+
+  before_action :discard_legacy_pdf_modifier_history
 
   def upload_pdf
     cleanup_stale_pdf_files!
@@ -36,8 +39,8 @@ class PdfsController < ApplicationController
     locked_copy(original_path, working_path)
     validate_output_pdf!(working_path)
 
-    session[:pdf_original_path] = original_path.to_s
-    session[:pdf_working_path] = working_path.to_s
+    session[:pdf_original_path] = private_storage_path_value(original_path)
+    session[:pdf_working_path] = private_storage_path_value(working_path)
     pdf_url = register_pdf_file!(working_path, filename: session[:download_filename], mark_current: true)
 
     render json: {
@@ -48,8 +51,8 @@ class PdfsController < ApplicationController
   end
 
   def reset
-    original_path = session[:pdf_original_path]
-    working_path = session[:pdf_working_path]
+    original_path = pdf_session_private_path(session[:pdf_original_path])
+    working_path = pdf_session_private_path(session[:pdf_working_path])
 
     if original_path.present? && working_path.present? && File.exist?(original_path)
       locked_copy(original_path, working_path)
@@ -74,7 +77,7 @@ class PdfsController < ApplicationController
   def artifact
     record = pdf_artifact_record_for_token!(params[:token])
     response.headers['Cache-Control'] = 'private, no-store'
-    send_file record['path'], type: record['content_type'], filename: record['filename'], disposition: 'inline'
+    send_file record['path'], type: record['content_type'], filename: record['filename'], disposition: artifact_disposition
   rescue => e
     render json: { error: e.message }, status: :not_found
   end
@@ -123,7 +126,7 @@ class PdfsController < ApplicationController
   def download_path_from_session
     return if session[:pdf_working_path].blank?
 
-    path = normalize_pdf_path(session[:pdf_working_path])
+    path = pdf_session_private_path(session[:pdf_working_path])
     return unless path_inside?(path, pdf_private_root.cleanpath)
     return unless File.exist?(path)
 
@@ -143,5 +146,19 @@ class PdfsController < ApplicationController
     return "pdf_master.pdf" if path.blank?
 
     File.basename(path)
+  end
+
+  def artifact_disposition
+    params[:download].present? || params[:disposition].to_s == 'attachment' ? 'attachment' : 'inline'
+  end
+
+  def pdf_session_private_path(value)
+    return if value.blank?
+
+    normalize_private_storage_path(value)
+  end
+
+  def discard_legacy_pdf_modifier_history
+    LEGACY_PDF_HISTORY_SESSION_KEYS.each { |key| session.delete(key) }
   end
 end
