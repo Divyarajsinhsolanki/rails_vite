@@ -9,6 +9,7 @@ import {
   Copy, 
   RotateCcw, 
   RotateCw, 
+  CheckCircle2,
   Loader2,
   ChevronLeft,
   ChevronRight,
@@ -40,7 +41,17 @@ const getCsrfHeaders = () => {
   return csrfToken ? { "X-CSRF-Token": csrfToken } : {};
 };
 
-const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, placementCoordinates, onCancelTool, setPdfUpdated }) => {
+const PdfViewer = ({
+  pdfUrl,
+  activeTool,
+  onConfirmPosition,
+  onPlacementChange,
+  placementCoordinates,
+  textDraft,
+  setTextDraft,
+  onCancelTool,
+  setPdfUpdated,
+}) => {
   const lastPdfPathRef = useRef(null);
   const loadSequenceRef = useRef(0);
   const actionInFlightRef = useRef(false);
@@ -51,8 +62,10 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, p
   const [pageWidth, setPageWidth] = useState(null);
   const [pageHeight, setPageHeight] = useState(null);
   const [processing, setProcessing] = useState(false);
+  const [activeQuickAction, setActiveQuickAction] = useState("");
   const [documentError, setDocumentError] = useState("");
   const [actionError, setActionError] = useState("");
+  const [actionNotice, setActionNotice] = useState("");
   const placementTools = new Set(["addText", "addSignature", "addStamp", "addWatermark"]);
   const shouldShowOverlay = placementTools.has(activeTool);
 
@@ -80,6 +93,7 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, p
     setNumPages(null);
     setDocumentError("");
     setActionError("");
+    setActionNotice("");
   }, [pdfUrl]);
 
   useEffect(() => {
@@ -120,6 +134,13 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, p
     setPageNumber(clampedPage => Math.min(Math.max(1, requestedPage), maxPage));
   }, [shouldShowOverlay, placementCoordinates?.pageNumber, numPages]);
 
+  useEffect(() => {
+    if (!actionNotice) return undefined;
+
+    const timeout = window.setTimeout(() => setActionNotice(""), 3200);
+    return () => window.clearTimeout(timeout);
+  }, [actionNotice]);
+
   function onDocumentLoadSuccess({ numPages }, loadId = documentLoadId) {
     if (loadId !== loadSequenceRef.current) return;
     setNumPages(numPages);
@@ -138,11 +159,13 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, p
     setDocumentError(error?.message || "Unable to load this PDF.");
   };
 
-  const handleQuickAction = async (endpoint, params = {}) => {
+  const handleQuickAction = async (endpoint, params = {}, actionKey = "pdfAction", fallbackMessage = "PDF action completed.") => {
     if (actionInFlightRef.current) return;
     actionInFlightRef.current = true;
     setProcessing(true);
+    setActiveQuickAction(actionKey);
     setActionError("");
+    setActionNotice("");
     const formData = new FormData();
     const cleanPath = pdfUrl.split("?")[0];
     formData.append("pdf_path", cleanPath);
@@ -168,12 +191,14 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, p
       } else {
         setPdfUpdated(prev => prev + 1);
       }
+      setActionNotice(data.message || fallbackMessage);
     } catch (error) {
       console.error("Action failed:", error);
       setActionError(error.message || "PDF action failed.");
     } finally {
       actionInFlightRef.current = false;
       setProcessing(false);
+      setActiveQuickAction("");
     }
   };
 
@@ -225,6 +250,13 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, p
         </div>
       )}
 
+      {actionNotice && (
+        <div className="mx-6 mt-3 flex shrink-0 items-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">
+          <CheckCircle2 className="h-4 w-4" />
+          {actionNotice}
+        </div>
+      )}
+
       {processing && (
         <div className="mx-6 mt-3 flex shrink-0 items-center gap-2 rounded-lg border border-indigo-100 bg-indigo-50 px-3 py-2 text-xs font-bold text-indigo-700">
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -268,6 +300,8 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, p
                     onConfirmPosition={(pos) => onConfirmPosition({ ...pos, pageNumber })}
                     onPlacementChange={(pos) => onPlacementChange?.({ ...pos, pageNumber })}
                     placementCoordinates={placementCoordinates}
+                    textDraft={textDraft}
+                    setTextDraft={setTextDraft}
                     onCancel={onCancelTool}
                     scale={scale}
                     pageWidth={pageWidth ? pageWidth * scale : 600}
@@ -280,56 +314,56 @@ const PdfViewer = ({ pdfUrl, activeTool, onConfirmPosition, onPlacementChange, p
         </div>
 
         {/* Floating Side Action Rail */}
-        <div className="shrink-0 flex flex-col gap-1 p-1 bg-white/80 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200/40 mt-2 z-20">
+        <div className="shrink-0 flex flex-col gap-1 p-1 bg-white/85 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200/50 mt-2 z-20">
           <button
-            onClick={() => handleQuickAction("/add_page", { position: pageNumber + 1 })}
+            onClick={() => handleQuickAction("/add_page", { position: pageNumber + 1 }, "addPage", "Page added.")}
             disabled={processing}
-            className="flex flex-col items-center justify-center w-12 h-12 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-xl transition-all group"
+            className="flex h-12 w-12 flex-col items-center justify-center rounded-xl text-indigo-600 transition-all hover:bg-indigo-600 hover:text-white disabled:cursor-wait disabled:opacity-60"
             title="Add Page After"
           >
-            {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            {activeQuickAction === "addPage" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
             <span className="text-[8px] font-black mt-1 uppercase">Add</span>
           </button>
           
           <button
-            onClick={() => handleQuickAction("/duplicate_page", { page_number: pageNumber })}
+            onClick={() => handleQuickAction("/duplicate_page", { page_number: pageNumber }, "duplicatePage", "Page duplicated.")}
             disabled={processing}
-            className="flex flex-col items-center justify-center w-12 h-12 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-xl transition-all group"
+            className="flex h-12 w-12 flex-col items-center justify-center rounded-xl text-indigo-600 transition-all hover:bg-indigo-600 hover:text-white disabled:cursor-wait disabled:opacity-60"
             title="Duplicate Page"
           >
-            <Copy className="h-4 w-4" />
+            {activeQuickAction === "duplicatePage" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
             <span className="text-[8px] font-black mt-1 uppercase">Copy</span>
           </button>
 
           <div className="h-px bg-gray-100 mx-2 my-1"></div>
 
           <button
-            onClick={() => handleQuickAction("/rotate_left", { page_number: pageNumber })}
+            onClick={() => handleQuickAction("/rotate_left", { page_number: pageNumber }, "rotateLeft", "Page rotated left.")}
             disabled={processing}
-            className="flex flex-col items-center justify-center w-12 h-10 text-gray-500 hover:bg-gray-100 rounded-xl transition-all"
+            className="flex h-10 w-12 flex-col items-center justify-center rounded-xl text-gray-500 transition-all hover:bg-gray-100 disabled:cursor-wait disabled:opacity-60"
             title="Rotate Left"
           >
-            <RotateCcw className="h-3.5 w-3.5" />
+            {activeQuickAction === "rotateLeft" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
           </button>
           
           <button
-            onClick={() => handleQuickAction("/rotate_right", { page_number: pageNumber })}
+            onClick={() => handleQuickAction("/rotate_right", { page_number: pageNumber }, "rotateRight", "Page rotated right.")}
             disabled={processing}
-            className="flex flex-col items-center justify-center w-12 h-10 text-gray-500 hover:bg-gray-100 rounded-xl transition-all"
+            className="flex h-10 w-12 flex-col items-center justify-center rounded-xl text-gray-500 transition-all hover:bg-gray-100 disabled:cursor-wait disabled:opacity-60"
             title="Rotate Right"
           >
-            <RotateCw className="h-3.5 w-3.5" />
+            {activeQuickAction === "rotateRight" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCw className="h-3.5 w-3.5" />}
           </button>
 
           <div className="h-px bg-gray-100 mx-2 my-1"></div>
 
           <button
-            onClick={() => handleQuickAction("/remove_page", { position: pageNumber })}
+            onClick={() => handleQuickAction("/remove_page", { position: pageNumber }, "removePage", "Page removed.")}
             disabled={processing || (numPages || 0) <= 1}
-            className="flex flex-col items-center justify-center w-12 h-12 text-red-500 hover:bg-red-600 hover:text-white rounded-xl transition-all"
+            className="flex h-12 w-12 flex-col items-center justify-center rounded-xl text-red-500 transition-all hover:bg-red-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
             title="Remove Page"
           >
-            <FileMinus className="h-4 w-4" />
+            {activeQuickAction === "removePage" ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileMinus className="h-4 w-4" />}
             <span className="text-[8px] font-black mt-1 uppercase">Del</span>
           </button>
         </div>

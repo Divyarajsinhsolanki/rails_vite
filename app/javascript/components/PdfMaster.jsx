@@ -186,6 +186,7 @@ const PdfMaster = () => {
   const [isError, setIsError] = useState(false);
   const [activeForm, setActiveForm] = useState(null);
   const [placementCoordinates, setPlacementCoordinates] = useState(null);
+  const [textDraft, setTextDraft] = useState({ text: "", fontSize: 14, color: "#111827" });
   const [downloadName, setDownloadName] = useState("document.pdf");
   const [pdfLibrary, setPdfLibrary] = useState([]);
 
@@ -212,6 +213,9 @@ const PdfMaster = () => {
 
   useEffect(() => {
     setPlacementCoordinates(null);
+    if (activeForm !== "addText") {
+      setTextDraft({ text: "", fontSize: 14, color: "#111827" });
+    }
   }, [activeForm]);
 
   const addPdfToLibrary = useCallback((item) => {
@@ -583,6 +587,8 @@ const PdfMaster = () => {
                         setActiveForm={setActiveForm}
                         placementCoordinates={placementCoordinates}
                         setPlacementCoordinates={setPlacementCoordinates}
+                        textDraft={textDraft}
+                        setTextDraft={setTextDraft}
                     />
                 </div>
               </motion.div>
@@ -597,6 +603,8 @@ const PdfMaster = () => {
               onConfirmPosition={handleConfirmPosition}
               onPlacementChange={handlePlacementChange}
               placementCoordinates={placementCoordinates}
+              textDraft={textDraft}
+              setTextDraft={setTextDraft}
               onCancelTool={() => setActiveForm(null)}
               setPdfUpdated={setPdfUpdated}
             />

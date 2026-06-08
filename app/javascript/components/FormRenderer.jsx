@@ -208,7 +208,17 @@ const formConfigs = {
     },
 };
 
-const FormRenderer = ({ activeForm, setActiveForm, setPdfUpdated, setPdfUrl, pdfPath, placementCoordinates, setPlacementCoordinates }) => {
+const FormRenderer = ({
+  activeForm,
+  setActiveForm,
+  setPdfUpdated,
+  setPdfUrl,
+  pdfPath,
+  placementCoordinates,
+  setPlacementCoordinates,
+  textDraft,
+  setTextDraft,
+}) => {
   const config = formConfigs[activeForm];
 
   if (!config) return null;
@@ -221,6 +231,8 @@ const FormRenderer = ({ activeForm, setActiveForm, setPdfUpdated, setPdfUrl, pdf
       pdfPath={pdfPath}
       placementCoordinates={placementCoordinates}
       setPlacementCoordinates={setPlacementCoordinates}
+      textDraft={textDraft}
+      setTextDraft={setTextDraft}
       {...config}
     />
   );

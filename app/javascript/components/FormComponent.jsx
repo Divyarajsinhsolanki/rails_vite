@@ -1,11 +1,27 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, Download, ExternalLink, FileUp, Loader2, MapPin, X } from "lucide-react";
+import {
+  CheckCircle2,
+  Download,
+  ExternalLink,
+  FileUp,
+  Loader2,
+  MapPin,
+  Minus,
+  Move,
+  Palette,
+  Plus,
+  Type,
+  X,
+} from "lucide-react";
 import { fetchWithTimeout } from "../utils/request";
 
 const placementFieldNames = new Set(["x", "y", "page_number"]);
 const MAX_PDF_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 const MAX_IMAGE_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+const TEXT_COLOR_SWATCHES = ["#111827", "#2563EB", "#059669", "#DC2626", "#7C3AED", "#EA580C"];
+const TEXT_SIZE_PRESETS = [12, 14, 18, 24, 32];
+const DEFAULT_TEXT_DRAFT = { text: "", fontSize: 14, color: "#111827" };
 
 const getCsrfHeaders = () => {
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
@@ -176,6 +192,8 @@ const FormComponent = ({
   pdfPath,
   placementCoordinates,
   setPlacementCoordinates,
+  textDraft,
+  setTextDraft,
 }) => {
   const initialFormData = useMemo(
     () => formFields.reduce((acc, field) => ({ ...acc, [field.name]: field.defaultValue ?? "" }), { pdf_path: pdfPath }),
@@ -188,6 +206,7 @@ const FormComponent = ({
   const [extractedText, setExtractedText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const hasPlacementFields = formFields.some((field) => placementFieldNames.has(field.name));
+  const isAddTextForm = endpoint === "/add_text";
 
   useEffect(() => {
     setFormData(initialFormData);
@@ -195,7 +214,40 @@ const FormComponent = ({
     setSuccessMessage("");
     setResultArtifacts([]);
     setExtractedText("");
+
+    if (isAddTextForm && setTextDraft) {
+      setTextDraft((previous) => ({
+        text: previous?.text || initialFormData.text || DEFAULT_TEXT_DRAFT.text,
+        fontSize: Number(previous?.fontSize || initialFormData.font_size || DEFAULT_TEXT_DRAFT.fontSize),
+        color: previous?.color || initialFormData.color || DEFAULT_TEXT_DRAFT.color,
+      }));
+    }
   }, [initialFormData, pdfPath]);
+
+  useEffect(() => {
+    if (!isAddTextForm || !textDraft) return;
+
+    setFormData((prev) => {
+      const nextText = textDraft.text ?? DEFAULT_TEXT_DRAFT.text;
+      const nextFontSize = textDraft.fontSize ?? DEFAULT_TEXT_DRAFT.fontSize;
+      const nextColor = textDraft.color ?? DEFAULT_TEXT_DRAFT.color;
+
+      if (
+        prev.text === nextText &&
+        String(prev.font_size) === String(nextFontSize) &&
+        prev.color === nextColor
+      ) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        text: nextText,
+        font_size: nextFontSize,
+        color: nextColor,
+      };
+    });
+  }, [isAddTextForm, textDraft?.text, textDraft?.fontSize, textDraft?.color]);
 
   useEffect(() => {
     if (!placementCoordinates) return;
@@ -231,12 +283,36 @@ const FormComponent = ({
     }));
   };
 
+  const updateTextDraftFromForm = (name, value) => {
+    if (!isAddTextForm || !setTextDraft) return;
+
+    if (name === "text") {
+      setTextDraft((previous) => ({ ...(previous || DEFAULT_TEXT_DRAFT), text: value }));
+    }
+
+    if (name === "font_size") {
+      const fontSize = Number(value);
+      if (!Number.isNaN(fontSize)) {
+        setTextDraft((previous) => ({ ...(previous || DEFAULT_TEXT_DRAFT), fontSize }));
+      }
+    }
+
+    if (name === "color") {
+      setTextDraft((previous) => ({ ...(previous || DEFAULT_TEXT_DRAFT), color: value || DEFAULT_TEXT_DRAFT.color }));
+    }
+  };
+
+  const setFieldValue = (name, value) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    updatePlacementFromForm(name, value);
+    updateTextDraftFromForm(name, value);
+  };
+
   const handleChange = (e) => {
     const { name, type, files, value } = e.target;
     const nextValue = type === "file" ? files?.[0] || null : value;
 
-    setFormData((prev) => ({ ...prev, [name]: nextValue }));
-    updatePlacementFromForm(name, value);
+    setFieldValue(name, nextValue);
   };
 
   const buildRequest = () => {
@@ -290,12 +366,15 @@ const FormComponent = ({
       const artifactUrls = Array.isArray(data.urls) ? data.urls : [];
       const artifacts = buildArtifacts(data);
       const nextPdfUrl = data.pdf_url || pdfUrls[0];
-      if (nextPdfUrl && setPdfUrl) {
-        setPdfUrl(nextPdfUrl);
+
+      if (nextPdfUrl) {
+        if (setPdfUrl) setPdfUrl(nextPdfUrl);
         writeStorage("pdfUrl", nextPdfUrl);
+        window.dispatchEvent(new CustomEvent("pdf-updated", { detail: nextPdfUrl }));
+      } else {
+        setPdfUpdated((prev) => prev + 1);
       }
 
-      setPdfUpdated((prev) => prev + 1);
       if (typeof data.text === "string") {
         setSuccessMessage(data.message || "Text extracted successfully.");
         setExtractedText(data.text);
@@ -324,7 +403,7 @@ const FormComponent = ({
 
   const renderField = (field, index) => {
     const baseInputClass = "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400";
-    const value = formData[field.name] || "";
+    const value = formData[field.name] ?? "";
 
     return (
       <div key={index} className={`flex flex-col ${field.type === "textarea" ? "md:col-span-2" : ""}`}>
@@ -381,6 +460,154 @@ const FormComponent = ({
     );
   };
 
+  const renderAddTextDesigner = () => {
+    const fontSizeValue = Math.min(Math.max(Number(formData.font_size) || DEFAULT_TEXT_DRAFT.fontSize, 8), 72);
+    const colorValue = formData.color || DEFAULT_TEXT_DRAFT.color;
+    const previewFontSize = Math.min(Math.max(fontSizeValue + 2, 16), 28);
+    const setFontSize = (nextSize) => setFieldValue("font_size", Math.min(Math.max(Number(nextSize) || 14, 8), 72));
+
+    const renderNumberControl = ({ name, label, min = "0", max }) => (
+      <label className="flex min-w-0 flex-col gap-1">
+        <span className="text-[10px] font-black uppercase tracking-wide text-slate-400">{label}</span>
+        <input
+          type="number"
+          name={name}
+          min={min}
+          max={max}
+          step="1"
+          value={formData[name] ?? ""}
+          onChange={handleChange}
+          disabled={submitting}
+          className="h-10 w-full rounded-lg border border-slate-200 bg-white px-2 text-sm font-bold text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+        />
+      </label>
+    );
+
+    return (
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="min-w-0 space-y-2">
+          <label className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-slate-500">
+            <Type className="h-4 w-4 text-indigo-500" />
+            Text
+          </label>
+          <textarea
+            name="text"
+            rows={4}
+            required
+            placeholder="Add a note, label, or comment"
+            value={formData.text ?? ""}
+            onChange={handleChange}
+            disabled={submitting}
+            style={{ color: colorValue, fontSize: `${previewFontSize}px` }}
+            className="min-h-[132px] w-full resize-none rounded-lg border border-slate-200 bg-white px-4 py-3 font-semibold leading-relaxed text-slate-900 shadow-sm outline-none transition placeholder:text-slate-300 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+          />
+        </div>
+
+        <div className="min-w-0 space-y-4">
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-slate-500">
+              <Move className="h-4 w-4 text-indigo-500" />
+              Position
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {renderNumberControl({ name: "page_number", label: "Page", min: "1" })}
+              {renderNumberControl({ name: "x", label: "X" })}
+              {renderNumberControl({ name: "y", label: "Y" })}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-slate-500">
+              <Type className="h-4 w-4 text-indigo-500" />
+              Size
+            </label>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setFontSize(fontSizeValue - 1)}
+                disabled={submitting || fontSizeValue <= 8}
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-200 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-40"
+                title="Decrease font size"
+              >
+                <Minus className="h-4 w-4" />
+              </button>
+              <input
+                type="range"
+                min="8"
+                max="72"
+                step="1"
+                value={fontSizeValue}
+                onChange={(event) => setFontSize(event.target.value)}
+                disabled={submitting}
+                className="min-w-0 flex-1 accent-indigo-600"
+                aria-label="Font size"
+              />
+              <button
+                type="button"
+                onClick={() => setFontSize(fontSizeValue + 1)}
+                disabled={submitting || fontSizeValue >= 72}
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-200 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-40"
+                title="Increase font size"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+              <span className="w-12 text-right text-xs font-black text-slate-500">{fontSizeValue}px</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {TEXT_SIZE_PRESETS.map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => setFontSize(size)}
+                  disabled={submitting}
+                  className={`rounded-md border px-2.5 py-1.5 text-xs font-black transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                    fontSizeValue === size
+                      ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                      : "border-slate-200 bg-white text-slate-500 hover:border-indigo-200 hover:text-indigo-600"
+                  }`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-slate-500">
+              <Palette className="h-4 w-4 text-indigo-500" />
+              Color
+            </label>
+            <div className="flex flex-wrap items-center gap-2">
+              {TEXT_COLOR_SWATCHES.map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => setFieldValue("color", color)}
+                  disabled={submitting}
+                  className={`h-8 w-8 rounded-full border-2 shadow-sm transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50 ${
+                    colorValue.toLowerCase() === color.toLowerCase() ? "border-slate-900 ring-2 ring-indigo-100" : "border-white"
+                  }`}
+                  style={{ backgroundColor: color }}
+                  title={color}
+                  aria-label={`Use color ${color}`}
+                />
+              ))}
+              <input
+                type="color"
+                name="color"
+                value={colorValue}
+                onChange={handleChange}
+                disabled={submitting}
+                className="h-8 w-10 cursor-pointer rounded-md border border-slate-200 bg-white p-1 disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label="Custom text color"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <motion.div
       className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
@@ -393,12 +620,14 @@ const FormComponent = ({
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div className="flex items-start gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
-              {hasPlacementFields ? <MapPin className="h-4 w-4" /> : <FileUp className="h-4 w-4" />}
+              {isAddTextForm ? <Type className="h-4 w-4" /> : hasPlacementFields ? <MapPin className="h-4 w-4" /> : <FileUp className="h-4 w-4" />}
             </div>
             <div>
               <h3 className="text-sm font-black text-slate-900">{title}</h3>
               <p className="text-xs text-slate-500">
-                {hasPlacementFields
+                {isAddTextForm
+                  ? "Text style, color, and placement for the current PDF page."
+                  : hasPlacementFields
                   ? "Drag the marker on the PDF or refine the placement values here."
                   : "Set the values for this PDF action and apply it to the current file."}
               </p>
@@ -415,9 +644,13 @@ const FormComponent = ({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
-          {formFields.map(renderField)}
-        </div>
+        {isAddTextForm ? (
+          renderAddTextDesigner()
+        ) : (
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+            {formFields.map(renderField)}
+          </div>
+        )}
 
         {errorMessage && (
           <p className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{errorMessage}</p>
@@ -499,7 +732,7 @@ const FormComponent = ({
             ) : (
               <>
                 <CheckCircle2 className="mr-2 h-4 w-4" />
-                Apply {title}
+                {isAddTextForm ? "Add Text to PDF" : `Apply ${title}`}
               </>
             )}
           </button>
