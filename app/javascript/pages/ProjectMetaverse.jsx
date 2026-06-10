@@ -312,12 +312,10 @@ export default function ProjectMetaverse() {
   const [searchParams, setSearchParams] = useSearchParams();
   const shellRef = useRef(null);
   const canvasRef = useRef(null);
-  const switchTimerRef = useRef(null);
   const selectedDate = useMemo(() => new Date(), []);
   const initialTab = searchParams.get("tab") || "overview";
   const [activeSection, setActiveSection] = useState(initialTab);
-  const [visibleSection, setVisibleSection] = useState(initialTab);
-  const [switchingSection, setSwitchingSection] = useState(false);
+  const [mountedSections, setMountedSections] = useState(() => new Set([initialTab]));
   const [project, setProject] = useState(null);
   const [sprints, setSprints] = useState([]);
   const [sprintId, setSprintId] = useState(null);
@@ -357,13 +355,6 @@ export default function ProjectMetaverse() {
     : 0;
 
   useEffect(() => {
-    return () => {
-      if (switchTimerRef.current?.reveal) window.clearTimeout(switchTimerRef.current.reveal);
-      if (switchTimerRef.current?.finish) window.clearTimeout(switchTimerRef.current.finish);
-    };
-  }, []);
-
-  useEffect(() => {
     let cancelled = false;
 
     Promise.all([
@@ -391,36 +382,14 @@ export default function ProjectMetaverse() {
 
   const runModuleTransition = useCallback((nextSection) => {
     if (!nextSection) return;
-    if (switchTimerRef.current?.reveal) window.clearTimeout(switchTimerRef.current.reveal);
-    if (switchTimerRef.current?.finish) window.clearTimeout(switchTimerRef.current.finish);
-
+    setMountedSections((current) => {
+      if (current.has(nextSection)) return current;
+      const next = new Set(current);
+      next.add(nextSection);
+      return next;
+    });
     setActiveSection(nextSection);
-    setSwitchingSection(true);
-
-    const finishWhenReady = (attempt = 0) => {
-      const pane = wallHosts?.content?.querySelector(`[data-metaverse-section="${nextSection}"]`);
-      const paneText = pane?.textContent || "";
-      const hasModuleLoader =
-        Boolean(pane?.querySelector(".animate-spin, [aria-busy='true']")) ||
-        /\bloading\b|loading\.\.\.|loading project|loading issues|loading developers/i.test(paneText);
-
-      if (hasModuleLoader && attempt < 18) {
-        switchTimerRef.current.finish = window.setTimeout(() => finishWhenReady(attempt + 1), 220);
-        return;
-      }
-
-      setSwitchingSection(false);
-    };
-
-    switchTimerRef.current = {
-      reveal: window.setTimeout(() => {
-        setVisibleSection(nextSection);
-      }, 420),
-      finish: window.setTimeout(() => {
-        finishWhenReady();
-      }, 1300),
-    };
-  }, [wallHosts]);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -500,8 +469,7 @@ export default function ProjectMetaverse() {
       return;
     }
     if (!dashboardTabs.some((item) => item.key === activeSection) && dashboardTabs[0]) {
-      setActiveSection(dashboardTabs[0].key);
-      setVisibleSection(dashboardTabs[0].key);
+      runModuleTransition(dashboardTabs[0].key);
     }
   }, [activeSection, dashboardTabs, runModuleTransition, searchParams]);
 
@@ -1044,19 +1012,14 @@ export default function ProjectMetaverse() {
                   <span>{sprint?.name || "No sprint"}</span>
                 </div>
               </header>
-              <div className={styles.contentViewport} data-wall-scroll="true" data-switching={switchingSection ? "true" : "false"}>
-                <div
-                  className={`${styles.contentRefresh} ${switchingSection ? styles.contentRefreshActive : ""}`}
-                  style={{ "--module-color": activeTab.color }}
-                  aria-hidden="true"
-                />
+              <div className={styles.contentViewport} data-wall-scroll="true">
                 <div className={styles.contentStack}>
-                  {dashboardTabs.map((tab) => (
+                  {dashboardTabs.filter((tab) => mountedSections.has(tab.key)).map((tab) => (
                     <section
                       key={tab.key}
                       data-metaverse-section={tab.key}
-                      className={tab.key === visibleSection ? styles.contentPaneActive : styles.contentPane}
-                      aria-hidden={tab.key !== visibleSection}
+                      className={tab.key === activeSection ? styles.contentPaneActive : styles.contentPane}
+                      aria-hidden={tab.key !== activeSection}
                     >
                       {sectionContent(tab.key)}
                     </section>

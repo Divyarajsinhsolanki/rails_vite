@@ -74,6 +74,14 @@ class PdfsController < ApplicationController
     render json: { error: e.message }, status: :not_found
   end
 
+  def status
+    pdf_record_for_token!(params[:token])
+    response.headers['Cache-Control'] = 'private, no-store'
+    head :no_content
+  rescue
+    head :not_found
+  end
+
   def artifact
     record = pdf_artifact_record_for_token!(params[:token])
     response.headers['Cache-Control'] = 'private, no-store'

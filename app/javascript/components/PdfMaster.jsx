@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { Document, Page, pdfjs } from "react-pdf";
 import pdfWorkerUrl from "react-pdf/node_modules/pdfjs-dist/build/pdf.worker.min.mjs?url";
@@ -30,8 +30,28 @@ const MAX_PDF_UPLOAD_SIZE_BYTES = 50 * 1024 * 1024;
 const PDF_LIBRARY_STORAGE_KEY = "pdfLibrary";
 const MAX_PDF_LIBRARY_ITEMS = 12;
 const PDF_HISTORY_ACTION_TIMEOUT_MS = 30000;
+const PDF_AVAILABILITY_TIMEOUT_MS = 5000;
 
 const normalizePdfUrl = (url) => (url || "").split("?")[0];
+
+const isPdfUrlAvailable = async (url) => {
+  const normalizedUrl = normalizePdfUrl(url);
+  if (!normalizedUrl) return false;
+
+  try {
+    const resolvedUrl = new URL(normalizedUrl, window.location.origin);
+    if (resolvedUrl.origin !== window.location.origin) return true;
+
+    const response = await fetchWithTimeout(
+      `${resolvedUrl.pathname}${resolvedUrl.search}`,
+      { method: "HEAD", cache: "no-store" },
+      PDF_AVAILABILITY_TIMEOUT_MS
+    );
+    return response.ok;
+  } catch {
+    return false;
+  }
+};
 
 const getPdfFileName = (url) => {
   const fileName = normalizePdfUrl(url).split("/").pop();
@@ -154,7 +174,7 @@ const normalizePdfLibraryItems = (items) => {
   return normalizedItems.slice(0, MAX_PDF_LIBRARY_ITEMS);
 };
 
-const PdfPreviewCard = ({ item, isActive, onOpen }) => (
+const PdfPreviewCard = ({ item, isActive, onOpen, onUnavailable }) => (
   <button
     type="button"
     onClick={() => onOpen(item)}
@@ -164,6 +184,8 @@ const PdfPreviewCard = ({ item, isActive, onOpen }) => (
     <div className="flex h-28 w-full items-center justify-center overflow-hidden bg-slate-100">
       <Document
         file={item.url}
+        onLoadError={() => onUnavailable?.(item.url)}
+        onSourceError={() => onUnavailable?.(item.url)}
         loading={<FileText className="h-8 w-8 text-slate-300" />}
         error={<FileText className="h-8 w-8 text-slate-300" />}
         noData={<FileText className="h-8 w-8 text-slate-300" />}
@@ -178,8 +200,11 @@ const PdfPreviewCard = ({ item, isActive, onOpen }) => (
 );
 
 const PdfMaster = () => {
+  const activePdfUrlRef = useRef(null);
+  const downloadNameRef = useRef("document.pdf");
   const [pdfUrl, setPdfUrl] = useState(null);
   const [pdfUpdated, setPdfUpdated] = useState(0);
+  const [restoringLibrary, setRestoringLibrary] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [showUploadMessage, setShowUploadMessage] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
@@ -189,34 +214,6 @@ const PdfMaster = () => {
   const [textDraft, setTextDraft] = useState({ text: "", fontSize: 14, color: "#111827" });
   const [downloadName, setDownloadName] = useState("document.pdf");
   const [pdfLibrary, setPdfLibrary] = useState([]);
-
-  useEffect(() => {
-    const storedPdf = readStorage("pdfUrl");
-    if (storedPdf) setPdfUrl(storedPdf);
-    const storedDownloadName = readStorage("pdfDownloadName");
-    if (storedDownloadName) setDownloadName(storedDownloadName);
-    const storedLibrary = normalizePdfLibraryItems(readJsonStorage(PDF_LIBRARY_STORAGE_KEY, []));
-    if (storedLibrary.length) setPdfLibrary(storedLibrary);
-
-    const handlePdfUpdate = (event) => {
-      const newUrl = event.detail;
-      if (!newUrl) return;
-      setPdfUrl(newUrl);
-      writeStorage("pdfUrl", newUrl);
-      addPdfToLibrary({ url: newUrl, name: getPdfFileName(newUrl) });
-      setPdfUpdated(prev => prev + 1);
-    };
-
-    window.addEventListener("pdf-updated", handlePdfUpdate);
-    return () => window.removeEventListener("pdf-updated", handlePdfUpdate);
-  }, []);
-
-  useEffect(() => {
-    setPlacementCoordinates(null);
-    if (activeForm !== "addText") {
-      setTextDraft({ text: "", fontSize: 14, color: "#111827" });
-    }
-  }, [activeForm]);
 
   const addPdfToLibrary = useCallback((item) => {
     const normalizedUrl = normalizePdfUrl(item?.url);
@@ -233,6 +230,116 @@ const PdfMaster = () => {
     });
   }, []);
 
+  const replacePdfInLibrary = useCallback((previousUrl, item) => {
+    const normalizedPreviousUrl = normalizePdfUrl(previousUrl);
+    const normalizedUrl = normalizePdfUrl(item?.url);
+    if (!normalizedUrl) return;
+
+    setPdfLibrary((previous) => {
+      const previousItem = previous.find(
+        (existing) => normalizePdfUrl(existing.url) === normalizedPreviousUrl
+      );
+      const withoutVersions = previous.filter((existing) => {
+        const existingUrl = normalizePdfUrl(existing.url);
+        return existingUrl !== normalizedPreviousUrl && existingUrl !== normalizedUrl;
+      });
+      const next = [
+        {
+          ...previousItem,
+          url: normalizedUrl,
+          name: item.name || previousItem?.name || getPdfFileName(normalizedUrl),
+          addedAt: previousItem?.addedAt || Date.now(),
+        },
+        ...withoutVersions,
+      ].slice(0, MAX_PDF_LIBRARY_ITEMS);
+      writeJsonStorage(PDF_LIBRARY_STORAGE_KEY, next);
+      return next;
+    });
+  }, []);
+
+  const removePdfFromLibrary = useCallback((url) => {
+    const normalizedUrl = normalizePdfUrl(url);
+    setPdfLibrary((previous) => {
+      const next = previous.filter((item) => normalizePdfUrl(item.url) !== normalizedUrl);
+      writeJsonStorage(PDF_LIBRARY_STORAGE_KEY, next);
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    activePdfUrlRef.current = normalizePdfUrl(pdfUrl);
+  }, [pdfUrl]);
+
+  useEffect(() => {
+    downloadNameRef.current = downloadName;
+  }, [downloadName]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const restorePdfState = async () => {
+      const storedPdf = normalizePdfUrl(readStorage("pdfUrl"));
+      const storedDownloadName = readStorage("pdfDownloadName");
+      const storedLibrary = normalizePdfLibraryItems(readJsonStorage(PDF_LIBRARY_STORAGE_KEY, []));
+      const candidateUrls = [...new Set([storedPdf, ...storedLibrary.map((item) => item.url)].filter(Boolean))];
+      const checks = await Promise.all(
+        candidateUrls.map(async (url) => [url, await isPdfUrlAvailable(url)])
+      );
+      if (cancelled) return;
+
+      const availableUrls = new Set(checks.filter(([, available]) => available).map(([url]) => url));
+      const availableLibrary = storedLibrary.filter((item) => availableUrls.has(item.url));
+      setPdfLibrary(availableLibrary);
+      writeJsonStorage(PDF_LIBRARY_STORAGE_KEY, availableLibrary);
+
+      if (storedPdf && availableUrls.has(storedPdf)) {
+        setPdfUrl(storedPdf);
+        activePdfUrlRef.current = storedPdf;
+        if (storedDownloadName) setDownloadName(storedDownloadName);
+      } else {
+        removeStorage("pdfUrl");
+        removeStorage("pdfDownloadName");
+        if (storedPdf) {
+          setUploadMessage("The previous PDF expired. Upload it again to continue editing.");
+          setIsError(true);
+          setShowUploadMessage(true);
+        }
+      }
+
+      setRestoringLibrary(false);
+    };
+
+    const handlePdfUpdate = (event) => {
+      const newUrl = normalizePdfUrl(event.detail);
+      if (!newUrl) return;
+
+      const previousUrl = activePdfUrlRef.current;
+      activePdfUrlRef.current = newUrl;
+      setPdfUrl(newUrl);
+      writeStorage("pdfUrl", newUrl);
+      replacePdfInLibrary(previousUrl, {
+        url: newUrl,
+        name: downloadNameRef.current || getPdfFileName(newUrl),
+      });
+      setPdfUpdated((prev) => prev + 1);
+    };
+
+    window.addEventListener("pdf-updated", handlePdfUpdate);
+    restorePdfState();
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("pdf-updated", handlePdfUpdate);
+    };
+  }, [replacePdfInLibrary]);
+
+  useEffect(() => {
+    setPlacementCoordinates(null);
+    if (activeForm !== "addText") {
+      setTextDraft({ text: "", fontSize: 14, color: "#111827" });
+    }
+  }, [activeForm]);
+
   const openLibraryPdf = useCallback((item) => {
     const normalizedUrl = normalizePdfUrl(item?.url);
     if (!normalizedUrl) return;
@@ -244,6 +351,22 @@ const PdfMaster = () => {
     writeStorage("pdfUrl", normalizedUrl);
     writeStorage("pdfDownloadName", item.name || getPdfFileName(normalizedUrl));
   }, []);
+
+  const handlePdfUnavailable = useCallback((url) => {
+    const normalizedUrl = normalizePdfUrl(url);
+    removePdfFromLibrary(normalizedUrl);
+    if (activePdfUrlRef.current !== normalizedUrl) return;
+
+    activePdfUrlRef.current = null;
+    setPdfUrl(null);
+    setActiveForm(null);
+    setPlacementCoordinates(null);
+    removeStorage("pdfUrl");
+    removeStorage("pdfDownloadName");
+    setUploadMessage("This PDF is no longer available. Upload it again to continue editing.");
+    setIsError(true);
+    setShowUploadMessage(true);
+  }, [removePdfFromLibrary]);
 
   const uploadSinglePdf = async (file) => {
     const validationMessage = validatePdfFile(file);
@@ -383,9 +506,10 @@ const PdfMaster = () => {
       if (!data.pdf_url) throw new Error("History action did not return a PDF.");
 
       const nextName = downloadName || getPdfFileName(data.pdf_url);
+      const previousUrl = pdfUrl;
       setPdfUrl(data.pdf_url);
       writeStorage("pdfUrl", data.pdf_url);
-      addPdfToLibrary({ url: data.pdf_url, name: nextName });
+      replacePdfInLibrary(previousUrl, { url: data.pdf_url, name: nextName });
       setPdfUpdated((prev) => prev + 1);
       setUploadMessage(data.message || "PDF history updated.");
       setIsError(false);
@@ -430,6 +554,17 @@ const PdfMaster = () => {
     </AnimatePresence>
   );
 
+  if (restoringLibrary) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-50 p-8 font-inter">
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-6 py-4 text-sm font-bold text-slate-700 shadow-lg shadow-slate-200/60">
+          <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
+          Checking recent PDFs...
+        </div>
+      </div>
+    );
+  }
+
   if (!pdfUrl) {
     return (
       <div className="flex h-screen flex-col items-center justify-center bg-slate-50 p-8 font-inter">
@@ -472,7 +607,13 @@ const PdfMaster = () => {
               </div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {pdfLibrary.slice(0, 6).map((item) => (
-                  <PdfPreviewCard key={normalizePdfUrl(item.url)} item={item} isActive={false} onOpen={openLibraryPdf} />
+                  <PdfPreviewCard
+                    key={normalizePdfUrl(item.url)}
+                    item={item}
+                    isActive={false}
+                    onOpen={openLibraryPdf}
+                    onUnavailable={handlePdfUnavailable}
+                  />
                 ))}
               </div>
             </div>
@@ -563,6 +704,7 @@ const PdfMaster = () => {
                     item={item}
                     isActive={normalizePdfUrl(pdfUrl) === normalizePdfUrl(item.url)}
                     onOpen={openLibraryPdf}
+                    onUnavailable={handlePdfUnavailable}
                   />
                 ))}
               </div>
@@ -607,6 +749,7 @@ const PdfMaster = () => {
               setTextDraft={setTextDraft}
               onCancelTool={() => setActiveForm(null)}
               setPdfUpdated={setPdfUpdated}
+              onPdfUnavailable={handlePdfUnavailable}
             />
           </div>
         </main>

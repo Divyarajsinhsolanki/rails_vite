@@ -15,6 +15,7 @@ Rails.application.routes.draw do
   post "/upload_pdf", to: "pdfs#upload_pdf"
   post "/reset_pdf", to: "pdfs#reset"
   get  "/download_pdf", to: "pdfs#download"
+  match "/pdf_file/:token", to: "pdfs#status", via: :head
   get  "/pdf_file/:token", to: "pdfs#show", as: :pdf_file
   get  "/pdf_artifact/:token", to: "pdfs#artifact", as: :pdf_artifact
 

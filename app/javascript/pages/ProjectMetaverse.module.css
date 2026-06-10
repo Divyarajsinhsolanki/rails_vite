@@ -309,83 +309,14 @@
   transform: translateY(0) scale(1);
   filter: blur(0);
   visibility: visible;
+  animation: contentPaneEnter 220ms ease-out;
 }
 
-.contentViewport[data-switching="true"] .contentStack {
-  opacity: 0.04;
-  pointer-events: none;
-  transform: scale(0.985);
-  filter: blur(4px) saturate(0.72);
-}
-
-.contentViewport[data-switching="true"] :global(.animate-spin) {
-  opacity: 0;
-}
-
-.contentRefresh {
-  position: absolute;
-  inset: 0;
-  z-index: 40;
-  overflow: hidden;
-  border: 0;
-  border-radius: 0;
-  background:
-    radial-gradient(circle at 22% 14%, color-mix(in srgb, var(--module-color) 24%, transparent), transparent 34%),
-    radial-gradient(circle at 80% 78%, rgb(15 23 42 / 0.12), transparent 32%),
-    linear-gradient(135deg, color-mix(in srgb, var(--module-color) 12%, #ffffff), #f8fbff 46%, #edf4fb);
-  box-shadow:
-    0 0 0 1px rgb(255 255 255 / 0.7) inset,
-    0 30px 80px rgb(15 23 42 / 0.18);
-  opacity: 0;
-  pointer-events: none;
-  transform: scale(0.985);
-  transition: opacity 180ms ease, transform 260ms ease;
-}
-
-.contentRefresh::before,
-.contentRefresh::after {
-  position: absolute;
-  content: "";
-}
-
-.contentRefresh::before {
-  inset: -44%;
-  background:
-    conic-gradient(
-      from 90deg,
-      transparent,
-      color-mix(in srgb, var(--module-color) 26%, transparent),
-      transparent 24%,
-      rgb(255 255 255 / 0.34),
-      transparent 38%
-    );
-  animation: moduleSweep 1.25s linear infinite;
-}
-
-.contentRefresh::after {
-  inset: 0;
-  background:
-    linear-gradient(90deg, transparent, rgb(255 255 255 / 0.78), transparent),
-    repeating-linear-gradient(90deg, rgb(15 23 42 / 0.08) 0 1px, transparent 1px 58px),
-    repeating-linear-gradient(180deg, rgb(15 23 42 / 0.06) 0 1px, transparent 1px 58px);
-  transform: translateX(-120%);
-  animation: moduleScan 880ms ease-out infinite;
-}
-
-.contentRefreshActive {
-  opacity: 1;
-  transform: scale(1);
-}
-
-@keyframes moduleSweep {
-  to {
-    transform: rotate(1turn);
-  }
-}
-
-@keyframes moduleScan {
-  to {
-    transform: translateX(100%);
+@keyframes contentPaneEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.995);
+    filter: blur(1px);
   }
 }
 

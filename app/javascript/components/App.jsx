@@ -56,7 +56,9 @@ const routeTransitionProps = {
 
 const AppRoutes = () => {
   const location = useLocation();
-  const routeKey = `${location.pathname}${location.search}`;
+  // Query parameters often represent in-page state, so keep the route mounted
+  // when they change instead of replaying the full-page loading transition.
+  const routeKey = location.pathname;
 
   return (
     <motion.div key={routeKey} className="shell-route-frame" {...routeTransitionProps}>

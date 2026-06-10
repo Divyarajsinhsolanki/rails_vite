@@ -51,10 +51,12 @@ const PdfViewer = ({
   setTextDraft,
   onCancelTool,
   setPdfUpdated,
+  onPdfUnavailable,
 }) => {
   const lastPdfPathRef = useRef(null);
   const loadSequenceRef = useRef(0);
   const actionInFlightRef = useRef(false);
+  const unavailableNotifiedRef = useRef(false);
   const [documentLoadId, setDocumentLoadId] = useState(0);
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
@@ -94,6 +96,7 @@ const PdfViewer = ({
     setDocumentError("");
     setActionError("");
     setActionNotice("");
+    unavailableNotifiedRef.current = false;
   }, [pdfUrl]);
 
   useEffect(() => {
@@ -157,6 +160,14 @@ const PdfViewer = ({
     if (loadId !== loadSequenceRef.current) return;
     console.error("PDF load failed:", error);
     setDocumentError(error?.message || "Unable to load this PDF.");
+
+    const missingPdf =
+      error?.name === "MissingPDFException" ||
+      /missing pdf/i.test(error?.message || "");
+    if (missingPdf && !unavailableNotifiedRef.current) {
+      unavailableNotifiedRef.current = true;
+      onPdfUnavailable?.(pdfUrl);
+    }
   };
 
   const handleQuickAction = async (endpoint, params = {}, actionKey = "pdfAction", fallbackMessage = "PDF action completed.") => {
