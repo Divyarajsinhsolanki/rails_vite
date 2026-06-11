@@ -15,9 +15,9 @@ export default defineConfig({
     reportCompressedSize: false,
     
     rollupOptions: {
-      input: {
-        application: 'app/javascript/entrypoints/application.jsx'
-      },
+      // input: {
+      //   application: 'app/javascript/entrypoints/application.jsx'
+      // },
       output: {
         manualChunks: {
           // Core vendor libraries
