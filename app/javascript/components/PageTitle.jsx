@@ -26,6 +26,7 @@ const routeTitles = {
   "/departments": "Departments",
   "/admin": "Admin",
   "/admin/portfolio": "Portfolio Editor",
+  "/my-work": "My Work",
   "/admin/login-as-user": "Admin Impersonation",
   "/settings": "Settings",
   "/chat": "Chat",

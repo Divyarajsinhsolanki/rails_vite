@@ -5,8 +5,10 @@ module WorkspaceScoped
     belongs_to :workspace
 
     default_scope lambda {
-      Current.workspace ? where(workspace_id: Current.workspace.id) : unscoped
+      Current.workspace ? where(workspace_id: Current.workspace.id) : none
     }
+
+    scope :in_workspace, ->(workspace) { unscoped.where(workspace_id: workspace.id) }
 
     before_validation :assign_current_workspace, on: :create
     validate :workspace_matches_associations

@@ -48,6 +48,25 @@ class PortfolioAuthorizationTest < ActionDispatch::IntegrationTest
     assert_equal "Foreign project", foreign_project.reload.name
   end
 
+  test "site admin can reorder portfolio projects and tour features" do
+    PortfolioSeeder.new.call
+    workspace = Workspace.create!(name: "Portfolio Ordering", slug: "portfolio-ordering", kind: "private")
+    site_admin = create_user(workspace, "ordering-admin@example.test", site_admin: true)
+    login(site_admin)
+
+    project = PortfolioProject.first!
+    feature = project.portfolio_features.first!
+    patch "/api/admin/portfolio/order", params: {
+      projects: [{ id: project.id, position: 4 }],
+      features: [{ id: feature.id, position: 3, tour_position: 2 }]
+    }
+
+    assert_response :success
+    assert_equal 4, project.reload.position
+    assert_equal 3, feature.reload.position
+    assert_equal 2, feature.tour_position
+  end
+
   private
 
   def create_user(workspace, email, site_admin: false)

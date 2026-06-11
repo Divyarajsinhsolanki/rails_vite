@@ -2,8 +2,7 @@ import React, { createContext, useState, useEffect, useCallback, useRef } from "
 import api from "../components/api";
 import { startDemoSession } from "../components/api";
 import { useNavigate } from "react-router-dom";
-import { auth, googleProvider } from "../firebaseConfig";
-import { signInWithPopup } from "firebase/auth";
+import { firebaseEnabled } from "../firebaseFlags";
 import { toast } from "react-hot-toast";
 import { COLOR_MAP, toRgb, lightenColor, darkenColor } from '/utils/theme';
 import PageLoader from "../components/ui/PageLoader";
@@ -84,7 +83,12 @@ export function AuthProvider({ children }) {
   };
 
   const handleGoogleLogin = async () => {
+    if (!firebaseEnabled) {
+      throw new Error("Google sign-in is not configured.");
+    }
+
     try {
+      const { auth, googleProvider, signInWithPopup } = await import("../firebaseConfig");
       const result = await signInWithPopup(auth, googleProvider);
       const firebaseUser = result.user;
       const idToken = await firebaseUser.getIdToken();
@@ -98,6 +102,7 @@ export function AuthProvider({ children }) {
       toast.success("Logged in successfully");
     } catch (error) {
       console.error("Google login failed:", error);
+      throw error;
     }
   };
 

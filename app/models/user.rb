@@ -78,7 +78,10 @@ class User < ApplicationRecord
   belongs_to :department, optional: true
 
   attr_encrypted :keka_api_key,
-                 key: ENV.fetch("KEKA_API_KEY_ENCRYPTION_KEY"),
+                 key: Digest::SHA256.digest(
+                   ENV["KEKA_API_KEY_ENCRYPTION_KEY"].presence ||
+                   Rails.application.secret_key_base
+                 ),
                  algorithm: "aes-256-gcm"
 
   enum :availability_status, {
@@ -112,7 +115,10 @@ class User < ApplicationRecord
   end
 
   def has_role?(name)
-    roles.exists?(name: name.to_s)
+    UserRole.in_workspace(workspace)
+      .where(user_id: id)
+      .joins(:role)
+      .exists?(roles: { name: name.to_s })
   end
 
   def owner?
@@ -180,9 +186,18 @@ class User < ApplicationRecord
 
   def public_json(include_roles: false)
     options = { except: PUBLIC_JSON_EXCLUDED_ATTRIBUTES }
-    options[:include] = { roles: { only: [:name] } } if include_roles
+    payload = as_json(options)
 
-    as_json(options)
+    if include_roles
+      role_names = UserRole.in_workspace(workspace)
+        .where(user_id: id)
+        .joins(:role)
+        .order("roles.name")
+        .pluck("roles.name")
+      payload["roles"] = role_names.map { |role_name| { "name" => role_name } }
+    end
+
+    payload
   end
 
   def notification_preferences_with_defaults

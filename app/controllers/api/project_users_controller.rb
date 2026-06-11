@@ -4,7 +4,9 @@ class Api::ProjectUsersController < Api::BaseController
   before_action :authorize_manager!, only: [:leave]
 
   def create
-    project_user = ProjectUser.new(project_user_params)
+    project = Project.find(params.dig(:project_user, :project_id))
+    user = current_user.workspace.users.find(params.dig(:project_user, :user_id))
+    project_user = project.project_users.new(project_user_attributes.merge(user: user))
     if project_user.save
       render json: serialize_project_user(project_user), status: :created
     else
@@ -13,7 +15,7 @@ class Api::ProjectUsersController < Api::BaseController
   end
 
   def update
-    if @project_user.update(project_user_params)
+    if @project_user.update(project_user_attributes)
       render json: serialize_project_user(@project_user)
     else
       render json: { errors: @project_user.errors.full_messages }, status: :unprocessable_entity
@@ -48,15 +50,14 @@ class Api::ProjectUsersController < Api::BaseController
     @project_user = ProjectUser.find(params[:id])
   end
 
-  def project_user_params
-    params.require(:project_user).permit(
-      :project_id,
-      :user_id,
-      :role,
-      :status,
-      :allocation_percentage,
-      :workload_status
-    )
+  def project_user_attributes
+    raw = params.require(:project_user)
+    attributes = {}
+    attributes[:role] = raw[:role] if ProjectUser.roles.key?(raw[:role])
+    attributes[:status] = raw[:status] if ProjectUser.statuses.key?(raw[:status])
+    attributes[:allocation_percentage] = raw[:allocation_percentage].to_i if raw[:allocation_percentage].present?
+    attributes[:workload_status] = raw[:workload_status] if ProjectUser::WORKLOAD_STATUSES.include?(raw[:workload_status])
+    attributes
   end
 
   def serialize_project_user(pu)

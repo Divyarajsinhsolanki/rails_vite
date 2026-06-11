@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import { FiExternalLink, FiPlus, FiSave, FiTrash2, FiUpload } from "react-icons/fi";
+import { FiExternalLink, FiMove, FiPlus, FiSave, FiTrash2, FiUpload } from "react-icons/fi";
 import {
   createPortfolioFeature,
   createPortfolioProject,
@@ -9,6 +9,7 @@ import {
   deletePortfolioProject,
   fetchPortfolioAdmin,
   updatePortfolioFeature,
+  updatePortfolioOrder,
   updatePortfolioProfile,
   updatePortfolioProject,
 } from "../components/api";
@@ -31,6 +32,15 @@ const emptyProject = {
   stack: "",
   metrics: "",
   engineering_highlights: "",
+  problem: "",
+  role: "",
+  constraints: "",
+  decisions: "",
+  trade_offs: "",
+  outcomes: "",
+  seo_title: "",
+  seo_description: "",
+  canonical_path: "/",
   position: 0,
   featured: false,
   published: false,
@@ -43,6 +53,8 @@ const PortfolioAdmin = () => {
   const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [featureDraft, setFeatureDraft] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [draggedProjectId, setDraggedProjectId] = useState(null);
+  const [draggedFeatureId, setDraggedFeatureId] = useState(null);
 
   const load = async () => {
     const { data } = await fetchPortfolioAdmin();
@@ -54,8 +66,10 @@ const PortfolioAdmin = () => {
       engineering_highlights: listText(data.profile.engineering_highlights),
       social_links: data.profile.social_links || {},
     } : null);
-    setProjects(data.projects || []);
-    if (!selectedProjectId && data.projects?.[0]) selectProject(data.projects[0]);
+    const nextProjects = data.projects || [];
+    setProjects(nextProjects);
+    const selected = nextProjects.find((project) => project.id === selectedProjectId) || nextProjects[0];
+    if (selected) selectProject(selected);
   };
 
   useEffect(() => {
@@ -70,6 +84,15 @@ const PortfolioAdmin = () => {
       stack: listText(project.stack),
       metrics: listText(project.metrics),
       engineering_highlights: listText(project.engineering_highlights),
+      problem: project.case_study?.problem || "",
+      role: project.case_study?.role || "",
+      constraints: listText(project.case_study?.constraints),
+      decisions: listText(project.case_study?.decisions),
+      trade_offs: listText(project.case_study?.trade_offs),
+      outcomes: listText(project.case_study?.outcomes),
+      seo_title: project.seo?.title || "",
+      seo_description: project.seo?.description || "",
+      canonical_path: project.seo?.canonical_path || "/",
     });
     setFeatureDraft(null);
   };
@@ -109,6 +132,15 @@ const PortfolioAdmin = () => {
       appendList(formData, "portfolio_project[stack]", projectDraft.stack);
       appendList(formData, "portfolio_project[metrics]", projectDraft.metrics);
       appendList(formData, "portfolio_project[engineering_highlights]", projectDraft.engineering_highlights);
+      ["problem", "role"].forEach((key) => {
+        formData.append(`portfolio_project[case_study][${key}]`, projectDraft[key] || "");
+      });
+      ["constraints", "decisions", "trade_offs", "outcomes"].forEach((key) => {
+        appendList(formData, `portfolio_project[case_study][${key}]`, projectDraft[key] || "");
+      });
+      formData.append("portfolio_project[seo][title]", projectDraft.seo_title || "");
+      formData.append("portfolio_project[seo][description]", projectDraft.seo_description || "");
+      formData.append("portfolio_project[seo][canonical_path]", projectDraft.canonical_path || "/");
       if (projectDraft.coverFile) formData.append("portfolio_project[cover_image]", projectDraft.coverFile);
       const response = selectedProjectId
         ? await updatePortfolioProject(selectedProjectId, formData)
@@ -128,7 +160,7 @@ const PortfolioAdmin = () => {
     setBusy(true);
     try {
       const formData = new FormData();
-      ["category", "title", "summary", "demo_path", "alt_text", "position"].forEach((key) => formData.append(`portfolio_feature[${key}]`, featureDraft[key] ?? ""));
+      ["category", "title", "summary", "demo_path", "alt_text", "position", "tour_position", "review_notes"].forEach((key) => formData.append(`portfolio_feature[${key}]`, featureDraft[key] ?? ""));
       formData.append("portfolio_feature[published]", featureDraft.published ? "1" : "0");
       if (featureDraft.screenshotFile) formData.append("portfolio_feature[screenshot]", featureDraft.screenshotFile);
       if (featureDraft.id) await updatePortfolioFeature(featureDraft.id, formData);
@@ -144,6 +176,36 @@ const PortfolioAdmin = () => {
   };
 
   const selectedProject = projects.find((project) => project.id === selectedProjectId);
+
+  const persistOrder = async (nextProjects, nextFeatures = selectedProject?.features || []) => {
+    setBusy(true);
+    try {
+      await updatePortfolioOrder({
+        projects: nextProjects.map((project, index) => ({ id: project.id, position: index + 1 })),
+        features: nextFeatures.map((feature, index) => ({
+          id: feature.id,
+          position: index + 1,
+          tour_position: index + 1,
+        })),
+      });
+      toast.success("Display order updated.");
+      await load();
+    } catch {
+      toast.error("Display order could not be updated.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const reorder = (items, draggedId, targetId) => {
+    const from = items.findIndex((item) => item.id === draggedId);
+    const to = items.findIndex((item) => item.id === targetId);
+    if (from < 0 || to < 0 || from === to) return items;
+    const next = [...items];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    return next;
+  };
 
   if (!profile) {
     return <div className="mx-auto max-w-5xl p-8 text-slate-600">Loading portfolio editor...</div>;
@@ -215,7 +277,21 @@ const PortfolioAdmin = () => {
         <aside className="rounded-[28px] border border-slate-200 bg-white p-4">
           <button onClick={() => { setSelectedProjectId(null); setProjectDraft(emptyProject); }} className="flex w-full items-center gap-2 rounded-xl bg-blue-50 px-3 py-2.5 font-semibold text-blue-700"><FiPlus /> New project</button>
           <div className="mt-3 space-y-1">
-            {projects.map((project) => <button key={project.id} onClick={() => selectProject(project)} className={`w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold ${selectedProjectId === project.id ? "bg-slate-950 text-white" : "text-slate-700 hover:bg-slate-50"}`}>{project.title}</button>)}
+            {projects.map((project) => (
+              <button
+                key={project.id}
+                draggable
+                onDragStart={() => setDraggedProjectId(project.id)}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={() => persistOrder(reorder(projects, draggedProjectId, project.id))}
+                onClick={() => selectProject(project)}
+                className={`flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-semibold ${selectedProjectId === project.id ? "bg-slate-950 text-white" : "text-slate-700 hover:bg-slate-50"}`}
+              >
+                <FiMove className="shrink-0 opacity-50" />
+                <span className="truncate">{project.title}</span>
+                <span className="ml-auto text-[10px] uppercase opacity-60">{project.published ? "Live" : "Draft"}</span>
+              </button>
+            ))}
           </div>
         </aside>
 
@@ -233,20 +309,35 @@ const PortfolioAdmin = () => {
             ].map(([key, label]) => <label key={key} className="text-sm font-semibold text-slate-700">{label}<input type={key === "position" ? "number" : "text"} value={projectDraft[key] ?? ""} onChange={(event) => setProjectDraft((current) => ({ ...current, [key]: event.target.value }))} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal" /></label>)}
           </div>
           {["summary", "description", "stack", "metrics", "engineering_highlights"].map((key) => <label key={key} className="mt-4 block text-sm font-semibold capitalize text-slate-700">{key.replaceAll("_", " ")}{["stack", "metrics", "engineering_highlights"].includes(key) ? " (one per line)" : ""}<textarea rows={key === "description" ? 4 : 3} value={projectDraft[key] || ""} onChange={(event) => setProjectDraft((current) => ({ ...current, [key]: event.target.value }))} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal" /></label>)}
+          <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <h3 className="font-semibold text-slate-950">Structured case study</h3>
+            {["problem", "role", "constraints", "decisions", "trade_offs", "outcomes"].map((key) => (
+              <label key={key} className="mt-4 block text-sm font-semibold capitalize text-slate-700">
+                {key.replaceAll("_", " ")}{["constraints", "decisions", "trade_offs", "outcomes"].includes(key) ? " (one per line)" : ""}
+                <textarea rows={3} value={projectDraft[key] || ""} onChange={(event) => setProjectDraft((current) => ({ ...current, [key]: event.target.value }))} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal" />
+              </label>
+            ))}
+          </div>
+          <div className="mt-6 grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
+            <h3 className="md:col-span-2 font-semibold text-slate-950">Search and social metadata</h3>
+            {[["seo_title", "SEO title"], ["canonical_path", "Canonical path"]].map(([key, label]) => <label key={key} className="text-sm font-semibold text-slate-700">{label}<input value={projectDraft[key] || ""} onChange={(event) => setProjectDraft((current) => ({ ...current, [key]: event.target.value }))} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal" /></label>)}
+            <label className="text-sm font-semibold text-slate-700 md:col-span-2">SEO description<textarea rows={3} value={projectDraft.seo_description || ""} onChange={(event) => setProjectDraft((current) => ({ ...current, seo_description: event.target.value }))} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal" /></label>
+          </div>
           <div className="mt-5 flex flex-wrap gap-5">
             <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold"><FiUpload /> Cover image<input type="file" accept="image/*" className="hidden" onChange={(event) => setProjectDraft((current) => ({ ...current, coverFile: event.target.files[0] }))} /></label>
             <label className="inline-flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={Boolean(projectDraft.featured)} onChange={(event) => setProjectDraft((current) => ({ ...current, featured: event.target.checked }))} /> Featured</label>
             <label className="inline-flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={Boolean(projectDraft.published)} onChange={(event) => setProjectDraft((current) => ({ ...current, published: event.target.checked }))} /> Published</label>
+            {projectDraft.cover_image_url ? <img src={projectDraft.cover_image_url} alt="" className="h-16 w-28 rounded-xl object-cover" /> : null}
           </div>
 
           {selectedProject ? (
             <div className="mt-8 border-t border-slate-200 pt-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-semibold">Feature gallery</h3>
-                <button type="button" onClick={() => setFeatureDraft({ category: "", title: "", summary: "", demo_path: "/demo", alt_text: "", position: (selectedProject.features?.length || 0) + 1, published: true })} className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white"><FiPlus /> Add feature</button>
+                <button type="button" onClick={() => setFeatureDraft({ category: "", title: "", summary: "", demo_path: "/demo", alt_text: "", review_notes: "", position: (selectedProject.features?.length || 0) + 1, tour_position: (selectedProject.features?.length || 0) + 1, published: true })} className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white"><FiPlus /> Add feature</button>
               </div>
               <div className="mt-4 grid gap-3 md:grid-cols-2">
-                {(selectedProject.features || []).map((feature) => <button type="button" key={feature.id} onClick={() => setFeatureDraft(feature)} className="rounded-2xl border border-slate-200 p-4 text-left"><p className="text-xs font-bold uppercase tracking-wider text-blue-700">{feature.category}</p><p className="mt-2 font-semibold">{feature.title}</p></button>)}
+                {(selectedProject.features || []).map((feature) => <button type="button" draggable key={feature.id} onDragStart={() => setDraggedFeatureId(feature.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => persistOrder(projects, reorder(selectedProject.features, draggedFeatureId, feature.id))} onClick={() => setFeatureDraft(feature)} className="rounded-2xl border border-slate-200 p-4 text-left"><div className="flex items-center gap-2"><FiMove className="text-slate-400" /><p className="text-xs font-bold uppercase tracking-wider text-blue-700">{feature.category}</p><span className="ml-auto text-[10px] uppercase text-slate-400">{feature.published ? "Live" : "Draft"}</span></div><p className="mt-2 font-semibold">{feature.title}</p>{feature.screenshot_url ? <img src={feature.screenshot_url} alt="" className="mt-3 h-24 w-full rounded-xl object-cover" /> : null}</button>)}
               </div>
             </div>
           ) : null}
@@ -257,8 +348,9 @@ const PortfolioAdmin = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
           <form onSubmit={saveFeature} className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[28px] bg-white p-6 shadow-2xl">
             <div className="flex items-center justify-between"><h2 className="text-2xl font-semibold">{featureDraft.id ? "Edit feature" : "New feature"}</h2><button type="button" onClick={() => setFeatureDraft(null)} className="rounded-full border p-2">×</button></div>
-            {["category", "title", "demo_path", "alt_text", "position"].map((key) => <label key={key} className="mt-4 block text-sm font-semibold capitalize">{key.replaceAll("_", " ")}<input type={key === "position" ? "number" : "text"} value={featureDraft[key] ?? ""} onChange={(event) => setFeatureDraft((current) => ({ ...current, [key]: event.target.value }))} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal" /></label>)}
+            {["category", "title", "demo_path", "alt_text", "position", "tour_position"].map((key) => <label key={key} className="mt-4 block text-sm font-semibold capitalize">{key.replaceAll("_", " ")}<input type={["position", "tour_position"].includes(key) ? "number" : "text"} value={featureDraft[key] ?? ""} onChange={(event) => setFeatureDraft((current) => ({ ...current, [key]: event.target.value }))} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal" /></label>)}
             <label className="mt-4 block text-sm font-semibold">Summary<textarea rows={4} value={featureDraft.summary || ""} onChange={(event) => setFeatureDraft((current) => ({ ...current, summary: event.target.value }))} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal" /></label>
+            <label className="mt-4 block text-sm font-semibold">What to notice<textarea rows={3} value={featureDraft.review_notes || ""} onChange={(event) => setFeatureDraft((current) => ({ ...current, review_notes: event.target.value }))} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal" /></label>
             <div className="mt-5 flex flex-wrap items-center gap-4">
               <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold"><FiUpload /> Screenshot<input type="file" accept="image/*" className="hidden" onChange={(event) => setFeatureDraft((current) => ({ ...current, screenshotFile: event.target.files[0] }))} /></label>
               <label className="inline-flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={Boolean(featureDraft.published)} onChange={(event) => setFeatureDraft((current) => ({ ...current, published: event.target.checked }))} /> Published</label>

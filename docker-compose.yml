@@ -1,25 +1,109 @@
-version: '3.8'
 services:
   db:
     image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nexus_hub_production
+      POSTGRES_USER: nexus
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
     volumes:
       - db-data:/var/lib/postgresql/data
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexus -d nexus_hub_production"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    build: .
+    env_file: .env
+    command: ./bin/rails db:prepare
+    environment: &app-environment
+      DATABASE_URL: postgres://nexus:${POSTGRES_PASSWORD}@db:5432/nexus_hub_production
+      REDIS_URL: redis://redis:6379/1
+      RAILS_ENV: production
+      RAILS_SERVE_STATIC_FILES: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   web:
     build: .
-    env_file:
-      - .env
-    environment:
-      DB_HOST: db
-    ports:
-      - "3000:3000"
+    restart: unless-stopped
+    env_file: .env
+    environment: *app-environment
+    command: ./bin/rails server -b 0.0.0.0
     depends_on:
-      - db
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "ruby -rnet/http -e 'exit(Net::HTTP.get_response(URI(\"http://localhost:3000/up\")).is_a?(Net::HTTPSuccess) ? 0 : 1)'"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+
+  worker:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment: *app-environment
+    command: bundle exec sidekiq
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+
+  backup:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      PGHOST: db
+      PGDATABASE: nexus_hub_production
+      PGUSER: nexus
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+    volumes:
+      - ./bin/backup-database:/usr/local/bin/backup-database:ro
+      - db-backups:/backups
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["while true; do backup-database; sleep 86400; done"]
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   db-data:
+  redis-data:
+  db-backups:
+  caddy-data:
+  caddy-config:

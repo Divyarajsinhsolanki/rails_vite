@@ -13,16 +13,16 @@ class CalendarEvent < ApplicationRecord
   has_many :event_reminders, dependent: :destroy
   has_many :recurrence_instances, class_name: 'CalendarEvent', foreign_key: :recurrence_parent_id, dependent: :nullify
 
-  enum visibility: {
+  enum :visibility, {
     personal: 'personal',
     project: 'project'
-  }, _default: 'personal'
+  }, default: 'personal'
 
-  enum status: {
+  enum :status, {
     scheduled: 'scheduled',
     cancelled: 'cancelled',
     completed: 'completed'
-  }, _default: 'scheduled'
+  }, default: 'scheduled'
 
   validates :title, :start_at, :end_at, :event_type, :visibility, :status, presence: true
   validates :event_type, inclusion: { in: EVENT_TYPES }

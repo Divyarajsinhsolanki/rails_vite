@@ -40,4 +40,43 @@ class PortfolioAndDemoTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
     assert_equal "demo_read_only", JSON.parse(response.body).fetch("error")
   end
+
+  test "demo reads do not change database state" do
+    post "/api/demo_session"
+    assert_response :success
+
+    workspace = Workspace.find_by!(kind: "demo")
+    conversation = Conversation.unscoped.where(workspace: workspace).first!
+    participant = ConversationParticipant.unscoped.find_by!(workspace: workspace, conversation: conversation, user: workspace.users.find_by!(demo_account: true))
+    before_state = {
+      participant_read_at: participant.last_read_at,
+      notification_reads: Notification.unscoped.where(workspace: workspace).pluck(:id, :read_at),
+      record_counts: [
+        Project.unscoped.where(workspace: workspace).count,
+        Task.unscoped.where(workspace: workspace).count,
+        Post.unscoped.where(workspace: workspace).count
+      ]
+    }
+
+    get "/api/demo/manifest"
+    assert_response :success
+    get "/api/search", params: { q: "Nexus" }
+    assert_response :success
+    get "/api/activity"
+    assert_response :success
+    get "/api/conversations/#{conversation.id}"
+    assert_response :success
+
+    if before_state[:participant_read_at].nil?
+      assert_nil participant.reload.last_read_at
+    else
+      assert_equal before_state[:participant_read_at], participant.reload.last_read_at
+    end
+    assert_equal before_state[:notification_reads], Notification.unscoped.where(workspace: workspace).pluck(:id, :read_at)
+    assert_equal before_state[:record_counts], [
+      Project.unscoped.where(workspace: workspace).count,
+      Task.unscoped.where(workspace: workspace).count,
+      Post.unscoped.where(workspace: workspace).count
+    ]
+  end
 end

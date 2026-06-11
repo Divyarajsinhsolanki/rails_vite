@@ -54,10 +54,17 @@ const DemoHub = () => {
                 <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-white">
                   <Icon className="h-5 w-5" />
                 </span>
-                <span className="text-sm font-semibold text-slate-400">0{index + 1}</span>
+                <span className="text-sm font-semibold text-slate-400">
+                  0{group.step || index + 1} / 0{manifest?.total_steps || 6}
+                </span>
               </div>
               <h2 className="mt-8 text-2xl font-semibold tracking-[-0.04em] text-slate-950">{group.title}</h2>
               <p className="mt-3 leading-7 text-slate-600">{group.summary}</p>
+              {group.review_notes ? (
+                <p className="mt-4 rounded-2xl bg-blue-50 p-4 text-sm leading-6 text-blue-900">
+                  <span className="font-semibold">What to notice:</span> {group.review_notes}
+                </p>
+              ) : null}
               <span className="mt-6 inline-flex items-center gap-2 font-semibold text-blue-700">
                 Explore screen <FiArrowUpRight className="transition group-hover:translate-x-1 group-hover:-translate-y-1" />
               </span>
@@ -78,6 +85,11 @@ const DemoHub = () => {
             <div key={item} className="rounded-2xl bg-slate-50 p-5 font-medium leading-7 text-slate-700">{item}</div>
           ))}
         </div>
+        {manifest?.recommended_start ? (
+          <Link to={manifest.recommended_start} className="mt-7 inline-flex items-center gap-2 rounded-full bg-slate-950 px-5 py-3 font-semibold text-white">
+            Start the recommended tour <FiArrowUpRight />
+          </Link>
+        ) : null}
       </section>
     </div>
   );

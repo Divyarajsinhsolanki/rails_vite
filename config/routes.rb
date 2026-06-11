@@ -8,6 +8,8 @@ Rails.application.routes.draw do
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
+  get "sitemap.xml" => "pages#sitemap", defaults: { format: :xml }
+  get "robots.txt" => "pages#robots", defaults: { format: :text }
 
   root "pages#index"
 
@@ -57,6 +59,8 @@ Rails.application.routes.draw do
     get 'portfolio', to: 'portfolio#show'
     post 'demo_session', to: 'demo_sessions#create'
     get 'demo/manifest', to: 'demo#manifest'
+    get 'search', to: 'search#index'
+    get 'activity', to: 'activity#index'
 
     namespace :admin do
       get 'portfolio', to: 'portfolio#show'
@@ -67,6 +71,7 @@ Rails.application.routes.draw do
       post 'portfolio/projects/:project_id/features', to: 'portfolio#create_feature'
       patch 'portfolio/features/:id', to: 'portfolio#update_feature'
       delete 'portfolio/features/:id', to: 'portfolio#destroy_feature'
+      patch 'portfolio/order', to: 'portfolio#update_order'
     end
 
     post 'signup', to: 'auth#signup'

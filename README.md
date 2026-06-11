@@ -1,6 +1,6 @@
 # Nexus Hub
 
-Nexus Hub is a Rails 7.1 and React workspace for managing day-to-day product, project, and team operations. It has moved beyond the original sample-app stage and now includes authenticated dashboards, project and sprint planning, work logs, calendars, collaboration tools, knowledge cards, and PDF workflows.
+Nexus Hub is a Rails 8 and React workspace for managing day-to-day product, project, and team operations. It has moved beyond the original sample-app stage and now includes authenticated dashboards, project and sprint planning, work logs, calendars, collaboration tools, knowledge cards, and PDF workflows.
 
 The Rails app serves both the JSON API and the React entrypoint. Vite handles the React development server and production bundle.
 
@@ -21,7 +21,7 @@ The Rails app serves both the JSON API and the React entrypoint. Vite handles th
 ## Tech Stack
 
 - Ruby 3.3.0
-- Rails 7.1
+- Rails 8.0
 - PostgreSQL
 - React 18
 - Vite 6 with `vite_rails`
@@ -141,6 +141,25 @@ Environment variables are documented in `.env.example`. The most important group
 - Action Cable: `REDIS_URL`
 - Rate limits: `RACK_ATTACK_LOGIN_PER_MINUTE`, `RACK_ATTACK_REQUESTS_PER_MINUTE`, `RACK_ATTACK_SIGNUP_PER_HOUR`
 - Portfolio/demo: `PORTFOLIO_ADMIN_EMAIL`, `DEMO_MODE_ENABLED`, `RACK_ATTACK_DEMO_PER_MINUTE`
+
+## Production Docker deployment
+
+The Compose stack includes Rails web, Sidekiq, PostgreSQL, Redis, Caddy, and daily
+PostgreSQL backups. Configure `.env` from `.env.example`, including
+`POSTGRES_PASSWORD`, `SECRET_KEY_BASE`, `APP_DOMAIN`, and the S3-compatible
+Active Storage settings.
+
+```bash
+docker compose build
+docker compose run --rm migrate
+docker compose run --rm web bin/rails portfolio:seed
+docker compose run --rm web bin/rails demo:seed
+docker compose up -d
+```
+
+Keep `DEMO_MODE_ENABLED=false` until migrations, synthetic seeds, uploaded
+portfolio media, deep links, `/up`, and backup output have been verified. Then
+enable demo mode and restart the web and worker services.
 - Contact form reCAPTCHA: `VITE_RECAPTCHA_SITE_KEY`, `RECAPTCHA_SECRET_KEY`, `RECAPTCHA_MIN_SCORE`
 - Knowledge cards and feeds: `VITE_GNEWS_API_KEY`, `VITE_NEWSAPI_KEY`, `VITE_FINANCIAL_MODELING_PREP_API_KEY`, `VITE_ALPHA_VANTAGE_API_KEY`, `VITE_NEWSDATA_API_KEY`, `VITE_GUARDIAN_API_KEY`, `VITE_WORDNIK_API_KEY`, `VITE_NASA_API_KEY`
 - Firebase: `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID`, `VITE_FIREBASE_MEASUREMENT_ID`

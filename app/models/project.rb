@@ -12,13 +12,14 @@ class Project < ApplicationRecord
   has_many :project_vault_items, dependent: :destroy, inverse_of: :project
   has_many :calendar_events, dependent: :nullify
 
-  enum status: {
+  enum :status, {
     upcoming: 'upcoming',
     running: 'running',
     completed: 'completed'
-  }, _default: 'running'
+  }, default: 'running'
 
   validates :name, presence: true
+  validates :name, uniqueness: { scope: :workspace_id }
   validate :end_date_not_before_start_date
 
   before_save :set_status_from_dates

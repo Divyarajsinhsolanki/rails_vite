@@ -11,6 +11,8 @@ class Api::DemoSessionsController < Api::BaseController
     user = workspace&.users&.find_by(demo_account: true)
     return render json: { error: "demo_unavailable" }, status: :service_unavailable unless user
 
+    Current.user = user
+    Current.workspace = workspace
     set_jwt_cookie!(user)
     render json: {
       user: authentication_user_payload(user),

@@ -13,8 +13,8 @@ class DemoWorkspaceSeeder
     guest = upsert_user(workspace, email: DEMO_EMAIL, first_name: "Demo", last_name: "Visitor", job_title: "Portfolio Guest", demo_account: true, landing_page: "demo")
     guest.roles = [roles.fetch("member")]
     Current.user = guest
-    engineer = upsert_user(workspace, email: "alex@nexushub.demo", first_name: "Alex", last_name: "Morgan", job_title: "Full-stack Engineer")
-    qa_user = upsert_user(workspace, email: "maya@nexushub.demo", first_name: "Maya", last_name: "Patel", job_title: "QA Engineer")
+    engineer = upsert_user(workspace, email: "alex@nexushub.demo", first_name: "Demo", last_name: "Engineer", job_title: "Full-stack Engineer")
+    qa_user = upsert_user(workspace, email: "maya@nexushub.demo", first_name: "Demo", last_name: "QA", job_title: "QA Engineer")
 
     department = Department.find_or_initialize_by(name: "Product Engineering")
     department.update!(manager: engineer, description: "Synthetic team data for the public portfolio demo.")
@@ -186,13 +186,16 @@ class DemoWorkspaceSeeder
       first_name: attributes.fetch(:first_name),
       last_name: attributes.fetch(:last_name),
       job_title: attributes.fetch(:job_title),
-      password: "DemoPassword!42",
-      password_confirmation: "DemoPassword!42",
       status: "active",
       landing_page: attributes.fetch(:landing_page, "posts"),
       demo_account: attributes.fetch(:demo_account, false),
       avatar_color: User.generate_avatar_color(attributes.fetch(:email))
     )
+    if user.new_record?
+      generated_password = SecureRandom.base64(36)
+      user.password = generated_password
+      user.password_confirmation = generated_password
+    end
     user.skip_confirmation!
     user.save!
     user

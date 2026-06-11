@@ -28,7 +28,7 @@ const fallbackProfile = {
   location: "India",
   summary: "I build product-focused web applications from database modeling and secure APIs through responsive interfaces, realtime collaboration, integrations, and deployment.",
   skills: ["Ruby on Rails", "React", "PostgreSQL", "JavaScript", "REST APIs", "Tailwind CSS"],
-  metrics: ["Rails 7.1 + React 18", "35+ API controllers", "20+ product surfaces", "Realtime collaboration"],
+  metrics: ["Rails 8.0 + React 18", "35+ API controllers", "20+ product surfaces", "Realtime collaboration"],
   architecture: ["React and Vite client", "Rails JSON API", "PostgreSQL data model", "Action Cable and background jobs"],
   engineering_highlights: ["Workspace authorization", "Project delivery workflows", "Realtime chat", "Calendar reminders", "PDF processing"],
   social_links: { github: "https://github.com/Divyarajsinhsolanki" },
@@ -38,9 +38,17 @@ const fallbackProject = {
   title: "Nexus Hub",
   tagline: "A connected workspace for planning, delivery, collaboration, knowledge, and document workflows.",
   summary: "Nexus Hub is a full-stack Rails and React product that brings project operations, personal productivity, team communication, learning tools, and PDF workflows into one application.",
-  stack: ["Ruby 3.3", "Rails 7.1", "React 18", "Vite 6", "PostgreSQL", "Tailwind CSS"],
+  stack: ["Ruby 3.3", "Rails 8.0", "React 18", "Vite 6", "PostgreSQL", "Tailwind CSS"],
   repository_url: "https://github.com/Divyarajsinhsolanki/rails_vite",
   engineering_highlights: fallbackProfile.engineering_highlights,
+  case_study: {
+    problem: "Teams often split project delivery, planning, communication, learning, and document work across disconnected tools.",
+    role: "Designed and implemented the Rails domain model, APIs, React product surfaces, authorization, realtime workflows, and deployment setup.",
+    constraints: ["Protect tenant data", "Keep a broad product understandable", "Offer a safe public demo"],
+    decisions: ["Workspace-scoped Rails APIs", "Synthetic read-only demo workspace", "Route-level loading for heavy features"],
+    trade_offs: ["A broad product requires stronger navigation and testing discipline"],
+    outcomes: ["One connected workspace", "One-click technical review", "Production-oriented deployment"],
+  },
   features: [
     ["Project Delivery", "Projects, Sprints, and Quality", "/projects"],
     ["Planning and Focus", "Calendar and Daily Momentum", "/momentum"],
@@ -62,6 +70,7 @@ const fallbackProject = {
 const navItems = [
   ["About", "about"],
   ["Case Study", "case-study"],
+  ["Decisions", "decisions"],
   ["Features", "features"],
   ["Architecture", "architecture"],
   ["Contact", "contact"],
@@ -159,7 +168,7 @@ const ContactForm = () => {
 const PublicPortfolio = () => {
   const navigate = useNavigate();
   const { handleDemoLogin } = useContext(AuthContext);
-  const [data, setData] = useState({ profile: fallbackProfile, projects: [fallbackProject] });
+  const [data, setData] = useState({ profile: fallbackProfile, projects: [fallbackProject], seo: {} });
   const [menuOpen, setMenuOpen] = useState(false);
   const [demoLoading, setDemoLoading] = useState("");
   const [demoError, setDemoError] = useState("");
@@ -170,6 +179,7 @@ const PublicPortfolio = () => {
         setData({
           profile: payload?.profile || fallbackProfile,
           projects: Array.isArray(payload?.projects) && payload.projects.length ? payload.projects : [fallbackProject],
+          seo: payload?.seo || {},
         });
       })
       .catch(() => setData((current) => current));
@@ -179,7 +189,26 @@ const PublicPortfolio = () => {
   const project = data.projects[0];
   const features = project?.features || [];
   const socialLinks = profile.social_links || {};
+  const caseStudy = project?.case_study || fallbackProject.case_study;
+  const seo = data.seo || {};
+  const browserUrl = typeof window === "undefined" ? "http://localhost:3000/" : window.location.href;
+  const browserOrigin = typeof window === "undefined" ? "http://localhost:3000" : window.location.origin;
   const initials = profile.full_name.split(/\s+/).map((part) => part[0]).slice(0, 2).join("");
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: profile.full_name,
+    jobTitle: "Full-stack Rails and React Engineer",
+    url: seo.canonical_url || browserOrigin,
+    sameAs: [socialLinks.github, socialLinks.linkedin].filter(Boolean),
+    knowsAbout: profile.skills || [],
+    hasPart: {
+      "@type": "SoftwareApplication",
+      name: project?.title || "Nexus Hub",
+      applicationCategory: "BusinessApplication",
+      description: project?.summary || profile.summary,
+    },
+  };
 
   const groupedFeatures = useMemo(
     () => [...features].sort((a, b) => (a.position || 0) - (b.position || 0)),
@@ -206,12 +235,16 @@ const PublicPortfolio = () => {
   return (
     <div className="min-h-screen overflow-hidden bg-[#07111f] text-white">
       <Helmet>
-        <title>{profile.full_name} | Full-stack Rails and React Engineer</title>
-        <meta name="description" content={profile.summary} />
-        <meta property="og:title" content={`${profile.full_name} | Full-stack Engineer`} />
-        <meta property="og:description" content={project?.summary || profile.summary} />
+        <title>{seo.title || `${profile.full_name} | Full-stack Rails and React Engineer`}</title>
+        <meta name="description" content={seo.description || profile.summary} />
+        <link rel="canonical" href={seo.canonical_url || browserUrl} />
+        <meta property="og:title" content={seo.title || `${profile.full_name} | Full-stack Engineer`} />
+        <meta property="og:description" content={seo.description || project?.summary || profile.summary} />
         <meta property="og:type" content="website" />
-        {project?.cover_image_url ? <meta property="og:image" content={project.cover_image_url} /> : null}
+        <meta property="og:url" content={seo.canonical_url || browserUrl} />
+        <meta name="twitter:card" content="summary_large_image" />
+        {seo.image_url || project?.cover_image_url ? <meta property="og:image" content={seo.image_url || project.cover_image_url} /> : null}
+        <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
       </Helmet>
 
       <div className="pointer-events-none fixed inset-0 opacity-50" aria-hidden="true">
@@ -346,6 +379,43 @@ const PublicPortfolio = () => {
           </div>
         </section>
 
+        <section id="decisions" className="border-y border-white/10 bg-white/[0.03]">
+          <div className="mx-auto max-w-7xl px-5 py-20 sm:px-8">
+            <p className="text-xs font-bold uppercase tracking-[0.3em] text-cyan-300">Engineering Decisions</p>
+            <h2 className="mt-4 max-w-4xl text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">
+              The reasoning behind the product, not only the feature list.
+            </h2>
+            <div className="mt-10 grid gap-5 lg:grid-cols-2">
+              <article className="rounded-[30px] border border-white/10 bg-slate-950/60 p-7">
+                <p className="text-xs font-bold uppercase tracking-[0.24em] text-cyan-300">Problem</p>
+                <p className="mt-4 text-lg leading-8 text-slate-200">{caseStudy.problem}</p>
+              </article>
+              <article className="rounded-[30px] border border-white/10 bg-slate-950/60 p-7">
+                <p className="text-xs font-bold uppercase tracking-[0.24em] text-cyan-300">My Role</p>
+                <p className="mt-4 text-lg leading-8 text-slate-200">{caseStudy.role}</p>
+              </article>
+              {[
+                ["Constraints", caseStudy.constraints],
+                ["Technical Decisions", caseStudy.decisions],
+                ["Trade-offs", caseStudy.trade_offs],
+                ["Outcomes", caseStudy.outcomes],
+              ].map(([title, items]) => (
+                <article key={title} className="rounded-[30px] border border-white/10 bg-white/5 p-7">
+                  <p className="text-xs font-bold uppercase tracking-[0.24em] text-cyan-300">{title}</p>
+                  <ul className="mt-5 space-y-3">
+                    {(items || []).map((item) => (
+                      <li key={item} className="flex gap-3 leading-7 text-slate-300">
+                        <FiCheck className="mt-1 shrink-0 text-cyan-300" aria-hidden="true" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section id="features" className="border-y border-white/10 bg-white/[0.03]">
           <div className="mx-auto max-w-7xl px-5 py-20 sm:px-8">
             <p className="text-xs font-bold uppercase tracking-[0.3em] text-cyan-300">Feature Map</p>
@@ -365,6 +435,11 @@ const PublicPortfolio = () => {
                     <p className="text-xs font-bold uppercase tracking-[0.24em] text-cyan-300">0{index + 1} / {feature.category}</p>
                     <h3 className="mt-3 text-2xl font-semibold tracking-[-0.035em]">{feature.title}</h3>
                     <p className="mt-3 leading-7 text-slate-400">{feature.summary}</p>
+                    {feature.review_notes ? (
+                      <p className="mt-4 rounded-2xl border border-cyan-300/10 bg-cyan-300/5 p-3 text-sm leading-6 text-cyan-100">
+                        <span className="font-semibold">What to notice:</span> {feature.review_notes}
+                      </p>
+                    ) : null}
                     <span className="mt-5 inline-flex items-center gap-2 font-semibold text-white">Open live screen <FiArrowUpRight className="transition group-hover:translate-x-1 group-hover:-translate-y-1" /></span>
                   </div>
                 </button>
@@ -387,6 +462,21 @@ const PublicPortfolio = () => {
                 </div>
               ))}
             </div>
+          </div>
+          <div className="mt-12 grid items-stretch gap-3 md:grid-cols-[1fr_auto_1fr_auto_1fr]">
+            {[
+              ["React + Vite", "Public portfolio and authenticated product UI"],
+              ["Rails 8.0", "Authentication, authorization, APIs, jobs, storage, and realtime"],
+              ["PostgreSQL + Redis + S3", "Tenant data, background work, streams, and durable media"],
+            ].map(([title, description], index) => (
+              <React.Fragment key={title}>
+                <div className="rounded-[26px] border border-white/10 bg-white/5 p-6">
+                  <p className="text-lg font-semibold text-white">{title}</p>
+                  <p className="mt-3 leading-7 text-slate-400">{description}</p>
+                </div>
+                {index < 2 ? <div className="hidden items-center text-2xl text-cyan-300 md:flex" aria-hidden="true">→</div> : null}
+              </React.Fragment>
+            ))}
           </div>
         </section>
 

@@ -4,7 +4,9 @@ class Api::TeamUsersController < Api::BaseController
   before_action :set_team_user, only: [:update, :destroy]
 
   def create
-    team_user = TeamUser.new(team_user_params)
+    team = Team.find(params.dig(:team_user, :team_id))
+    user = current_user.workspace.users.find(params.dig(:team_user, :user_id))
+    team_user = team.team_users.new(team_user_attributes.merge(user: user))
     if team_user.save
       render json: serialize_team_user(team_user), status: :created
     else
@@ -13,7 +15,7 @@ class Api::TeamUsersController < Api::BaseController
   end
 
   def update
-    if @team_user.update(team_user_params)
+    if @team_user.update(team_user_attributes)
       render json: serialize_team_user(@team_user)
     else
       render json: { errors: @team_user.errors.full_messages }, status: :unprocessable_entity
@@ -47,8 +49,12 @@ class Api::TeamUsersController < Api::BaseController
     @team_user = TeamUser.find(params[:id])
   end
 
-  def team_user_params
-    params.require(:team_user).permit(:team_id, :user_id, :role, :status)
+  def team_user_attributes
+    raw = params.require(:team_user)
+    attributes = {}
+    attributes[:role] = raw[:role] if TeamUser.roles.key?(raw[:role])
+    attributes[:status] = raw[:status] if TeamUser.statuses.key?(raw[:status])
+    attributes
   end
 
   def serialize_team_user(tu)

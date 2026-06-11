@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useContext, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { Document, Page, pdfjs } from "react-pdf";
 import pdfWorkerUrl from "react-pdf/node_modules/pdfjs-dist/build/pdf.worker.min.mjs?url";
@@ -7,6 +7,7 @@ import PdfViewer from "./PdfViewer";
 import SidebarToolbar from "./SidebarToolbar";
 import { AnimatePresence, motion } from "framer-motion";
 import { fetchWithTimeout, PDF_UPLOAD_TIMEOUT_MS } from "../utils/request";
+import { AuthContext } from "../context/AuthContext";
 
 import {
   FileText,
@@ -200,6 +201,8 @@ const PdfPreviewCard = ({ item, isActive, onOpen, onUnavailable }) => (
 );
 
 const PdfMaster = () => {
+  const { user } = useContext(AuthContext);
+  const isDemo = Boolean(user?.demo_account);
   const activePdfUrlRef = useRef(null);
   const downloadNameRef = useRef("document.pdf");
   const [pdfUrl, setPdfUrl] = useState(null);
@@ -278,6 +281,15 @@ const PdfMaster = () => {
     let cancelled = false;
 
     const restorePdfState = async () => {
+      if (isDemo) {
+        const sampleUrl = "/demo/nexus-hub-sample.pdf";
+        setPdfUrl(sampleUrl);
+        setDownloadName("nexus-hub-sample.pdf");
+        setPdfLibrary([{ url: sampleUrl, name: "Nexus Hub sample", addedAt: Date.now() }]);
+        setRestoringLibrary(false);
+        return;
+      }
+
       const storedPdf = normalizePdfUrl(readStorage("pdfUrl"));
       const storedDownloadName = readStorage("pdfDownloadName");
       const storedLibrary = normalizePdfLibraryItems(readJsonStorage(PDF_LIBRARY_STORAGE_KEY, []));
@@ -331,7 +343,7 @@ const PdfMaster = () => {
       cancelled = true;
       window.removeEventListener("pdf-updated", handlePdfUpdate);
     };
-  }, [replacePdfInLibrary]);
+  }, [isDemo, replacePdfInLibrary]);
 
   useEffect(() => {
     setPlacementCoordinates(null);
@@ -481,7 +493,7 @@ const PdfMaster = () => {
     accept: { 'application/pdf': ['.pdf'] },
     maxSize: MAX_PDF_UPLOAD_SIZE_BYTES,
     multiple: true,
-    disabled: uploading,
+    disabled: uploading || isDemo,
   });
 
   const handlePlacementChange = useCallback((coordinates) => {
@@ -531,7 +543,7 @@ const PdfMaster = () => {
   };
 
   const startWithSample = () => {
-    const sampleUrl = "/documents/sample.pdf";
+    const sampleUrl = "/demo/nexus-hub-sample.pdf";
     setPdfUrl(sampleUrl);
     setDownloadName("sample.pdf");
     writeStorage("pdfUrl", sampleUrl);
@@ -634,6 +646,11 @@ const PdfMaster = () => {
 
   return (
     <div className="h-full w-full flex min-h-0 flex-col bg-white overflow-hidden font-inter select-none">
+      {isDemo ? (
+        <div className="shrink-0 border-b border-cyan-200 bg-cyan-50 px-4 py-2 text-center text-sm font-semibold text-cyan-950">
+          Sample document preview. Uploads, editing, history, and destructive actions are disabled in the read-only demo.
+        </div>
+      ) : null}
       {/* 🚀 Header */}
       <header className="h-14 border-b border-gray-100 flex items-center justify-between px-6 bg-white shrink-0 z-30">
         <div className="flex items-center space-x-4">
@@ -647,6 +664,7 @@ const PdfMaster = () => {
           <input
             type="text"
             value={downloadName}
+            disabled={isDemo}
             onChange={(event) => {
               setDownloadName(event.target.value);
               writeStorage("pdfDownloadName", event.target.value);
@@ -656,7 +674,7 @@ const PdfMaster = () => {
           />
         </div>
         <div className="flex items-center space-x-4">
-          <div className="flex items-center rounded-lg border border-gray-200 bg-white p-1">
+          {!isDemo ? <div className="flex items-center rounded-lg border border-gray-200 bg-white p-1">
             <button
               onClick={() => handleHistoryAction("/undo_pdf")}
               className="inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-50 hover:text-indigo-600"
@@ -671,9 +689,18 @@ const PdfMaster = () => {
             >
               <Redo2 className="h-4 w-4" />
             </button>
-          </div>
-          <button onClick={closePdf} className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors">Close</button>
-          <button 
+          </div> : null}
+          {!isDemo ? <button onClick={closePdf} className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors">Close</button> : null}
+          {isDemo ? (
+            <a
+              href={pdfUrl}
+              download={downloadName}
+              className="flex items-center rounded-lg bg-indigo-600 px-4 py-1.5 text-xs font-bold text-white shadow-lg shadow-indigo-100"
+            >
+              <Download className="mr-2 h-3.5 w-3.5" />
+              Download sample
+            </a>
+          ) : <button
             onClick={() => {
               const url = new URL("/download_pdf", window.location.origin);
               const cleanPath = normalizePdfUrl(pdfUrl);
@@ -686,13 +713,13 @@ const PdfMaster = () => {
           >
             <Download className="h-3.5 w-3.5 mr-2" />
             Download
-          </button>
+          </button>}
         </div>
       </header>
 
       {/* 🍱 Main Layout Container */}
       <div className="flex flex-1 overflow-hidden relative">
-        <SidebarToolbar activeTool={activeForm} setActiveTool={setActiveForm} />
+        {isDemo ? null : <SidebarToolbar activeTool={activeForm} setActiveTool={setActiveForm} />}
         
         <main className="flex-1 flex flex-col bg-gray-50/50 overflow-hidden relative">
           {pdfLibrary.length > 1 && (
@@ -713,7 +740,7 @@ const PdfMaster = () => {
 
           {/* Component Action Bar (Add Text Inputs etc) */}
           <AnimatePresence>
-            {activeForm && (
+            {!isDemo && activeForm && (
               <motion.div 
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
@@ -741,7 +768,7 @@ const PdfMaster = () => {
           <div className="flex-1 overflow-hidden relative">
             <PdfViewer
               pdfUrl={`${pdfUrl}?updated=${pdfUpdated}`}
-              activeTool={activeForm}
+              activeTool={isDemo ? null : activeForm}
               onConfirmPosition={handleConfirmPosition}
               onPlacementChange={handlePlacementChange}
               placementCoordinates={placementCoordinates}

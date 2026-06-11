@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { auth, getRedirectResult } from "../firebaseConfig";
+import { firebaseEnabled } from "../firebaseFlags";
 import { Toaster, toast } from "react-hot-toast";
 import SpinnerOverlay from "../components/ui/SpinnerOverlay";
 import WorkspaceOrb from "../components/landing/WorkspaceOrb";
@@ -39,12 +39,6 @@ const Login = ({ switchToSignup }) => {
       toast.success("Email confirmed. Please log in.");
     }
 
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result?.user) {
-        }
-      })
-      .catch(console.error);
   }, [searchParams]);
 
   return (
@@ -121,36 +115,40 @@ const Login = ({ switchToSignup }) => {
                 ⚠️ {error}
               </div>
             )}
-            {/* Divider */}
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-slate-500">OR</span>
-              </div>
-            </div>
+            {firebaseEnabled ? (
+              <>
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-200" />
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="bg-white px-2 text-slate-500">OR</span>
+                  </div>
+                </div>
 
-            {/* Google Login Button */}
-            <button
-              onClick={async () => {
-                setLoading(true);
-                try {
-                  await handleGoogleLogin();
-                } finally {
-                  setLoading(false);
-                }
-              }}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-3 font-medium text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
-            >
-              <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path
-                  fill="currentColor"
-                  d="M12.545 10.239v3.821h5.445c-.712 2.315-2.647 3.972-5.445 3.972a6.033 6.033 0 110-12.064c1.835 0 3.456.705 4.691 1.942l3.099-3.101A10.113 10.113 0 0012.545 2C7.021 2 2.545 6.477 2.545 12s4.476 10 10 10c5.523 0 10-4.477 10-10a10.1 10.1 0 00-.167-1.785l-9.833-.006z"
-                />
-              </svg>
-              Sign in with Google
-            </button>
+                <button
+                  onClick={async () => {
+                    setLoading(true);
+                    try {
+                      await handleGoogleLogin();
+                    } catch (googleError) {
+                      toast.error(googleError.message || "Google login failed.");
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-3 font-medium text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+                >
+                  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path
+                      fill="currentColor"
+                      d="M12.545 10.239v3.821h5.445c-.712 2.315-2.647 3.972-5.445 3.972a6.033 6.033 0 110-12.064c1.835 0 3.456.705 4.691 1.942l3.099-3.101A10.113 10.113 0 0012.545 2C7.021 2 2.545 6.477 2.545 12s4.476 10 10 10c5.523 0 10-4.477 10-10a10.1 10.1 0 00-.167-1.785l-9.833-.006z"
+                    />
+                  </svg>
+                  Sign in with Google
+                </button>
+              </>
+            ) : null}
 
             <p className="mt-6 text-center text-sm text-slate-600">
               Don't have an account?{" "}

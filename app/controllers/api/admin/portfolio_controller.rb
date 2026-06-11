@@ -61,6 +61,23 @@ class Api::Admin::PortfolioController < Api::BaseController
     head :no_content
   end
 
+  def update_order
+    PortfolioProject.transaction do
+      Array(params[:projects]).each do |entry|
+        PortfolioProject.find(entry.require(:id)).update!(position: entry.require(:position))
+      end
+
+      Array(params[:features]).each do |entry|
+        PortfolioFeature.find(entry.require(:id)).update!(
+          position: entry.require(:position),
+          tour_position: entry[:tour_position].presence || entry.require(:position)
+        )
+      end
+    end
+
+    show
+  end
+
   private
 
   def authorize_site_admin!
@@ -77,13 +94,15 @@ class Api::Admin::PortfolioController < Api::BaseController
   def project_params
     params.require(:portfolio_project).permit(
       :title, :slug, :tagline, :summary, :description, :repository_url, :live_url,
-      :position, :featured, :published, stack: [], metrics: [], engineering_highlights: []
+      :position, :featured, :published, stack: [], metrics: [], engineering_highlights: [],
+      case_study: {}, seo: {}
     )
   end
 
   def feature_params
     params.require(:portfolio_feature).permit(
-      :category, :title, :summary, :demo_path, :alt_text, :position, :published
+      :category, :title, :summary, :demo_path, :alt_text, :position, :tour_position,
+      :review_notes, :published
     )
   end
 

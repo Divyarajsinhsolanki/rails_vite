@@ -33,7 +33,7 @@ module SessionCookieAuthentication
     profile_picture_url = rails_blob_url(user.profile_picture, only_path: true) if user.profile_picture.attached?
     cover_photo_url = rails_blob_url(user.cover_photo, only_path: true) if user.cover_photo.attached?
 
-    user.public_json(include_roles: true).merge(
+    user.public_json(include_roles: true).symbolize_keys.merge(
       profile_picture: profile_picture_url,
       cover_photo: cover_photo_url,
       avatar_color: user.avatar_color,

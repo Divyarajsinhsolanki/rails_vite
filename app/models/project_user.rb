@@ -6,7 +6,7 @@ class ProjectUser < ApplicationRecord
   belongs_to :project, inverse_of: :project_users
   belongs_to :user, inverse_of: :project_users
 
-  enum role: {
+  enum :role, {
     owner: 'owner',
     manager: 'manager',
     collaborator: 'collaborator',
@@ -16,14 +16,14 @@ class ProjectUser < ApplicationRecord
     designer: 'designer',
     analyst: 'analyst',
     viewer: 'viewer'
-  }, _default: 'collaborator'
+  }, default: 'collaborator'
 
-  enum status: {
+  enum :status, {
     invited: 'invited',
     requested: 'requested',
     active: 'active',
     removed: 'removed'
-  }, _default: 'active'
+  }, default: 'active'
 
   WORKLOAD_STATUSES = %w[free partial full overloaded].freeze
 

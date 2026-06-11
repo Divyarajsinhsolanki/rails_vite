@@ -42,10 +42,28 @@ class Api::DemoController < Api::BaseController
     return head :forbidden unless current_user.demo_account?
 
     project = Project.order(:id).first
-    groups = GROUPS.map do |group|
+    portfolio_features = PortfolioProject.published.ordered.first
+      &.portfolio_features
+      &.published
+      &.tour_ordered
+      &.to_a || []
+
+    groups = GROUPS.each_with_index.map do |group, index|
+      feature = portfolio_features[index]
       route = group[:route]
+      route = feature.demo_path if feature&.demo_path.present?
       route = "/projects/#{project.id}/dashboard" if group[:key] == "delivery" && project
-      group.merge(route: route)
+      group.merge(
+        route: route,
+        step: index + 1,
+        review_notes: feature&.review_notes,
+        screenshot_url: attachment_path(feature&.screenshot)
+      )
+    end
+
+    groups.each_with_index do |group, index|
+      group[:previous_route] = index.zero? ? "/demo" : groups[index - 1][:route]
+      group[:next_route] = index == groups.length - 1 ? "/demo#architecture" : groups[index + 1][:route]
     end
 
     render json: {
@@ -54,7 +72,17 @@ class Api::DemoController < Api::BaseController
         name: current_user.workspace.name
       },
       duration: "5 minutes",
+      total_steps: groups.length,
+      recommended_start: groups.first&.dig(:route),
       groups: groups
     }
+  end
+
+  private
+
+  def attachment_path(attachment)
+    return unless attachment&.attached?
+
+    Rails.application.routes.url_helpers.rails_blob_path(attachment, only_path: true)
   end
 end

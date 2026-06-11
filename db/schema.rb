@@ -10,9 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2027_06_10_000100) do
+ActiveRecord::Schema[8.0].define(version: 2027_06_11_000000) do
   # These are extensions that must be enabled in order to support this database
-  enable_extension "plpgsql"
+  enable_extension "pg_catalog.plpgsql"
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -329,7 +329,10 @@ ActiveRecord::Schema[7.1].define(version: 2027_06_10_000100) do
     t.boolean "published", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "review_notes"
+    t.integer "tour_position", default: 0, null: false
     t.index ["portfolio_project_id", "published", "position"], name: "idx_portfolio_features_order"
+    t.index ["portfolio_project_id", "tour_position"], name: "idx_portfolio_features_tour_order"
     t.index ["portfolio_project_id"], name: "index_portfolio_features_on_portfolio_project_id"
   end
 
@@ -364,6 +367,8 @@ ActiveRecord::Schema[7.1].define(version: 2027_06_10_000100) do
     t.boolean "published", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "case_study", default: {}, null: false
+    t.jsonb "seo", default: {}, null: false
     t.index ["published", "position"], name: "index_portfolio_projects_on_published_and_position"
     t.index ["slug"], name: "index_portfolio_projects_on_slug", unique: true
   end
@@ -456,6 +461,7 @@ ActiveRecord::Schema[7.1].define(version: 2027_06_10_000100) do
     t.string "issue_sheet_name", default: "Issue Tracker", null: false
     t.bigint "workspace_id", null: false
     t.index ["owner_id"], name: "index_projects_on_owner_id"
+    t.index ["workspace_id", "name"], name: "index_projects_on_workspace_id_and_name", unique: true
     t.index ["workspace_id"], name: "index_projects_on_workspace_id"
   end
 
@@ -591,6 +597,7 @@ ActiveRecord::Schema[7.1].define(version: 2027_06_10_000100) do
     t.datetime "updated_at", null: false
     t.bigint "workspace_id", null: false
     t.index ["owner_id"], name: "index_teams_on_owner_id"
+    t.index ["workspace_id", "name"], name: "index_teams_on_workspace_id_and_name", unique: true
     t.index ["workspace_id"], name: "index_teams_on_workspace_id"
   end
 
@@ -701,6 +708,7 @@ ActiveRecord::Schema[7.1].define(version: 2027_06_10_000100) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "workspace_id", null: false
+    t.index ["workspace_id", "name"], name: "index_work_categories_on_workspace_id_and_name", unique: true
     t.index ["workspace_id"], name: "index_work_categories_on_workspace_id"
   end
 
@@ -760,6 +768,7 @@ ActiveRecord::Schema[7.1].define(version: 2027_06_10_000100) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "workspace_id", null: false
+    t.index ["workspace_id", "name"], name: "index_work_priorities_on_workspace_id_and_name", unique: true
     t.index ["workspace_id"], name: "index_work_priorities_on_workspace_id"
   end
 
@@ -770,7 +779,6 @@ ActiveRecord::Schema[7.1].define(version: 2027_06_10_000100) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "workspace_id", null: false
-    t.index ["name"], name: "index_work_tags_on_name", unique: true
     t.index ["workspace_id", "name"], name: "index_work_tags_on_workspace_id_and_name", unique: true
     t.index ["workspace_id"], name: "index_work_tags_on_workspace_id"
   end

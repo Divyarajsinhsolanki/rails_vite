@@ -113,6 +113,8 @@ export const login = (u) => api.post("/login", u);
 export const logout = () => api.delete("/logout");
 export const startDemoSession = () => api.post("/demo_session", {}, { skipAuthRetry: true });
 export const fetchDemoManifest = () => api.get("/demo/manifest");
+export const searchWorkspace = (query, types) => api.get("/search", { params: { q: query, types } });
+export const fetchActivity = () => api.get("/activity");
 export const fetchPortfolio = () => api.get("/portfolio", { skipAuthRetry: true });
 export const fetchPortfolioAdmin = () => api.get("/admin/portfolio");
 export const updatePortfolioProfile = (data) => api.patch("/admin/portfolio/profile", data, { headers: { "Content-Type": "multipart/form-data" } });
@@ -122,6 +124,7 @@ export const deletePortfolioProject = (id) => api.delete(`/admin/portfolio/proje
 export const createPortfolioFeature = (projectId, data) => api.post(`/admin/portfolio/projects/${projectId}/features`, data, { headers: { "Content-Type": "multipart/form-data" } });
 export const updatePortfolioFeature = (id, data) => api.patch(`/admin/portfolio/features/${id}`, data, { headers: { "Content-Type": "multipart/form-data" } });
 export const deletePortfolioFeature = (id) => api.delete(`/admin/portfolio/features/${id}`);
+export const updatePortfolioOrder = (data) => api.patch("/admin/portfolio/order", data);
 export const fetchUserInfo = () => api.get("/view_profile");
 export const updateUserInfo = (d) => api.post("/update_profile", d);
 export const fetchUserProfile = (id) => api.get(`/users/${id}.json`);

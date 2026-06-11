@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
+destination="/backups/${PGDATABASE}-${timestamp}.sql.gz"
+
+pg_dump --no-owner --no-privileges | gzip > "${destination}"
+find /backups -type f -name "*.sql.gz" -mtime "+${BACKUP_RETENTION_DAYS:-14}" -delete
+echo "Database backup written to ${destination}"

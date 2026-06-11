@@ -215,6 +215,9 @@ class Api::AuthController < Api::BaseController
   end
 
   def verify_firebase_token(token)
+    project_id = ENV["FIREBASE_PROJECT_ID"].to_s
+    return nil if project_id.blank?
+
     certs = Rails.cache.fetch('google_certs', expires_in: 1.hour) do
       uri = URI('https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com')
       JSON.parse(Net::HTTP.get(uri))
@@ -230,9 +233,9 @@ class Api::AuthController < Api::BaseController
       public_key,
       true,
       algorithm: 'RS256',
-      iss: 'https://securetoken.google.com/temppdfmodifier',
+      iss: "https://securetoken.google.com/#{project_id}",
       verify_iss: true,
-      aud: 'temppdfmodifier',
+      aud: project_id,
       verify_aud: true
     )
     decoded

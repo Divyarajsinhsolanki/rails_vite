@@ -1,7 +1,7 @@
 class Conversation < ApplicationRecord
   include WorkspaceScoped
 
-  enum conversation_type: { direct: "direct", group: "group" }, _prefix: :conversation
+  enum :conversation_type, { direct: "direct", group: "group" }, prefix: :conversation
 
   belongs_to :creator, class_name: "User"
   has_many :conversation_participants, dependent: :destroy

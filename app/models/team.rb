@@ -8,5 +8,5 @@ class Team < ApplicationRecord
   has_many :learning_goals, dependent: :destroy, inverse_of: :team
   has_many :skill_endorsements, dependent: :nullify, inverse_of: :team
 
-  validates :name, presence: true
+  validates :name, presence: true, uniqueness: { scope: :workspace_id }
 end

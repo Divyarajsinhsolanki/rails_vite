@@ -53,7 +53,8 @@ ENV SMTP_ADDRESS="smtp.example.com" \
     SMTP_USERNAME="dummy@example.com" \
     SMTP_PASSWORD="dummy" \
     SECRET_KEY_BASE="dummy_secret_key_base_for_build" \
-    KEKA_API_KEY_ENCRYPTION_KEY="0123456789abcdef0123456789abcdef"
+    KEKA_API_KEY_ENCRYPTION_KEY="0123456789abcdef0123456789abcdef" \
+    ACTIVE_STORAGE_SERVICE="local"
 
 RUN RAILS_ENV=production bin/vite build
 RUN RAILS_ENV=production bundle exec rails assets:precompile
@@ -65,7 +66,11 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y \
       libpq5 \
       libsqlite3-0 \
-      libvips && \
+      libvips \
+      imagemagick \
+      poppler-utils \
+      ghostscript \
+      qpdf && \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 COPY --from=build /usr/local/bundle /usr/local/bundle

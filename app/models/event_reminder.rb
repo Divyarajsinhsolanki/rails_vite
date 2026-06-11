@@ -5,11 +5,11 @@ class EventReminder < ApplicationRecord
 
   belongs_to :calendar_event
 
-  enum state: {
+  enum :state, {
     pending: 'pending',
     sent: 'sent',
     failed: 'failed'
-  }, _default: 'pending'
+  }, default: 'pending'
 
   validates :channel, :minutes_before, :send_at, :state, presence: true
   validates :channel, inclusion: { in: CHANNELS }

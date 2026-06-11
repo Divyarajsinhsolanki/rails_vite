@@ -14,6 +14,7 @@ import {
   FiLogOut,
   FiMenu,
   FiMessageSquare,
+  FiSearch,
   FiSettings,
   FiUser,
   FiUsers,
@@ -39,6 +40,11 @@ const useNavbarEffects = () => {
 
 const resolveSection = (pathname) => {
   const sections = [
+    {
+      match: (value) => value.startsWith("/my-work"),
+      label: "My Work",
+      caption: "Assignments, deadlines, meetings, and recent activity",
+    },
     {
       match: (value) => value === "/" || value.startsWith("/calendar"),
       label: "Planning Deck",
@@ -315,6 +321,85 @@ const ProjectsDropdown = ({ projects, onItemClick, active }) => {
   );
 };
 
+const AreaDropdown = ({ label, icon: Icon, links, active }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setIsOpen(false);
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative shrink-0" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen((value) => !value)}
+        className={`group relative flex items-center gap-1.5 rounded-[16px] px-2.5 py-1.5 text-[12px] font-semibold xl:text-[12.5px] ${
+          active || isOpen ? "text-slate-950" : "text-slate-600"
+        }`}
+        aria-expanded={isOpen}
+      >
+        <span
+          className={`absolute inset-0 rounded-[16px] border ${
+            active || isOpen
+              ? "border-white/85 bg-white/90 shadow-[0_16px_34px_rgb(15_23_42_/_0.12)]"
+              : "border-transparent group-hover:border-white/70 group-hover:bg-white/48"
+          }`}
+        />
+        <span
+          className={`relative z-10 flex h-6 w-6 items-center justify-center rounded-[12px] ${
+            active || isOpen
+              ? "bg-slate-950 text-white"
+              : "border border-white/70 bg-white/70 text-[var(--theme-color)]"
+          }`}
+        >
+          <Icon className="h-[13px] w-[13px]" />
+        </span>
+        <span className="relative z-10">{label}</span>
+        <FiChevronDown className={`relative z-10 h-4 w-4 transition ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+
+      <AnimatePresence>
+        {isOpen ? (
+          <motion.div
+            initial={{ opacity: 0, y: 14, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.97 }}
+            className="shell-panel shell-panel-floating shell-panel-strong absolute right-0 top-full z-50 mt-3 w-[18rem] rounded-[28px] p-2"
+          >
+            <div className="rounded-[22px] bg-white/75 p-3">
+              <p className="px-3 pb-2 text-[0.66rem] font-semibold uppercase tracking-[0.25em] text-slate-400">
+                {label}
+              </p>
+              {links.map((link) => {
+                const LinkIcon = link.icon;
+                return (
+                  <NavLink
+                    key={link.to}
+                    to={link.to}
+                    onClick={() => setIsOpen(false)}
+                    className={menuItemClass}
+                  >
+                    <span className={menuIconClass}>
+                      <LinkIcon className="h-4 w-4" />
+                    </span>
+                    {link.label}
+                  </NavLink>
+                );
+              })}
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 const Navbar = () => {
   const { user, handleLogout } = useContext(AuthContext);
   const [projects, setProjects] = useState([]);
@@ -374,15 +459,22 @@ const Navbar = () => {
   }, [user]);
 
   const navLinks = [
-    { to: "/calendar", label: "Calendar", icon: FiCalendar, visible: !!user },
-    { to: "/momentum", label: "Momentum", icon: FiZap, visible: !!user },
-    { to: "/posts", label: "Updates", icon: FiMessageSquare, visible: !!user },
+    { to: "/my-work", label: "My Work", icon: FiBriefcase, visible: !!user },
     { to: "/knowledge", label: "Knowledge", icon: FiBook, visible: !!user },
-    { to: "/worklog", label: "Work Log", icon: FiClock, visible: !!user },
-    { to: "/chat", label: "Chat", icon: FiMessageSquare, visible: !!user },
-    { to: "/vault", label: "Vault", icon: FiMenu, visible: !!user },
     { to: "/pdf-master", label: "PDF Master", icon: FiFileText, visible: !!user },
-    { to: "/teams", label: "Teams", icon: FiUsers, visible: !!user },
+  ];
+  const planningLinks = [
+    { to: "/calendar", label: "Calendar", icon: FiCalendar },
+    { to: "/momentum", label: "Momentum Hub", icon: FiZap },
+    { to: "/worklog", label: "Work Log", icon: FiClock },
+    { to: "/vault", label: "Vault", icon: FiMenu },
+  ];
+  const collaborationLinks = [
+    { to: "/posts", label: "Posts and Updates", icon: FiMessageSquare },
+    { to: "/teams", label: "Teams", icon: FiUsers },
+    { to: "/chat", label: "Chat", icon: FiMessageSquare },
+    { to: "/departments", label: "Departments", icon: FiGrid },
+    { to: "/notifications", label: "Notifications", icon: FiAward },
   ];
 
   const hasAdminRole = user?.roles?.some((role) => ["owner", "admin"].includes(role.name));
@@ -398,6 +490,8 @@ const Navbar = () => {
   ].filter(Boolean);
 
   const isProjectsSection = location.pathname.startsWith("/projects");
+  const isPlanningSection = planningLinks.some((link) => location.pathname.startsWith(link.to));
+  const isCollaborationSection = collaborationLinks.some((link) => location.pathname.startsWith(link.to));
 
   return (
     <motion.header
@@ -446,24 +540,43 @@ const Navbar = () => {
 
         <nav className="hidden min-w-0 flex-1 items-center lg:flex">
           <div className="scrollbar-hide flex w-full items-center justify-start gap-0.5 overflow-x-auto rounded-[24px] border border-white/60 bg-white/52 p-1 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.82)] xl:justify-center xl:overflow-visible">
-            {navLinks.map(
-              (link) =>
-                link.visible && (
-                  <AnimatedNavLink key={link.to} to={link.to} label={link.label} icon={link.icon} />
-                )
-            )}
-
             {user ? (
-              <ProjectsDropdown
-                projects={projects}
-                active={isProjectsSection}
-                onItemClick={() => setIsMobileMenuOpen(false)}
-              />
+              <>
+                <AnimatedNavLink to="/my-work" label="My Work" icon={FiBriefcase} />
+                <ProjectsDropdown
+                  projects={projects}
+                  active={isProjectsSection}
+                  onItemClick={() => setIsMobileMenuOpen(false)}
+                />
+                <AreaDropdown label="Planning" icon={FiCalendar} links={planningLinks} active={isPlanningSection} />
+                <AreaDropdown
+                  label="Collaboration"
+                  icon={FiUsers}
+                  links={collaborationLinks}
+                  active={isCollaborationSection}
+                />
+                <AnimatedNavLink to="/knowledge" label="Knowledge" icon={FiBook} />
+                <AnimatedNavLink to="/pdf-master" label="Documents" icon={FiFileText} />
+              </>
             ) : null}
           </div>
         </nav>
 
         <div className="ml-auto shrink-0 flex items-center gap-2 sm:gap-3">
+          {user ? (
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event("nexus:open-search"))}
+              className="hidden items-center gap-2 rounded-full border border-white/65 bg-white/62 px-3 py-2 text-xs font-semibold text-slate-600 shadow-[0_14px_28px_rgb(15_23_42_/_0.08)] hover:bg-white lg:flex"
+              aria-label="Search workspace"
+            >
+              <FiSearch className="h-4 w-4" />
+              <span className="hidden min-[1450px]:inline">Search</span>
+              <kbd className="hidden rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono text-[10px] min-[1550px]:inline">
+                Ctrl K
+              </kbd>
+            </button>
+          ) : null}
           {user ? (
             <span className="shell-chip hidden min-[1720px]:inline-flex">
               <span className="shell-chip-dot" />
@@ -697,6 +810,41 @@ const Navbar = () => {
                           ))}
                         </div>
                       </motion.div>
+
+                      {[
+                        ["Planning and focus", planningLinks],
+                        ["Collaboration", collaborationLinks],
+                      ].map(([label, links], sectionIndex) => (
+                        <motion.div
+                          key={label}
+                          initial={{ x: 16, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          transition={{ delay: 0.24 + sectionIndex * 0.04 }}
+                          className="pt-4"
+                        >
+                          <p className="mb-2 px-2 text-[0.66rem] font-semibold uppercase tracking-[0.28em] text-slate-400">
+                            {label}
+                          </p>
+                          <div className="space-y-1">
+                            {links.map((link) => {
+                              const Icon = link.icon;
+                              return (
+                                <NavLink
+                                  key={link.to}
+                                  to={link.to}
+                                  onClick={() => setIsMobileMenuOpen(false)}
+                                  className={menuItemClass}
+                                >
+                                  <span className={menuIconClass}>
+                                    <Icon className="h-4 w-4" />
+                                  </span>
+                                  {link.label}
+                                </NavLink>
+                              );
+                            })}
+                          </div>
+                        </motion.div>
+                      ))}
                     </>
                   ) : (
                     <div className="space-y-2 pt-2">

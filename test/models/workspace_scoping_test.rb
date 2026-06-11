@@ -25,6 +25,17 @@ class WorkspaceScopingTest < ActiveSupport::TestCase
     assert_includes membership.errors[:user], "must belong to the same workspace"
   end
 
+  test "workspace scoped queries fail closed without current workspace" do
+    workspace = Workspace.create!(name: "Closed Scope", slug: "closed-scope", kind: "private")
+    project = Project.create!(workspace: workspace, name: "Hidden without context")
+
+    Current.reset_all
+
+    assert_nil Project.find_by(id: project.id)
+    assert_equal 0, Project.count
+    assert_equal project, Project.in_workspace(workspace).find(project.id)
+  end
+
   private
 
   def create_user(workspace, email)

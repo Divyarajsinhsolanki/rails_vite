@@ -13,6 +13,8 @@ import PageTitle from "./PageTitle";
 import PageLoader from "./ui/PageLoader";
 import ChatLauncher from "./ChatLauncher";
 import DemoBanner from "./DemoBanner";
+import DemoTourNavigator from "./DemoTourNavigator";
+import CommandPalette from "./CommandPalette";
 import { AuthContext } from "../context/AuthContext";
 
 const Admin = lazy(() => import("../components/Admin/Admin"));
@@ -29,6 +31,7 @@ const IssueTracker = lazy(() => import("../pages/IssueTracker"));
 const KnowledgeDashboard = lazy(() => import("../pages/KnowledgeDashboard"));
 const Legal = lazy(() => import("../pages/Legal"));
 const MetaverseLanding = lazy(() => import("../pages/MetaverseLanding"));
+const MyWork = lazy(() => import("../pages/MyWork"));
 const Notifications = lazy(() => import("../pages/Notifications"));
 const DemoHub = lazy(() => import("../pages/DemoHub"));
 const PdfMaster = lazy(() => import("./PdfMaster"));
@@ -88,6 +91,7 @@ const AppRoutes = () => {
             />
 
             <Route path="/demo" element={<PrivateRoute><DemoHub /></PrivateRoute>} />
+            <Route path="/my-work" element={<PrivateRoute><MyWork /></PrivateRoute>} />
             <Route
               path="/momentum"
               element={
@@ -305,6 +309,8 @@ const AppShell = () => {
       </div>
 
       {user?.demo_account ? <DemoBanner /> : null}
+      {user?.demo_account ? <DemoTourNavigator /> : null}
+      <CommandPalette />
       {isProjectMetaverseRoute ? null : <Navbar />}
 
       <main className={`shell-main ${isImmersiveRoute ? "shell-main-immersive" : ""} ${isChatRoute ? "shell-main-chat" : ""}`}>

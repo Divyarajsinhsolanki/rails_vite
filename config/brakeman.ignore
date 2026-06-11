@@ -1,0 +1,13 @@
+{
+  "ignored_warnings": [
+    {
+      "fingerprint": "58d9c971a35df296e5131885432841388899572a35b70e93e117506e04543cbd",
+      "note": "Reviewed: the token resolves a server-side record, and PdfStorage verifies the normalized path remains inside the private PDF root before send_file."
+    },
+    {
+      "fingerprint": "a553f6d24040a99ced039fdd0912e59eabc181ecfe2b74d70071af9577c331f7",
+      "note": "Reviewed: artifact tokens resolve server-side metadata, and PdfStorage validates the normalized artifact path against the private PDF root."
+    }
+  ],
+  "updated": "2026-06-11 13:30:00 +0530"
+}

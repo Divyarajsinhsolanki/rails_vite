@@ -109,8 +109,13 @@ class Api::AdminController < Api::BaseController
   end
 
   def set_model
-    @model = params[:table].classify.constantize
-  rescue
+    requested_name = params[:table].to_s.classify
+    Rails.application.eager_load!
+    @model = ActiveRecord::Base.descendants.find do |model|
+      model.name == requested_name && admin_model_names.include?(model.name)
+    end
+    raise ActiveRecord::RecordNotFound unless @model
+  rescue ActiveRecord::RecordNotFound
     render json: { error: "Invalid table name" }, status: :unprocessable_entity
   end
 
