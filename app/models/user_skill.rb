@@ -1,4 +1,6 @@
 class UserSkill < ApplicationRecord
+  include WorkspaceScoped
+
   belongs_to :user, inverse_of: :user_skills
   belongs_to :skill, inverse_of: :user_skills
   has_many :skill_endorsements, dependent: :destroy, inverse_of: :user_skill

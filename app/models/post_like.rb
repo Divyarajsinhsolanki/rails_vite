@@ -1,4 +1,6 @@
 class PostLike < ApplicationRecord
+  include WorkspaceScoped
+
   belongs_to :post, inverse_of: :post_likes
   belongs_to :user, inverse_of: :post_likes
 

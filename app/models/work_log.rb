@@ -1,5 +1,6 @@
 class WorkLog < ApplicationRecord
   include UserStampable
+  include WorkspaceScoped
 
   belongs_to :user, inverse_of: :work_logs
   belongs_to :category, class_name: 'WorkCategory', optional: true, inverse_of: :work_logs

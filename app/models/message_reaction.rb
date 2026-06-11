@@ -1,4 +1,6 @@
 class MessageReaction < ApplicationRecord
+  include WorkspaceScoped
+
   EMOJIS = %w[👍 ❤️ 🎉].freeze
 
   belongs_to :message

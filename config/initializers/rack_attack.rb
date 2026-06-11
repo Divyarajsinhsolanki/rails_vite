@@ -11,6 +11,10 @@ class Rack::Attack
     req.ip if req.path == '/api/users' && req.post?
   end
 
+  throttle('demo-session/ip', limit: ENV.fetch('RACK_ATTACK_DEMO_PER_MINUTE', 20).to_i, period: 1.minute) do |req|
+    req.ip if req.path == '/api/demo_session' && req.post?
+  end
+
   self.throttled_responder = lambda do |_request|
     [429, { 'Content-Type' => 'application/json' }, [{ error: 'Rate limit exceeded. Please try again later.' }.to_json]]
   end

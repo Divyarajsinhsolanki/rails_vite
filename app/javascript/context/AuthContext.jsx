@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useCallback, useRef } from "react";
 import api from "../components/api";
+import { startDemoSession } from "../components/api";
 import { useNavigate } from "react-router-dom";
 import { auth, googleProvider } from "../firebaseConfig";
 import { signInWithPopup } from "firebase/auth";
@@ -61,7 +62,7 @@ export function AuthProvider({ children }) {
         scheduleRefresh(data.exp);
       } catch {
         setUser(null);
-        navigate("/", { state: { mode: "login" } });
+        navigate("/login");
       }
     }, ms);
   }, [navigate]);
@@ -76,11 +77,10 @@ export function AuthProvider({ children }) {
   };
 
   const handleSignup = async (payload) => {
-    const { data } = await api.post("/signup", payload);
-    setUser(data.user);
-    scheduleRefresh(data.exp);
-    navigate(data.user.landing_page ? `/${data.user.landing_page}` : "/");
-    toast.success("Logged in successfully");
+    await api.post("/signup", payload);
+    setUser(null);
+    navigate("/login");
+    toast.success("Workspace created. Verify your email before signing in.");
   };
 
   const handleGoogleLogin = async () => {
@@ -101,11 +101,19 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const handleDemoLogin = async (returnTo = "/demo") => {
+    const { data } = await startDemoSession();
+    setUser(data.user);
+    scheduleRefresh(data.exp);
+    navigate(returnTo.startsWith("/") ? returnTo : "/demo");
+    toast.success("Read-only demo started");
+  };
+
   const handleLogout = async () => {
     await api.delete("/logout");
     setUser(null);
     clearTimeout(refreshTimer.current);
-    navigate("/", { state: { mode: "login" } });
+    navigate("/login");
   };
 
   const value = {
@@ -116,6 +124,7 @@ export function AuthProvider({ children }) {
     handleLogin,
     handleSignup,
     handleGoogleLogin,
+    handleDemoLogin,
     handleLogout,
   };
 

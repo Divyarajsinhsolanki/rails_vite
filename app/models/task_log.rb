@@ -1,5 +1,6 @@
 class TaskLog < ApplicationRecord
   include UserStampable
+  include WorkspaceScoped
 
   belongs_to :task, inverse_of: :task_logs
   belongs_to :developer, class_name: 'User', inverse_of: :developed_task_logs

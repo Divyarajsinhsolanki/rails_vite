@@ -5,9 +5,16 @@ require 'open-uri'
 class Api::AuthController < Api::BaseController
   include Rails.application.routes.url_helpers
   skip_before_action :authenticate_user!, only: [:login, :signup, :refresh]
+  skip_before_action :enforce_demo_read_only!, only: [:login, :signup, :refresh, :logout]
 
   def signup
     user = User.new(user_params)
+    workspace = Workspace.new(
+      name: "#{user.first_name.presence || 'New'} Workspace",
+      slug: "#{user.first_name.presence || 'workspace'}-#{SecureRandom.hex(4)}",
+      kind: "private"
+    )
+    user.workspace = workspace
     if params.dig(:auth, :profile_picture).present? && params.dig(:auth, :profile_picture) != "null"
       user.profile_picture = params[:auth][:profile_picture]
     end
@@ -15,10 +22,10 @@ class Api::AuthController < Api::BaseController
       user.cover_photo = params[:auth][:cover_photo]
     end
 
-    if user.save
+    if save_signup_user(workspace, user)
       render json: {
         message: "User created successfully. Please check your email to verify your account.",
-        user: user_payload(user)
+        user: authentication_user_payload(user)
       }, status: :created
     else
       render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
@@ -43,6 +50,7 @@ class Api::AuthController < Api::BaseController
         user.last_name = last_name.presence || first_name
         user.password = SecureRandom.hex(10)
         user.landing_page ||= User::LANDING_PAGES.first
+        user.workspace = build_personal_workspace(first_name)
         user.skip_confirmation! if user.respond_to?(:skip_confirmation!)
       end
 
@@ -54,7 +62,7 @@ class Api::AuthController < Api::BaseController
         )
       end
 
-      user.save! if user.changed? || user.new_record?
+      save_google_user!(user) if user.changed? || user.new_record?
     else
       user = User.find_by(email: params[:auth][:email])
       return render json: { error: "Invalid credentials" }, status: :unauthorized unless user&.valid_password?(params[:auth][:password])
@@ -63,10 +71,11 @@ class Api::AuthController < Api::BaseController
 
     return render json: { error: "Account locked" }, status: :unauthorized if user.locked?
 
+    Current.workspace = user.workspace
     set_jwt_cookie!(user)
     render json: {
       message: "Login successful",
-      user: user_payload(user),
+      user: authentication_user_payload(user),
       exp: 15.minutes.from_now.to_i
     }
   end
@@ -76,9 +85,10 @@ class Api::AuthController < Api::BaseController
     payload = JwtService.decode(refresh_token)
 
     if payload && (user = User.find_by(id: payload["user_id"]))
+      Current.workspace = user.workspace
       set_jwt_cookie!(user)
       render json: {
-        user: user_payload(user),
+        user: authentication_user_payload(user),
         exp: 15.minutes.from_now.to_i
       }
     else
@@ -87,8 +97,7 @@ class Api::AuthController < Api::BaseController
   end
 
   def logout
-    cookies.delete(:access_token, httponly: true)
-    cookies.delete(:refresh_token, httponly: true)
+    clear_jwt_cookies!
     render json: { message: "Logged out successfully" }
   end
 
@@ -176,18 +185,33 @@ class Api::AuthController < Api::BaseController
     permitted
   end
 
-  def user_payload(user)
-    profile_picture_url = rails_blob_url(user.profile_picture, only_path: true) if user.profile_picture.attached?
-    cover_photo_url = rails_blob_url(user.cover_photo, only_path: true) if user.cover_photo.attached?
-    user.public_json(include_roles: true).merge(
-      profile_picture: profile_picture_url,
-      cover_photo: cover_photo_url,
-      avatar_color: user.avatar_color,
-      landing_page: user.landing_page,
-      phone_number: user.phone_number,
-      bio: user.bio,
-      social_links: user.social_links || {}
+  def save_signup_user(workspace, user)
+    Workspace.transaction do
+      workspace.save!
+      user.save!
+      user.roles = [Role.find_or_create_by!(name: "owner")]
+    end
+    true
+  rescue ActiveRecord::RecordInvalid
+    false
+  end
+
+  def build_personal_workspace(first_name)
+    Workspace.new(
+      name: "#{first_name.presence || 'Personal'} Workspace",
+      slug: "#{first_name.presence || 'workspace'}-#{SecureRandom.hex(4)}",
+      kind: "private"
     )
+  end
+
+  def save_google_user!(user)
+    was_new_record = user.new_record?
+
+    Workspace.transaction do
+      user.workspace.save! if user.workspace&.new_record?
+      user.save!
+      user.roles = [Role.find_or_create_by!(name: "owner")] if was_new_record
+    end
   end
 
   def verify_firebase_token(token)
@@ -217,24 +241,4 @@ class Api::AuthController < Api::BaseController
     nil
   end
 
-  def set_jwt_cookie!(user)
-    access_token = JwtService.encode({ user_id: user.id }, exp: 15.minutes.from_now)
-    refresh_token = JwtService.encode({ user_id: user.id }, exp: 7.days.from_now)
-
-    cookies.signed[:access_token] = {
-      value: access_token,
-      httponly: true,
-      secure: Rails.env.production?,
-      same_site: :strict,
-      expires: 15.minutes.from_now
-    }
-
-    cookies.signed[:refresh_token] = {
-      value: refresh_token,
-      httponly: true,
-      secure: Rails.env.production?,
-      same_site: :lax,
-      expires: 7.days.from_now
-    }
-  end
 end

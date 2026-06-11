@@ -1,4 +1,6 @@
 class ProjectVaultItem < ApplicationRecord
+  include WorkspaceScoped
+
   belongs_to :project, inverse_of: :project_vault_items
   belongs_to :project_environment, optional: true
 

@@ -1,7 +1,7 @@
-import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
+import React, { Suspense, lazy, useContext } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 
 import { AuthProvider } from "../context/AuthContext";
 import PrivateRoute from "../components/PrivateRoute";
@@ -12,9 +12,12 @@ import Footer from "./Footer";
 import PageTitle from "./PageTitle";
 import PageLoader from "./ui/PageLoader";
 import ChatLauncher from "./ChatLauncher";
+import DemoBanner from "./DemoBanner";
+import { AuthContext } from "../context/AuthContext";
 
 const Admin = lazy(() => import("../components/Admin/Admin"));
 const AdminImpersonation = lazy(() => import("../pages/AdminImpersonation"));
+const AuthPage = lazy(() => import("../pages/AuthPage"));
 const Calendar = lazy(() => import("../pages/Calendar"));
 const Chat = lazy(() => import("../pages/Chat"));
 const Contact = lazy(() => import("../pages/Contact"));
@@ -27,8 +30,11 @@ const KnowledgeDashboard = lazy(() => import("../pages/KnowledgeDashboard"));
 const Legal = lazy(() => import("../pages/Legal"));
 const MetaverseLanding = lazy(() => import("../pages/MetaverseLanding"));
 const Notifications = lazy(() => import("../pages/Notifications"));
+const DemoHub = lazy(() => import("../pages/DemoHub"));
 const PdfMaster = lazy(() => import("./PdfMaster"));
+const PortfolioAdmin = lazy(() => import("../pages/PortfolioAdmin"));
 const PostPage = lazy(() => import("../pages/PostPage"));
+const PublicPortfolio = lazy(() => import("../pages/PublicPortfolio"));
 const Profile = lazy(() => import("../components/Profile"));
 const ProjectMetaverse = lazy(() => import("../pages/ProjectMetaverse"));
 const Projects = lazy(() => import("../pages/Projects"));
@@ -64,9 +70,12 @@ const AppRoutes = () => {
     <motion.div key={routeKey} className="shell-route-frame" {...routeTransitionProps}>
       <Suspense fallback={<PageLoader title="Loading view" message="Preparing this screen..." />}>
         <Routes location={location}>
+            <Route path="/" element={<PublicPortfolio />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/legal" element={<Legal />} />
             <Route path="/metaverse-landing" element={<MetaverseLanding />} />
+            <Route path="/login" element={<AuthPage mode="login" />} />
+            <Route path="/signup" element={<AuthPage mode="signup" />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route
@@ -78,14 +87,7 @@ const AppRoutes = () => {
               }
             />
 
-            <Route
-              path="/"
-              element={
-                <PrivateRoute>
-                  <PostPage />
-                </PrivateRoute>
-              }
-            />
+            <Route path="/demo" element={<PrivateRoute><DemoHub /></PrivateRoute>} />
             <Route
               path="/momentum"
               element={
@@ -221,8 +223,16 @@ const AppRoutes = () => {
             <Route
               path="/admin"
               element={
-                <PrivateRoute ownerOnly>
+                <PrivateRoute siteAdminOnly>
                   <Admin />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin/portfolio"
+              element={
+                <PrivateRoute siteAdminOnly>
+                  <PortfolioAdmin />
                 </PrivateRoute>
               }
             />
@@ -274,9 +284,16 @@ const AppRoutes = () => {
 
 const AppShell = () => {
   const location = useLocation();
+  const { user } = useContext(AuthContext);
   const isProjectMetaverseRoute = /^\/projects\/[^/]+\/metaverse$/.test(location.pathname);
   const isImmersiveRoute = location.pathname.startsWith("/knowledge") || isProjectMetaverseRoute;
   const isChatRoute = location.pathname.startsWith("/chat");
+  const isPublicRoute = ["/", "/contact", "/legal", "/metaverse-landing"].includes(location.pathname);
+  const isAuthRoute = ["/login", "/signup", "/forgot-password", "/reset-password"].includes(location.pathname);
+
+  if (isPublicRoute || isAuthRoute) {
+    return <AppRoutes />;
+  }
 
   return (
     <div className={`shell-app flex min-h-screen flex-col ${isImmersiveRoute ? "shell-app-immersive" : ""} ${isChatRoute ? "shell-app-chat" : ""}`}>
@@ -287,6 +304,7 @@ const AppShell = () => {
         <div className="shell-rings" />
       </div>
 
+      {user?.demo_account ? <DemoBanner /> : null}
       {isProjectMetaverseRoute ? null : <Navbar />}
 
       <main className={`shell-main ${isImmersiveRoute ? "shell-main-immersive" : ""} ${isChatRoute ? "shell-main-chat" : ""}`}>

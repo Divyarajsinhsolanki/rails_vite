@@ -2,11 +2,14 @@ class KnowledgeBookmarkReminderJob < ApplicationJob
   queue_as :default
 
   def perform
-    KnowledgeBookmark.due_for_reminder.includes(:user).find_each do |bookmark|
+    KnowledgeBookmark.unscoped.due_for_reminder.includes(:user, :workspace).find_each do |bookmark|
       next if bookmark.user.email.blank?
+      next if bookmark.workspace.demo?
 
-      KnowledgeBookmarkMailer.reminder(bookmark).deliver_later
-      bookmark.schedule_next_reminder!
+      Current.set(workspace: bookmark.workspace) do
+        KnowledgeBookmarkMailer.reminder(bookmark).deliver_later
+        bookmark.schedule_next_reminder!
+      end
     end
   end
 end

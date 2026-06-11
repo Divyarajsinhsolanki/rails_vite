@@ -1,4 +1,6 @@
 class EventReminder < ApplicationRecord
+  include WorkspaceScoped
+
   CHANNELS = %w[in_app email slack].freeze
 
   belongs_to :calendar_event

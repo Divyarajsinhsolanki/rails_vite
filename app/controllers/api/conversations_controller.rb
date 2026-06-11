@@ -43,8 +43,12 @@ class Api::ConversationsController < Api::BaseController
 
   def show
     participant = @conversation.conversation_participants.find_by(user_id: current_user.id)
-    if participant&.update(last_read_at: Time.current)
-      Chat::Broadcaster.broadcast_message_read(@conversation.id, current_user.id)
+    if !current_user.demo_account? && participant&.update(last_read_at: Time.current)
+      Chat::Broadcaster.broadcast_message_read(
+        current_user.workspace_id,
+        @conversation.id,
+        current_user.id
+      )
     end
 
     render json: serialize_conversation(@conversation, include_messages: true)
@@ -68,7 +72,7 @@ class Api::ConversationsController < Api::BaseController
   end
 
   def start_direct
-    other_user = User.find(params[:user_id])
+    other_user = current_user.workspace.users.find(params[:user_id])
     conversation = find_or_create_direct_conversation(other_user)
 
     render json: serialize_conversation(conversation)

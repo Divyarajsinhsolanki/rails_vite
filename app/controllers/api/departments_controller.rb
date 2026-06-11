@@ -47,7 +47,7 @@ class Api::DepartmentsController < Api::BaseController
 
     User.transaction do
       @department.users.update_all(department_id: nil)
-      User.where(id: user_ids).update_all(department_id: @department.id)
+      current_user.workspace.users.where(id: user_ids).update_all(department_id: @department.id)
     end
 
     @department.reload
@@ -73,7 +73,6 @@ class Api::DepartmentsController < Api::BaseController
     payload = {
       id: department.id,
       name: department.name,
-      users_count: department.users.size,
       users_count: department.users.size,
       updated_at: department.updated_at,
       description: department.description,

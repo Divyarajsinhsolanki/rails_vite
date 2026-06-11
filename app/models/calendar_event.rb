@@ -1,4 +1,6 @@
 class CalendarEvent < ApplicationRecord
+  include WorkspaceScoped
+
   EVENT_TYPES = %w[meeting deadline reminder focus sprint_ceremony].freeze
   RECURRENCE_RULES = %w[none daily weekly monthly].freeze
 

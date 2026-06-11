@@ -1,4 +1,6 @@
 class LearningGoal < ApplicationRecord
+  include WorkspaceScoped
+
   belongs_to :user, inverse_of: :learning_goals
   belongs_to :team, optional: true, inverse_of: :learning_goals
   has_many :learning_checkpoints, dependent: :destroy, inverse_of: :learning_goal

@@ -1,5 +1,5 @@
 class Current < ActiveSupport::CurrentAttributes
-  attribute :user, :request_id
+  attribute :user, :workspace, :request_id
 
   class << self
     def request_id

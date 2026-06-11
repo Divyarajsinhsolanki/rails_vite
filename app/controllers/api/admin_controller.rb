@@ -1,5 +1,5 @@
 class Api::AdminController < Api::BaseController
-  before_action :authorize_owner!
+  before_action :authorize_site_admin!
   before_action :set_model, except: [:tables]
   
   def tables
@@ -116,9 +116,25 @@ class Api::AdminController < Api::BaseController
 
   def record_params
     scalar_columns = @model.columns.reject { |column| json_column?(column) }.map { |column| column.name.to_sym }
+    scalar_columns -= protected_admin_columns
     json_columns = @model.columns.select { |column| json_column?(column) }.map { |column| { column.name.to_sym => {} } }
 
     params.require(:record).permit(*scalar_columns, *json_columns)
+  end
+
+  def protected_admin_columns
+    return [] unless @model == User
+
+    %i[
+      workspace_id
+      demo_account
+      site_admin
+      encrypted_password
+      reset_password_token
+      confirmation_token
+      encrypted_keka_api_key
+      encrypted_keka_api_key_iv
+    ]
   end
 
   def filter_params
@@ -132,7 +148,7 @@ class Api::AdminController < Api::BaseController
     column.type.in?([:json, :jsonb])
   end
 
-  def authorize_owner!
-    head :forbidden unless current_user&.owner?
+  def authorize_site_admin!
+    head :forbidden unless current_user&.site_admin?
   end
 end

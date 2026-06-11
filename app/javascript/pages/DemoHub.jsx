@@ -1,0 +1,86 @@
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { FiArrowUpRight, FiClock, FiDatabase, FiLayers, FiShield, FiZap } from "react-icons/fi";
+import { fetchDemoManifest } from "../components/api";
+
+const iconMap = [FiLayers, FiClock, FiZap, FiDatabase, FiShield, FiArrowUpRight];
+
+const DemoHub = () => {
+  const [manifest, setManifest] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetchDemoManifest()
+      .then(({ data }) => setManifest(data))
+      .catch(() => setError("The guided tour could not be loaded."));
+  }, []);
+
+  return (
+    <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <section className="overflow-hidden rounded-[36px] bg-slate-950 px-6 py-10 text-white shadow-2xl sm:px-10 lg:px-14">
+        <p className="text-xs font-bold uppercase tracking-[0.3em] text-cyan-300">Guided Product Tour</p>
+        <div className="mt-5 grid gap-8 lg:grid-cols-[1.4fr_0.6fr] lg:items-end">
+          <div>
+            <h1 className="max-w-4xl text-4xl font-semibold tracking-[-0.05em] sm:text-6xl">
+              Understand Nexus Hub in about five minutes.
+            </h1>
+            <p className="mt-5 max-w-3xl text-base leading-7 text-slate-300 sm:text-lg">
+              Follow the six product areas below. Each card opens a real application screen backed by synthetic,
+              read-only data.
+            </p>
+          </div>
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+            <p className="text-sm text-slate-400">Demo workspace</p>
+            <p className="mt-1 text-xl font-semibold">{manifest?.workspace?.name || "Nexus Hub Demo"}</p>
+            <p className="mt-4 inline-flex items-center gap-2 text-sm text-cyan-200">
+              <FiClock /> {manifest?.duration || "5 minutes"}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {error ? <p className="mt-6 rounded-2xl bg-rose-50 p-4 text-rose-700">{error}</p> : null}
+
+      <section className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        {(manifest?.groups || []).map((group, index) => {
+          const Icon = iconMap[index % iconMap.length];
+          return (
+            <Link
+              key={group.key}
+              to={group.route}
+              className="group rounded-[30px] border border-white/80 bg-white/80 p-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)] backdrop-blur transition hover:-translate-y-1 hover:shadow-[0_32px_70px_rgba(15,23,42,0.14)]"
+            >
+              <div className="flex items-start justify-between">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-white">
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span className="text-sm font-semibold text-slate-400">0{index + 1}</span>
+              </div>
+              <h2 className="mt-8 text-2xl font-semibold tracking-[-0.04em] text-slate-950">{group.title}</h2>
+              <p className="mt-3 leading-7 text-slate-600">{group.summary}</p>
+              <span className="mt-6 inline-flex items-center gap-2 font-semibold text-blue-700">
+                Explore screen <FiArrowUpRight className="transition group-hover:translate-x-1 group-hover:-translate-y-1" />
+              </span>
+            </Link>
+          );
+        })}
+      </section>
+
+      <section id="architecture" className="mt-8 rounded-[32px] border border-slate-200 bg-white p-7 sm:p-10">
+        <p className="text-xs font-bold uppercase tracking-[0.28em] text-blue-700">Architecture</p>
+        <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-950">What to look for behind the UI</h2>
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          {[
+            "Rails JSON APIs with workspace-scoped authorization",
+            "React route-level code splitting and reusable product components",
+            "PostgreSQL, Active Job, Active Storage, and Action Cable workflows",
+          ].map((item) => (
+            <div key={item} className="rounded-2xl bg-slate-50 p-5 font-medium leading-7 text-slate-700">{item}</div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default DemoHub;

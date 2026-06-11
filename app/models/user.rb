@@ -8,7 +8,7 @@ class User < ApplicationRecord
 
   enum :status, { invited: "invited", active: "active", locked: "locked" }, default: "invited"
 
-  LANDING_PAGES = %w[calendar posts profile vault knowledge worklog projects teams pdf users departments chat notifications].freeze
+  LANDING_PAGES = %w[demo calendar posts profile vault knowledge worklog projects teams pdf users departments chat notifications].freeze
   AVAILABILITY_LABELS = {
     'available_now' => 'Available Now',
     'available_soon' => 'Available in 2 weeks',
@@ -44,6 +44,7 @@ class User < ApplicationRecord
 
   has_one_attached :profile_picture
   has_one_attached :cover_photo
+  belongs_to :workspace
   has_many :posts, dependent: :destroy, inverse_of: :user
   has_many :tasks, foreign_key: :assigned_to_user, inverse_of: :assigned_user
   has_many :developed_tasks, class_name: 'Task', foreign_key: :developer_id, inverse_of: :developer
@@ -93,9 +94,12 @@ class User < ApplicationRecord
   validates :availability_status, inclusion: { in: availability_statuses.keys }
   validates :phone_number, length: { maximum: 30 }, allow_blank: true
   validates :avatar_color, format: { with: AVATAR_COLOR_FORMAT }
+  validates :demo_account, uniqueness: { scope: :workspace_id }, if: :demo_account?
+  validate :department_belongs_to_workspace
 
   before_validation :normalize_avatar_color
   before_validation :ensure_avatar_color
+  before_validation :assign_site_admin_from_environment
   after_create :assign_default_role
 
   def self.generate_avatar_color(seed)
@@ -129,6 +133,14 @@ class User < ApplicationRecord
 
   def team_leader?
     has_role?(:team_leader)
+  end
+
+  def demo_account?
+    demo_account
+  end
+
+  def site_admin?
+    site_admin
   end
 
   def full_name
@@ -221,6 +233,17 @@ class User < ApplicationRecord
 
     seed = email.presence || [first_name, last_name].compact.join(' ')
     self.avatar_color = self.class.generate_avatar_color(seed)
+  end
+
+  def assign_site_admin_from_environment
+    configured_email = ENV["PORTFOLIO_ADMIN_EMAIL"].to_s.strip.downcase
+    self.site_admin = true if configured_email.present? && email.to_s.downcase == configured_email
+  end
+
+  def department_belongs_to_workspace
+    return if department.blank? || department.workspace_id == workspace_id
+
+    errors.add(:department, "must belong to the same workspace")
   end
 
   def after_confirmation

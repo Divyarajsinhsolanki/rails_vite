@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
+ActiveRecord::Schema[7.1].define(version: 2027_06_10_000100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -63,6 +63,7 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.bigint "recurrence_parent_id"
     t.string "external_source"
     t.string "external_id"
+    t.bigint "workspace_id", null: false
     t.index ["event_type"], name: "index_calendar_events_on_event_type"
     t.index ["external_source", "external_id"], name: "index_calendar_events_on_external_source_and_external_id"
     t.index ["project_id"], name: "index_calendar_events_on_project_id"
@@ -72,6 +73,7 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.index ["user_id", "start_at"], name: "index_calendar_events_on_user_id_and_start_at"
     t.index ["user_id"], name: "index_calendar_events_on_user_id"
     t.index ["visibility", "start_at"], name: "index_calendar_events_on_visibility_and_start_at"
+    t.index ["workspace_id"], name: "index_calendar_events_on_workspace_id"
   end
 
   create_table "comments", force: :cascade do |t|
@@ -80,9 +82,11 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.text "body", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["post_id", "created_at"], name: "index_comments_on_post_id_and_created_at"
     t.index ["post_id"], name: "index_comments_on_post_id"
     t.index ["user_id"], name: "index_comments_on_user_id"
+    t.index ["workspace_id"], name: "index_comments_on_workspace_id"
   end
 
   create_table "contacts", force: :cascade do |t|
@@ -99,9 +103,11 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.datetime "last_read_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["conversation_id", "user_id"], name: "idx_unique_conversation_participant", unique: true
     t.index ["conversation_id"], name: "index_conversation_participants_on_conversation_id"
     t.index ["user_id"], name: "index_conversation_participants_on_user_id"
+    t.index ["workspace_id"], name: "index_conversation_participants_on_workspace_id"
   end
 
   create_table "conversations", force: :cascade do |t|
@@ -110,8 +116,10 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.bigint "creator_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["conversation_type"], name: "index_conversations_on_conversation_type"
     t.index ["creator_id"], name: "index_conversations_on_creator_id"
+    t.index ["workspace_id"], name: "index_conversations_on_workspace_id"
   end
 
   create_table "departments", force: :cascade do |t|
@@ -120,8 +128,10 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.datetime "updated_at", null: false
     t.text "description"
     t.bigint "manager_id"
+    t.bigint "workspace_id", null: false
     t.index ["manager_id"], name: "index_departments_on_manager_id"
-    t.index ["name"], name: "index_departments_on_name", unique: true
+    t.index ["workspace_id", "name"], name: "index_departments_on_workspace_id_and_name", unique: true
+    t.index ["workspace_id"], name: "index_departments_on_workspace_id"
   end
 
   create_table "event_reminders", force: :cascade do |t|
@@ -133,9 +143,11 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.string "state", default: "pending", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["calendar_event_id", "minutes_before", "channel"], name: "idx_unique_event_reminder_window", unique: true
     t.index ["calendar_event_id"], name: "index_event_reminders_on_calendar_event_id"
     t.index ["state", "send_at"], name: "index_event_reminders_on_state_and_send_at"
+    t.index ["workspace_id"], name: "index_event_reminders_on_workspace_id"
   end
 
   create_table "friendships", force: :cascade do |t|
@@ -143,9 +155,11 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.bigint "followed_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["followed_id"], name: "index_friendships_on_followed_id"
     t.index ["follower_id", "followed_id"], name: "index_friendships_on_follower_id_and_followed_id", unique: true
     t.index ["follower_id"], name: "index_friendships_on_follower_id"
+    t.index ["workspace_id"], name: "index_friendships_on_workspace_id"
   end
 
   create_table "issues", force: :cascade do |t|
@@ -188,15 +202,17 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.string "issue_present_in_rails4"
     t.bigint "reporter_id"
     t.bigint "assignee_user_id"
+    t.bigint "workspace_id", null: false
     t.index ["assignee"], name: "index_issues_on_assignee"
     t.index ["assignee_user_id"], name: "index_issues_on_assignee_user_id"
     t.index ["due_date"], name: "index_issues_on_due_date"
-    t.index ["issue_key"], name: "index_issues_on_issue_key", unique: true
     t.index ["local_qa"], name: "index_issues_on_local_qa"
     t.index ["mf6_app"], name: "index_issues_on_mf6_app"
     t.index ["project_id"], name: "index_issues_on_project_id"
     t.index ["reporter_id"], name: "index_issues_on_reporter_id"
     t.index ["team_test"], name: "index_issues_on_team_test"
+    t.index ["workspace_id", "issue_key"], name: "index_issues_on_workspace_id_and_issue_key", unique: true
+    t.index ["workspace_id"], name: "index_issues_on_workspace_id"
   end
 
   create_table "items", force: :cascade do |t|
@@ -206,7 +222,9 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["user_id"], name: "index_items_on_user_id"
+    t.index ["workspace_id"], name: "index_items_on_workspace_id"
   end
 
   create_table "knowledge_bookmarks", force: :cascade do |t|
@@ -221,10 +239,12 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.integer "reminder_interval_days", default: 7, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["collection_name"], name: "index_knowledge_bookmarks_on_collection_name"
     t.index ["next_reminder_at"], name: "index_knowledge_bookmarks_on_next_reminder_at"
     t.index ["user_id", "card_type", "source_id"], name: "index_knowledge_bookmarks_on_identity", unique: true
     t.index ["user_id"], name: "index_knowledge_bookmarks_on_user_id"
+    t.index ["workspace_id"], name: "index_knowledge_bookmarks_on_workspace_id"
   end
 
   create_table "learning_checkpoints", force: :cascade do |t|
@@ -234,7 +254,9 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.string "resource_url"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["learning_goal_id"], name: "index_learning_checkpoints_on_learning_goal_id"
+    t.index ["workspace_id"], name: "index_learning_checkpoints_on_workspace_id"
   end
 
   create_table "learning_goals", force: :cascade do |t|
@@ -246,8 +268,10 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.text "description"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["team_id"], name: "index_learning_goals_on_team_id"
     t.index ["user_id"], name: "index_learning_goals_on_user_id"
+    t.index ["workspace_id"], name: "index_learning_goals_on_workspace_id"
   end
 
   create_table "message_reactions", force: :cascade do |t|
@@ -256,9 +280,11 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.string "emoji", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["message_id", "user_id", "emoji"], name: "idx_unique_message_reaction", unique: true
     t.index ["message_id"], name: "index_message_reactions_on_message_id"
     t.index ["user_id"], name: "index_message_reactions_on_user_id"
+    t.index ["workspace_id"], name: "index_message_reactions_on_workspace_id"
   end
 
   create_table "messages", force: :cascade do |t|
@@ -267,9 +293,11 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.text "body"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["conversation_id", "created_at"], name: "index_messages_on_conversation_id_and_created_at"
     t.index ["conversation_id"], name: "index_messages_on_conversation_id"
     t.index ["user_id"], name: "index_messages_on_user_id"
+    t.index ["workspace_id"], name: "index_messages_on_workspace_id"
   end
 
   create_table "notifications", force: :cascade do |t|
@@ -282,10 +310,62 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.jsonb "metadata"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["actor_id"], name: "index_notifications_on_actor_id"
     t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable"
     t.index ["recipient_id", "read_at"], name: "index_notifications_on_recipient_id_and_read_at"
     t.index ["recipient_id"], name: "index_notifications_on_recipient_id"
+    t.index ["workspace_id"], name: "index_notifications_on_workspace_id"
+  end
+
+  create_table "portfolio_features", force: :cascade do |t|
+    t.bigint "portfolio_project_id", null: false
+    t.string "category", null: false
+    t.string "title", null: false
+    t.text "summary", null: false
+    t.string "demo_path"
+    t.string "alt_text"
+    t.integer "position", default: 0, null: false
+    t.boolean "published", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["portfolio_project_id", "published", "position"], name: "idx_portfolio_features_order"
+    t.index ["portfolio_project_id"], name: "index_portfolio_features_on_portfolio_project_id"
+  end
+
+  create_table "portfolio_profiles", force: :cascade do |t|
+    t.string "full_name", null: false
+    t.string "headline", null: false
+    t.string "location"
+    t.text "summary", null: false
+    t.jsonb "skills", default: [], null: false
+    t.jsonb "metrics", default: [], null: false
+    t.jsonb "social_links", default: {}, null: false
+    t.jsonb "architecture", default: [], null: false
+    t.jsonb "engineering_highlights", default: [], null: false
+    t.boolean "published", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "portfolio_projects", force: :cascade do |t|
+    t.string "title", null: false
+    t.string "slug", null: false
+    t.string "tagline"
+    t.text "summary", null: false
+    t.text "description"
+    t.jsonb "stack", default: [], null: false
+    t.jsonb "metrics", default: [], null: false
+    t.jsonb "engineering_highlights", default: [], null: false
+    t.string "repository_url"
+    t.string "live_url"
+    t.integer "position", default: 0, null: false
+    t.boolean "featured", default: false, null: false
+    t.boolean "published", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["published", "position"], name: "index_portfolio_projects_on_published_and_position"
+    t.index ["slug"], name: "index_portfolio_projects_on_slug", unique: true
   end
 
   create_table "post_likes", force: :cascade do |t|
@@ -293,10 +373,12 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.bigint "post_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["post_id", "user_id"], name: "index_post_likes_on_post_id_and_user_id", unique: true
     t.index ["post_id"], name: "index_post_likes_on_post_id"
     t.index ["user_id", "post_id"], name: "index_post_likes_on_user_id_and_post_id", unique: true
     t.index ["user_id"], name: "index_post_likes_on_user_id"
+    t.index ["workspace_id"], name: "index_post_likes_on_workspace_id"
   end
 
   create_table "posts", force: :cascade do |t|
@@ -306,8 +388,10 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "comments_count", default: 0, null: false
+    t.bigint "workspace_id", null: false
     t.index ["created_at"], name: "index_posts_on_created_at"
     t.index ["user_id"], name: "index_posts_on_user_id"
+    t.index ["workspace_id"], name: "index_posts_on_workspace_id"
   end
 
   create_table "project_environments", force: :cascade do |t|
@@ -317,8 +401,10 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.text "description"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["project_id", "name"], name: "index_project_environments_on_project_id_and_name", unique: true
     t.index ["project_id"], name: "index_project_environments_on_project_id"
+    t.index ["workspace_id"], name: "index_project_environments_on_workspace_id"
   end
 
   create_table "project_users", force: :cascade do |t|
@@ -330,9 +416,11 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.datetime "updated_at", null: false
     t.integer "allocation_percentage", default: 0, null: false
     t.string "workload_status", default: "partial", null: false
+    t.bigint "workspace_id", null: false
     t.index ["project_id", "user_id"], name: "index_project_users_on_project_id_and_user_id", unique: true
     t.index ["project_id"], name: "index_project_users_on_project_id"
     t.index ["user_id"], name: "index_project_users_on_user_id"
+    t.index ["workspace_id"], name: "index_project_users_on_workspace_id"
   end
 
   create_table "project_vault_items", force: :cascade do |t|
@@ -345,9 +433,11 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.jsonb "metadata", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["project_environment_id"], name: "index_project_vault_items_on_project_environment_id"
     t.index ["project_id", "category"], name: "index_project_vault_items_on_project_id_and_category"
     t.index ["project_id"], name: "index_project_vault_items_on_project_id"
+    t.index ["workspace_id"], name: "index_project_vault_items_on_workspace_id"
   end
 
   create_table "projects", force: :cascade do |t|
@@ -364,7 +454,9 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.boolean "qa_mode_enabled", default: false, null: false
     t.string "issue_sheet_id"
     t.string "issue_sheet_name", default: "Issue Tracker", null: false
+    t.bigint "workspace_id", null: false
     t.index ["owner_id"], name: "index_projects_on_owner_id"
+    t.index ["workspace_id"], name: "index_projects_on_workspace_id"
   end
 
   create_table "roles", force: :cascade do |t|
@@ -381,10 +473,12 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.text "note"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["endorser_id", "user_skill_id"], name: "index_skill_endorsements_on_endorser_and_user_skill", unique: true
     t.index ["endorser_id"], name: "index_skill_endorsements_on_endorser_id"
     t.index ["team_id"], name: "index_skill_endorsements_on_team_id"
     t.index ["user_skill_id"], name: "index_skill_endorsements_on_user_skill_id"
+    t.index ["workspace_id"], name: "index_skill_endorsements_on_workspace_id"
   end
 
   create_table "skills", force: :cascade do |t|
@@ -392,7 +486,9 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.string "category"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["name"], name: "index_skills_on_name", unique: true
+    t.bigint "workspace_id", null: false
+    t.index ["workspace_id", "name"], name: "index_skills_on_workspace_id_and_name", unique: true
+    t.index ["workspace_id"], name: "index_skills_on_workspace_id"
   end
 
   create_table "sprints", force: :cascade do |t|
@@ -407,10 +503,12 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.integer "updated_by"
     t.bigint "project_id", null: false
     t.integer "working_days_mask", default: 62, null: false
+    t.bigint "workspace_id", null: false
     t.index ["end_date"], name: "index_sprints_on_end_date"
     t.index ["project_id"], name: "index_sprints_on_project_id"
     t.index ["start_date"], name: "index_sprints_on_start_date"
     t.index ["working_days_mask"], name: "index_sprints_on_working_days_mask"
+    t.index ["workspace_id"], name: "index_sprints_on_workspace_id"
   end
 
   create_table "task_logs", force: :cascade do |t|
@@ -424,9 +522,11 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.integer "updated_by"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["developer_id"], name: "index_task_logs_on_developer_id"
     t.index ["log_date"], name: "index_task_logs_on_log_date"
     t.index ["task_id"], name: "index_task_logs_on_task_id"
+    t.index ["workspace_id"], name: "index_task_logs_on_workspace_id"
   end
 
   create_table "tasks", force: :cascade do |t|
@@ -461,10 +561,12 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.decimal "automation_qa_hours", precision: 6, scale: 2
     t.decimal "total_hours", precision: 6, scale: 2
     t.string "priority"
+    t.bigint "workspace_id", null: false
     t.index ["developer_id"], name: "index_tasks_on_developer_id"
     t.index ["project_id"], name: "index_tasks_on_project_id"
     t.index ["sprint_id"], name: "index_tasks_on_sprint_id"
     t.index ["type"], name: "index_tasks_on_type"
+    t.index ["workspace_id"], name: "index_tasks_on_workspace_id"
   end
 
   create_table "team_users", force: :cascade do |t|
@@ -474,9 +576,11 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.string "status", default: "pending", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["team_id", "user_id"], name: "index_team_users_on_team_id_and_user_id", unique: true
     t.index ["team_id"], name: "index_team_users_on_team_id"
     t.index ["user_id"], name: "index_team_users_on_user_id"
+    t.index ["workspace_id"], name: "index_team_users_on_workspace_id"
   end
 
   create_table "teams", force: :cascade do |t|
@@ -485,7 +589,9 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.bigint "owner_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["owner_id"], name: "index_teams_on_owner_id"
+    t.index ["workspace_id"], name: "index_teams_on_workspace_id"
   end
 
   create_table "topic_follows", force: :cascade do |t|
@@ -493,9 +599,11 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.bigint "topic_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["topic_id"], name: "index_topic_follows_on_topic_id"
     t.index ["user_id", "topic_id"], name: "index_topic_follows_on_user_id_and_topic_id", unique: true
     t.index ["user_id"], name: "index_topic_follows_on_user_id"
+    t.index ["workspace_id"], name: "index_topic_follows_on_workspace_id"
   end
 
   create_table "topics", force: :cascade do |t|
@@ -504,7 +612,9 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.integer "topic_follows_count", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["name"], name: "index_topics_on_name", unique: true
+    t.bigint "workspace_id", null: false
+    t.index ["workspace_id", "name"], name: "index_topics_on_workspace_id_and_name", unique: true
+    t.index ["workspace_id"], name: "index_topics_on_workspace_id"
   end
 
   create_table "user_roles", force: :cascade do |t|
@@ -512,9 +622,11 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.bigint "role_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["role_id"], name: "index_user_roles_on_role_id"
     t.index ["user_id", "role_id"], name: "index_user_roles_on_user_id_and_role_id", unique: true
     t.index ["user_id"], name: "index_user_roles_on_user_id"
+    t.index ["workspace_id"], name: "index_user_roles_on_workspace_id"
   end
 
   create_table "user_skills", force: :cascade do |t|
@@ -525,9 +637,11 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.datetime "last_endorsed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["skill_id"], name: "index_user_skills_on_skill_id"
     t.index ["user_id", "skill_id"], name: "index_user_skills_on_user_id_and_skill_id", unique: true
     t.index ["user_id"], name: "index_user_skills_on_user_id"
+    t.index ["workspace_id"], name: "index_user_skills_on_workspace_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -566,12 +680,16 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.string "avatar_color"
     t.string "encrypted_keka_api_key"
     t.string "encrypted_keka_api_key_iv"
+    t.bigint "workspace_id", null: false
+    t.boolean "demo_account", default: false, null: false
+    t.boolean "site_admin", default: false, null: false
     t.index ["availability_status"], name: "index_users_on_availability_status"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["department_id"], name: "index_users_on_department_id"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["last_seen_at"], name: "index_users_on_last_seen_at"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
+    t.index ["workspace_id"], name: "index_users_on_workspace_id"
   end
 
   create_table "work_categories", force: :cascade do |t|
@@ -582,6 +700,8 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.integer "updated_by"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
+    t.index ["workspace_id"], name: "index_work_categories_on_workspace_id"
   end
 
   create_table "work_log_tags", force: :cascade do |t|
@@ -589,9 +709,11 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.bigint "work_tag_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["work_log_id", "work_tag_id"], name: "index_work_log_tags_on_work_log_id_and_work_tag_id", unique: true
     t.index ["work_log_id"], name: "index_work_log_tags_on_work_log_id"
     t.index ["work_tag_id"], name: "index_work_log_tags_on_work_tag_id"
+    t.index ["workspace_id"], name: "index_work_log_tags_on_workspace_id"
   end
 
   create_table "work_logs", force: :cascade do |t|
@@ -608,9 +730,11 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.integer "updated_by"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["category_id"], name: "index_work_logs_on_category_id"
     t.index ["priority_id"], name: "index_work_logs_on_priority_id"
     t.index ["user_id"], name: "index_work_logs_on_user_id"
+    t.index ["workspace_id"], name: "index_work_logs_on_workspace_id"
   end
 
   create_table "work_notes", force: :cascade do |t|
@@ -621,8 +745,10 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.integer "updated_by"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["user_id", "note_date"], name: "index_work_notes_on_user_id_and_note_date", unique: true
     t.index ["user_id"], name: "index_work_notes_on_user_id"
+    t.index ["workspace_id"], name: "index_work_notes_on_workspace_id"
   end
 
   create_table "work_priorities", force: :cascade do |t|
@@ -633,6 +759,8 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.integer "updated_by"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
+    t.index ["workspace_id"], name: "index_work_priorities_on_workspace_id"
   end
 
   create_table "work_tags", force: :cascade do |t|
@@ -641,7 +769,19 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
     t.integer "updated_by"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
     t.index ["name"], name: "index_work_tags_on_name", unique: true
+    t.index ["workspace_id", "name"], name: "index_work_tags_on_workspace_id_and_name", unique: true
+    t.index ["workspace_id"], name: "index_work_tags_on_workspace_id"
+  end
+
+  create_table "workspaces", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.string "kind", default: "private", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_workspaces_on_slug", unique: true
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
@@ -650,61 +790,101 @@ ActiveRecord::Schema[7.1].define(version: 2027_05_28_000000) do
   add_foreign_key "calendar_events", "sprints"
   add_foreign_key "calendar_events", "tasks"
   add_foreign_key "calendar_events", "users"
+  add_foreign_key "calendar_events", "workspaces"
   add_foreign_key "comments", "posts"
   add_foreign_key "comments", "users"
+  add_foreign_key "comments", "workspaces"
   add_foreign_key "conversation_participants", "conversations"
   add_foreign_key "conversation_participants", "users"
+  add_foreign_key "conversation_participants", "workspaces"
   add_foreign_key "conversations", "users", column: "creator_id"
+  add_foreign_key "conversations", "workspaces"
   add_foreign_key "departments", "users", column: "manager_id"
+  add_foreign_key "departments", "workspaces"
   add_foreign_key "event_reminders", "calendar_events"
+  add_foreign_key "event_reminders", "workspaces"
   add_foreign_key "friendships", "users", column: "followed_id"
   add_foreign_key "friendships", "users", column: "follower_id"
+  add_foreign_key "friendships", "workspaces"
   add_foreign_key "issues", "projects"
   add_foreign_key "issues", "users", column: "assignee_user_id"
   add_foreign_key "issues", "users", column: "reporter_id"
+  add_foreign_key "issues", "workspaces"
   add_foreign_key "items", "users"
+  add_foreign_key "items", "workspaces"
   add_foreign_key "knowledge_bookmarks", "users"
+  add_foreign_key "knowledge_bookmarks", "workspaces"
   add_foreign_key "learning_checkpoints", "learning_goals"
+  add_foreign_key "learning_checkpoints", "workspaces"
   add_foreign_key "learning_goals", "teams"
   add_foreign_key "learning_goals", "users"
+  add_foreign_key "learning_goals", "workspaces"
   add_foreign_key "message_reactions", "messages"
   add_foreign_key "message_reactions", "users"
+  add_foreign_key "message_reactions", "workspaces"
   add_foreign_key "messages", "conversations"
   add_foreign_key "messages", "users"
+  add_foreign_key "messages", "workspaces"
   add_foreign_key "notifications", "users", column: "actor_id"
   add_foreign_key "notifications", "users", column: "recipient_id"
+  add_foreign_key "notifications", "workspaces"
+  add_foreign_key "portfolio_features", "portfolio_projects"
   add_foreign_key "post_likes", "posts"
   add_foreign_key "post_likes", "users"
+  add_foreign_key "post_likes", "workspaces"
   add_foreign_key "posts", "users"
+  add_foreign_key "posts", "workspaces"
   add_foreign_key "project_environments", "projects"
+  add_foreign_key "project_environments", "workspaces"
   add_foreign_key "project_users", "projects"
   add_foreign_key "project_users", "users"
+  add_foreign_key "project_users", "workspaces"
   add_foreign_key "project_vault_items", "project_environments"
   add_foreign_key "project_vault_items", "projects"
+  add_foreign_key "project_vault_items", "workspaces"
   add_foreign_key "projects", "users", column: "owner_id"
+  add_foreign_key "projects", "workspaces"
   add_foreign_key "skill_endorsements", "teams"
   add_foreign_key "skill_endorsements", "user_skills"
   add_foreign_key "skill_endorsements", "users", column: "endorser_id"
+  add_foreign_key "skill_endorsements", "workspaces"
+  add_foreign_key "skills", "workspaces"
   add_foreign_key "sprints", "projects"
+  add_foreign_key "sprints", "workspaces"
   add_foreign_key "task_logs", "tasks"
   add_foreign_key "task_logs", "users", column: "developer_id"
+  add_foreign_key "task_logs", "workspaces"
   add_foreign_key "tasks", "projects"
   add_foreign_key "tasks", "sprints"
   add_foreign_key "tasks", "users", column: "developer_id"
+  add_foreign_key "tasks", "workspaces"
   add_foreign_key "team_users", "teams"
   add_foreign_key "team_users", "users"
+  add_foreign_key "team_users", "workspaces"
   add_foreign_key "teams", "users", column: "owner_id"
+  add_foreign_key "teams", "workspaces"
   add_foreign_key "topic_follows", "topics"
   add_foreign_key "topic_follows", "users"
+  add_foreign_key "topic_follows", "workspaces"
+  add_foreign_key "topics", "workspaces"
   add_foreign_key "user_roles", "roles"
   add_foreign_key "user_roles", "users"
+  add_foreign_key "user_roles", "workspaces"
   add_foreign_key "user_skills", "skills"
   add_foreign_key "user_skills", "users"
+  add_foreign_key "user_skills", "workspaces"
   add_foreign_key "users", "departments"
+  add_foreign_key "users", "workspaces"
+  add_foreign_key "work_categories", "workspaces"
   add_foreign_key "work_log_tags", "work_logs"
   add_foreign_key "work_log_tags", "work_tags"
+  add_foreign_key "work_log_tags", "workspaces"
   add_foreign_key "work_logs", "users"
   add_foreign_key "work_logs", "work_categories", column: "category_id"
   add_foreign_key "work_logs", "work_priorities", column: "priority_id"
+  add_foreign_key "work_logs", "workspaces"
   add_foreign_key "work_notes", "users"
+  add_foreign_key "work_notes", "workspaces"
+  add_foreign_key "work_priorities", "workspaces"
+  add_foreign_key "work_tags", "workspaces"
 end

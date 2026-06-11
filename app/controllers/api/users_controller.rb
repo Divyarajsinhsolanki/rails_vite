@@ -8,7 +8,7 @@ class Api::UsersController < Api::BaseController
 
   # GET /api/users.json
   def index
-    users = User.order(created_at: :desc)
+    users = current_user.workspace.users.order(created_at: :desc)
     render_paginated_collection(users, serializer: method(:serialize_user))
   end
 
@@ -32,7 +32,7 @@ class Api::UsersController < Api::BaseController
       return render json: { errors: validation_errors.uniq }, status: :unprocessable_entity
     end
 
-    @user = User.new(create_user_params)
+    @user = current_user.workspace.users.new(create_user_params)
 
     User.transaction do
       @user.save!
@@ -69,7 +69,7 @@ class Api::UsersController < Api::BaseController
     current_user.touch(:last_seen_at)
     online = current_user.last_seen_at.present? && current_user.last_seen_at >= ONLINE_WINDOW.ago
 
-    ActionCable.server.broadcast("presence", {
+    ActionCable.server.broadcast("workspace_#{current_user.workspace_id}:presence", {
       user_id: current_user.id,
       last_seen_at: current_user.last_seen_at,
       online: online
@@ -91,7 +91,7 @@ class Api::UsersController < Api::BaseController
   private
 
   def set_user
-    @user = User.find(params[:id] || params[:user][:id])
+    @user = current_user.workspace.users.find(params[:id] || params.dig(:user, :id))
   end
 
   def create_user_params

@@ -1,4 +1,6 @@
 class Item < ApplicationRecord
+  include WorkspaceScoped
+
   belongs_to :user, inverse_of: :items
 
   validates :title, presence: true

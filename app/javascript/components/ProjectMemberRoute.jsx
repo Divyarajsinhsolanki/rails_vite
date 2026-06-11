@@ -1,15 +1,12 @@
 import React, { useContext, useEffect, useState } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { fetchProjects } from "./api";
-import AuthPage from "../pages/AuthPage";
 import PageLoader from "./ui/PageLoader";
 import AccessDeniedRedirect from "./AccessDeniedRedirect";
 
 const ProjectMemberRoute = ({ children }) => {
   const { projectId } = useParams();
-  const location = useLocation();
-  const mode = location.state?.mode || "login";
   const { isAuthenticated, initializing, user } = useContext(AuthContext);
   const [isMember, setIsMember] = useState(null);
 
@@ -29,8 +26,9 @@ const ProjectMemberRoute = ({ children }) => {
     };
   }, [projectId, isAuthenticated, user]);
 
-  if (initializing || isMember === null) return <PageLoader title="Project access" message="Verifying project permissions…" />;
-  if (!isAuthenticated) return <AuthPage mode={mode} />;
+  if (initializing) return <PageLoader title="Project access" message="Verifying project permissions…" />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (isMember === null) return <PageLoader title="Project access" message="Verifying project permissions…" />;
   if (!isMember) return <AccessDeniedRedirect />;
   return children;
 };

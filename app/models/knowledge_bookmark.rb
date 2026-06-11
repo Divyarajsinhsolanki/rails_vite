@@ -1,4 +1,6 @@
 class KnowledgeBookmark < ApplicationRecord
+  include WorkspaceScoped
+
   belongs_to :user, inverse_of: :knowledge_bookmarks
 
   validates :card_type, presence: true

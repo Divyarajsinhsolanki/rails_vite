@@ -1,12 +1,16 @@
 class Api::BaseController < ApplicationController
+  include SessionCookieAuthentication
+
   protect_from_forgery with: :null_session
   before_action :set_request_context
   before_action :authenticate_user!
+  before_action :enforce_demo_read_only!
   before_action :set_cache_headers, if: :cacheable_api_request?
 
   def authenticate_user!
     @current_user = jwt_cookie_user || devise_session_user
     Current.user = @current_user
+    Current.workspace = @current_user&.workspace
 
     return if @current_user
 
@@ -28,6 +32,14 @@ class Api::BaseController < ApplicationController
   end
 
   private
+
+  def enforce_demo_read_only!
+    return unless current_user&.demo_account?
+    return if request.get? || request.head?
+    return if controller_name == "auth" && action_name == "logout"
+
+    render json: { error: "demo_read_only" }, status: :forbidden
+  end
 
   def jwt_cookie_user
     token = cookies.signed[:access_token]

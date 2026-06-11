@@ -8,6 +8,12 @@
 #     MovieGenre.find_or_create_by!(name: genre_name)
 #   end
 
+seed_workspace = Workspace.find_or_create_by!(slug: "private-workspace") do |workspace|
+  workspace.name = "Private Workspace"
+  workspace.kind = "private"
+end
+Current.workspace = seed_workspace
+
 # Default Roles
 %w[owner admin member].each do |name|
   Role.find_or_create_by!(name: name)
@@ -690,3 +696,10 @@ users.each do |user|
     end
   end
 end
+
+PortfolioSeeder.new.call
+
+admin_email = ENV["PORTFOLIO_ADMIN_EMAIL"].to_s.strip.downcase
+User.find_by(email: admin_email)&.update!(site_admin: true) if admin_email.present?
+
+DemoWorkspaceSeeder.new.call if ActiveModel::Type::Boolean.new.cast(ENV.fetch("DEMO_MODE_ENABLED", "false"))

@@ -1,4 +1,6 @@
 class TeamUser < ApplicationRecord
+  include WorkspaceScoped
+
   belongs_to :team, inverse_of: :team_users
   belongs_to :user, inverse_of: :team_users
 

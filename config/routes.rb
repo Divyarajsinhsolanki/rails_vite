@@ -54,6 +54,21 @@ Rails.application.routes.draw do
   # React now handles the /sheet route. Data is provided via the API below.
 
   namespace :api do
+    get 'portfolio', to: 'portfolio#show'
+    post 'demo_session', to: 'demo_sessions#create'
+    get 'demo/manifest', to: 'demo#manifest'
+
+    namespace :admin do
+      get 'portfolio', to: 'portfolio#show'
+      patch 'portfolio/profile', to: 'portfolio#update_profile'
+      post 'portfolio/projects', to: 'portfolio#create_project'
+      patch 'portfolio/projects/:id', to: 'portfolio#update_project'
+      delete 'portfolio/projects/:id', to: 'portfolio#destroy_project'
+      post 'portfolio/projects/:project_id/features', to: 'portfolio#create_feature'
+      patch 'portfolio/features/:id', to: 'portfolio#update_feature'
+      delete 'portfolio/features/:id', to: 'portfolio#destroy_feature'
+    end
+
     post 'signup', to: 'auth#signup'
     post 'login', to: 'auth#login'
     delete 'logout', to: 'auth#logout'

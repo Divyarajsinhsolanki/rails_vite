@@ -1,5 +1,6 @@
 class ProjectUser < ApplicationRecord
   include UserStampable
+  include WorkspaceScoped
   after_create :notify_user
 
   belongs_to :project, inverse_of: :project_users

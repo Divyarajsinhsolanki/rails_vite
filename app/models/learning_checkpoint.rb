@@ -1,4 +1,6 @@
 class LearningCheckpoint < ApplicationRecord
+  include WorkspaceScoped
+
   belongs_to :learning_goal, inverse_of: :learning_checkpoints
 
   validates :title, presence: true

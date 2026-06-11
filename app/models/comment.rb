@@ -1,5 +1,6 @@
 class Comment < ApplicationRecord
   include UserStampable
+  include WorkspaceScoped
 
   belongs_to :post, counter_cache: true, inverse_of: :comments
   belongs_to :user, inverse_of: :comments

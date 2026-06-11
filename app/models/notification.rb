@@ -1,4 +1,6 @@
 class Notification < ApplicationRecord
+  include WorkspaceScoped
+
   belongs_to :recipient, class_name: "User"
   belongs_to :actor, class_name: "User"
   belongs_to :notifiable, polymorphic: true
@@ -7,6 +9,7 @@ class Notification < ApplicationRecord
   scope :recent, -> { order(created_at: :desc) }
 
   before_create :respect_recipient_preferences
+  before_validation :assign_recipient_workspace, on: :create
 
   def mark_as_read!
     update!(read_at: Time.current)
@@ -15,6 +18,10 @@ class Notification < ApplicationRecord
   after_create_commit :broadcast_to_channel
 
   private
+
+  def assign_recipient_workspace
+    self.workspace ||= recipient&.workspace
+  end
 
   def broadcast_to_channel
     Chat::Broadcaster.broadcast_notification(self)

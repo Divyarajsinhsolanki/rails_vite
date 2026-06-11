@@ -15,6 +15,8 @@ The Rails app serves both the JSON API and the React entrypoint. Vite handles th
 - PDF Master tools for upload, edit, annotate, sign, watermark, stamp, merge, split, compress, encrypt, decrypt, protect, export, undo, and redo.
 - Optional Google Sheets integration for sprint tasks, logs, and issue imports.
 - Optional Keka integration for attendance and employee details.
+- Public one-page engineering portfolio with a Nexus Hub case study, feature gallery, resume/media administration, and a read-only guided demo.
+- Workspace tenancy that isolates each signup and all business data behind workspace-scoped APIs, jobs, and realtime streams.
 
 ## Tech Stack
 
@@ -100,7 +102,13 @@ sudo apt-get install postgresql libpq-dev imagemagick poppler-utils
    bin/rails db:seed
    ```
 
-   Seeds create baseline roles, teams, projects, work categories, work priorities, work tags, departments, and starter issue-tracker data.
+   Seeds create baseline roles, the published portfolio copy, optimized feature screenshots, and the existing starter workspace data.
+
+   To create or refresh the synthetic read-only portfolio workspace:
+
+   ```bash
+   bin/rails demo:seed
+   ```
 
 6. Start the app.
 
@@ -132,6 +140,7 @@ Environment variables are documented in `.env.example`. The most important group
 - CORS: `CORS_ALLOWED_ORIGINS`, `CORS_ALLOWED_PATH`
 - Action Cable: `REDIS_URL`
 - Rate limits: `RACK_ATTACK_LOGIN_PER_MINUTE`, `RACK_ATTACK_REQUESTS_PER_MINUTE`, `RACK_ATTACK_SIGNUP_PER_HOUR`
+- Portfolio/demo: `PORTFOLIO_ADMIN_EMAIL`, `DEMO_MODE_ENABLED`, `RACK_ATTACK_DEMO_PER_MINUTE`
 - Contact form reCAPTCHA: `VITE_RECAPTCHA_SITE_KEY`, `RECAPTCHA_SECRET_KEY`, `RECAPTCHA_MIN_SCORE`
 - Knowledge cards and feeds: `VITE_GNEWS_API_KEY`, `VITE_NEWSAPI_KEY`, `VITE_FINANCIAL_MODELING_PREP_API_KEY`, `VITE_ALPHA_VANTAGE_API_KEY`, `VITE_NEWSDATA_API_KEY`, `VITE_GUARDIAN_API_KEY`, `VITE_WORDNIK_API_KEY`, `VITE_NASA_API_KEY`
 - Firebase: `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID`, `VITE_FIREBASE_MEASUREMENT_ID`
@@ -167,20 +176,26 @@ bin/dev                           # run Rails, JS watcher, and Vite
 bin/rails db:prepare              # create/migrate database
 bin/rails db:seed                 # seed starter data
 bin/rails routes                  # inspect Rails routes
-yarn test                         # run Vitest utility tests
+bin/rails demo:seed               # seed the synthetic read-only demo workspace
+bin/rails test                    # run Rails model and request tests
+yarn test                         # run Vitest UI and utility tests
 RAILS_ENV=production bin/vite build
 bin/rails assets:precompile
 ```
 
 ## Tests
 
-The repository currently has Vitest tests for selected JavaScript utilities:
+Run the Rails workspace, portfolio, authorization, and demo request tests:
+
+```bash
+bin/rails test
+```
+
+Run the Vitest portfolio rendering and JavaScript utility tests:
 
 ```bash
 yarn test
 ```
-
-There is no committed Rails test suite yet.
 
 ## Docker
 

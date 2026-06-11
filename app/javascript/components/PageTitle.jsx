@@ -1,10 +1,13 @@
 import React, { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
-const APP_NAME = "My Rails + Vite + React App";
+const APP_NAME = "Divyarajsinh Solanki";
 
 const routeTitles = {
-  "/": "Calendar",
+  "/": "Full-stack Rails and React Engineer",
+  "/login": "Workspace Login",
+  "/signup": "Create Workspace",
+  "/demo": "Nexus Hub Guided Demo",
   "/calendar": "Calendar",
   "/contact": "Contact",
   "/legal": "Legal",
@@ -22,6 +25,7 @@ const routeTitles = {
   "/users": "Users",
   "/departments": "Departments",
   "/admin": "Admin",
+  "/admin/portfolio": "Portfolio Editor",
   "/admin/login-as-user": "Admin Impersonation",
   "/settings": "Settings",
   "/chat": "Chat",

@@ -1,4 +1,6 @@
 class Conversation < ApplicationRecord
+  include WorkspaceScoped
+
   enum conversation_type: { direct: "direct", group: "group" }, _prefix: :conversation
 
   belongs_to :creator, class_name: "User"

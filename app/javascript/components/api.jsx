@@ -1,4 +1,5 @@
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 const getCsrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content;
 
@@ -26,6 +27,10 @@ api.interceptors.response.use(
     // NEW GUARD CLAUSE
     if (config?.skipAuthRetry || config?.url.includes("/refresh")) {
       return Promise.reject(error);
+    }
+
+    if (response?.status === 403 && response?.data?.error === "demo_read_only") {
+      toast.error("This portfolio demo is read-only.");
     }
 
     if (response?.status === 401 && !config._retry) {
@@ -106,6 +111,17 @@ export const SchedulerAPI = {
 export const signup = (u) => api.post("/signup", u);
 export const login = (u) => api.post("/login", u);
 export const logout = () => api.delete("/logout");
+export const startDemoSession = () => api.post("/demo_session", {}, { skipAuthRetry: true });
+export const fetchDemoManifest = () => api.get("/demo/manifest");
+export const fetchPortfolio = () => api.get("/portfolio", { skipAuthRetry: true });
+export const fetchPortfolioAdmin = () => api.get("/admin/portfolio");
+export const updatePortfolioProfile = (data) => api.patch("/admin/portfolio/profile", data, { headers: { "Content-Type": "multipart/form-data" } });
+export const createPortfolioProject = (data) => api.post("/admin/portfolio/projects", data, { headers: { "Content-Type": "multipart/form-data" } });
+export const updatePortfolioProject = (id, data) => api.patch(`/admin/portfolio/projects/${id}`, data, { headers: { "Content-Type": "multipart/form-data" } });
+export const deletePortfolioProject = (id) => api.delete(`/admin/portfolio/projects/${id}`);
+export const createPortfolioFeature = (projectId, data) => api.post(`/admin/portfolio/projects/${projectId}/features`, data, { headers: { "Content-Type": "multipart/form-data" } });
+export const updatePortfolioFeature = (id, data) => api.patch(`/admin/portfolio/features/${id}`, data, { headers: { "Content-Type": "multipart/form-data" } });
+export const deletePortfolioFeature = (id) => api.delete(`/admin/portfolio/features/${id}`);
 export const fetchUserInfo = () => api.get("/view_profile");
 export const updateUserInfo = (d) => api.post("/update_profile", d);
 export const fetchUserProfile = (id) => api.get(`/users/${id}.json`);

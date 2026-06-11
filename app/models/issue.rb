@@ -1,4 +1,6 @@
 class Issue < ApplicationRecord
+  include WorkspaceScoped
+
   belongs_to :project
   belongs_to :reporter, class_name: 'User', optional: true
   belongs_to :assignee_user, class_name: 'User', optional: true
@@ -21,7 +23,7 @@ class Issue < ApplicationRecord
 
   has_many_attached :media_files
 
-  validates :issue_key, presence: true, uniqueness: true
+  validates :issue_key, presence: true, uniqueness: { scope: :workspace_id }
   validates :title, presence: true
   validates :status, inclusion: { in: STATUSES }
   validates :severity, inclusion: { in: SEVERITIES }

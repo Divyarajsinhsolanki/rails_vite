@@ -1,5 +1,6 @@
 class Task < ApplicationRecord
   include UserStampable
+  include WorkspaceScoped
 
   belongs_to :sprint, optional: true, inverse_of: :tasks
   belongs_to :developer, class_name: 'User', optional: true, inverse_of: :developed_tasks
@@ -46,7 +47,7 @@ class Task < ApplicationRecord
     return if previous_assigned_to_user == current_assigned_to_user
     return if current_assigned_to_user.blank?
 
-    recipient = User.find_by(id: current_assigned_to_user)
+    recipient = workspace.users.find_by(id: current_assigned_to_user)
     return unless recipient
 
     actor_id = notification_actor_id(updated_by)

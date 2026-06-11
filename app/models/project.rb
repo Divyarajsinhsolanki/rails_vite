@@ -1,4 +1,6 @@
 class Project < ApplicationRecord
+  include WorkspaceScoped
+
   belongs_to :owner, class_name: 'User', optional: true, inverse_of: :owned_projects
 
   has_many :project_users, dependent: :destroy, inverse_of: :project

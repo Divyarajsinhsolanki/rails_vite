@@ -1,5 +1,6 @@
 class Post < ApplicationRecord
   include UserStampable
+  include WorkspaceScoped
 
   belongs_to :user, inverse_of: :posts
   has_one_attached :image

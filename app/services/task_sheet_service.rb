@@ -700,7 +700,7 @@ class TaskSheetService
   end
 
   def user_lookup
-    @user_lookup ||= User.order(:id).each_with_object({}) do |user, lookup|
+    @user_lookup ||= Current.workspace.users.order(:id).each_with_object({}) do |user, lookup|
       [user.first_name, user.last_name, user.full_name, user.name, user.email].compact.each do |entry|
         normalized = entry.to_s.strip.downcase
         next if normalized.blank?

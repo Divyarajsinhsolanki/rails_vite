@@ -8,7 +8,10 @@ module Chat
           message: serialize_message(message)
         }
 
-        ActionCable.server.broadcast(conversation_stream(message.conversation_id), payload)
+        ActionCable.server.broadcast(
+          conversation_stream(message.workspace_id, message.conversation_id),
+          payload
+        )
         broadcast_conversation_refresh(message.conversation)
       end
 
@@ -23,19 +26,22 @@ module Chat
           last_actor_action: last_actor_action
         }
 
-        ActionCable.server.broadcast(conversation_stream(message.conversation_id), payload)
+        ActionCable.server.broadcast(
+          conversation_stream(message.workspace_id, message.conversation_id),
+          payload
+        )
       end
 
       def broadcast_conversation_refresh(conversation)
         conversation.participant_ids.each do |participant_id|
-          ActionCable.server.broadcast(user_stream(participant_id), {
+          ActionCable.server.broadcast(user_stream(conversation.workspace_id, participant_id), {
             type: "conversation_refresh",
             conversation_id: conversation.id
           })
         end
       end
 
-      def broadcast_typing_indicator(conversation_id, user, is_typing)
+      def broadcast_typing_indicator(workspace_id, conversation_id, user, is_typing)
         payload = {
           type: "typing_indicator",
           conversation_id: conversation_id,
@@ -44,10 +50,10 @@ module Chat
           is_typing: is_typing
         }
 
-        ActionCable.server.broadcast(conversation_stream(conversation_id), payload)
+        ActionCable.server.broadcast(conversation_stream(workspace_id, conversation_id), payload)
       end
 
-      def broadcast_message_read(conversation_id, user_id)
+      def broadcast_message_read(workspace_id, conversation_id, user_id)
         payload = {
           type: "message_read",
           conversation_id: conversation_id,
@@ -55,7 +61,7 @@ module Chat
           read_at: Time.current
         }
 
-        ActionCable.server.broadcast(conversation_stream(conversation_id), payload)
+        ActionCable.server.broadcast(conversation_stream(workspace_id, conversation_id), payload)
       end
 
       def broadcast_notification(notification)
@@ -90,15 +96,18 @@ module Chat
           }
         }
 
-        ActionCable.server.broadcast(user_stream(notification.recipient_id), payload)
+        ActionCable.server.broadcast(
+          user_stream(notification.workspace_id, notification.recipient_id),
+          payload
+        )
       end
 
-      def user_stream(user_id)
-        "chat_user_#{user_id}"
+      def user_stream(workspace_id, user_id)
+        "workspace_#{workspace_id}:chat_user_#{user_id}"
       end
 
-      def conversation_stream(conversation_id)
-        "chat_conversation_#{conversation_id}"
+      def conversation_stream(workspace_id, conversation_id)
+        "workspace_#{workspace_id}:chat_conversation_#{conversation_id}"
       end
 
       private

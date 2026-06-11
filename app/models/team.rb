@@ -1,4 +1,6 @@
 class Team < ApplicationRecord
+  include WorkspaceScoped
+
   belongs_to :owner, class_name: 'User', optional: true, inverse_of: :owned_teams
 
   has_many :team_users, dependent: :destroy, inverse_of: :team

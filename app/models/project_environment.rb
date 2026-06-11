@@ -1,4 +1,6 @@
 class ProjectEnvironment < ApplicationRecord
+  include WorkspaceScoped
+
   belongs_to :project, inverse_of: :project_environments
   has_many :project_vault_items, dependent: :nullify
 

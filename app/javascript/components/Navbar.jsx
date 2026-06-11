@@ -388,7 +388,8 @@ const Navbar = () => {
   const hasAdminRole = user?.roles?.some((role) => ["owner", "admin"].includes(role.name));
   const isOwner = user?.roles?.some((role) => role.name === "owner");
   const profileLinks = [
-    hasAdminRole ? { to: "/admin", label: "Admin Panel", icon: FiBriefcase } : null,
+    user?.site_admin ? { to: "/admin/portfolio", label: "Portfolio Editor", icon: FiBriefcase } : null,
+    user?.site_admin ? { to: "/admin", label: "System Admin", icon: FiGrid } : null,
     { to: "/profile", label: "My Profile", icon: FiUser },
     { to: "/users", label: "User Management", icon: FiUsers },
     { to: "/departments", label: "Departments", icon: FiGrid },
@@ -415,7 +416,7 @@ const Navbar = () => {
         <div className="pointer-events-none absolute inset-y-4 left-[18%] hidden w-px bg-gradient-to-b from-transparent via-white/60 to-transparent opacity-75 lg:block" />
 
         <Link
-          to="/"
+          to="/posts"
           className="group flex min-w-0 items-center gap-2 rounded-[26px] px-1 py-1"
           onClick={() => setIsMobileMenuOpen(false)}
         >
@@ -563,15 +564,13 @@ const Navbar = () => {
           ) : (
             <div className="hidden items-center gap-2 lg:flex">
               <Link
-                to="/"
-                state={{ mode: "login" }}
+                to="/login"
                 className="rounded-full border border-white/70 bg-white/58 px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-[0_14px_24px_rgb(15_23_42_/_0.06)] hover:bg-white"
               >
                 Login
               </Link>
               <Link
-                to="/"
-                state={{ mode: "signup" }}
+                to="/signup"
                 className="rounded-full border border-white/75 bg-[linear-gradient(135deg,var(--theme-color),var(--theme-secondary))] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_18px_36px_rgb(52_109_255_/_0.24)] hover:brightness-110"
               >
                 Get Started
@@ -702,16 +701,14 @@ const Navbar = () => {
                   ) : (
                     <div className="space-y-2 pt-2">
                       <Link
-                        to="/"
-                        state={{ mode: "login" }}
+                        to="/login"
                         onClick={() => setIsMobileMenuOpen(false)}
                         className="flex items-center justify-center rounded-[20px] border border-white/75 bg-white/82 px-4 py-3 text-base font-semibold text-slate-800 shadow-[0_14px_24px_rgb(15_23_42_/_0.06)]"
                       >
                         Login
                       </Link>
                       <Link
-                        to="/"
-                        state={{ mode: "signup" }}
+                        to="/signup"
                         onClick={() => setIsMobileMenuOpen(false)}
                         className="flex items-center justify-center rounded-[20px] bg-[linear-gradient(135deg,var(--theme-color),var(--theme-secondary))] px-4 py-3 text-base font-semibold text-white shadow-[0_18px_36px_rgb(52_109_255_/_0.24)]"
                       >

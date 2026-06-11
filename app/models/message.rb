@@ -1,4 +1,6 @@
 class Message < ApplicationRecord
+  include WorkspaceScoped
+
   MENTION_REGEX = /@([a-zA-Z0-9._-]+)/.freeze
 
   belongs_to :conversation

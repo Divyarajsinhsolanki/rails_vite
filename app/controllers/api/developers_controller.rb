@@ -1,6 +1,6 @@
 class Api::DevelopersController < Api::BaseController
   def index
-    users = User.order(:first_name, :last_name, :email)
+    users = current_user.workspace.users.order(:first_name, :last_name, :email)
     users = users.joins(:project_users).where(project_users: { project_id: params[:project_id] }).distinct if params[:project_id].present?
     render_paginated_collection(users, serializer: method(:serialize_developer))
   end

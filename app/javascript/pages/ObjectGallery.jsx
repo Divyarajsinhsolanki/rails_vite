@@ -145,8 +145,7 @@ const ObjectGallery = () => {
             </p>
           </div>
           <Link
-            to="/"
-            state={{ mode: "login" }}
+            to="/login"
             className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-slate-950/20 hover:-translate-y-1 hover:bg-white/15"
           >
             Back to login
