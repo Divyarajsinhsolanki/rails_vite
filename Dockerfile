@@ -52,7 +52,8 @@ ENV SMTP_ADDRESS="smtp.example.com" \
     SMTP_PORT="587" \
     SMTP_USERNAME="dummy@example.com" \
     SMTP_PASSWORD="dummy" \
-    SECRET_KEY_BASE="dummy_secret_key_base_for_build"
+    SECRET_KEY_BASE="dummy_secret_key_base_for_build" \
+    KEKA_API_KEY_ENCRYPTION_KEY="0123456789abcdef0123456789abcdef"
 
 RUN RAILS_ENV=production bin/vite build
 RUN RAILS_ENV=production bundle exec rails assets:precompile
