@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+fail() {
+  printf 'Deployment stopped: %s\n' "$1" >&2
+  exit 1
+}
+
+env_value() {
+  local name="$1"
+  local shell_value="${!name:-}"
+
+  if [ -n "$shell_value" ]; then
+    printf '%s' "$shell_value"
+    return
+  fi
+
+  sed -n "s/^${name}=//p" .env | tail -n 1
+}
+
+require_value() {
+  local name="$1"
+  local value
+  value="$(env_value "$name")"
+
+  [ -n "$value" ] || fail "$name is missing from .env."
+  case "$value" in
+    replace-*|your_*|dummy*|example*)
+      fail "$name still contains a placeholder value."
+      ;;
+  esac
+}
+
+command -v docker >/dev/null 2>&1 || fail "Docker is not installed."
+docker compose version >/dev/null 2>&1 || fail "the Docker Compose plugin is not installed."
+[ -f .env ] || fail "copy .env.example to .env and configure the production values first."
+
+require_value "POSTGRES_PASSWORD"
+
+if [ -n "$(env_value SECRET_KEY_BASE)" ]; then
+  require_value "SECRET_KEY_BASE"
+elif [ -n "$(env_value RAILS_MASTER_KEY)" ]; then
+  require_value "RAILS_MASTER_KEY"
+else
+  fail "SECRET_KEY_BASE or RAILS_MASTER_KEY must be configured."
+fi
+
+storage_service="$(env_value ACTIVE_STORAGE_SERVICE)"
+if [ "${storage_service:-s3}" = "s3" ]; then
+  require_value "S3_ACCESS_KEY_ID"
+  require_value "S3_SECRET_ACCESS_KEY"
+  require_value "S3_BUCKET"
+fi
+
+echo "== Validating deployment configuration =="
+docker compose config --quiet
+
+echo "== Building, releasing, and starting Nexus Hub =="
+docker compose up --detach --build --remove-orphans --wait
+
+echo
+docker compose ps
+echo
+echo "Deployment complete. Database preparation and safe seeds ran through bin/release."

@@ -1,8 +1,9 @@
 #!/bin/bash -e
 
-# If running the rails server then create or migrate existing database
-if [ "${1}" == "./bin/rails" ] && [ "${2}" == "server" ]; then
-  ./bin/rails db:prepare
+# Generic Docker platforms may not provide a release phase. Compose runs the
+# dedicated release service and disables this fallback to avoid duplicate work.
+if [ "${1}" == "./bin/rails" ] && [ "${2}" == "server" ] && [ "${AUTO_RELEASE:-true}" != "false" ]; then
+  ./bin/release
 fi
 
 exec "${@}"

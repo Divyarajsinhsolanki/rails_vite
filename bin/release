@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Universal release command for Docker Compose and hosted deployment platforms.
+# It is idempotent and safe to run on every release.
+exec bin/rails app:bootstrap

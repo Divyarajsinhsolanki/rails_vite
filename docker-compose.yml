@@ -26,15 +26,18 @@ services:
       timeout: 5s
       retries: 10
 
-  migrate:
+  release:
     build: .
     env_file: .env
-    command: ./bin/rails db:prepare
+    command: ./bin/release
     environment: &app-environment
       DATABASE_URL: postgres://nexus:${POSTGRES_PASSWORD}@db:5432/nexus_hub_production
       REDIS_URL: redis://redis:6379/1
       RAILS_ENV: production
       RAILS_SERVE_STATIC_FILES: "true"
+      AUTO_RELEASE: "false"
+      SEED_PORTFOLIO: ${SEED_PORTFOLIO:-true}
+      SEED_DEMO: ${SEED_DEMO:-true}
     depends_on:
       db:
         condition: service_healthy
@@ -48,7 +51,7 @@ services:
     environment: *app-environment
     command: ./bin/rails server -b 0.0.0.0
     depends_on:
-      migrate:
+      release:
         condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "ruby -rnet/http -e 'exit(Net::HTTP.get_response(URI(\"http://localhost:3000/up\")).is_a?(Net::HTTPSuccess) ? 0 : 1)'"]
@@ -63,7 +66,7 @@ services:
     environment: *app-environment
     command: bundle exec sidekiq
     depends_on:
-      migrate:
+      release:
         condition: service_completed_successfully
 
   caddy:
