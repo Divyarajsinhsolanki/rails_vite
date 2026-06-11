@@ -24,6 +24,9 @@ RUN apt-get update -qq && \
       pkg-config \
       python-is-python3
 
+# Match the Bundler version recorded in Gemfile.lock.
+RUN gem install bundler -v 4.0.6
+
 ARG NODE_VERSION=20.18.0
 ARG YARN_VERSION=1.22.22
 ENV PATH=/usr/local/node/bin:$PATH
@@ -43,15 +46,15 @@ RUN yarn install --frozen-lockfile
 COPY . .
 
 RUN bundle exec bootsnap precompile app/ lib/
+
+# Provide non-sensitive placeholders while production assets are compiled.
+ENV SMTP_ADDRESS="smtp.example.com" \
+    SMTP_PORT="587" \
+    SMTP_USERNAME="dummy@example.com" \
+    SMTP_PASSWORD="dummy" \
+    SECRET_KEY_BASE="dummy_secret_key_base_for_build"
+
 RUN RAILS_ENV=production bin/vite build
-
-# Set ENV needed only for build phase
-ENV SMTP_ADDRESS="smtp.example.com"
-ENV SMTP_PORT="587"
-ENV SMTP_USERNAME="dummy@example.com"
-ENV SMTP_PASSWORD="dummy"
-ENV SECRET_KEY_BASE="dummy_secret_key_base_for_build"
-
 RUN RAILS_ENV=production bundle exec rails assets:precompile
 
 # --- Final Runtime Stage ---
