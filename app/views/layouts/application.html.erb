@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="description" content="<%= PortfolioAccess.enabled? ? "Portfolio of Divyarajsinh Solanki, a full-stack Ruby on Rails and React engineer building Nexus Hub." : "Sign in or create a Nexus Hub workspace." %>">
     <meta name="nexus-portfolio-enabled" content="<%= PortfolioAccess.enabled? %>">
+    <meta name="nexus-recaptcha-site-key" content="<%= ENV["VITE_RECAPTCHA_SITE_KEY"] %>">
+    <meta name="nexus-firebase-api-key" content="<%= ENV["VITE_FIREBASE_API_KEY"] %>">
+    <meta name="nexus-firebase-auth-domain" content="<%= ENV["VITE_FIREBASE_AUTH_DOMAIN"] %>">
+    <meta name="nexus-firebase-project-id" content="<%= ENV["VITE_FIREBASE_PROJECT_ID"] %>">
+    <meta name="nexus-firebase-storage-bucket" content="<%= ENV["VITE_FIREBASE_STORAGE_BUCKET"] %>">
+    <meta name="nexus-firebase-messaging-sender-id" content="<%= ENV["VITE_FIREBASE_MESSAGING_SENDER_ID"] %>">
+    <meta name="nexus-firebase-app-id" content="<%= ENV["VITE_FIREBASE_APP_ID"] %>">
+    <meta name="nexus-firebase-measurement-id" content="<%= ENV["VITE_FIREBASE_MEASUREMENT_ID"] %>">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
     <link rel="icon" type="image/png" href="/favicon.png">

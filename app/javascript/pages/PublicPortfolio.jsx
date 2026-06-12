@@ -19,8 +19,12 @@ import {
 } from "react-icons/fi";
 import { AuthContext } from "../context/AuthContext";
 import { fetchPortfolio, sendContact } from "../components/api";
+import { runtimeOrBuildValue } from "../config/runtime";
 
-const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+const RECAPTCHA_SITE_KEY = runtimeOrBuildValue(
+  "nexus-recaptcha-site-key",
+  import.meta.env.VITE_RECAPTCHA_SITE_KEY
+);
 
 const fallbackProfile = {
   full_name: "Divyarajsinh Solanki",

@@ -1,6 +1,5 @@
-const featureMeta = (name) =>
-  typeof document === "undefined"
-    ? null
-    : document.querySelector(`meta[name="${name}"]`)?.content;
+import { runtimeMetaValue } from "./runtime";
 
-export const portfolioEnabled = featureMeta("nexus-portfolio-enabled") === "true";
+export const portfolioEnabled = runtimeMetaValue("nexus-portfolio-enabled") === "true";
+
+export const logoutDestination = (enabled = portfolioEnabled) => (enabled ? "/" : "/login");

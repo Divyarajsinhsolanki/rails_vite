@@ -6,6 +6,7 @@ import { firebaseEnabled } from "../firebaseFlags";
 import { toast } from "react-hot-toast";
 import { COLOR_MAP, toRgb, lightenColor, darkenColor } from '/utils/theme';
 import PageLoader from "../components/ui/PageLoader";
+import { logoutDestination } from "../config/features";
 
 export const AuthContext = createContext();
 
@@ -118,7 +119,7 @@ export function AuthProvider({ children }) {
     await api.delete("/logout");
     setUser(null);
     clearTimeout(refreshTimer.current);
-    navigate("/login");
+    navigate(logoutDestination(), { replace: true });
   };
 
   const value = {

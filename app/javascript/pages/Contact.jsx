@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { sendContact } from "../components/api";
+import { runtimeOrBuildValue } from "../config/runtime";
 
-const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+const RECAPTCHA_SITE_KEY = runtimeOrBuildValue(
+  "nexus-recaptcha-site-key",
+  import.meta.env.VITE_RECAPTCHA_SITE_KEY
+);
 
 const Contact = () => {
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });

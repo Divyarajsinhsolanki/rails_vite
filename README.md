@@ -127,6 +127,24 @@ the Rails server starts. Keep `DEMO_MODE_ENABLED=false` until the deployment is
 verified; the synthetic workspace can still be prepared safely. Set
 `SEED_DEMO=false` to omit it entirely.
 
+### Copy the local database to Render
+
+This is destructive: it replaces the Render database. Suspend application
+writes first and copy the **External Database URL** from the Render Postgres
+Info page. The script creates a production backup before restoring local data.
+
+```bash
+CONFIRM_DATABASE_REPLACE=replace-render-database \
+RENDER_DATABASE_URL='postgresql://user:password@host/database' \
+bin/copy-local-db-to-render
+```
+
+Set `LOCAL_DATABASE_URL` too if the local database does not use the default
+`postgresql://postgres:postgres@localhost/pdf_master_development` connection.
+This copies PostgreSQL data only. Copy Active Storage objects separately when
+local records reference uploaded files. The installed PostgreSQL client tools
+must be at least as new as both database servers.
+
 ## Google Sheets Integration
 
 Google Sheets features are optional and are used for sprint task sheets, sprint log export, and issue imports.
