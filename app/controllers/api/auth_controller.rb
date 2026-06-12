@@ -134,7 +134,10 @@ class Api::AuthController < Api::BaseController
     end
     render json: {
       user: current_user.public_json(include_roles: true)
-                      .merge(profile_picture: profile_picture_url, cover_photo: cover_photo_url, avatar_color: current_user.avatar_color, phone_number: current_user.phone_number, bio: current_user.bio, social_links: current_user.social_links || {}),
+                      .merge(
+                        "profile_picture" => profile_picture_url,
+                        "cover_photo" => cover_photo_url
+                      ),
       teams: teams,
       projects: projects,
       keka: current_user.keka_payload

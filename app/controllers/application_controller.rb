@@ -30,6 +30,10 @@ class ApplicationController < ActionController::Base
     ].include?([request.request_method, request.path])
   end
 
+  def require_portfolio_enabled!
+    head :not_found unless PortfolioAccess.enabled?
+  end
+
   def user_from_access_cookie
     token = cookies.signed[:access_token]
     payload = JwtService.decode(token)

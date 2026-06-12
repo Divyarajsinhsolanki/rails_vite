@@ -1,4 +1,6 @@
 class Api::DemoController < Api::BaseController
+  before_action :require_portfolio_enabled!
+
   GROUPS = [
     {
       key: "delivery",

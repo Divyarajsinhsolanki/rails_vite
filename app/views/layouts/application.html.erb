@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Divyarajsinh Solanki | Full-stack Engineer</title>
+    <title><%= PortfolioAccess.enabled? ? "Divyarajsinh Solanki | Full-stack Engineer" : "Nexus Hub | Workspace Login" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="description" content="Portfolio of Divyarajsinh Solanki, a full-stack Ruby on Rails and React engineer building Nexus Hub.">
+    <meta name="description" content="<%= PortfolioAccess.enabled? ? "Portfolio of Divyarajsinh Solanki, a full-stack Ruby on Rails and React engineer building Nexus Hub." : "Sign in or create a Nexus Hub workspace." %>">
+    <meta name="nexus-portfolio-enabled" content="<%= PortfolioAccess.enabled? %>">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
     <link rel="icon" type="image/png" href="/favicon.png">

@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { portfolioEnabled } from "../config/features";
 
 const Footer = () => {
   return (
@@ -12,9 +13,11 @@ const Footer = () => {
           <Link to="/legal" className="hover:text-indigo-600 transition">
             Privacy & Terms
           </Link>
-          <Link to="/" className="hover:text-indigo-600 transition">
-            Portfolio
-          </Link>
+          {portfolioEnabled ? (
+            <Link to="/" className="hover:text-indigo-600 transition">
+              Portfolio
+            </Link>
+          ) : null}
         </div>
       </div>
     </footer>

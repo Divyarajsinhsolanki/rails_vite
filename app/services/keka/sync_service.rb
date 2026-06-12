@@ -7,9 +7,10 @@ module Keka
     end
 
     def call
-      validate!
+      api_key = @user.safe_keka_api_key
+      validate!(api_key)
 
-      client = Client.new(base_url: @user.keka_base_url, api_key: @user.keka_api_key)
+      client = Client.new(base_url: @user.keka_base_url, api_key: api_key)
       range_start = 30.days.ago.to_date
       range_end = Date.current
 
@@ -30,10 +31,10 @@ module Keka
 
     private
 
-    def validate!
-      return if @user.keka_base_url.present? && @user.keka_api_key.present? && @user.keka_employee_id.present?
+    def validate!(api_key)
+      return if @user.keka_base_url.present? && api_key.present? && @user.keka_employee_id.present?
 
-      raise SyncError, "Keka credentials are missing. Please save base URL, API key, and employee ID."
+      raise SyncError, "Keka credentials are missing or can no longer be decrypted. Please save them again."
     end
   end
 end

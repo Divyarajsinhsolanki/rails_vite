@@ -1,10 +1,11 @@
 import React, { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { portfolioEnabled } from "../config/features";
 
-const APP_NAME = "Divyarajsinh Solanki";
+const APP_NAME = portfolioEnabled ? "Divyarajsinh Solanki" : "Nexus Hub";
 
 const routeTitles = {
-  "/": "Full-stack Rails and React Engineer",
+  "/": portfolioEnabled ? "Full-stack Rails and React Engineer" : "Workspace Login",
   "/login": "Workspace Login",
   "/signup": "Create Workspace",
   "/demo": "Nexus Hub Guided Demo",

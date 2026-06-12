@@ -26,6 +26,7 @@ import { AuthContext } from "../context/AuthContext";
 import { fetchProjects } from "./api";
 import NotificationCenter from "./NotificationCenter";
 import logo from "../images/logo.webp";
+import { portfolioEnabled } from "../config/features";
 
 const useNavbarEffects = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -480,7 +481,7 @@ const Navbar = () => {
   const hasAdminRole = user?.roles?.some((role) => ["owner", "admin"].includes(role.name));
   const isOwner = user?.roles?.some((role) => role.name === "owner");
   const profileLinks = [
-    user?.site_admin ? { to: "/admin/portfolio", label: "Portfolio Editor", icon: FiBriefcase } : null,
+    user?.site_admin && portfolioEnabled ? { to: "/admin/portfolio", label: "Portfolio Editor", icon: FiBriefcase } : null,
     user?.site_admin ? { to: "/admin", label: "System Admin", icon: FiGrid } : null,
     { to: "/profile", label: "My Profile", icon: FiUser },
     { to: "/users", label: "User Management", icon: FiUsers },

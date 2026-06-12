@@ -1,4 +1,6 @@
 class Api::DemoSessionsController < Api::BaseController
+  before_action :require_portfolio_enabled!
+
   skip_before_action :authenticate_user!
   skip_before_action :enforce_demo_read_only!
 

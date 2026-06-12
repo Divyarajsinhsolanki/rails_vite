@@ -1,6 +1,15 @@
 require "test_helper"
 
 class PortfolioAuthorizationTest < ActionDispatch::IntegrationTest
+  setup do
+    @previous_portfolio_mode = ENV["PORTFOLIO_ENABLED"]
+    ENV["PORTFOLIO_ENABLED"] = "true"
+  end
+
+  teardown do
+    ENV["PORTFOLIO_ENABLED"] = @previous_portfolio_mode
+  end
+
   test "portfolio administration requires site admin" do
     workspace = Workspace.create!(name: "Admin Test", slug: "admin-test", kind: "private")
     member = create_user(workspace, "member@example.test")

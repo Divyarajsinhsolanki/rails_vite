@@ -162,15 +162,28 @@ class User < ApplicationRecord
   end
 
   def keka_connected?
-    keka_base_url.present? && keka_api_key.present? && keka_employee_id.present?
+    keka_base_url.present? && safe_keka_api_key.present? && keka_employee_id.present?
   end
 
   def keka_api_key_masked
-    return if keka_api_key.blank?
+    api_key = safe_keka_api_key
+    return if api_key.blank?
 
-    visible = keka_api_key.to_s.last(4)
-    masked_length = [keka_api_key.to_s.length - 4, 0].max
+    visible = api_key.to_s.last(4)
+    masked_length = [api_key.to_s.length - 4, 0].max
     "#{'*' * masked_length}#{visible}"
+  end
+
+  def safe_keka_api_key
+    keka_api_key
+  rescue OpenSSL::Cipher::CipherError, ArgumentError => error
+    unless @keka_decryption_warning_logged
+      Rails.logger.warn(
+        "Unable to decrypt Keka credentials for user_id=#{id}; credentials must be saved again (#{error.class})."
+      )
+      @keka_decryption_warning_logged = true
+    end
+    nil
   end
 
   def keka_payload

@@ -1,6 +1,7 @@
 class Api::Admin::PortfolioController < Api::BaseController
   include Rails.application.routes.url_helpers
 
+  before_action :require_portfolio_enabled!
   before_action :authorize_site_admin!
   skip_before_action :enforce_demo_read_only!
 

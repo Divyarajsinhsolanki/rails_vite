@@ -1,6 +1,8 @@
 class Api::PortfolioController < ApplicationController
   include Rails.application.routes.url_helpers
 
+  before_action :require_portfolio_enabled!
+
   def show
     profile = PortfolioProfile.published.includes(avatar_attachment: :blob, resume_attachment: :blob).first
     projects = PortfolioProject.published.ordered.includes(

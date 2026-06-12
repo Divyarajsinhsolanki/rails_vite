@@ -86,7 +86,7 @@ Environment variables are documented in `.env.example`. The most important group
 - CORS: `CORS_ALLOWED_ORIGINS`, `CORS_ALLOWED_PATH`
 - Action Cable: `REDIS_URL`
 - Rate limits: `RACK_ATTACK_LOGIN_PER_MINUTE`, `RACK_ATTACK_REQUESTS_PER_MINUTE`, `RACK_ATTACK_SIGNUP_PER_HOUR`
-- Portfolio/demo: `PORTFOLIO_ADMIN_EMAIL`, `DEMO_MODE_ENABLED`, `RACK_ATTACK_DEMO_PER_MINUTE`
+- Portfolio/demo: `PORTFOLIO_ENABLED`, `PORTFOLIO_ADMIN_EMAIL`, `DEMO_MODE_ENABLED`, `RACK_ATTACK_DEMO_PER_MINUTE`
 - Contact form reCAPTCHA: `VITE_RECAPTCHA_SITE_KEY`, `RECAPTCHA_SECRET_KEY`, `RECAPTCHA_MIN_SCORE`
 - Knowledge cards and feeds: `VITE_GNEWS_API_KEY`, `VITE_NEWSAPI_KEY`, `VITE_FINANCIAL_MODELING_PREP_API_KEY`, `VITE_ALPHA_VANTAGE_API_KEY`, `VITE_NEWSDATA_API_KEY`, `VITE_GUARDIAN_API_KEY`, `VITE_WORDNIK_API_KEY`, `VITE_NASA_API_KEY`
 - Firebase: `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID`, `VITE_FIREBASE_MEASUREMENT_ID`
@@ -95,6 +95,9 @@ Environment variables are documented in `.env.example`. The most important group
 
 Values prefixed with `VITE_` are exposed to browser-side JavaScript. Do not put
 private server secrets in `VITE_` variables.
+
+Keep `KEKA_API_KEY_ENCRYPTION_KEY` unchanged between deployments. If it changes,
+existing Keka credentials become unreadable and must be entered again.
 
 ## Production Deployment
 
@@ -181,10 +184,13 @@ The same seed flow is used locally, in CI, and in deployment:
 
 - `SEED_PORTFOLIO=true` loads or refreshes the public portfolio.
 - `SEED_DEMO=true` loads or refreshes synthetic demo data.
+- `PORTFOLIO_ENABLED=true` exposes the portfolio, demo, and portfolio administration.
 - `DEMO_MODE_ENABLED=true` permits visitors to start demo sessions.
 
-Seeding demo data does not enable public demo access. All seed operations are
-idempotent, so release commands can be retried safely.
+When `PORTFOLIO_ENABLED` is false or absent, `/` displays the normal login/signup
+flow and portfolio/demo routes and APIs are unavailable. Seeding demo data does
+not enable public demo access. All seed operations are idempotent, so release
+commands can be retried safely.
 
 ## Project Structure
 

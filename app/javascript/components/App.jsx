@@ -16,6 +16,7 @@ import DemoBanner from "./DemoBanner";
 import DemoTourNavigator from "./DemoTourNavigator";
 import CommandPalette from "./CommandPalette";
 import { AuthContext } from "../context/AuthContext";
+import { portfolioEnabled } from "../config/features";
 
 const Admin = lazy(() => import("../components/Admin/Admin"));
 const AdminImpersonation = lazy(() => import("../pages/AdminImpersonation"));
@@ -73,10 +74,10 @@ const AppRoutes = () => {
     <motion.div key={routeKey} className="shell-route-frame" {...routeTransitionProps}>
       <Suspense fallback={<PageLoader title="Loading view" message="Preparing this screen..." />}>
         <Routes location={location}>
-            <Route path="/" element={<PublicPortfolio />} />
-            <Route path="/contact" element={<Contact />} />
+            <Route path="/" element={portfolioEnabled ? <PublicPortfolio /> : <AuthPage mode="login" />} />
+            <Route path="/contact" element={portfolioEnabled ? <Contact /> : <Navigate to="/login" replace />} />
             <Route path="/legal" element={<Legal />} />
-            <Route path="/metaverse-landing" element={<MetaverseLanding />} />
+            <Route path="/metaverse-landing" element={portfolioEnabled ? <MetaverseLanding /> : <Navigate to="/login" replace />} />
             <Route path="/login" element={<AuthPage mode="login" />} />
             <Route path="/signup" element={<AuthPage mode="signup" />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -90,7 +91,7 @@ const AppRoutes = () => {
               }
             />
 
-            <Route path="/demo" element={<PrivateRoute><DemoHub /></PrivateRoute>} />
+            <Route path="/demo" element={portfolioEnabled ? <PrivateRoute><DemoHub /></PrivateRoute> : <Navigate to="/login" replace />} />
             <Route path="/my-work" element={<PrivateRoute><MyWork /></PrivateRoute>} />
             <Route
               path="/momentum"
@@ -235,9 +236,13 @@ const AppRoutes = () => {
             <Route
               path="/admin/portfolio"
               element={
-                <PrivateRoute siteAdminOnly>
-                  <PortfolioAdmin />
-                </PrivateRoute>
+                portfolioEnabled ? (
+                  <PrivateRoute siteAdminOnly>
+                    <PortfolioAdmin />
+                  </PrivateRoute>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
               }
             />
             <Route
@@ -292,7 +297,8 @@ const AppShell = () => {
   const isProjectMetaverseRoute = /^\/projects\/[^/]+\/metaverse$/.test(location.pathname);
   const isImmersiveRoute = location.pathname.startsWith("/knowledge") || isProjectMetaverseRoute;
   const isChatRoute = location.pathname.startsWith("/chat");
-  const isPublicRoute = ["/", "/contact", "/legal", "/metaverse-landing"].includes(location.pathname);
+  const portfolioPublicRoutes = portfolioEnabled ? ["/contact", "/metaverse-landing"] : [];
+  const isPublicRoute = ["/", "/legal", ...portfolioPublicRoutes].includes(location.pathname);
   const isAuthRoute = ["/login", "/signup", "/forgot-password", "/reset-password"].includes(location.pathname);
 
   if (isPublicRoute || isAuthRoute) {

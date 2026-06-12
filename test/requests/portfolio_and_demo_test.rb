@@ -4,12 +4,15 @@ class PortfolioAndDemoTest < ActionDispatch::IntegrationTest
   setup do
     PortfolioSeeder.new.call
     @previous_demo_mode = ENV["DEMO_MODE_ENABLED"]
+    @previous_portfolio_mode = ENV["PORTFOLIO_ENABLED"]
     ENV["DEMO_MODE_ENABLED"] = "true"
+    ENV["PORTFOLIO_ENABLED"] = "true"
     DemoWorkspaceSeeder.new.call
   end
 
   teardown do
     ENV["DEMO_MODE_ENABLED"] = @previous_demo_mode
+    ENV["PORTFOLIO_ENABLED"] = @previous_portfolio_mode
   end
 
   test "published portfolio is public" do
@@ -78,5 +81,15 @@ class PortfolioAndDemoTest < ActionDispatch::IntegrationTest
       Task.unscoped.where(workspace: workspace).count,
       Post.unscoped.where(workspace: workspace).count
     ]
+  end
+
+  test "portfolio and demo endpoints are unavailable when portfolio mode is disabled" do
+    ENV["PORTFOLIO_ENABLED"] = "false"
+
+    get "/api/portfolio"
+    assert_response :not_found
+
+    post "/api/demo_session"
+    assert_response :not_found
   end
 end
