@@ -1,21 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-command -v pg_dump >/dev/null 2>&1 || {
-  echo "pg_dump is required." >&2
-  exit 1
-}
-command -v pg_restore >/dev/null 2>&1 || {
-  echo "pg_restore is required." >&2
-  exit 1
-}
 command -v psql >/dev/null 2>&1 || {
   echo "psql is required." >&2
   exit 1
 }
 
 if [ -z "${RENDER_DATABASE_URL:-}" ]; then
-  echo "Set RENDER_DATABASE_URL to the External Database URL from Render Postgres." >&2
+  if [ -t 0 ]; then
+    read -r -s -p "Render External Database URL: " RENDER_DATABASE_URL
+    echo
+    export RENDER_DATABASE_URL
+  else
+    echo "Set RENDER_DATABASE_URL to the External Database URL from Render Postgres." >&2
+    exit 1
+  fi
+fi
+
+if [ -z "${RENDER_DATABASE_URL}" ]; then
+  echo "Render External Database URL cannot be empty." >&2
   exit 1
 fi
 
@@ -24,9 +27,7 @@ if [ "${CONFIRM_DATABASE_REPLACE:-}" != "replace-render-database" ]; then
 This operation replaces the Render database with your local development database.
 Suspend application writes first, then run with:
 
-  CONFIRM_DATABASE_REPLACE=replace-render-database \
-  RENDER_DATABASE_URL='postgresql://...' \
-  bin/copy-local-db-to-render
+  CONFIRM_DATABASE_REPLACE=replace-render-database bin/copy-local-db-to-render
 WARNING
   exit 1
 fi
@@ -39,7 +40,6 @@ production_backup="${backup_dir}/render-before-local-copy-${timestamp}.dump"
 
 mkdir -p "${backup_dir}"
 
-client_major="$(pg_dump --version | awk '{ print $3 }' | cut -d. -f1)"
 local_server_major="$(
   psql "${local_database_url}" --no-align --tuples-only --command="SHOW server_version_num" |
     tr -d '[:space:]' |
@@ -51,38 +51,95 @@ render_server_major="$(
     awk '{ print int($1 / 10000) }'
 )"
 
-if [ "${client_major}" -lt "${local_server_major}" ] || [ "${client_major}" -lt "${render_server_major}" ]; then
-  echo "PostgreSQL client ${client_major} is too old." >&2
-  echo "Install client tools ${local_server_major} or newer for local and ${render_server_major} or newer for Render." >&2
-  exit 1
+required_client_major="${local_server_major}"
+if [ "${render_server_major}" -gt "${required_client_major}" ]; then
+  required_client_major="${render_server_major}"
 fi
 
+client_mode="native"
+native_client_major=0
+if command -v pg_dump >/dev/null 2>&1 && command -v pg_restore >/dev/null 2>&1; then
+  native_client_major="$(pg_dump --version | awk '{ print $3 }' | cut -d. -f1)"
+fi
+
+if [ "${native_client_major}" -lt "${required_client_major}" ]; then
+  command -v docker >/dev/null 2>&1 || {
+    echo "PostgreSQL client ${native_client_major} is too old and Docker is unavailable." >&2
+    echo "Install PostgreSQL client ${required_client_major} or newer." >&2
+    exit 1
+  }
+
+  client_mode="docker"
+  postgres_client_image="${POSTGRES_CLIENT_IMAGE:-postgres:${required_client_major}-alpine}"
+  echo "Native PostgreSQL client ${native_client_major} is too old; using ${postgres_client_image}."
+
+  docker_client_major="$(
+    docker run --rm "${postgres_client_image}" pg_dump --version |
+      awk '{ print $3 }' |
+      cut -d. -f1
+  )"
+  if [ "${docker_client_major}" -lt "${required_client_major}" ]; then
+    echo "Docker PostgreSQL client ${docker_client_major} is too old." >&2
+    exit 1
+  fi
+fi
+
+dump_database() {
+  local database_url="$1"
+  local output_file="$2"
+
+  if [ "${client_mode}" = "native" ]; then
+    pg_dump \
+      --format=custom \
+      --no-owner \
+      --no-privileges \
+      --file="${output_file}" \
+      "${database_url}"
+  else
+    docker run \
+      --rm \
+      --network host \
+      --env DATABASE_URL="${database_url}" \
+      "${postgres_client_image}" \
+      sh -c 'pg_dump --format=custom --no-owner --no-privileges "$DATABASE_URL"' \
+      > "${output_file}"
+  fi
+}
+
+restore_database() {
+  local database_url="$1"
+  local input_file="$2"
+
+  if [ "${client_mode}" = "native" ]; then
+    pg_restore \
+      --clean \
+      --if-exists \
+      --single-transaction \
+      --no-owner \
+      --no-privileges \
+      --exit-on-error \
+      --dbname="${database_url}" \
+      "${input_file}"
+  else
+    docker run \
+      --rm \
+      --interactive \
+      --network host \
+      --env DATABASE_URL="${database_url}" \
+      "${postgres_client_image}" \
+      sh -c 'pg_restore --clean --if-exists --single-transaction --no-owner --no-privileges --exit-on-error --dbname="$DATABASE_URL"' \
+      < "${input_file}"
+  fi
+}
+
 echo "Backing up the current Render database to ${production_backup}..."
-pg_dump \
-  --format=custom \
-  --no-owner \
-  --no-privileges \
-  --file="${production_backup}" \
-  "${RENDER_DATABASE_URL}"
+dump_database "${RENDER_DATABASE_URL}" "${production_backup}"
 
 echo "Dumping the local development database to ${local_dump}..."
-pg_dump \
-  --format=custom \
-  --no-owner \
-  --no-privileges \
-  --file="${local_dump}" \
-  "${local_database_url}"
+dump_database "${local_database_url}" "${local_dump}"
 
 echo "Replacing the Render database..."
-pg_restore \
-  --clean \
-  --if-exists \
-  --single-transaction \
-  --no-owner \
-  --no-privileges \
-  --exit-on-error \
-  --dbname="${RENDER_DATABASE_URL}" \
-  "${local_dump}"
+restore_database "${RENDER_DATABASE_URL}" "${local_dump}"
 
 echo "Render database replaced successfully."
 echo "Production backup: ${production_backup}"

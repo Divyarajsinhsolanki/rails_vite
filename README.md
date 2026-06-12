@@ -134,16 +134,18 @@ writes first and copy the **External Database URL** from the Render Postgres
 Info page. The script creates a production backup before restoring local data.
 
 ```bash
-CONFIRM_DATABASE_REPLACE=replace-render-database \
-RENDER_DATABASE_URL='postgresql://user:password@host/database' \
-bin/copy-local-db-to-render
+CONFIRM_DATABASE_REPLACE=replace-render-database bin/copy-local-db-to-render
 ```
+
+The script securely prompts for the Render External Database URL when it is not
+already set.
 
 Set `LOCAL_DATABASE_URL` too if the local database does not use the default
 `postgresql://postgres:postgres@localhost/pdf_master_development` connection.
 This copies PostgreSQL data only. Copy Active Storage objects separately when
-local records reference uploaded files. The installed PostgreSQL client tools
-must be at least as new as both database servers.
+local records reference uploaded files. When the installed PostgreSQL client is
+too old, the script automatically uses the matching official PostgreSQL Docker
+image.
 
 ## Google Sheets Integration
 
