@@ -295,7 +295,8 @@ const AppShell = () => {
   const location = useLocation();
   const { user } = useContext(AuthContext);
   const isProjectMetaverseRoute = /^\/projects\/[^/]+\/metaverse$/.test(location.pathname);
-  const isImmersiveRoute = location.pathname.startsWith("/knowledge") || isProjectMetaverseRoute;
+  const isPdfRoute = location.pathname.startsWith("/pdf");
+  const isImmersiveRoute = location.pathname.startsWith("/knowledge") || isProjectMetaverseRoute || isPdfRoute;
   const isChatRoute = location.pathname.startsWith("/chat");
   const portfolioPublicRoutes = portfolioEnabled ? ["/contact", "/metaverse-landing"] : [];
   const isPublicRoute = ["/", "/legal", ...portfolioPublicRoutes].includes(location.pathname);

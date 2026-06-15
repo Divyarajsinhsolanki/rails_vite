@@ -1,788 +1,922 @@
-import React, { useState, useEffect, useCallback, useContext, useRef } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
+import { Document, Page } from "react-pdf";
 import { useDropzone } from "react-dropzone";
-import { Document, Page, pdfjs } from "react-pdf";
-import pdfWorkerUrl from "react-pdf/node_modules/pdfjs-dist/build/pdf.worker.min.mjs?url";
-import PdfEditor from "./PdfEditor";
-import PdfViewer from "./PdfViewer";
-import SidebarToolbar from "./SidebarToolbar";
-import { AnimatePresence, motion } from "framer-motion";
-import { fetchWithTimeout, PDF_UPLOAD_TIMEOUT_MS } from "../utils/request";
-import { AuthContext } from "../context/AuthContext";
-
+import { toast } from "react-hot-toast";
 import {
+  ArrowDownToLine,
+  ArrowRight,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Crop,
+  Download,
+  Eraser,
+  FileArchive,
+  FilePlus2,
   FileText,
+  GripVertical,
+  Highlighter,
+  Image,
+  Images,
+  Library,
+  Loader2,
+  Lock,
+  Merge,
+  MousePointer2,
+  PenLine,
+  Plus,
+  Redo2,
+  RotateCcw,
+  RotateCw,
+  Save,
+  Scissors,
+  Search,
+  ShieldAlert,
+  Square,
+  Stamp,
+  Trash2,
+  Type,
+  Undo2,
+  Unlock,
   Upload,
   X,
-  Loader2,
-  Check,
-  Download,
-  Undo2,
-  Redo2,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
+import { AuthContext } from "../context/AuthContext";
+import {
+  createPdfDocumentOperation,
+  deletePdfDocument,
+  fetchPdfDocumentOperation,
+  fetchPdfDocuments,
+  redoPdfDocument,
+  renamePdfDocument,
+  restorePdfDocument,
+  undoPdfDocument,
+  uploadPdfDocument,
+} from "./api";
+import PdfDocumentCanvas from "./PdfDocumentCanvas";
 
-pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
-
-const getCsrfHeaders = () => {
-  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-  return csrfToken ? { "X-CSRF-Token": csrfToken } : {};
+const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
+const SAMPLE_DOCUMENT = {
+  id: "demo",
+  title: "Nexus Hub sample",
+  original_filename: "nexus-hub-sample.pdf",
+  page_count: 1,
+  encrypted: false,
+  current_version_id: "demo",
+  content_url: "/demo/nexus-hub-sample.pdf",
+  download_url: "/demo/nexus-hub-sample.pdf",
 };
 
-const MAX_PDF_UPLOAD_SIZE_BYTES = 50 * 1024 * 1024;
-const PDF_LIBRARY_STORAGE_KEY = "pdfLibrary";
-const MAX_PDF_LIBRARY_ITEMS = 12;
-const PDF_HISTORY_ACTION_TIMEOUT_MS = 30000;
-const PDF_AVAILABILITY_TIMEOUT_MS = 5000;
-
-const normalizePdfUrl = (url) => (url || "").split("?")[0];
-
-const isPdfUrlAvailable = async (url) => {
-  const normalizedUrl = normalizePdfUrl(url);
-  if (!normalizedUrl) return false;
-
-  try {
-    const resolvedUrl = new URL(normalizedUrl, window.location.origin);
-    if (resolvedUrl.origin !== window.location.origin) return true;
-
-    const response = await fetchWithTimeout(
-      `${resolvedUrl.pathname}${resolvedUrl.search}`,
-      { method: "HEAD", cache: "no-store" },
-      PDF_AVAILABILITY_TIMEOUT_MS
-    );
-    return response.ok;
-  } catch {
-    return false;
-  }
+const bytesLabel = (bytes = 0) => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
+  return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
 };
 
-const getPdfFileName = (url) => {
-  const fileName = normalizePdfUrl(url).split("/").pop();
-  if (!fileName) return "Untitled PDF";
+const errorMessage = (error, fallback = "PDF action failed.") =>
+  error?.response?.data?.error ||
+  error?.response?.data?.errors?.join?.(", ") ||
+  error?.message ||
+  fallback;
 
-  try {
-    return decodeURIComponent(fileName);
-  } catch {
-    return fileName;
-  }
+const tools = [
+  { id: "select", label: "Select", icon: MousePointer2 },
+  { id: "text", label: "Text", icon: Type },
+  { id: "highlight", label: "Highlight", icon: Highlighter },
+  { id: "pen", label: "Pen", icon: PenLine },
+  { id: "rectangle", label: "Rectangle", icon: Square },
+  { id: "arrow", label: "Arrow", icon: ArrowRight },
+  { id: "watermark", label: "Watermark", icon: Stamp },
+  { id: "signature", label: "Signature", icon: PenLine },
+  { id: "stamp", label: "Stamp", icon: Image },
+  { id: "crop", label: "Crop", icon: Crop },
+  { id: "redact", label: "Redact", icon: Eraser },
+];
+
+const LazyPageThumbnail = ({ pageNumber }) => {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (!ref.current || visible) return undefined;
+    if (!("IntersectionObserver" in window)) {
+      setVisible(true);
+      return undefined;
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      setVisible(true);
+      observer.disconnect();
+    }, { rootMargin: "240px" });
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [visible]);
+
+  return (
+    <div ref={ref} className="flex min-h-[171px] items-center justify-center overflow-hidden rounded-lg bg-slate-100">
+      {visible ? (
+        <Page pageNumber={pageNumber} width={132} renderTextLayer={false} renderAnnotationLayer={false} />
+      ) : (
+        <Loader2 className="h-4 w-4 animate-spin text-slate-300" />
+      )}
+    </div>
+  );
 };
 
-const readStorage = (key) => {
-  try {
-    return window.localStorage.getItem(key);
-  } catch (error) {
-    console.warn(`localStorage read failed for ${key}:`, error);
-    return null;
-  }
-};
-
-const writeStorage = (key, value) => {
-  try {
-    window.localStorage.setItem(key, value);
-  } catch (error) {
-    console.warn(`localStorage write failed for ${key}:`, error);
-  }
-};
-
-const readJsonStorage = (key, fallbackValue) => {
-  try {
-    const value = window.localStorage.getItem(key);
-    return value ? JSON.parse(value) : fallbackValue;
-  } catch (error) {
-    console.warn(`localStorage JSON read failed for ${key}:`, error);
-    return fallbackValue;
-  }
-};
-
-const writeJsonStorage = (key, value) => {
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value));
-  } catch (error) {
-    console.warn(`localStorage JSON write failed for ${key}:`, error);
-  }
-};
-
-const removeStorage = (key) => {
-  try {
-    window.localStorage.removeItem(key);
-  } catch (error) {
-    console.warn(`localStorage remove failed for ${key}:`, error);
-  }
-};
-
-const uploadErrorMessage = (status, data, fallbackError) => {
-  if (status === 413) return data?.error || "File too large. Maximum upload size is 50MB.";
-  if (status === 415) return data?.error || "Invalid file type. Only PDF files are allowed.";
-  if (status === 422) return data?.error || "PDF upload was rejected. Please choose a valid PDF.";
-  if (status >= 500) return "PDF upload service is unavailable. Please try again.";
-  if (fallbackError?.name === "RequestTimeoutError") return "Upload timed out. Please try again with a smaller PDF or check your connection.";
-  return data?.error || fallbackError?.message || "Upload failed.";
-};
-
-const validatePdfFile = (file) => {
-  if (!file) return "Choose a PDF file to upload.";
-  if (file.size > MAX_PDF_UPLOAD_SIZE_BYTES) return "File too large. Maximum upload size is 50MB.";
-
-  const hasPdfType = file.type === "application/pdf";
-  const hasPdfExtension = file.name?.toLowerCase().endsWith(".pdf");
-  if (!hasPdfType && !hasPdfExtension) return "Invalid file type. Only PDF files are allowed.";
-
-  return "";
-};
-
-const normalizePlacementCoordinates = (coordinates, previous) => {
-  const next = { ...(previous || {}) };
-
-  if (coordinates.x !== undefined) {
-    const x = Number(coordinates.x);
-    if (Number.isFinite(x)) next.x = Math.max(0, Math.round(x));
-  }
-
-  if (coordinates.y !== undefined) {
-    const y = Number(coordinates.y);
-    if (Number.isFinite(y)) next.y = Math.max(0, Math.round(y));
-  }
-
-  if (coordinates.pageNumber !== undefined) {
-    const pageNumber = Number(coordinates.pageNumber);
-    if (Number.isFinite(pageNumber)) next.pageNumber = Math.max(1, Math.round(pageNumber));
-  } else if (!next.pageNumber) {
-    next.pageNumber = 1;
-  }
-
-  if (coordinates.scale !== undefined) {
-    const scale = Number(coordinates.scale);
-    if (Number.isFinite(scale) && scale > 0) next.scale = scale;
-  }
-
-  return next;
-};
-
-const normalizePdfLibraryItems = (items) => {
-  const seen = new Set();
-  const normalizedItems = [];
-
-  for (const item of Array.isArray(items) ? items : []) {
-    const url = normalizePdfUrl(item?.url);
-    if (!url || seen.has(url)) continue;
-
-    seen.add(url);
-    normalizedItems.push({
-      ...item,
-      url,
-      name: item?.name || getPdfFileName(url),
+const PageOrganizer = ({
+  documentRecord,
+  pageOrder,
+  setPageOrder,
+  selectedPages,
+  setSelectedPages,
+  currentPage,
+  setCurrentPage,
+  onReorder,
+  disabled,
+}) => {
+  const togglePage = (pageNumber) => {
+    setSelectedPages((current) => {
+      const next = new Set(current);
+      next.has(pageNumber) ? next.delete(pageNumber) : next.add(pageNumber);
+      return next;
     });
-  }
+    setCurrentPage(pageNumber);
+  };
 
-  return normalizedItems.slice(0, MAX_PDF_LIBRARY_ITEMS);
-};
-
-const PdfPreviewCard = ({ item, isActive, onOpen, onUnavailable }) => (
-  <button
-    type="button"
-    onClick={() => onOpen(item)}
-    className={`group flex min-w-36 flex-col overflow-hidden rounded-lg border bg-white text-left shadow-sm transition hover:border-indigo-300 hover:shadow-md ${isActive ? "border-indigo-400 ring-2 ring-indigo-100" : "border-slate-200"}`}
-    title={item.name}
-  >
-    <div className="flex h-28 w-full items-center justify-center overflow-hidden bg-slate-100">
-      <Document
-        file={item.url}
-        onLoadError={() => onUnavailable?.(item.url)}
-        onSourceError={() => onUnavailable?.(item.url)}
-        loading={<FileText className="h-8 w-8 text-slate-300" />}
-        error={<FileText className="h-8 w-8 text-slate-300" />}
-        noData={<FileText className="h-8 w-8 text-slate-300" />}
+  return (
+    <Document
+      file={`${documentRecord.content_url}?thumbnail=${documentRecord.current_version_id}`}
+      loading={<div className="flex justify-center p-8"><Loader2 className="h-5 w-5 animate-spin text-indigo-600" /></div>}
+    >
+      <DragDropContext
+        onDragEnd={(result) => {
+          if (disabled || !result.destination) return;
+          const next = [...pageOrder];
+          const [moved] = next.splice(result.source.index, 1);
+          next.splice(result.destination.index, 0, moved);
+          setPageOrder(next);
+          onReorder(next);
+        }}
       >
-        <Page pageNumber={1} width={128} renderTextLayer={false} renderAnnotationLayer={false} />
-      </Document>
-    </div>
-    <div className="w-full px-2.5 py-2">
-      <p className="truncate text-xs font-bold text-slate-700 group-hover:text-indigo-700">{item.name}</p>
-    </div>
-  </button>
-);
+        <Droppable droppableId="pdf-pages">
+          {(provided) => (
+            <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-3 p-3">
+              {pageOrder.map((pageNumber, index) => (
+                <Draggable key={pageNumber} draggableId={`page-${pageNumber}`} index={index} isDragDisabled={disabled}>
+                  {(dragProvided, snapshot) => (
+                    <div
+                      ref={dragProvided.innerRef}
+                      {...dragProvided.draggableProps}
+                      className={`group rounded-xl border bg-white p-2 shadow-sm transition ${
+                        selectedPages.has(pageNumber) ? "border-indigo-500 ring-2 ring-indigo-100" : "border-slate-200"
+                      } ${snapshot.isDragging ? "shadow-xl" : ""}`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <button
+                          type="button"
+                          {...dragProvided.dragHandleProps}
+                          className="mt-8 text-slate-300 hover:text-slate-600"
+                          aria-label={`Move page ${pageNumber}`}
+                        >
+                          <GripVertical className="h-4 w-4" />
+                        </button>
+                        <button type="button" onClick={() => togglePage(pageNumber)} className="min-w-0 flex-1 text-left">
+                          <LazyPageThumbnail pageNumber={pageNumber} />
+                          <div className="mt-2 flex items-center justify-between text-xs">
+                            <span className="font-bold text-slate-700">Page {pageNumber}</span>
+                            {currentPage === pageNumber ? <span className="text-indigo-600">Viewing</span> : null}
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
+    </Document>
+  );
+};
 
 const PdfMaster = () => {
   const { user } = useContext(AuthContext);
   const isDemo = Boolean(user?.demo_account);
-  const activePdfUrlRef = useRef(null);
-  const downloadNameRef = useRef("document.pdf");
-  const [pdfUrl, setPdfUrl] = useState(null);
-  const [pdfUpdated, setPdfUpdated] = useState(0);
-  const [restoringLibrary, setRestoringLibrary] = useState(true);
+  const pollTimer = useRef(null);
+  const [documents, setDocuments] = useState(isDemo ? [SAMPLE_DOCUMENT] : []);
+  const [usage, setUsage] = useState({ document_count: 0, document_limit: 25, storage_bytes: 0, storage_limit_bytes: 1024 ** 3 });
+  const [selectedId, setSelectedId] = useState(isDemo ? SAMPLE_DOCUMENT.id : null);
+  const [loading, setLoading] = useState(!isDemo);
   const [uploading, setUploading] = useState(false);
-  const [showUploadMessage, setShowUploadMessage] = useState(false);
-  const [uploadMessage, setUploadMessage] = useState("");
-  const [isError, setIsError] = useState(false);
-  const [activeForm, setActiveForm] = useState(null);
-  const [placementCoordinates, setPlacementCoordinates] = useState(null);
-  const [textDraft, setTextDraft] = useState({ text: "", fontSize: 14, color: "#111827" });
-  const [downloadName, setDownloadName] = useState("document.pdf");
-  const [pdfLibrary, setPdfLibrary] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [search, setSearch] = useState("");
+  const [leftTab, setLeftTab] = useState("library");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageOrder, setPageOrder] = useState([]);
+  const [selectedPages, setSelectedPages] = useState(new Set());
+  const [zoom, setZoom] = useState(1);
+  const [activeTool, setActiveTool] = useState("select");
+  const [shapes, setShapes] = useState([]);
+  const [selectedShapeId, setSelectedShapeId] = useState(null);
+  const [assetFile, setAssetFile] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [operation, setOperation] = useState(null);
+  const [artifacts, setArtifacts] = useState([]);
+  const [mergeIds, setMergeIds] = useState([]);
+  const [mergeTitle, setMergeTitle] = useState("Merged document");
+  const [splitSizeMb, setSplitSizeMb] = useState(10);
+  const [password, setPassword] = useState("");
+  const [mobilePanel, setMobilePanel] = useState("tools");
+  const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
 
-  const addPdfToLibrary = useCallback((item) => {
-    const normalizedUrl = normalizePdfUrl(item?.url);
-    if (!normalizedUrl) return;
+  const selectedDocument = documents.find((document) => String(document.id) === String(selectedId)) || null;
+  const selectedShape = shapes.find((shape) => shape.id === selectedShapeId) || null;
+  const filteredDocuments = useMemo(
+    () => documents.filter((document) =>
+      `${document.title} ${document.original_filename}`.toLowerCase().includes(search.toLowerCase())
+    ),
+    [documents, search]
+  );
 
-    setPdfLibrary((previous) => {
-      const withoutDuplicate = previous.filter((existing) => normalizePdfUrl(existing.url) !== normalizedUrl);
-      const next = [
-        { url: normalizedUrl, name: item.name || getPdfFileName(normalizedUrl), addedAt: Date.now() },
-        ...withoutDuplicate,
-      ].slice(0, MAX_PDF_LIBRARY_ITEMS);
-      writeJsonStorage(PDF_LIBRARY_STORAGE_KEY, next);
-      return next;
+  const loadDocuments = useCallback(async (preferredId) => {
+    if (isDemo) return;
+    const { data } = await fetchPdfDocuments();
+    setDocuments(data.documents || []);
+    setUsage(data.usage || {});
+    setSelectedId((current) => {
+      const candidate = preferredId || current;
+      return data.documents?.some((document) => String(document.id) === String(candidate))
+        ? candidate
+        : data.documents?.[0]?.id || null;
     });
-  }, []);
-
-  const replacePdfInLibrary = useCallback((previousUrl, item) => {
-    const normalizedPreviousUrl = normalizePdfUrl(previousUrl);
-    const normalizedUrl = normalizePdfUrl(item?.url);
-    if (!normalizedUrl) return;
-
-    setPdfLibrary((previous) => {
-      const previousItem = previous.find(
-        (existing) => normalizePdfUrl(existing.url) === normalizedPreviousUrl
-      );
-      const withoutVersions = previous.filter((existing) => {
-        const existingUrl = normalizePdfUrl(existing.url);
-        return existingUrl !== normalizedPreviousUrl && existingUrl !== normalizedUrl;
-      });
-      const next = [
-        {
-          ...previousItem,
-          url: normalizedUrl,
-          name: item.name || previousItem?.name || getPdfFileName(normalizedUrl),
-          addedAt: previousItem?.addedAt || Date.now(),
-        },
-        ...withoutVersions,
-      ].slice(0, MAX_PDF_LIBRARY_ITEMS);
-      writeJsonStorage(PDF_LIBRARY_STORAGE_KEY, next);
-      return next;
-    });
-  }, []);
-
-  const removePdfFromLibrary = useCallback((url) => {
-    const normalizedUrl = normalizePdfUrl(url);
-    setPdfLibrary((previous) => {
-      const next = previous.filter((item) => normalizePdfUrl(item.url) !== normalizedUrl);
-      writeJsonStorage(PDF_LIBRARY_STORAGE_KEY, next);
-      return next;
-    });
-  }, []);
+  }, [isDemo]);
 
   useEffect(() => {
-    activePdfUrlRef.current = normalizePdfUrl(pdfUrl);
-  }, [pdfUrl]);
-
-  useEffect(() => {
-    downloadNameRef.current = downloadName;
-  }, [downloadName]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const restorePdfState = async () => {
-      if (isDemo) {
-        const sampleUrl = "/demo/nexus-hub-sample.pdf";
-        setPdfUrl(sampleUrl);
-        setDownloadName("nexus-hub-sample.pdf");
-        setPdfLibrary([{ url: sampleUrl, name: "Nexus Hub sample", addedAt: Date.now() }]);
-        setRestoringLibrary(false);
-        return;
-      }
-
-      const storedPdf = normalizePdfUrl(readStorage("pdfUrl"));
-      const storedDownloadName = readStorage("pdfDownloadName");
-      const storedLibrary = normalizePdfLibraryItems(readJsonStorage(PDF_LIBRARY_STORAGE_KEY, []));
-      const candidateUrls = [...new Set([storedPdf, ...storedLibrary.map((item) => item.url)].filter(Boolean))];
-      const checks = await Promise.all(
-        candidateUrls.map(async (url) => [url, await isPdfUrlAvailable(url)])
-      );
-      if (cancelled) return;
-
-      const availableUrls = new Set(checks.filter(([, available]) => available).map(([url]) => url));
-      const availableLibrary = storedLibrary.filter((item) => availableUrls.has(item.url));
-      setPdfLibrary(availableLibrary);
-      writeJsonStorage(PDF_LIBRARY_STORAGE_KEY, availableLibrary);
-
-      if (storedPdf && availableUrls.has(storedPdf)) {
-        setPdfUrl(storedPdf);
-        activePdfUrlRef.current = storedPdf;
-        if (storedDownloadName) setDownloadName(storedDownloadName);
-      } else {
-        removeStorage("pdfUrl");
-        removeStorage("pdfDownloadName");
-        if (storedPdf) {
-          setUploadMessage("The previous PDF expired. Upload it again to continue editing.");
-          setIsError(true);
-          setShowUploadMessage(true);
-        }
-      }
-
-      setRestoringLibrary(false);
-    };
-
-    const handlePdfUpdate = (event) => {
-      const newUrl = normalizePdfUrl(event.detail);
-      if (!newUrl) return;
-
-      const previousUrl = activePdfUrlRef.current;
-      activePdfUrlRef.current = newUrl;
-      setPdfUrl(newUrl);
-      writeStorage("pdfUrl", newUrl);
-      replacePdfInLibrary(previousUrl, {
-        url: newUrl,
-        name: downloadNameRef.current || getPdfFileName(newUrl),
-      });
-      setPdfUpdated((prev) => prev + 1);
-    };
-
-    window.addEventListener("pdf-updated", handlePdfUpdate);
-    restorePdfState();
-
-    return () => {
-      cancelled = true;
-      window.removeEventListener("pdf-updated", handlePdfUpdate);
-    };
-  }, [isDemo, replacePdfInLibrary]);
-
-  useEffect(() => {
-    setPlacementCoordinates(null);
-    if (activeForm !== "addText") {
-      setTextDraft({ text: "", fontSize: 14, color: "#111827" });
+    if (isDemo) return undefined;
+    try {
+      window.localStorage.removeItem("pdfUrl");
+    } catch {
+      // The persistent library does not depend on browser storage.
     }
-  }, [activeForm]);
+    loadDocuments()
+      .catch((error) => toast.error(errorMessage(error, "Could not load PDF library.")))
+      .finally(() => setLoading(false));
+    return () => window.clearTimeout(pollTimer.current);
+  }, [isDemo, loadDocuments]);
 
-  const openLibraryPdf = useCallback((item) => {
-    const normalizedUrl = normalizePdfUrl(item?.url);
-    if (!normalizedUrl) return;
+  useEffect(() => {
+    const count = selectedDocument?.page_count || 0;
+    setPageOrder(Array.from({ length: count }, (_, index) => index + 1));
+    setSelectedPages(new Set());
+    setCurrentPage(1);
+    setShapes([]);
+    setSelectedShapeId(null);
+    setArtifacts([]);
+    setOperation(null);
+  }, [selectedDocument?.id, selectedDocument?.current_version_id]);
 
-    setPdfUrl(normalizedUrl);
-    setDownloadName(item.name || getPdfFileName(normalizedUrl));
-    setActiveForm(null);
-    setPlacementCoordinates(null);
-    writeStorage("pdfUrl", normalizedUrl);
-    writeStorage("pdfDownloadName", item.name || getPdfFileName(normalizedUrl));
-  }, []);
-
-  const handlePdfUnavailable = useCallback((url) => {
-    const normalizedUrl = normalizePdfUrl(url);
-    removePdfFromLibrary(normalizedUrl);
-    if (activePdfUrlRef.current !== normalizedUrl) return;
-
-    activePdfUrlRef.current = null;
-    setPdfUrl(null);
-    setActiveForm(null);
-    setPlacementCoordinates(null);
-    removeStorage("pdfUrl");
-    removeStorage("pdfDownloadName");
-    setUploadMessage("This PDF is no longer available. Upload it again to continue editing.");
-    setIsError(true);
-    setShowUploadMessage(true);
-  }, [removePdfFromLibrary]);
-
-  const uploadSinglePdf = async (file) => {
-    const validationMessage = validatePdfFile(file);
-    if (validationMessage) throw new Error(validationMessage);
-
-    const formData = new FormData();
-    formData.append("pdf", file);
-
-    const response = await fetchWithTimeout("/upload_pdf", {
-      method: "POST",
-      body: formData,
-      headers: getCsrfHeaders(),
-    }, PDF_UPLOAD_TIMEOUT_MS);
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(uploadErrorMessage(response.status, data));
-    if (!data.pdf_url) throw new Error("Upload finished without a PDF URL.");
-
-    return {
-      url: data.pdf_url,
-      name: data.download_filename || data.original_filename || file.name || "document.pdf",
+  useEffect(() => {
+    const handler = (event) => {
+      if (!selectedDocument || busy || isDemo) return;
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
+        event.preventDefault();
+        event.shiftKey ? handleHistory("redo") : handleHistory("undo");
+      }
+      if (event.key === "Delete" && selectedShapeId) {
+        setShapes((current) => current.filter((shape) => shape.id !== selectedShapeId));
+        setSelectedShapeId(null);
+      }
+      if (event.key === "Escape") {
+        setActiveTool("select");
+        setSelectedShapeId(null);
+      }
     };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  });
+
+  const updateSelectedDocument = (nextDocument) => {
+    if (!nextDocument) return;
+    setDocuments((current) => current.map((document) =>
+      String(document.id) === String(nextDocument.id) ? nextDocument : document
+    ));
   };
 
-  const applyUploadedPdf = (item) => {
-    const normalizedUrl = normalizePdfUrl(item.url);
-    setPdfUrl(normalizedUrl);
-    writeStorage("pdfUrl", normalizedUrl);
-    setDownloadName(item.name);
-    writeStorage("pdfDownloadName", item.name);
-    addPdfToLibrary({ ...item, url: normalizedUrl });
+  const completeOperation = async (nextOperation) => {
+    setOperation(nextOperation);
+    setArtifacts(nextOperation.artifacts || []);
+    if (nextOperation.status === "failed") throw new Error(nextOperation.error || "PDF operation failed.");
+    if (nextOperation.status !== "completed") return false;
+
+    if (nextOperation.document) updateSelectedDocument(nextOperation.document);
+    const preferredId = nextOperation.result?.document_id || nextOperation.result?.document_ids?.[0] || selectedId;
+    await loadDocuments(preferredId);
+    toast.success("PDF operation completed.");
+    return true;
   };
 
-  const handleFileUpload = async (file) => {
-    if (!file) return;
+  const pollOperation = async (id, attempt = 0) => {
+    if (attempt >= 250) {
+      throw new Error("This operation is taking longer than expected. Check its status again later.");
+    }
+    const { data } = await fetchPdfDocumentOperation(id);
+    if (await completeOperation(data)) return data;
+
+    await new Promise((resolve) => {
+      pollTimer.current = window.setTimeout(resolve, 1200);
+    });
+    return pollOperation(id, attempt + 1);
+  };
+
+  const runOperation = async (kind, parameters = {}, options = {}) => {
+    if (isDemo) return null;
+    setBusy(true);
+    setArtifacts([]);
+    try {
+      const payload = {
+        kind,
+        pdf_document_id: options.documentId === null ? undefined : (options.documentId || selectedDocument?.id),
+        base_version_id: options.baseVersionId === null ? undefined : (options.baseVersionId || selectedDocument?.current_version_id),
+        parameters,
+        ...(options.password ? { password: options.password } : {}),
+      };
+      const { data } = await createPdfDocumentOperation(payload, options.asset);
+      setOperation(data);
+      if (data.status === "completed") {
+        await completeOperation(data);
+        return data;
+      }
+      return await pollOperation(data.id);
+    } catch (error) {
+      toast.error(errorMessage(error));
+      throw error;
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handlePageReorder = async (order) => {
+    try {
+      await runOperation("reorder_pages", { page_order: order });
+    } catch {
+      setPageOrder(Array.from({ length: selectedDocument?.page_count || 0 }, (_, index) => index + 1));
+    }
+  };
+
+  const handleMergeReorder = (result) => {
+    if (!result.destination) return;
+    setMergeIds((current) => {
+      const next = [...current];
+      const [moved] = next.splice(result.source.index, 1);
+      next.splice(result.destination.index, 0, moved);
+      return next;
+    });
+  };
+
+  const handleHistory = async (direction) => {
+    if (!selectedDocument || isDemo) return;
+    setBusy(true);
+    try {
+      const request = direction === "undo" ? undoPdfDocument : redoPdfDocument;
+      const { data } = await request(selectedDocument.id);
+      updateSelectedDocument(data);
+      toast.success(direction === "undo" ? "Change undone." : "Change redone.");
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleUpload = async (files) => {
+    if (isDemo) return;
+    const accepted = Array.from(files || []).filter((file) => {
+      if (file.size > MAX_UPLOAD_BYTES) {
+        toast.error(`${file.name} is larger than 50MB.`);
+        return false;
+      }
+      return true;
+    });
+    if (!accepted.length) return;
 
     setUploading(true);
-    setShowUploadMessage(false);
-    setIsError(false);
     try {
-      const item = await uploadSinglePdf(file);
-      applyUploadedPdf(item);
-      setUploadMessage("Document ready in PDF Master.");
-      setIsError(false);
-      setShowUploadMessage(true);
-    } catch (error) {
-      console.error("PDF upload failed:", error);
-      setUploadMessage(error.message || "Upload failed.");
-      setIsError(true);
-      setShowUploadMessage(true);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleMultipleFiles = async (files) => {
-    const pdfFiles = Array.from(files || []);
-    if (!pdfFiles.length) return;
-
-    setUploading(true);
-    setShowUploadMessage(false);
-    setIsError(false);
-
-    try {
-      const results = await Promise.allSettled(pdfFiles.map((file) => uploadSinglePdf(file)));
-      const successful = [];
-      const failed = [];
-
-      results.forEach((result, index) => {
-        if (result.status === "fulfilled") {
-          successful.push(result.value);
-        } else {
-          failed.push({
-            file: pdfFiles[index]?.name || `PDF ${index + 1}`,
-            error: result.reason?.message || "Upload failed.",
-          });
-        }
-      });
-
-      successful.forEach(addPdfToLibrary);
-      if (successful.length) applyUploadedPdf(successful[0]);
-
-      if (failed.length) {
-        const firstFailure = failed[0];
-        setUploadMessage(`${successful.length} uploaded, ${failed.length} failed. ${firstFailure.file}: ${firstFailure.error}`);
-        setIsError(true);
-      } else {
-        setUploadMessage(`${successful.length} PDF${successful.length === 1 ? "" : "s"} uploaded. Open any file from the preview grid.`);
-        setIsError(false);
+      let lastId = null;
+      for (const file of accepted) {
+        const { data } = await uploadPdfDocument(file, "", (event) => {
+          setUploadProgress(event.total ? Math.round((event.loaded / event.total) * 100) : 0);
+        });
+        lastId = data.id;
       }
-      setShowUploadMessage(true);
+      await loadDocuments(lastId);
+      toast.success(`${accepted.length} PDF${accepted.length === 1 ? "" : "s"} saved.`);
     } catch (error) {
-      console.error("Batch PDF upload failed:", error);
-      setUploadMessage(error.message || "Batch upload failed.");
-      setIsError(true);
-      setShowUploadMessage(true);
+      toast.error(errorMessage(error, "Upload failed."));
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop: (files) => handleMultipleFiles(files),
-    onDropRejected: (rejections) => {
-      const firstError = rejections?.[0]?.errors?.[0];
-      const message = firstError?.code === "file-too-large"
-        ? "File too large. Maximum upload size is 50MB."
-        : "Invalid file type. Only PDF files are allowed.";
-      setUploadMessage(message);
-      setIsError(true);
-      setShowUploadMessage(true);
-    },
-    accept: { 'application/pdf': ['.pdf'] },
-    maxSize: MAX_PDF_UPLOAD_SIZE_BYTES,
+  const dropzone = useDropzone({
+    onDrop: handleUpload,
+    accept: { "application/pdf": [".pdf"] },
+    maxSize: MAX_UPLOAD_BYTES,
     multiple: true,
     disabled: uploading || isDemo,
   });
 
-  const handlePlacementChange = useCallback((coordinates) => {
-    setPlacementCoordinates((previous) => normalizePlacementCoordinates(coordinates, previous));
-  }, []);
+  const applyStagedChanges = async () => {
+    const redactions = shapes.filter((shape) => shape.type === "redact");
+    const crops = shapes.filter((shape) => shape.type === "crop");
+    const imageShapes = shapes.filter((shape) => ["signature", "stamp"].includes(shape.type));
+    const annotations = shapes.filter((shape) => !["redact", "crop", "signature", "stamp"].includes(shape.type));
+    const operationGroups = [redactions, crops, imageShapes, annotations].filter((group) => group.length);
 
-  const handleConfirmPosition = useCallback((coordinates) => {
-    handlePlacementChange(coordinates);
-  }, [handlePlacementChange]);
-
-  const handleHistoryAction = async (endpoint) => {
-    setShowUploadMessage(false);
-    setIsError(false);
-
-    try {
-      const response = await fetchWithTimeout(endpoint, {
-        method: "POST",
-        headers: getCsrfHeaders(),
-      }, PDF_HISTORY_ACTION_TIMEOUT_MS);
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || "History action failed.");
-      if (!data.pdf_url) throw new Error("History action did not return a PDF.");
-
-      const nextName = downloadName || getPdfFileName(data.pdf_url);
-      const previousUrl = pdfUrl;
-      setPdfUrl(data.pdf_url);
-      writeStorage("pdfUrl", data.pdf_url);
-      replacePdfInLibrary(previousUrl, { url: data.pdf_url, name: nextName });
-      setPdfUpdated((prev) => prev + 1);
-      setUploadMessage(data.message || "PDF history updated.");
-      setIsError(false);
-      setShowUploadMessage(true);
-    } catch (error) {
-      console.error("PDF history action failed:", error);
-      setUploadMessage(error.message || "History action failed.");
-      setIsError(true);
-      setShowUploadMessage(true);
+    if (operationGroups.length > 1) {
+      toast.error("Apply one edit type at a time to keep document versions consistent.");
+      return;
     }
+
+    if (redactions.length) {
+      const confirmed = window.confirm(
+        "Secure redaction rasterizes affected pages. Searchable text and interactive elements on those pages will be removed. Continue?"
+      );
+      if (!confirmed) return;
+      await runOperation("redact", { regions: redactions });
+    } else if (crops.length) {
+      if (crops.length > 1) {
+        toast.error("Apply one crop area at a time.");
+        return;
+      }
+      await runOperation("crop", crops[0]);
+    } else if (annotations.length) {
+      await runOperation("annotations", { shapes: annotations });
+    } else if (imageShapes.length) {
+      if (!assetFile) {
+        toast.error("Choose an image for the signature or stamp.");
+        return;
+      }
+      if (imageShapes.length > 1) {
+        toast.error("Apply one signature or stamp at a time.");
+        return;
+      }
+      await runOperation("image", imageShapes[0], { asset: assetFile });
+    }
+    setShapes([]);
+    setSelectedShapeId(null);
+    setAssetFile(null);
+    setActiveTool("select");
   };
 
-  const closePdf = () => {
-    setPdfUrl(null);
-    setActiveForm(null);
-    setPlacementCoordinates(null);
-    removeStorage("pdfUrl");
-    removeStorage("pdfDownloadName");
+  const selectedPageNumbers = [...selectedPages].sort((a, b) => a - b);
+
+  const updateShape = (changes) => {
+    if (!selectedShapeId) return;
+    setShapes((current) => current.map((shape) =>
+      shape.id === selectedShapeId ? { ...shape, ...changes } : shape
+    ));
   };
 
-  const startWithSample = () => {
-    const sampleUrl = "/demo/nexus-hub-sample.pdf";
-    setPdfUrl(sampleUrl);
-    setDownloadName("sample.pdf");
-    writeStorage("pdfUrl", sampleUrl);
-    writeStorage("pdfDownloadName", "sample.pdf");
-  };
+  const storagePercent = Math.min(100, ((usage.storage_bytes || 0) / (usage.storage_limit_bytes || 1)) * 100);
 
-  const feedbackToast = (
-    <AnimatePresence>
-      {showUploadMessage && (
-        <motion.div
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 50, opacity: 0 }}
-          className={`fixed bottom-8 left-1/2 z-[100] flex -translate-x-1/2 items-center gap-3 rounded-full px-6 py-3 text-xs font-bold text-white shadow-2xl ${isError ? 'bg-red-500' : 'bg-gray-900'}`}
-        >
-          {isError ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
-          {uploadMessage}
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-
-  if (restoringLibrary) {
+  if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-slate-50 p-8 font-inter">
-        <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-6 py-4 text-sm font-bold text-slate-700 shadow-lg shadow-slate-200/60">
-          <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
-          Checking recent PDFs...
-        </div>
-      </div>
-    );
-  }
-
-  if (!pdfUrl) {
-    return (
-      <div className="flex h-screen flex-col items-center justify-center bg-slate-50 p-8 font-inter">
-        <div className="w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-10 shadow-2xl shadow-slate-200/70">
-          <div className="mb-8 flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200">
-              <FileText className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-black text-slate-950">PDF Master</h1>
-              <p className="text-sm text-slate-500">Upload a PDF to edit pages, text, signatures, stamps, and downloads.</p>
-            </div>
-          </div>
-
-          <div
-            {...getRootProps()}
-            aria-busy={uploading}
-            className={`flex w-full cursor-pointer flex-col items-center rounded-3xl border-2 border-dashed p-12 text-center transition-all ${uploading ? 'cursor-wait border-indigo-200 bg-indigo-50/70' : isDragActive ? 'border-indigo-500 bg-indigo-50 shadow-xl shadow-indigo-100' : 'border-slate-200 bg-slate-50 hover:border-indigo-300 hover:bg-white'}`}
-          >
-            <input {...getInputProps()} />
-            {uploading ? (
-              <>
-                <Loader2 className="mb-4 h-10 w-10 animate-spin text-indigo-600" />
-                <p className="font-bold text-slate-800">Preparing PDF Master workspace...</p>
-                <p className="mt-2 text-sm text-slate-500">Uploading and validating your document.</p>
-              </>
-            ) : (
-              <>
-                <Upload className="mb-4 h-10 w-10 text-indigo-600" />
-                <p className="font-bold text-slate-800">{isDragActive ? 'Release to upload' : 'Drop PDFs here'}</p>
-                <p className="mt-2 text-sm text-slate-500">or click to choose one or more PDFs up to 50MB each</p>
-              </>
-            )}
-          </div>
-
-          {pdfLibrary.length > 0 && (
-            <div className="mt-8 border-t border-slate-100 pt-6">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-xs font-black uppercase tracking-wide text-slate-500">Recent PDFs</h2>
-              </div>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {pdfLibrary.slice(0, 6).map((item) => (
-                  <PdfPreviewCard
-                    key={normalizePdfUrl(item.url)}
-                    item={item}
-                    isActive={false}
-                    onOpen={openLibraryPdf}
-                    onUnavailable={handlePdfUnavailable}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          <button
-            onClick={startWithSample}
-            disabled={uploading}
-            className="mt-8 text-sm font-bold text-slate-400 transition-colors hover:text-indigo-600 hover:underline disabled:pointer-events-none disabled:opacity-50"
-          >
-            Start with a sample PDF
-          </button>
-        </div>
-        {feedbackToast}
+      <div className="flex h-full min-h-[70vh] items-center justify-center bg-slate-100">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
       </div>
     );
   }
 
   return (
-    <div className="h-full w-full flex min-h-0 flex-col bg-white overflow-hidden font-inter select-none">
-      {isDemo ? (
-        <div className="shrink-0 border-b border-cyan-200 bg-cyan-50 px-4 py-2 text-center text-sm font-semibold text-cyan-950">
-          Sample document preview. Uploads, editing, history, and destructive actions are disabled in the read-only demo.
-        </div>
-      ) : null}
-      {/* 🚀 Header */}
-      <header className="h-14 border-b border-gray-100 flex items-center justify-between px-6 bg-white shrink-0 z-30">
-        <div className="flex items-center space-x-4">
-          <div className="bg-indigo-600 text-white p-1.5 rounded-lg shadow-lg shadow-indigo-200">
-            <FileText className="h-4 w-4" />
+    <div className="flex h-[calc(100dvh-5rem)] min-h-0 w-full flex-col overflow-hidden rounded-t-3xl border border-white/70 bg-white shadow-2xl shadow-slate-900/10">
+      <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 md:px-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white">
+            <FileText className="h-5 w-5" />
           </div>
           <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500">PDF Master</p>
-            <h2 className="max-w-xs truncate text-sm font-bold text-gray-800">{getPdfFileName(pdfUrl)}</h2>
+            <p className="truncate text-sm font-bold text-slate-900">{selectedDocument?.title || "Personal document library"}</p>
           </div>
-          <input
-            type="text"
-            value={downloadName}
-            disabled={isDemo}
-            onChange={(event) => {
-              setDownloadName(event.target.value);
-              writeStorage("pdfDownloadName", event.target.value);
-            }}
-            placeholder="Rename download file"
-            className="h-8 w-56 rounded-md border border-gray-200 px-2.5 text-xs text-gray-700 shadow-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
-          />
         </div>
-        <div className="flex items-center space-x-4">
-          {!isDemo ? <div className="flex items-center rounded-lg border border-gray-200 bg-white p-1">
-            <button
-              onClick={() => handleHistoryAction("/undo_pdf")}
-              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-50 hover:text-indigo-600"
-              title="Undo"
-            >
-              <Undo2 className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => handleHistoryAction("/redo_pdf")}
-              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-50 hover:text-indigo-600"
-              title="Redo"
-            >
-              <Redo2 className="h-4 w-4" />
-            </button>
-          </div> : null}
-          {!isDemo ? <button onClick={closePdf} className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors">Close</button> : null}
-          {isDemo ? (
-            <a
-              href={pdfUrl}
-              download={downloadName}
-              className="flex items-center rounded-lg bg-indigo-600 px-4 py-1.5 text-xs font-bold text-white shadow-lg shadow-indigo-100"
-            >
-              <Download className="mr-2 h-3.5 w-3.5" />
-              Download sample
+
+        {selectedDocument ? (
+          <div className="flex items-center gap-1.5">
+            {!isDemo ? (
+              <>
+                <button type="button" disabled={busy || !selectedDocument.can_undo} onClick={() => handleHistory("undo")} className="toolbar-button" title="Undo (Ctrl+Z)" aria-label="Undo last PDF change">
+                  <Undo2 className="h-4 w-4" />
+                </button>
+                <button type="button" disabled={busy || !selectedDocument.can_redo} onClick={() => handleHistory("redo")} className="toolbar-button" title="Redo (Ctrl+Shift+Z)" aria-label="Redo PDF change">
+                  <Redo2 className="h-4 w-4" />
+                </button>
+              </>
+            ) : null}
+            <a href={selectedDocument.download_url} className="inline-flex h-9 items-center rounded-lg bg-indigo-600 px-3 text-xs font-bold text-white hover:bg-indigo-700">
+              <Download className="mr-1.5 h-4 w-4" /> Download
             </a>
-          ) : <button
-            onClick={() => {
-              const url = new URL("/download_pdf", window.location.origin);
-              const cleanPath = normalizePdfUrl(pdfUrl);
-              const requestedName = downloadName?.trim();
-              if (cleanPath) url.searchParams.set("pdf_path", cleanPath);
-              if (requestedName) url.searchParams.set("download_name", requestedName);
-              window.open(`${url.pathname}${url.search}`, "_blank");
-            }}
-            className="flex items-center px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all shadow-lg shadow-indigo-100 active:scale-95"
-          >
-            <Download className="h-3.5 w-3.5 mr-2" />
-            Download
-          </button>}
-        </div>
+          </div>
+        ) : null}
       </header>
 
-      {/* 🍱 Main Layout Container */}
-      <div className="flex flex-1 overflow-hidden relative">
-        {isDemo ? null : <SidebarToolbar activeTool={activeForm} setActiveTool={setActiveForm} />}
-        
-        <main className="flex-1 flex flex-col bg-gray-50/50 overflow-hidden relative">
-          {pdfLibrary.length > 1 && (
-            <div className="shrink-0 border-b border-gray-100 bg-white/80 px-4 py-3">
-              <div className="flex gap-3 overflow-x-auto pb-1">
-                {pdfLibrary.map((item) => (
-                  <PdfPreviewCard
-                    key={normalizePdfUrl(item.url)}
-                    item={item}
-                    isActive={normalizePdfUrl(pdfUrl) === normalizePdfUrl(item.url)}
-                    onOpen={openLibraryPdf}
-                    onUnavailable={handlePdfUnavailable}
-                  />
+      {isDemo ? (
+        <div className="shrink-0 border-b border-cyan-200 bg-cyan-50 px-4 py-2 text-center text-xs font-semibold text-cyan-900">
+          Read-only sample. Sign in with a regular account to save and edit documents.
+        </div>
+      ) : null}
+
+      <div className="flex min-h-0 flex-1">
+        <aside className="hidden w-72 shrink-0 flex-col border-r border-slate-200 bg-slate-50/80 lg:flex">
+          <div className="grid grid-cols-2 border-b border-slate-200 bg-white p-2">
+            {[
+              ["library", Library, "Library"],
+              ["pages", Images, "Pages"],
+            ].map(([id, Icon, label]) => (
+              <button key={id} type="button" onClick={() => setLeftTab(id)} className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-bold ${leftTab === id ? "bg-indigo-50 text-indigo-700" : "text-slate-500"}`}>
+                <Icon className="h-4 w-4" /> {label}
+              </button>
+            ))}
+          </div>
+
+          {leftTab === "library" ? (
+            <div className="flex min-h-0 flex-1 flex-col">
+              {!isDemo ? (
+                <div className="space-y-3 border-b border-slate-200 p-3">
+                  <div {...dropzone.getRootProps()} className={`cursor-pointer rounded-xl border-2 border-dashed p-4 text-center transition ${dropzone.isDragActive ? "border-indigo-500 bg-indigo-50" : "border-slate-300 bg-white hover:border-indigo-300"}`}>
+                    <input {...dropzone.getInputProps()} />
+                    {uploading ? <Loader2 className="mx-auto h-5 w-5 animate-spin text-indigo-600" /> : <Upload className="mx-auto h-5 w-5 text-indigo-600" />}
+                    <p className="mt-2 text-xs font-bold text-slate-700">{uploading ? `Uploading ${uploadProgress}%` : "Upload PDFs"}</p>
+                    <p className="mt-1 text-[10px] text-slate-400">Up to 50MB each</p>
+                  </div>
+                  <div>
+                    <div className="mb-1 flex justify-between text-[10px] font-bold text-slate-500">
+                      <span>{usage.document_count || 0}/{usage.document_limit || 25} documents</span>
+                      <span>{bytesLabel(usage.storage_bytes)} / 1 GB</span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
+                      <div className="h-full rounded-full bg-indigo-500" style={{ width: `${storagePercent}%` }} />
+                    </div>
+                  </div>
+                  <label className="relative block">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                    <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search documents" className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-xs outline-none focus:border-indigo-400" />
+                  </label>
+                </div>
+              ) : null}
+              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">
+                {filteredDocuments.map((document) => (
+                  <button key={document.id} type="button" onClick={() => setSelectedId(document.id)} className={`flex w-full items-center gap-3 rounded-xl border p-2.5 text-left transition ${String(selectedId) === String(document.id) ? "border-indigo-400 bg-indigo-50" : "border-slate-200 bg-white hover:border-indigo-200"}`}>
+                    <div className="flex h-14 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md bg-slate-100">
+                      {document.thumbnail_url ? <img src={document.thumbnail_url} alt="" className="h-full w-full object-cover" /> : document.encrypted ? <Lock className="h-5 w-5 text-slate-400" /> : <FileText className="h-5 w-5 text-slate-400" />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-bold text-slate-800">{document.title}</p>
+                      <p className="mt-1 text-[10px] text-slate-400">{document.page_count || "Locked"} pages · {bytesLabel(document.byte_size)}</p>
+                    </div>
+                  </button>
                 ))}
               </div>
             </div>
+          ) : selectedDocument && !selectedDocument.encrypted ? (
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <PageOrganizer
+                documentRecord={selectedDocument}
+                pageOrder={pageOrder}
+                setPageOrder={setPageOrder}
+                selectedPages={selectedPages}
+                setSelectedPages={setSelectedPages}
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+                onReorder={handlePageReorder}
+                disabled={busy}
+              />
+            </div>
+          ) : (
+            <p className="p-6 text-center text-xs text-slate-500">Unlock this PDF to view its pages.</p>
           )}
+        </aside>
 
-          {/* Component Action Bar (Add Text Inputs etc) */}
-          <AnimatePresence>
-            {!isDemo && activeForm && (
-              <motion.div 
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="bg-white border-b border-gray-100 overflow-hidden shadow-sm z-20"
-              >
-                <div className="p-4 max-w-4xl mx-auto">
-                    <PdfEditor
-                        setPdfUpdated={setPdfUpdated}
-                        setPdfUrl={setPdfUrl}
-                        pdfPath={pdfUrl}
-                        activeForm={activeForm}
-                        setActiveForm={setActiveForm}
-                        placementCoordinates={placementCoordinates}
-                        setPlacementCoordinates={setPlacementCoordinates}
-                        textDraft={textDraft}
-                        setTextDraft={setTextDraft}
-                    />
+        <main className="flex min-w-0 flex-1 flex-col bg-slate-100">
+          {selectedDocument ? (
+            <>
+              <div className="flex h-12 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-3">
+                <div className="flex items-center gap-1 overflow-x-auto">
+                  {tools.map(({ id, label, icon: Icon }) => (
+                    <button key={id} type="button" disabled={isDemo || selectedDocument.encrypted || busy} onClick={() => { setActiveTool(id); setMobilePanel("tools"); }} className={`flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-xs font-bold transition ${activeTool === id ? "bg-indigo-600 text-white" : "text-slate-500 hover:bg-slate-100"} disabled:cursor-not-allowed disabled:opacity-40`} title={label} aria-label={`${label} tool`}>
+                      <Icon className="h-4 w-4" /><span className="hidden xl:inline">{label}</span>
+                    </button>
+                  ))}
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                <div className="ml-2 flex shrink-0 items-center gap-1">
+                  <button type="button" onClick={() => setZoom((value) => Math.max(0.5, value - 0.1))} className="toolbar-button" aria-label="Zoom out"><ZoomOut className="h-4 w-4" /></button>
+                  <span className="w-11 text-center text-[10px] font-bold text-slate-500">{Math.round(zoom * 100)}%</span>
+                  <button type="button" onClick={() => setZoom((value) => Math.min(2, value + 0.1))} className="toolbar-button" aria-label="Zoom in"><ZoomIn className="h-4 w-4" /></button>
+                </div>
+              </div>
 
-          {/* 📽️ PDF Cockpit Viewport */}
-          <div className="flex-1 overflow-hidden relative">
-            <PdfViewer
-              pdfUrl={`${pdfUrl}?updated=${pdfUpdated}`}
-              activeTool={isDemo ? null : activeForm}
-              onConfirmPosition={handleConfirmPosition}
-              onPlacementChange={handlePlacementChange}
-              placementCoordinates={placementCoordinates}
-              textDraft={textDraft}
-              setTextDraft={setTextDraft}
-              onCancelTool={() => setActiveForm(null)}
-              setPdfUpdated={setPdfUpdated}
-              onPdfUnavailable={handlePdfUnavailable}
-            />
-          </div>
+              {selectedDocument.encrypted ? (
+                <div className="flex flex-1 items-center justify-center p-6">
+                  <div className="w-full max-w-md rounded-2xl border border-amber-200 bg-white p-6 text-center shadow-xl">
+                    <Lock className="mx-auto h-10 w-10 text-amber-500" />
+                    <h2 className="mt-4 text-lg font-black text-slate-900">Password-protected PDF</h2>
+                    <p className="mt-2 text-sm text-slate-500">Enter the password to create an unlocked version for editing.</p>
+                    {!isDemo ? (
+                      <div className="mt-5 flex gap-2">
+                        <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="PDF password" />
+                        <button type="button" disabled={busy || !password} onClick={() => runOperation("unlock", {}, { password }).then(() => setPassword(""))} className="rounded-lg bg-indigo-600 px-4 text-sm font-bold text-white">Unlock</button>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <PdfDocumentCanvas
+                    documentRecord={selectedDocument}
+                    pageNumber={currentPage}
+                    zoom={zoom}
+                    activeTool={isDemo ? null : activeTool}
+                    shapes={shapes}
+                    setShapes={setShapes}
+                    selectedShapeId={selectedShapeId}
+                    setSelectedShapeId={setSelectedShapeId}
+                    onDocumentLoaded={(count) => {
+                      if (!pageOrder.length) setPageOrder(Array.from({ length: count }, (_, index) => index + 1));
+                    }}
+                  />
+                  <div className="flex h-12 shrink-0 items-center justify-center gap-2 border-t border-slate-200 bg-white">
+                    <button type="button" disabled={currentPage <= 1} onClick={() => setCurrentPage((page) => page - 1)} className="toolbar-button" aria-label="Previous page"><ChevronLeft className="h-4 w-4" /></button>
+                    <span className="text-xs font-bold text-slate-600">Page {currentPage} of {selectedDocument.page_count || pageOrder.length}</span>
+                    <button type="button" disabled={currentPage >= (selectedDocument.page_count || pageOrder.length)} onClick={() => setCurrentPage((page) => page + 1)} className="toolbar-button" aria-label="Next page"><ChevronRight className="h-4 w-4" /></button>
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            <div className="flex flex-1 items-center justify-center p-6">
+              <div className="max-w-lg text-center">
+                <FilePlus2 className="mx-auto h-12 w-12 text-indigo-500" />
+                <h2 className="mt-4 text-2xl font-black text-slate-900">Add your first PDF</h2>
+                <p className="mt-2 text-sm text-slate-500">Documents stay in your personal library until you delete them.</p>
+                {!isDemo ? (
+                  <button type="button" onClick={dropzone.open} className="mt-5 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white"><Upload className="mr-2 inline h-4 w-4" />Choose PDF</button>
+                ) : null}
+              </div>
+            </div>
+          )}
         </main>
+
+        <aside className="hidden w-80 shrink-0 flex-col border-l border-slate-200 bg-white xl:flex">
+          <div className="border-b border-slate-200 px-4 py-3">
+            <h2 className="text-sm font-black text-slate-900">Document tools</h2>
+            <p className="mt-0.5 text-xs text-slate-500">Edit the selected document or staged object.</p>
+          </div>
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4">
+            {busy && operation ? (
+              <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-3">
+                <div className="flex items-center gap-2 text-xs font-bold text-indigo-700"><Loader2 className="h-4 w-4 animate-spin" />{operation.kind.replaceAll("_", " ")}</div>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-indigo-100"><div className="h-full bg-indigo-600" style={{ width: `${operation.progress || 10}%` }} /></div>
+              </div>
+            ) : null}
+
+            {shapes.length ? (
+              <div className="space-y-3 rounded-xl border border-indigo-100 bg-indigo-50/50 p-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-black uppercase tracking-wide text-indigo-700">Staged changes</p>
+                  <button type="button" onClick={() => { setShapes([]); setSelectedShapeId(null); }} className="text-xs font-bold text-rose-600">Clear</button>
+                </div>
+                <p className="text-xs text-slate-600">{shapes.length} object{shapes.length === 1 ? "" : "s"} will be flattened into a new PDF version.</p>
+                {selectedShape ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {["x", "y", "width", "height"].filter((key) => selectedShape[key] !== undefined).map((key) => (
+                      <label key={key} className="text-[10px] font-bold uppercase text-slate-500">
+                        {key}
+                        <input type="number" value={Math.round(selectedShape[key])} onChange={(event) => updateShape({ [key]: Number(event.target.value) })} className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700" />
+                      </label>
+                    ))}
+                    {["text", "watermark"].includes(selectedShape.type) ? (
+                      <>
+                        <label className="col-span-2 text-[10px] font-bold uppercase text-slate-500">Text<input value={selectedShape.text || ""} onChange={(event) => updateShape({ text: event.target.value })} className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs normal-case" /></label>
+                        <label className="text-[10px] font-bold uppercase text-slate-500">Size<input type="number" min="8" max="96" value={selectedShape.font_size || 18} onChange={(event) => updateShape({ font_size: Number(event.target.value) })} className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs" /></label>
+                      </>
+                    ) : null}
+                    <label className="text-[10px] font-bold uppercase text-slate-500">Color<input type="color" value={selectedShape.color || "#dc2626"} onChange={(event) => updateShape({ color: event.target.value })} className="mt-1 h-8 w-full rounded-md border border-slate-200 bg-white p-1" /></label>
+                  </div>
+                ) : null}
+                {shapes.some((shape) => ["signature", "stamp"].includes(shape.type)) ? (
+                  <input type="file" accept="image/png,image/jpeg" onChange={(event) => setAssetFile(event.target.files?.[0] || null)} className="w-full text-xs file:mr-2 file:rounded-md file:border-0 file:bg-indigo-100 file:px-2 file:py-1.5 file:font-bold file:text-indigo-700" />
+                ) : null}
+                <button type="button" disabled={busy} onClick={applyStagedChanges} className="flex w-full items-center justify-center rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white"><Save className="mr-2 h-4 w-4" />Apply changes</button>
+              </div>
+            ) : null}
+
+            {selectedDocument && !isDemo ? (
+              <>
+                <section className="space-y-2">
+                  <h3 className="text-[10px] font-black uppercase tracking-wide text-slate-400">Document</h3>
+                  <input
+                    value={selectedDocument.title}
+                    onChange={(event) => updateSelectedDocument({ ...selectedDocument, title: event.target.value })}
+                    onBlur={() => renamePdfDocument(selectedDocument.id, selectedDocument.title)
+                      .then(({ data }) => updateSelectedDocument(data))
+                      .catch((error) => {
+                        toast.error(errorMessage(error));
+                        loadDocuments(selectedDocument.id);
+                      })}
+                    aria-label="Document title"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-slate-800"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <button type="button" disabled={busy || selectedDocument.encrypted} onClick={() => runOperation("compress")} className="inspector-button"><FileArchive className="h-4 w-4" />Compress</button>
+                    <button type="button" disabled={busy || selectedDocument.encrypted} onClick={() => runOperation("extract_text")} className="inspector-button"><FileText className="h-4 w-4" />Text</button>
+                    <button type="button" disabled={busy || selectedDocument.encrypted} onClick={() => runOperation("export_images")} className="inspector-button"><Images className="h-4 w-4" />Images</button>
+                    <button type="button" disabled={busy} onClick={() => restorePdfDocument(selectedDocument.id).then(({ data }) => updateSelectedDocument(data)).catch((error) => toast.error(errorMessage(error)))} className="inspector-button"><RotateCcw className="h-4 w-4" />Original</button>
+                  </div>
+                </section>
+
+                <section className="space-y-2">
+                  <h3 className="text-[10px] font-black uppercase tracking-wide text-slate-400">Selected pages</h3>
+                  <p className="text-xs text-slate-500">{selectedPageNumbers.length ? selectedPageNumbers.join(", ") : "Select pages from the Pages tab."}</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button type="button" disabled={busy || !selectedPageNumbers.length} onClick={() => runOperation("rotate_pages", { page_numbers: selectedPageNumbers, degrees: 270 })} className="inspector-button"><RotateCcw className="h-4 w-4" />Left</button>
+                    <button type="button" disabled={busy || !selectedPageNumbers.length} onClick={() => runOperation("rotate_pages", { page_numbers: selectedPageNumbers, degrees: 90 })} className="inspector-button"><RotateCw className="h-4 w-4" />Right</button>
+                    <button type="button" disabled={busy || !selectedPageNumbers.length} onClick={() => runOperation("duplicate_pages", { page_numbers: selectedPageNumbers })} className="inspector-button"><Plus className="h-4 w-4" />Duplicate</button>
+                    <button type="button" disabled={busy || !selectedPageNumbers.length} onClick={() => runOperation("extract_pages", { page_numbers: selectedPageNumbers })} className="inspector-button"><Scissors className="h-4 w-4" />Extract</button>
+                    <button type="button" disabled={busy} onClick={() => runOperation("add_blank_page", { position: currentPage + 1, reference_page_number: currentPage })} className="inspector-button"><FilePlus2 className="h-4 w-4" />Blank page</button>
+                    <button type="button" disabled={busy || !selectedPageNumbers.length || selectedPageNumbers.length >= selectedDocument.page_count} onClick={() => window.confirm(`Delete ${selectedPageNumbers.length} selected page(s)?`) && runOperation("delete_pages", { page_numbers: selectedPageNumbers })} className="inspector-button text-rose-600"><Trash2 className="h-4 w-4" />Delete</button>
+                  </div>
+                </section>
+
+                <section className="space-y-2">
+                  <h3 className="text-[10px] font-black uppercase tracking-wide text-slate-400">Security</h3>
+                  <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+                  <button type="button" disabled={busy || password.length < 8 || selectedDocument.encrypted} onClick={() => runOperation("protect", {}, { password }).then(() => setPassword(""))} className="flex w-full items-center justify-center rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white"><Lock className="mr-2 h-4 w-4" />Protect PDF</button>
+                </section>
+
+                <section className="space-y-2">
+                  <h3 className="text-[10px] font-black uppercase tracking-wide text-slate-400">Merge documents</h3>
+                  <div className="max-h-32 space-y-1 overflow-y-auto rounded-lg border border-slate-200 p-2">
+                    {documents.map((document) => (
+                      <label key={document.id} className={`flex items-center gap-2 text-xs ${document.encrypted ? "text-slate-300" : "text-slate-600"}`}>
+                        <input type="checkbox" disabled={document.encrypted} checked={mergeIds.includes(document.id)} onChange={(event) => setMergeIds((current) => event.target.checked ? [...current, document.id] : current.filter((id) => id !== document.id))} />
+                        <span className="truncate">{document.title}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {mergeIds.length ? (
+                    <DragDropContext onDragEnd={handleMergeReorder}>
+                      <Droppable droppableId="merge-order">
+                        {(provided) => (
+                          <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-1">
+                            {mergeIds.map((id, index) => {
+                              const document = documents.find((item) => item.id === id);
+                              return (
+                                <Draggable key={id} draggableId={`merge-${id}`} index={index} isDragDisabled={busy}>
+                                  {(dragProvided) => (
+                                    <div ref={dragProvided.innerRef} {...dragProvided.draggableProps} {...dragProvided.dragHandleProps} className="flex items-center gap-2 rounded-lg bg-slate-50 px-2 py-1.5 text-xs text-slate-600">
+                                      <GripVertical className="h-3.5 w-3.5 text-slate-300" />
+                                      <span className="min-w-0 flex-1 truncate">{index + 1}. {document?.title}</span>
+                                    </div>
+                                  )}
+                                </Draggable>
+                              );
+                            })}
+                            {provided.placeholder}
+                          </div>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
+                  ) : null}
+                  <input value={mergeTitle} onChange={(event) => setMergeTitle(event.target.value)} maxLength={160} aria-label="Merged document title" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs" />
+                  <button type="button" disabled={busy || mergeIds.length < 2 || !mergeTitle.trim()} onClick={() => runOperation("merge", { document_ids: mergeIds, title: mergeTitle.trim() }, { documentId: null, baseVersionId: null }).then(() => setMergeIds([]))} className="flex w-full items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700"><Merge className="mr-2 h-4 w-4" />Merge in this order</button>
+                </section>
+
+                <section className="space-y-2">
+                  <h3 className="text-[10px] font-black uppercase tracking-wide text-slate-400">Split by size</h3>
+                  <div className="flex gap-2">
+                    <input type="number" min="1" max="50" value={splitSizeMb} onChange={(event) => setSplitSizeMb(Number(event.target.value))} aria-label="Maximum split file size in megabytes" className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-xs" />
+                    <span className="flex items-center text-xs font-bold text-slate-500">MB</span>
+                  </div>
+                  <button type="button" disabled={busy || selectedDocument.encrypted || splitSizeMb < 1 || splitSizeMb > 50} onClick={() => runOperation("split_by_size", { max_size_mb: splitSizeMb })} className="flex w-full items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700"><Scissors className="mr-2 h-4 w-4" />Create split documents</button>
+                </section>
+
+                {artifacts.length ? (
+                  <section className="space-y-2">
+                    <h3 className="text-[10px] font-black uppercase tracking-wide text-slate-400">Generated files</h3>
+                    {artifacts.map((artifact) => (
+                      <a key={artifact.id} href={artifact.download_url} className="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">
+                        <span className="truncate">{artifact.filename}</span><ArrowDownToLine className="h-4 w-4" />
+                      </a>
+                    ))}
+                  </section>
+                ) : null}
+
+                <button type="button" onClick={() => window.confirm(`Delete "${selectedDocument.title}" and all saved versions?`) && deletePdfDocument(selectedDocument.id).then(() => loadDocuments()).catch((error) => toast.error(errorMessage(error)))} className="flex w-full items-center justify-center rounded-lg border border-rose-200 px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50"><Trash2 className="mr-2 h-4 w-4" />Delete document</button>
+              </>
+            ) : null}
+          </div>
+        </aside>
       </div>
 
-      {feedbackToast}
+      <div className="grid shrink-0 grid-cols-3 border-t border-slate-200 bg-white xl:hidden">
+        {[
+          ["library", Library],
+          ["pages", Images],
+          ["tools", Save],
+        ].map(([id, Icon]) => (
+          <button key={id} type="button" onClick={() => { setMobilePanel(id); setMobilePanelOpen(true); }} className={`flex items-center justify-center gap-2 py-3 text-xs font-bold capitalize ${mobilePanel === id && mobilePanelOpen ? "text-indigo-600" : "text-slate-400"}`}><Icon className="h-4 w-4" />{id}</button>
+        ))}
+      </div>
+
+      {mobilePanelOpen ? (
+        <div className="fixed inset-0 z-[90] bg-slate-950/30 xl:hidden" onClick={() => setMobilePanelOpen(false)}>
+          <section
+            className="absolute inset-x-2 bottom-2 max-h-[72dvh] overflow-hidden rounded-2xl border border-white/70 bg-white shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+              <h2 className="text-sm font-black capitalize text-slate-900">{mobilePanel}</h2>
+              <button type="button" onClick={() => setMobilePanelOpen(false)} className="toolbar-button" aria-label="Close panel"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="max-h-[calc(72dvh-3.5rem)] overflow-y-auto p-3">
+              {mobilePanel === "library" ? (
+                <div className="space-y-3">
+                  {!isDemo ? (
+                    <button type="button" onClick={dropzone.open} disabled={uploading} className="flex w-full items-center justify-center rounded-xl border-2 border-dashed border-indigo-200 bg-indigo-50 px-4 py-4 text-sm font-bold text-indigo-700">
+                      {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                      {uploading ? `Uploading ${uploadProgress}%` : "Upload PDFs"}
+                    </button>
+                  ) : null}
+                  {!isDemo ? (
+                    <>
+                      <label className="relative block">
+                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search documents" aria-label="Search documents" className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-xs" />
+                      </label>
+                      <p className="text-xs font-semibold text-slate-500">{usage.document_count || 0}/{usage.document_limit || 25} documents · {bytesLabel(usage.storage_bytes)} / 1 GB</p>
+                    </>
+                  ) : null}
+                  {filteredDocuments.map((document) => (
+                    <button key={document.id} type="button" onClick={() => { setSelectedId(document.id); setMobilePanelOpen(false); }} className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left ${String(selectedId) === String(document.id) ? "border-indigo-400 bg-indigo-50" : "border-slate-200"}`}>
+                      {document.encrypted ? <Lock className="h-5 w-5 text-amber-500" /> : <FileText className="h-5 w-5 text-indigo-500" />}
+                      <span className="min-w-0 flex-1 truncate text-sm font-bold text-slate-800">{document.title}</span>
+                      <span className="text-xs text-slate-400">{document.page_count || "Locked"}p</span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+
+              {mobilePanel === "pages" && selectedDocument && !selectedDocument.encrypted ? (
+                <PageOrganizer
+                  documentRecord={selectedDocument}
+                  pageOrder={pageOrder}
+                  setPageOrder={setPageOrder}
+                  selectedPages={selectedPages}
+                  setSelectedPages={setSelectedPages}
+                  currentPage={currentPage}
+                  setCurrentPage={(page) => { setCurrentPage(page); setMobilePanelOpen(false); }}
+                  onReorder={handlePageReorder}
+                  disabled={busy}
+                />
+              ) : null}
+
+              {mobilePanel === "tools" ? (
+                <div className="space-y-4">
+                  {shapes.length ? (
+                    <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-3">
+                      <p className="text-sm font-bold text-indigo-800">{shapes.length} staged object{shapes.length === 1 ? "" : "s"}</p>
+                      {shapes.some((shape) => ["signature", "stamp"].includes(shape.type)) ? (
+                        <input type="file" accept="image/png,image/jpeg" onChange={(event) => setAssetFile(event.target.files?.[0] || null)} className="mt-3 w-full text-xs" />
+                      ) : null}
+                      <button type="button" disabled={busy} onClick={() => applyStagedChanges().then(() => setMobilePanelOpen(false))} className="mt-3 flex w-full items-center justify-center rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white"><Save className="mr-2 h-4 w-4" />Apply changes</button>
+                    </div>
+                  ) : null}
+                  {selectedDocument && !isDemo ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      <button type="button" disabled={busy || selectedDocument.encrypted} onClick={() => runOperation("compress")} className="inspector-button"><FileArchive className="h-4 w-4" />Compress</button>
+                      <button type="button" disabled={busy || selectedDocument.encrypted} onClick={() => runOperation("export_images")} className="inspector-button"><Images className="h-4 w-4" />Export</button>
+                      <button type="button" disabled={busy || !selectedPageNumbers.length} onClick={() => runOperation("rotate_pages", { page_numbers: selectedPageNumbers, degrees: 90 })} className="inspector-button"><RotateCw className="h-4 w-4" />Rotate</button>
+                      <button type="button" disabled={busy || !selectedPageNumbers.length} onClick={() => runOperation("extract_pages", { page_numbers: selectedPageNumbers })} className="inspector-button"><Scissors className="h-4 w-4" />Extract</button>
+                      <button type="button" disabled={busy || selectedDocument.encrypted} onClick={() => runOperation("split_by_size", { max_size_mb: splitSizeMb })} className="inspector-button"><Scissors className="h-4 w-4" />Split</button>
+                    </div>
+                  ) : null}
+                  {artifacts.map((artifact) => (
+                    <a key={artifact.id} href={artifact.download_url} className="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">
+                      <span className="truncate">{artifact.filename}</span><Download className="h-4 w-4" />
+                    </a>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 };

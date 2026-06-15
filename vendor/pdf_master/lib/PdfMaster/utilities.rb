@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 require 'fileutils'
+require 'securerandom'
+require 'tmpdir'
 
 module PdfMaster
   module Utilities
-    UPLOADS_DIR = 'public/uploads'.freeze
-
     POSITIONS = {
       'top_right' => ->(w, h) { [w - 110, h - 50] },
       'top_left' => ->(_w, h) { [10, h - 50] },
@@ -16,16 +16,20 @@ module PdfMaster
       'bottom_center' => ->(w, _h) { [(w / 2) - 50, 50] }
     }.freeze
 
-    def ensure_directory
-      FileUtils.mkdir_p(UPLOADS_DIR)
+    def operation_directory(pdf_path)
+      directory = File.join(File.dirname(File.expand_path(pdf_path)), "pdf_master_tmp")
+      FileUtils.mkdir_p(directory)
+      directory
     end
 
     def file_path_with_prefix(pdf_path, prefix)
-      "#{UPLOADS_DIR}/#{prefix}_#{File.basename(pdf_path)}"
+      stem = File.basename(pdf_path, File.extname(pdf_path))
+      File.join(File.dirname(File.expand_path(pdf_path)), "#{prefix}_#{SecureRandom.hex(10)}_#{stem}.pdf")
     end
 
-    def temp_file_path(prefix)
-      "#{UPLOADS_DIR}/temp_#{prefix}.pdf"
+    def temp_file_path(prefix, pdf_path = Dir.tmpdir)
+      directory = File.directory?(pdf_path) ? pdf_path : operation_directory(pdf_path)
+      File.join(directory, "#{prefix}_#{SecureRandom.hex(10)}.pdf")
     end
 
     def valid_page?(pdf, page)

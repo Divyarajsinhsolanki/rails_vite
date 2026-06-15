@@ -6,7 +6,7 @@ module PdfMaster
   class Editor < Base
     class << self
       def add_received_stamp(pdf_path, name = 'Received', x = nil, y = nil, page = 1, position = nil, degree = 0, rotate_direction = 'right', font_settings = {})
-        Logger.log("Adding 'Received' stamp to #{pdf_path} on page #{page}")
+        Logger.log("Adding received stamp")
       
         # Default text for the stamp
         stamp_text = "#{name} - #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
@@ -34,14 +34,14 @@ module PdfMaster
           Logger.log("'Received' stamp added successfully.")
           output_path
         rescue => e
-          Logger.log("Error adding 'Received' stamp: #{e.message}")
+          Logger.log_exception("Adding received stamp", e)
           raise
         end
       end
       
 
       def add_image(pdf_path, image_path, x = nil, y = nil, page = 1, position = nil, image_settings = {})
-        Logger.log("Adding image '#{image_path}' to #{pdf_path} on page #{page}")
+        Logger.log("Adding image")
         width = image_settings[:width] || 120
         output_path = process_pdf(pdf_path, image_settings[:prefix] || 'image', page) do |target_page, temp_pdf, page_size|
           x, y = calculate_position(position, target_page.mediabox[2], target_page.mediabox[3], x, y)
@@ -49,10 +49,10 @@ module PdfMaster
             pdf.image image_path, at: [x, y], width: width
           end
         end
-        Logger.log("Image '#{image_path}' added successfully.")
+        Logger.log("Image added successfully.")
         output_path
       rescue => e
-        Logger.log("Error adding image: #{e.message}")
+        Logger.log_exception("Adding image", e)
         raise
       end
 
@@ -65,23 +65,57 @@ module PdfMaster
       end
 
       def add_text(pdf_path, text, x = nil, y = nil, page = 1, position = nil, font_settings = {})
-        Logger.log("Adding text to #{pdf_path} on page #{page}")
+        Logger.log("Adding text")
         output_path = process_pdf(pdf_path, 'text', page) do |target_page, temp_pdf, page_size|
           x, y = calculate_position(position, target_page.mediabox[2], target_page.mediabox[3], x, y)
           generate_overlay_pdf(temp_pdf, page_size: page_size) do |pdf|
             apply_font(pdf, font_settings)  # Apply custom or default font settings
-            pdf.draw_text text, at: [x, y]
+            pdf.text_box(
+              text,
+              at: [x, y],
+              width: font_settings[:width] || 360,
+              height: font_settings[:height] || 160,
+              overflow: :shrink_to_fit
+            )
           end
         end
         Logger.log("Text added successfully.")
         output_path
       rescue => e
-        Logger.log("Error adding text: #{e.message}")
+        Logger.log_exception("Adding text", e)
         raise
       end
 
+      def add_shapes(pdf_path, shapes_by_page, output_path: nil)
+        output_path ||= file_path_with_prefix(pdf_path, "annotations")
+        source = CombinePDF.load(pdf_path)
+
+        shapes_by_page.each do |page_number, shapes|
+          page_number = Integer(page_number)
+          unless page_number.between?(1, source.pages.count)
+            raise ArgumentError, "Invalid page number"
+          end
+          target_page = source.pages[page_number - 1]
+
+          width = target_page.mediabox[2].to_f - target_page.mediabox[0].to_f
+          height = target_page.mediabox[3].to_f - target_page.mediabox[1].to_f
+          overlay_path = temp_file_path("annotations", pdf_path)
+
+          generate_overlay_pdf(overlay_path, page_size: [width, height]) do |pdf|
+            Array(shapes).each { |shape| draw_shape(pdf, shape) }
+          end
+          target_page << CombinePDF.load(overlay_path).pages.first
+          FileUtils.rm_f(overlay_path)
+        end
+
+        source.save(output_path)
+        output_path
+      ensure
+        FileUtils.rm_f(overlay_path) if defined?(overlay_path) && overlay_path
+      end
+
       def add_watermark(pdf_path, watermark_text, x = nil, y = nil, page = 1, position = nil, font_settings = {})
-        Logger.log("Adding watermark to #{pdf_path} on page #{page}")
+        Logger.log("Adding watermark")
         settings = watermark_font_settings.merge(font_settings)
         output_path = process_pdf(pdf_path, 'watermark', page) do |target_page, temp_pdf, page_size|
           x, y = calculate_position(position, target_page.mediabox[2], target_page.mediabox[3], x, y)
@@ -102,12 +136,12 @@ module PdfMaster
         Logger.log("Watermark added successfully.")
         output_path
       rescue => e
-        Logger.log("Error adding watermark: #{e.message}")
+        Logger.log_exception("Adding watermark", e)
         raise
       end
 
       def add_annotation(pdf_path, text, x = nil, y = nil, page = 1, position = nil, font_settings = {})
-        Logger.log("Adding annotation to #{pdf_path} on page #{page}")
+        Logger.log("Adding annotation")
         output_path = process_pdf(pdf_path, 'annotation', page) do |target_page, temp_pdf, page_size|
           x, y = calculate_position(position, target_page.mediabox[2], target_page.mediabox[3], x, y)
           generate_overlay_pdf(temp_pdf, page_size: page_size) do |pdf|
@@ -119,36 +153,12 @@ module PdfMaster
         Logger.log("Annotation added successfully.")
         output_path
       rescue => e
-        Logger.log("Error adding annotation: #{e.message}")
-        raise
-      end
-
-      def replace_text(input_pdf, text_to_remove, replacement_text = "[redacted]")
-        Logger.log("Replacing text: '#{text_to_remove}' with '#{replacement_text}' in #{input_pdf}")
-        doc = HexaPDF::Document.open(input_pdf)
-
-        doc.pages.each do |page|
-          next unless page.contents
-
-          # HexaPDF pages can have multiple content streams
-          Array(page.contents).each do |content_stream|
-            source = content_stream.stream
-            if source.include?(text_to_remove)
-              new_source = source.gsub(text_to_remove, replacement_text)
-              content_stream.stream = new_source
-            end
-          end
-        end
-
-        doc.write(input_pdf, optimize: true)
-        Logger.log("Text replaced successfully with '#{replacement_text}'.")
-      rescue => e
-        Logger.log("Error replacing text: #{e.message}")
+        Logger.log_exception("Adding annotation", e)
         raise
       end
 
       def add_hyperlink(pdf_path, link_text, url, x, y, page, font_settings = {})
-        Logger.log("Adding hyperlink to #{pdf_path}")
+        Logger.log("Adding hyperlink")
         process_pdf(pdf_path, 'hyperlink', page) do |target_page, temp_pdf|
           generate_overlay_pdf(temp_pdf) do |pdf|
             apply_font(pdf, font_settings)  # Apply custom or default font settings
@@ -163,7 +173,7 @@ module PdfMaster
       end
 
       def add_header_footer(pdf_path, header, footer, font_settings = {})
-        Logger.log("Adding header and footer to #{pdf_path}")
+        Logger.log("Adding header and footer")
         process_pdf(pdf_path, 'header_footer', 1) do |target_page, temp_pdf|
           generate_overlay_pdf(temp_pdf) do |pdf|
             apply_font(pdf, font_settings)  # Apply custom or default font settings
@@ -175,7 +185,7 @@ module PdfMaster
       end
 
       def redact_text(pdf_path, text_to_redact)
-        Logger.log("Redacting text in #{pdf_path}")
+        Logger.log("Redacting text")
 
         pdf = HexaPDF::Document.open(pdf_path)
 
@@ -194,6 +204,57 @@ module PdfMaster
       end
 
       private
+
+      def draw_shape(pdf, raw_shape)
+        shape = raw_shape.transform_keys(&:to_sym)
+        type = shape[:type].to_s
+        color = shape[:color].to_s.delete_prefix("#")
+        color = "111827" if color.empty?
+        fill_color = shape[:fill_color].to_s.delete_prefix("#")
+        fill_color = nil if fill_color.empty?
+        stroke_width = [[shape[:stroke_width].to_f, 0.5].max, 20].min
+        x = shape[:x].to_f
+        y = shape[:y].to_f
+        width = shape[:width].to_f
+        height = shape[:height].to_f
+
+        pdf.stroke_color(color)
+        pdf.line_width(stroke_width)
+
+        case type
+        when "text", "watermark"
+          apply_font(pdf, size: shape[:font_size].to_f.clamp(8, 96), color: color)
+          draw_text = lambda do
+            pdf.text_box(shape[:text].to_s, at: [x, y], width: [width, 1].max,
+                         height: [height, 1].max, overflow: :shrink_to_fit)
+          end
+          type == "watermark" ? pdf.transparent(shape[:opacity].to_f.clamp(0.05, 1.0), &draw_text) : draw_text.call
+        when "highlight"
+          pdf.transparent(shape[:opacity].to_f.clamp(0.05, 1.0)) do
+            pdf.fill_color(fill_color || color)
+            pdf.fill_rectangle([x, y], width, height)
+          end
+        when "rectangle"
+          pdf.fill_color(fill_color) if fill_color
+          fill_color ? pdf.fill_and_stroke_rectangle([x, y], width, height) :
+                       pdf.stroke_rectangle([x, y], width, height)
+        when "arrow"
+          x2 = shape[:x2].to_f
+          y2 = shape[:y2].to_f
+          pdf.stroke_line([x, y], [x2, y2])
+          angle = Math.atan2(y2 - y, x2 - x)
+          head = [10 + stroke_width, 24].min
+          pdf.stroke_line([x2, y2], [x2 - head * Math.cos(angle - Math::PI / 6),
+                                     y2 - head * Math.sin(angle - Math::PI / 6)])
+          pdf.stroke_line([x2, y2], [x2 - head * Math.cos(angle + Math::PI / 6),
+                                     y2 - head * Math.sin(angle + Math::PI / 6)])
+        when "pen"
+          points = Array(shape[:points]).map { |point| [point["x"] || point[:x], point["y"] || point[:y]].map(&:to_f) }
+          points.each_cons(2) { |from, to| pdf.stroke_line(from, to) }
+        else
+          raise ArgumentError, "Unsupported annotation type"
+        end
+      end
 
       def extract_text_positions(page)
         text_fragments = []

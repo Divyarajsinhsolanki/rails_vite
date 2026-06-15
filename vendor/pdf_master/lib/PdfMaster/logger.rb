@@ -5,21 +5,17 @@ require 'logger'
 module PdfMaster
   class Logger
     def self.instance
-      @loggers ||= begin
-        file_logger = ::Logger.new(File.join(Dir.pwd, 'pdf_master.log'), 'daily')
-        file_logger.level = ::Logger::INFO
+      return Rails.logger if defined?(Rails) && Rails.respond_to?(:logger)
 
-        console_logger = ::Logger.new(STDOUT)
-        console_logger.level = ::Logger::INFO
-
-        [file_logger, console_logger].freeze
-      end
+      @logger ||= ::Logger.new($stdout)
     end
 
     def self.log(message, level = :info)
-      file_logger, console_logger = instance
-      file_logger.send(level, message)
-      console_logger.send(level, message)
+      instance.public_send(level, "[PdfMaster] #{message}")
+    end
+
+    def self.log_exception(operation, error)
+      log("#{operation} failed (#{error.class})", :error)
     end
 
     def self.log_and_raise(error_class, message)

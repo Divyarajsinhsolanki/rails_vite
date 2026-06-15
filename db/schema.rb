@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2027_06_11_000000) do
+ActiveRecord::Schema[8.0].define(version: 2027_06_15_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -316,6 +316,81 @@ ActiveRecord::Schema[8.0].define(version: 2027_06_11_000000) do
     t.index ["recipient_id", "read_at"], name: "index_notifications_on_recipient_id_and_read_at"
     t.index ["recipient_id"], name: "index_notifications_on_recipient_id"
     t.index ["workspace_id"], name: "index_notifications_on_workspace_id"
+  end
+
+  create_table "pdf_document_artifacts", force: :cascade do |t|
+    t.bigint "workspace_id", null: false
+    t.bigint "user_id", null: false
+    t.bigint "pdf_document_id"
+    t.bigint "pdf_document_operation_id"
+    t.string "kind", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["expires_at"], name: "index_pdf_document_artifacts_on_expires_at"
+    t.index ["pdf_document_id"], name: "index_pdf_document_artifacts_on_pdf_document_id"
+    t.index ["pdf_document_operation_id"], name: "index_pdf_document_artifacts_on_pdf_document_operation_id"
+    t.index ["user_id"], name: "index_pdf_document_artifacts_on_user_id"
+    t.index ["workspace_id"], name: "index_pdf_document_artifacts_on_workspace_id"
+  end
+
+  create_table "pdf_document_operations", force: :cascade do |t|
+    t.bigint "workspace_id", null: false
+    t.bigint "user_id", null: false
+    t.bigint "pdf_document_id"
+    t.bigint "base_version_id"
+    t.string "kind", null: false
+    t.string "status", default: "queued", null: false
+    t.integer "progress", default: 0, null: false
+    t.jsonb "parameters", default: {}, null: false
+    t.jsonb "result", default: {}, null: false
+    t.text "error_message"
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["base_version_id"], name: "index_pdf_document_operations_on_base_version_id"
+    t.index ["pdf_document_id"], name: "index_pdf_document_operations_on_pdf_document_id"
+    t.index ["status", "created_at"], name: "index_pdf_document_operations_on_status_and_created_at"
+    t.index ["user_id", "created_at"], name: "index_pdf_document_operations_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_pdf_document_operations_on_user_id"
+    t.index ["workspace_id"], name: "index_pdf_document_operations_on_workspace_id"
+  end
+
+  create_table "pdf_document_versions", force: :cascade do |t|
+    t.bigint "workspace_id", null: false
+    t.bigint "pdf_document_id", null: false
+    t.bigint "created_by_id", null: false
+    t.bigint "parent_version_id"
+    t.integer "version_number", null: false
+    t.string "operation", null: false
+    t.integer "page_count"
+    t.boolean "encrypted", default: false, null: false
+    t.bigint "byte_size", default: 0, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_pdf_document_versions_on_created_by_id"
+    t.index ["pdf_document_id", "version_number"], name: "idx_pdf_document_versions_number", unique: true
+    t.index ["pdf_document_id"], name: "index_pdf_document_versions_on_pdf_document_id"
+    t.index ["workspace_id"], name: "index_pdf_document_versions_on_workspace_id"
+  end
+
+  create_table "pdf_documents", force: :cascade do |t|
+    t.bigint "workspace_id", null: false
+    t.bigint "user_id", null: false
+    t.string "title", null: false
+    t.string "original_filename", null: false
+    t.integer "page_count"
+    t.boolean "encrypted", default: false, null: false
+    t.bigint "current_version_id"
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "updated_at"], name: "index_pdf_documents_on_user_id_and_updated_at"
+    t.index ["user_id"], name: "index_pdf_documents_on_user_id"
+    t.index ["workspace_id", "user_id"], name: "index_pdf_documents_on_workspace_id_and_user_id"
+    t.index ["workspace_id"], name: "index_pdf_documents_on_workspace_id"
   end
 
   create_table "portfolio_features", force: :cascade do |t|
@@ -836,6 +911,21 @@ ActiveRecord::Schema[8.0].define(version: 2027_06_11_000000) do
   add_foreign_key "notifications", "users", column: "actor_id"
   add_foreign_key "notifications", "users", column: "recipient_id"
   add_foreign_key "notifications", "workspaces"
+  add_foreign_key "pdf_document_artifacts", "pdf_document_operations"
+  add_foreign_key "pdf_document_artifacts", "pdf_documents"
+  add_foreign_key "pdf_document_artifacts", "users"
+  add_foreign_key "pdf_document_artifacts", "workspaces"
+  add_foreign_key "pdf_document_operations", "pdf_document_versions", column: "base_version_id", on_delete: :nullify
+  add_foreign_key "pdf_document_operations", "pdf_documents"
+  add_foreign_key "pdf_document_operations", "users"
+  add_foreign_key "pdf_document_operations", "workspaces"
+  add_foreign_key "pdf_document_versions", "pdf_document_versions", column: "parent_version_id", on_delete: :nullify
+  add_foreign_key "pdf_document_versions", "pdf_documents"
+  add_foreign_key "pdf_document_versions", "users", column: "created_by_id"
+  add_foreign_key "pdf_document_versions", "workspaces"
+  add_foreign_key "pdf_documents", "pdf_document_versions", column: "current_version_id", on_delete: :nullify
+  add_foreign_key "pdf_documents", "users"
+  add_foreign_key "pdf_documents", "workspaces"
   add_foreign_key "portfolio_features", "portfolio_projects"
   add_foreign_key "post_likes", "posts"
   add_foreign_key "post_likes", "users"

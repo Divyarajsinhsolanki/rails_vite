@@ -33,6 +33,7 @@ gem "sidekiq"
 gem "sentry-rails"
 gem "sentry-ruby"
 gem "PdfMaster", path: "vendor/pdf_master"
+gem "rubyzip", ">= 2.4", "< 4"
 
 # connection_pool 3.0.x has a Ruby 3.3 syntax issue in this app stack.
 gem "connection_pool", "~> 2.5"

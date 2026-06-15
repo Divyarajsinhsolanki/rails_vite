@@ -284,6 +284,54 @@ textarea {
   background: var(--shell-surface-strong);
 }
 
+.toolbar-button {
+  display: inline-flex;
+  height: 2.25rem;
+  width: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  color: rgb(100 116 139);
+  transition: background-color 150ms, color 150ms, opacity 150ms;
+}
+
+.toolbar-button:hover {
+  background: rgb(241 245 249);
+  color: rgb(79 70 229);
+}
+
+.toolbar-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.inspector-button {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border: 1px solid rgb(226 232 240);
+  border-radius: 0.6rem;
+  background: white;
+  padding: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgb(71 85 105);
+  transition: border-color 150ms, background-color 150ms, color 150ms;
+}
+
+.inspector-button:hover:not(:disabled) {
+  border-color: rgb(199 210 254);
+  background: rgb(238 242 255);
+  color: rgb(67 56 202);
+}
+
+.inspector-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
 .shell-chip {
   display: inline-flex;
   align-items: center;

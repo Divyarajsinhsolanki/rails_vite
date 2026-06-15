@@ -13,45 +13,11 @@ Rails.application.routes.draw do
 
   root "pages#index"
 
-  # PDF
-  post "/upload_pdf", to: "pdfs#upload_pdf"
-  post "/reset_pdf", to: "pdfs#reset"
+  # Legacy PDF reads remain available until their existing 24-hour tokens expire.
   get  "/download_pdf", to: "pdfs#download"
   match "/pdf_file/:token", to: "pdfs#status", via: :head
   get  "/pdf_file/:token", to: "pdfs#show", as: :pdf_file
   get  "/pdf_artifact/:token", to: "pdfs#artifact", as: :pdf_artifact
-
-  post "/api/update_pdf", to: "pdf_modifiers#update_pdf"
-
-  post "/add_page", to: "pdf_modifiers#add_page"
-  post "/remove_page", to: "pdf_modifiers#remove_page"
-
-  post "/duplicate_page", to: "pdf_modifiers#duplicate_page"
-  post "/replace_text", to: "pdf_modifiers#replace_text"
-
-  post "/add_text", to: "pdf_modifiers#add_text"
-  post "/add_signature", to: "pdf_modifiers#add_signature"
-
-  post "/add_watermark", to: "pdf_modifiers#add_watermark"
-  post "/add_stamp", to: "pdf_modifiers#add_stamp"
-
-  post "/rotate_left", to: "pdf_modifiers#rotate_left"
-  post "/rotate_right", to: "pdf_modifiers#rotate_right"
-
-  post "/merge_pdf", to: "pdf_modifiers#merge_pdf"
-  post "/split_pdf", to: "pdf_modifiers#split_pdf"
-  post "/split_by_size", to: "pdf_modifiers#split_by_size"
-  post "/compress_pdf", to: "pdf_modifiers#compress_pdf"
-  post "/update_metadata", to: "pdf_modifiers#update_metadata"
-  post "/add_page_numbers", to: "pdf_modifiers#add_page_numbers"
-  post "/export_to_images", to: "pdf_modifiers#export_to_images"
-  post "/extract_text", to: "pdf_modifiers#extract_text"
-  post "/undo_pdf", to: "pdf_modifiers#undo_pdf"
-  post "/redo_pdf", to: "pdf_modifiers#redo_pdf"
-
-  post "/encrypt_pdf", to: "pdf_modifiers#encrypt_pdf"
-  post "/decrypt_pdf", to: "pdf_modifiers#decrypt_pdf"
-  post "/protect_pdf", to: "pdf_modifiers#protect_pdf"
 
   # React now handles the /sheet route. Data is provided via the API below.
 
@@ -201,6 +167,17 @@ Rails.application.routes.draw do
     end
 
     get 'daily_momentum', to: 'daily_momentum#show'
+
+    resources :pdf_documents, only: %i[index show create update destroy] do
+      member do
+        get :content
+        get :download
+        post :undo
+        post :redo
+        post :restore_original
+      end
+    end
+    resources :pdf_document_operations, only: %i[create show]
 
     resources :roles, only: [:index]
 

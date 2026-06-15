@@ -251,6 +251,38 @@ export const deleteProjectVaultItem = (projectId, id) => api.delete(`/projects/$
 
 export const fetchDailyMomentum = () => api.get('/daily_momentum');
 
+// PDF DOCUMENTS
+export const fetchPdfDocuments = () => api.get('/pdf_documents');
+export const fetchPdfDocument = (id) => api.get(`/pdf_documents/${id}`);
+export const uploadPdfDocument = (file, title, onUploadProgress) => {
+  const data = new FormData();
+  data.append('file', file);
+  if (title) data.append('title', title);
+  return api.post('/pdf_documents', data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress,
+  });
+};
+export const renamePdfDocument = (id, title) => api.patch(`/pdf_documents/${id}`, { title });
+export const deletePdfDocument = (id) => api.delete(`/pdf_documents/${id}`);
+export const undoPdfDocument = (id) => api.post(`/pdf_documents/${id}/undo`);
+export const redoPdfDocument = (id) => api.post(`/pdf_documents/${id}/redo`);
+export const restorePdfDocument = (id) => api.post(`/pdf_documents/${id}/restore_original`);
+export const createPdfDocumentOperation = (payload, asset) => {
+  if (!asset) return api.post('/pdf_document_operations', payload);
+
+  const data = new FormData();
+  data.append('kind', payload.kind);
+  if (payload.pdf_document_id) data.append('pdf_document_id', payload.pdf_document_id);
+  if (payload.base_version_id) data.append('base_version_id', payload.base_version_id);
+  data.append('parameters', JSON.stringify(payload.parameters || {}));
+  data.append('asset', asset);
+  return api.post('/pdf_document_operations', data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+};
+export const fetchPdfDocumentOperation = (id) => api.get(`/pdf_document_operations/${id}`);
+
 // WORK LOG ENDPOINTS
 export const fetchWorkPriorities = () => withNormalizedCollection(api.get('/work_priorities', { params: collectionParams() }));
 export const fetchWorkCategories = () => withNormalizedCollection(api.get('/work_categories', { params: collectionParams() }));

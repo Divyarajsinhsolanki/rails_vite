@@ -39,7 +39,7 @@ class PortfolioAndDemoTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
     assert_equal "demo_read_only", JSON.parse(response.body).fetch("error")
 
-    post "/upload_pdf"
+    post "/api/pdf_documents"
     assert_response :forbidden
     assert_equal "demo_read_only", JSON.parse(response.body).fetch("error")
   end
