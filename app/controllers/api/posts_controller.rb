@@ -2,16 +2,16 @@ class Api::PostsController < Api::BaseController
   # before_action :authenticate_user!, only: [:create, :update, :destroy]
   include Rails.application.routes.url_helpers
 
+  COMMENTS_PREVIEW_LIMIT = 5
+
   before_action :set_post, only: [:like, :unlike]
 
   def index
     if request.format.html?
-      # Optimize queries with includes and use existing pagination helper
       posts = Post.includes(:user, :image_attachment, :post_likes, comments: :user)
       posts = posts.where(user_id: params[:user_id]) if params[:user_id]
       posts = posts.order(created_at: :desc)
-      
-      # Use the base controller's pagination helper
+
       render_paginated_collection(posts, serializer: method(:serialize_post), per_page: 20)
     end
   end
@@ -39,7 +39,7 @@ class Api::PostsController < Api::BaseController
     return head :forbidden unless post
 
     post.destroy
-    render json: { message: "Post deleted successfully" }
+    render json: { message: 'Post deleted successfully' }
   end
 
   def like
@@ -74,32 +74,34 @@ class Api::PostsController < Api::BaseController
   end
 
   def serialize_post(post)
-    # Pre-calculate liked_by_current status from already-loaded likes to avoid extra queries
     current_user_id = current_user&.id
     liked_by_current = current_user_id && post.post_likes.any? { |like| like.user_id == current_user_id }
-    
+
+    sorted_comments = (post.comments || []).sort_by(&:created_at)
+    preview_comments = sorted_comments.first(COMMENTS_PREVIEW_LIMIT)
+
     {
       id: post.id,
       message: post.message,
-      image_url: post.image.attached? ? rails_blob_url(post.image, disposition: "attachment", only_path: true) : nil,
+      image_url: post.image.attached? ? rails_blob_url(post.image, disposition: 'attachment', only_path: true) : nil,
       created_at: post.created_at.iso8601,
       likes_count: post.post_likes.size,
       liked_by_current_user: liked_by_current,
-      comments_count: post.try(:comments_count) || post.comments.size,
-      comments: serialize_comments(post),
+      comments_count: sorted_comments.size,
+      has_more_comments: sorted_comments.size > COMMENTS_PREVIEW_LIMIT,
+      comments: serialize_comments(post, preview_comments),
       user: {
         id: post.user.id,
         email: post.user.email,
         first_name: post.user.first_name,
         last_name: post.user.last_name,
-        profile_picture: post.user.profile_picture.attached? ?
-          rails_blob_url(post.user.profile_picture, only_path: true) : nil
+        profile_picture: post.user.profile_picture.attached? ? rails_blob_url(post.user.profile_picture, only_path: true) : nil
       }
     }
   end
 
-  def serialize_comments(post)
-    (post.comments || []).sort_by(&:created_at).map do |comment|
+  def serialize_comments(post, comments)
+    comments.map do |comment|
       {
         id: comment.id,
         body: comment.body,
@@ -110,8 +112,7 @@ class Api::PostsController < Api::BaseController
           email: comment.user.email,
           first_name: comment.user.first_name,
           last_name: comment.user.last_name,
-          profile_picture: comment.user.profile_picture.attached? ?
-            rails_blob_url(comment.user.profile_picture, only_path: true) : nil
+          profile_picture: comment.user.profile_picture.attached? ? rails_blob_url(comment.user.profile_picture, only_path: true) : nil
         }
       }
     end
