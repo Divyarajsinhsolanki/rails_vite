@@ -41,8 +41,11 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "combine_pdf", '1.0.25'
   spec.add_dependency "prawn", "~> 2.4"
-  spec.add_dependency "hexapdf", "~> 0.47"
+  spec.add_dependency "hexapdf", "~> 0.16"
   spec.add_dependency "mini_magick", "~> 4.11"
-
+  spec.add_dependency "shellwords"
+  spec.add_dependency "pdfkit", "~> 0.8"
+  spec.add_dependency "wkhtmltopdf-binary", "~> 0.12.6"
+  
   spec.add_development_dependency 'rspec', "~> 3.13.0"
 end

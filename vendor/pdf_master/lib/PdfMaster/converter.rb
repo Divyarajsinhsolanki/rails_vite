@@ -1,14 +1,11 @@
 # frozen_string_literal: true
 
-require "fileutils"
-require "open3"
-
 module PdfMaster
   class Converter
     class << self
 
       def image_to_pdf(image_paths, output_pdf)
-        Logger.log("Converting images to PDF")
+        Logger.log("Converting images #{image_paths} to PDF: #{output_pdf}")
         images = Array(image_paths)
         pdf = Prawn::Document.new
         images.each_with_index do |image, index|
@@ -16,29 +13,36 @@ module PdfMaster
           pdf.start_new_page unless index == images.length - 1
         end
         pdf.render_file(output_pdf)
-        Logger.log("Image to PDF conversion completed.")
+        Logger.log("Image to PDF conversion completed: #{output_pdf}")
       end
 
       def pdf_to_images(input_pdf, output_folder)
-        Logger.log("Converting PDF to images")
-        FileUtils.mkdir_p(output_folder)
-        output_prefix = File.join(output_folder, "page")
-        _stdout, _stderr, status = Open3.capture3("pdftoppm", "-png", input_pdf, output_prefix)
+        Logger.log("Converting PDF #{input_pdf} to images in #{output_folder}")
 
-        if status.success?
-          Logger.log("PDF converted to images successfully.")
-        else
-          Logger.log("PDF to image conversion failed.", :error)
-          raise "PDF to image conversion failed."
+        # Ensure the output folder exists
+        Dir.mkdir(output_folder) unless Dir.exist?(output_folder)
+      
+        # Construct the command using `pdftoppm` (part of Poppler)
+        output_prefix = File.join(output_folder, "page")
+        command = "pdftoppm -png #{Shellwords.escape(input_pdf)} #{Shellwords.escape(output_prefix)}"
+
+        unless system('which pdftoppm > /dev/null 2>&1')
+          Logger.log('pdftoppm not found in PATH')
+          raise 'pdftoppm command is required for PDF to image conversion'
         end
-      rescue Errno::ENOENT
-        Logger.log("PDF image converter is unavailable.", :error)
-        raise "pdftoppm is required for PDF image conversion."
+
+        success = system(command)
+
+        if success
+          Logger.log("Successfully converted PDF pages to images in #{output_folder}")
+        else
+          Logger.log('Error converting PDF to images.')
+          raise 'PDF to Image conversion failed.'
+        end
       end
 
       def extract_images(input_pdf, output_folder)
-        Logger.log("Extracting images from PDF")
-        FileUtils.mkdir_p(output_folder)
+        Logger.log("Extracting images from PDF: #{input_pdf}")
         pdf = HexaPDF::Document.open(input_pdf)
         image_index = 1
 
@@ -61,13 +65,24 @@ module PdfMaster
 
             # Write the image data to a file
             File.open(image_path, 'wb') { |f| f.write(stream.stream) }
+            Logger.log("Extracted image saved: #{image_path}")
             image_index += 1
           end
         end
-        Logger.log("Images extracted successfully.")
       rescue => e
-        Logger.log_exception("Extracting images", e)
+        Logger.log("Error extracting images: #{e.message}")
         raise
+      end
+
+      def html_file_to_pdf(file_path, output_path = nil)
+        html_content = File.read(file_path)
+
+        kit = PDFKit.new(html_content, page_size: 'A4')
+        pdf = kit.to_pdf
+
+        if output_path
+          File.open(output_path, 'wb') { |file| file.write(pdf) }
+        end
       end
     end
   end

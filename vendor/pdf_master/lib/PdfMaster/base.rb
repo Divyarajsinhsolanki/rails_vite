@@ -20,16 +20,13 @@ module PdfMaster
         File.delete(temp_pdf) if File.exist?(temp_pdf)
       end
 
-      def process_pdf(pdf_path, prefix, page, output_path: nil)
-        output_path ||= file_path_with_prefix(pdf_path, prefix)
-        temp_pdf = temp_file_path(prefix, pdf_path)
+      def process_pdf(pdf_path, prefix, page)
+        ensure_directory
+        output_path = file_path_with_prefix(pdf_path, prefix)
+        temp_pdf = temp_file_path(prefix)
 
         original_pdf = CombinePDF.load(pdf_path)
-        page_number = Integer(page)
-        unless page_number.between?(1, original_pdf.pages.count)
-          raise ArgumentError, "Invalid page number"
-        end
-        target_page = original_pdf.pages[page_number - 1]
+        target_page = original_pdf.pages[page - 1]
         
         # Detect page size from mediabox
         width = target_page.mediabox[2] - target_page.mediabox[0]
@@ -39,8 +36,6 @@ module PdfMaster
         yield(target_page, temp_pdf, page_size) if block_given?
         merge_and_save(original_pdf, target_page, temp_pdf, output_path)
         output_path
-      ensure
-        FileUtils.rm_f(temp_pdf) if defined?(temp_pdf) && temp_pdf
       end
 
       # Font Settings

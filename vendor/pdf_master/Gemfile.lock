@@ -1,0 +1,61 @@
+PATH
+  remote: .
+  specs:
+    PdfMaster (0.1.0)
+      combine_pdf (= 1.0.25)
+      hexapdf (~> 0.16)
+      mini_magick (~> 4.11)
+      pdfkit (~> 0.8)
+      prawn (~> 2.4)
+      shellwords
+      wkhtmltopdf-binary (~> 0.12.6)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    bigdecimal (3.1.9)
+    cmdparse (3.0.7)
+    combine_pdf (1.0.25)
+      matrix
+      ruby-rc4 (>= 0.1.5)
+    diff-lcs (1.6.1)
+    geom2d (0.3.1)
+    hexapdf (0.16.0)
+      cmdparse (~> 3.0, >= 3.0.3)
+      geom2d (~> 0.3)
+    matrix (0.4.2)
+    mini_magick (4.13.2)
+    pdf-core (0.10.0)
+    pdfkit (0.8.7.3)
+    prawn (2.5.0)
+      matrix (~> 0.4)
+      pdf-core (~> 0.10.0)
+      ttfunk (~> 1.8)
+    rspec (3.13.0)
+      rspec-core (~> 3.13.0)
+      rspec-expectations (~> 3.13.0)
+      rspec-mocks (~> 3.13.0)
+    rspec-core (3.13.3)
+      rspec-support (~> 3.13.0)
+    rspec-expectations (3.13.3)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-mocks (3.13.2)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-support (3.13.2)
+    ruby-rc4 (0.1.5)
+    shellwords (0.2.2)
+    ttfunk (1.8.0)
+      bigdecimal (~> 3.1)
+    wkhtmltopdf-binary (0.12.6.8)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  PdfMaster!
+  rspec (~> 3.13.0)
+
+BUNDLED WITH
+   2.6.6
