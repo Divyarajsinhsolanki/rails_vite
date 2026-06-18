@@ -59,6 +59,12 @@ const NEW_CHAT_MODES = [
   { id: "group", label: "Group" }
 ];
 const CONVERSATIONS_PAGE_SIZE = 30;
+const RIGHT_SIDE_FEATURE_IDEAS = [
+  "Pinned messages for decisions and blockers",
+  "Action items detected from this chat",
+  "Shared links and docs grouped by type",
+  "Quick meeting notes or follow-up reminders"
+];
 
 const escapeRegExp = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -425,7 +431,7 @@ const ConversationItem = ({ conversation, currentUserId, isActive, searchQuery, 
   return (
     <Item
       {...itemProps}
-      className={`group relative block overflow-hidden rounded-[22px] border p-3.5 transition-all duration-200 ${onSelect ? "w-full text-left" : ""} ${
+      className={`group relative block overflow-hidden rounded-[18px] border p-2.5 transition-all duration-200 ${onSelect ? "w-full text-left" : ""} ${
         isActive
           ? "border-transparent bg-slate-950 text-white shadow-[0_22px_55px_-28px_rgba(15,23,42,0.95)]"
           : "border-white/70 bg-white/72 text-slate-700 shadow-[0_18px_45px_-34px_rgba(15,23,42,0.5)] hover:-translate-y-0.5 hover:border-slate-200 hover:bg-white/92 dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-slate-200 dark:hover:border-zinc-700 dark:hover:bg-zinc-900"
@@ -439,13 +445,13 @@ const ConversationItem = ({ conversation, currentUserId, isActive, searchQuery, 
         }`}
       />
 
-      <div className="relative flex items-start gap-3">
+      <div className="relative flex items-start gap-2.5">
         <div className="shrink-0">
           {isDirect ? (
-            <Avatar name={displayName} src={displayImage} size="md" />
+            <Avatar name={displayName} src={displayImage} size="sm" />
           ) : (
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-sky-100 to-cyan-50 text-sky-700 ring-2 ring-white/90 dark:from-sky-950/60 dark:to-cyan-950/40 dark:text-sky-200">
-              <FiUsers className="h-5 w-5" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-sky-100 to-cyan-50 text-sky-700 ring-2 ring-white/90 dark:from-sky-950/60 dark:to-cyan-950/40 dark:text-sky-200">
+              <FiUsers className="h-4 w-4" />
             </div>
           )}
         </div>
@@ -454,12 +460,12 @@ const ConversationItem = ({ conversation, currentUserId, isActive, searchQuery, 
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <p className={`truncate text-sm font-semibold ${isActive ? "text-white" : "text-slate-900 dark:text-white"}`}>
+                <p className={`truncate text-[13px] font-semibold ${isActive ? "text-white" : "text-slate-900 dark:text-white"}`}>
                   <HighlightText text={displayName} query={searchQuery} />
                 </p>
                 {isUnread && !isActive && <span className="h-2 w-2 rounded-full bg-emerald-500" />}
               </div>
-              <p className={`mt-1 text-[11px] font-medium uppercase tracking-[0.2em] ${isActive ? "text-sky-100/70" : "text-slate-400 dark:text-slate-500"}`}>
+              <p className={`mt-0.5 text-[10px] font-medium uppercase tracking-[0.16em] ${isActive ? "text-sky-100/70" : "text-slate-400 dark:text-slate-500"}`}>
                 {subtitle}
               </p>
             </div>
@@ -469,13 +475,13 @@ const ConversationItem = ({ conversation, currentUserId, isActive, searchQuery, 
             </span>
           </div>
 
-          <div className="mt-3 flex items-end justify-between gap-3">
-            <p className={`line-clamp-2 text-xs leading-5 ${isActive ? "text-sky-50/80" : isUnread ? "font-semibold text-slate-800 dark:text-slate-100" : "text-slate-500 dark:text-slate-400"}`}>
+          <div className="mt-1.5 flex items-end justify-between gap-2">
+            <p className={`line-clamp-1 text-[11px] leading-4 ${isActive ? "text-sky-50/80" : isUnread ? "font-semibold text-slate-800 dark:text-slate-100" : "text-slate-500 dark:text-slate-400"}`}>
               <HighlightText text={conversationPreview} query={searchQuery} />
             </p>
 
             {isUnread && (
-              <span className={`flex h-6 min-w-[1.5rem] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${isActive ? "bg-white text-slate-950" : "bg-slate-950 text-white dark:bg-white dark:text-slate-950"}`}>
+              <span className={`flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${isActive ? "bg-white text-slate-950" : "bg-slate-950 text-white dark:bg-white dark:text-slate-950"}`}>
                 {conversation.unread_count}
               </span>
             )}
@@ -578,22 +584,22 @@ const MessageBubble = ({ message, isMe, showAvatar, onToggleReaction, participan
       animate={{ opacity: 1, y: 0 }}
       className={`group/bubble flex w-full ${isMe ? "justify-end" : "justify-start"}`}
     >
-      <div className={`flex max-w-[92%] gap-3 md:max-w-[78%] ${isMe ? "flex-row-reverse" : "flex-row"}`}>
+      <div className={`flex max-w-[92%] gap-2 md:max-w-[74%] ${isMe ? "flex-row-reverse" : "flex-row"}`}>
         {!isMe && (
-          <div className="flex w-10 shrink-0 items-end justify-center">
+          <div className="flex w-8 shrink-0 items-end justify-center">
             {showAvatar ? <Avatar name={message.user_name} src={message.user_profile_picture} size="sm" /> : <div className="h-8 w-8" />}
           </div>
         )}
 
         <div className={`relative flex flex-col ${isMe ? "items-end" : "items-start"}`}>
           {!isMe && showAvatar && (
-            <span className="mb-1.5 ml-2 text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+            <span className="mb-0.5 ml-2 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
               {message.user_name}
             </span>
           )}
 
           <div
-            className={`relative overflow-hidden rounded-[24px] border px-4 py-3 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.5)] ${
+            className={`relative overflow-hidden rounded-[20px] border px-3.5 py-2 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.5)] ${
               isMe
                 ? "border-transparent bg-[linear-gradient(135deg,rgba(15,23,42,1),rgba(30,41,59,0.92))] text-white"
                 : "border-white/80 bg-white/92 text-slate-800 dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-slate-200"
@@ -615,7 +621,7 @@ const MessageBubble = ({ message, isMe, showAvatar, onToggleReaction, participan
             )}
           </div>
 
-          <div className="mt-2 flex flex-wrap items-center gap-1 px-1">
+          <div className={`relative z-10 flex flex-wrap items-center gap-1 px-1 ${isMe ? "-mt-1.5 justify-end pr-2" : "-mt-1.5 pl-2"}`}>
             {REACTION_EMOJIS.map((emoji) => {
               const count = reactions[emoji] || 0;
               const isActive = reactedEmojis.includes(emoji);
@@ -626,7 +632,7 @@ const MessageBubble = ({ message, isMe, showAvatar, onToggleReaction, participan
                   key={`${message.id}-${emoji}`}
                   type="button"
                   onClick={() => onToggleReaction(message.id, emoji, isActive)}
-                  className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium transition ${
+                  className={`inline-flex items-center gap-1 rounded-full border bg-clip-padding px-2 py-0.5 shadow-sm backdrop-blur text-[10px] font-medium transition ${
                     isActive
                       ? "border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-700 dark:bg-amber-900/40 dark:text-amber-200"
                       : "border-slate-200 bg-white/80 text-slate-600 hover:border-slate-300 dark:border-zinc-700 dark:bg-zinc-800/85 dark:text-slate-300"
@@ -639,7 +645,7 @@ const MessageBubble = ({ message, isMe, showAvatar, onToggleReaction, participan
             })}
           </div>
 
-          <div className={`pointer-events-none absolute -top-9 z-20 opacity-0 transition-all duration-150 group-hover/bubble:pointer-events-auto group-hover/bubble:opacity-100 ${isMe ? "right-0" : "left-0"}`}>
+          <div className={`pointer-events-none absolute -top-7 z-20 opacity-0 transition-all duration-150 group-hover/bubble:pointer-events-auto group-hover/bubble:opacity-100 ${isMe ? "right-0" : "left-0"}`}>
             <div className="flex items-center gap-1 rounded-full border border-white/70 bg-white/92 p-1 shadow-xl backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/95">
               {REACTION_EMOJIS.map((emoji) => {
                 const isActive = reactedEmojis.includes(emoji);
@@ -657,7 +663,7 @@ const MessageBubble = ({ message, isMe, showAvatar, onToggleReaction, participan
             </div>
           </div>
 
-          <div className="mt-1.5 flex items-center gap-2 px-1 text-[11px] text-slate-400 dark:text-slate-500">
+          <div className="mt-0.5 flex items-center gap-2 px-1 text-[11px] text-slate-400 dark:text-slate-500">
             <span>{timeString}</span>
             {isMe && (
               <span className={`inline-flex items-center gap-1 ${seenBy.length > 0 ? "text-emerald-500" : ""}`}>
@@ -1890,12 +1896,12 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
                 <div className="relative flex min-w-0 flex-1 flex-col">
                   <div
                     ref={messageListRef}
-                    className="scrollbar-hide relative flex-1 overflow-y-auto px-4 py-5 md:px-6 md:py-6"
+                    className="scrollbar-hide relative flex-1 overflow-y-auto px-4 py-4 md:px-5 md:py-4"
                     style={{
                       backgroundImage: "radial-gradient(circle at top, rgba(96,165,250,0.12), transparent 28%), radial-gradient(circle at bottom right, rgba(56,189,248,0.14), transparent 24%), linear-gradient(180deg, rgba(255,255,255,0.55), rgba(248,250,252,0.78))"
                     }}
                   >
-                    <div className="mx-auto flex max-w-4xl flex-col gap-6">
+                    <div className="mx-auto flex max-w-4xl flex-col gap-4">
                       <div className="sticky top-0 z-10 flex justify-center">
                         <span className="rounded-full border border-white/80 bg-white/90 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500 shadow-sm backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-slate-300">
                           {deferredThreadSearchQuery.trim()
@@ -1939,7 +1945,7 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
                         </div>
                       ) : (
                         groupedMessages.map((group) => (
-                          <div key={group.dateKey} className="space-y-4">
+                          <div key={group.dateKey} className="space-y-2">
                             <div className="flex justify-center">
                               <span className="rounded-full border border-white/80 bg-white/92 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/92 dark:text-slate-400">
                                 {group.label}
@@ -1991,7 +1997,7 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
                     </div>
                   </div>
 
-                  <div className="border-t border-white/70 bg-white/76 px-4 py-3 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/76 md:px-6">
+                  <div className="border-t border-white/70 bg-white/76 px-4 py-2 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/76 md:px-6">
                     <div className="mx-auto max-w-4xl">
                       {attachments.length > 0 && (
                         <div className="scrollbar-hide mb-4 flex gap-3 overflow-x-auto pb-1">
@@ -2046,7 +2052,7 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
                         onDragOver={handleDragOverAttachments}
                         onDragLeave={handleDragLeaveAttachments}
                         onDrop={handleDropAttachments}
-                        className={`relative rounded-[28px] border p-3 shadow-[0_24px_60px_-36px_rgba(15,23,42,0.7)] backdrop-blur-xl transition ${
+                        className={`relative rounded-[22px] border p-2 shadow-[0_24px_60px_-36px_rgba(15,23,42,0.7)] backdrop-blur-xl transition ${
                           isDraggingFiles
                             ? "border-sky-400 bg-sky-50/95 ring-4 ring-sky-200/60 dark:border-sky-500 dark:bg-sky-950/40 dark:ring-sky-900/50"
                             : "border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(248,250,252,0.98))] dark:border-zinc-700 dark:bg-[linear-gradient(135deg,rgba(24,24,27,0.96),rgba(9,9,11,0.96))]"
@@ -2069,17 +2075,17 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
                           onChange={handleAddAttachments}
                         />
 
-                        <div className="flex items-end gap-3">
+                        <div className="flex items-end gap-2">
                           <button
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
-                            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-slate-300 dark:hover:bg-zinc-800"
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-slate-300 dark:hover:bg-zinc-800"
                             title="Add attachments"
                           >
                             <FiPaperclip className="h-5 w-5" />
                           </button>
 
-                          <div className="min-w-0 flex-1 rounded-[24px] border border-slate-200 bg-white px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900">
+                          <div className="min-w-0 flex-1 rounded-[18px] border border-slate-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900">
                             <textarea
                               ref={composerTextareaRef}
                               value={messageBody}
@@ -2126,7 +2132,7 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
                               onSelect={syncComposerSelection}
                               rows={1}
                               placeholder="Write a message..."
-                              className="max-h-40 min-h-[28px] w-full resize-none border-0 bg-transparent p-0 text-sm leading-6 text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
+                              className="max-h-32 min-h-[24px] w-full resize-none border-0 bg-transparent p-0 text-sm leading-5 text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
                             />
 
                             <MentionSuggestions
@@ -2135,7 +2141,7 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
                               onSelect={handleSelectMention}
                             />
 
-                            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                               <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
                                 <span className="inline-flex items-center gap-1">
                                   <FiClock className="h-3.5 w-3.5" />
@@ -2164,7 +2170,7 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
                           <button
                             type="submit"
                             disabled={isSending || (!messageBody.trim() && attachments.length === 0)}
-                            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-950 text-white shadow-[0_24px_60px_-34px_rgba(15,23,42,1)] transition hover:-translate-y-0.5 hover:brightness-110 disabled:translate-y-0 disabled:opacity-40 disabled:shadow-none dark:bg-white dark:text-slate-950"
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-950 text-white shadow-[0_24px_60px_-34px_rgba(15,23,42,1)] transition hover:-translate-y-0.5 hover:brightness-110 disabled:translate-y-0 disabled:opacity-40 disabled:shadow-none dark:bg-white dark:text-slate-950"
                             title="Send message"
                           >
                             <FiSend className={`h-5 w-5 ${isSending ? "animate-pulse" : ""}`} />
@@ -2253,6 +2259,23 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
                                       {formatParticipantStatus(participant, user?.id)}
                                     </p>
                                   </div>
+                                </div>
+                              ))}
+                            </div>
+                          </section>
+
+
+                          <section className="mt-6">
+                            <div className="mb-3 flex items-center gap-2">
+                              <FiZap className="h-4 w-4 text-slate-400" />
+                              <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-slate-400 dark:text-slate-500">Right-side ideas</p>
+                            </div>
+
+                            <div className="space-y-2 rounded-[24px] border border-sky-100 bg-sky-50/70 p-3 dark:border-sky-950/60 dark:bg-sky-950/20">
+                              {RIGHT_SIDE_FEATURE_IDEAS.map((idea) => (
+                                <div key={idea} className="flex items-start gap-2 rounded-2xl bg-white/76 px-3 py-2 text-xs font-medium text-slate-600 dark:bg-zinc-900/72 dark:text-slate-300">
+                                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500" />
+                                  <span>{idea}</span>
                                 </div>
                               ))}
                             </div>
