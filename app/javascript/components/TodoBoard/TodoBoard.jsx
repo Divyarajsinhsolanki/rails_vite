@@ -9,7 +9,7 @@ import TaskForm from "./TaskForm";
 import KanbanColumn from "./KanbanColumn";
 import Heatmap from "./Heatmap";
 import ProgressPieChart from "./ProgressPieChart";
-import { XCircleIcon, PlusIcon, UserIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
+import { XCircleIcon, PlusIcon, UserIcon, Squares2X2Icon, MagnifyingGlassIcon, SparklesIcon, ArrowTrendingUpIcon } from '@heroicons/react/24/outline';
 
 function Modal({ isOpen, onClose, title, children }) {
   if (!isOpen) return null;
@@ -110,6 +110,28 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange, viewMod
   }
 
   const currentSprint = sprints.find(s => s.id === selectedSprintId);
+  const allTasks = Object.values(columns).flatMap(col => col.items);
+  const totalTasks = allTasks.length;
+  const completedTasks = columns.completed?.items.length || 0;
+  const inProgressTasks = columns.inprogress?.items.length || 0;
+  const completionRate = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const focusLoad = totalTasks ? Math.round((inProgressTasks / totalTasks) * 100) : 0;
+  const overdueTasks = allTasks.filter(task => {
+    if (!task.end_date || task.status === 'completed') return false;
+    return new Date(task.end_date) < new Date(new Date().toDateString());
+  }).length;
+
+  const suggestions = [
+    overdueTasks > 0
+      ? `${overdueTasks} overdue task${overdueTasks === 1 ? '' : 's'} need a due-date reset or owner check-in.`
+      : 'No overdue work is visible — keep the sprint buffer protected.',
+    focusLoad > 45
+      ? 'In-progress load is high. Move one item to Done before starting another task.'
+      : 'Work-in-progress looks healthy. Keep the team focused on the active lane.',
+    completionRate < 35
+      ? 'Completion is still ramping up. Pull the smallest task forward for quick momentum.'
+      : 'Completion trend is solid. Capture learnings before closing the sprint.'
+  ];
 
   // --- HANDLERS ---
   const handleAddTask = async (newTaskData) => {
@@ -278,57 +300,102 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange, viewMod
   }, {});
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 px-8 pb-8 pt-2 font-sans text-gray-800">
-      <div className="max-w-8xl mx-auto bg-white rounded-xl shadow-lg p-4">
+    <div className="relative min-h-screen overflow-hidden bg-[#070910] px-4 pb-10 pt-4 font-sans text-slate-100 sm:px-8">
+      <div className="pointer-events-none absolute -left-28 top-10 h-72 w-72 rounded-full bg-fuchsia-500/30 blur-3xl" />
+      <div className="pointer-events-none absolute right-0 top-0 h-96 w-96 rounded-full bg-cyan-300/20 blur-3xl" />
+      <div className="pointer-events-none absolute inset-x-0 top-28 h-52 bg-[radial-gradient(ellipse_at_center,rgba(167,139,250,0.2),transparent_65%)]" />
+      <div className="relative mx-auto max-w-[1520px] rounded-[2rem] border border-white/10 bg-white/10 p-4 shadow-2xl shadow-black/40 backdrop-blur-2xl sm:p-6">
         <Toaster position="top-right" />
-        <header className="mb-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-            <div className="mb-4 sm:mb-0 flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] flex items-center">
-                <Squares2X2Icon className="h-7 w-7 mr-2" />Taskboard
-              </h1>
-              {viewMode !== 'dev' && (
-                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold border ${viewMode === 'qa'
-                  ? 'bg-purple-50 text-purple-700 border-purple-200'
-                  : 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                  }`}>
-                  {viewMode === 'qa' ? 'QA mode' : 'Combined mode'}
+        <header className="relative mb-6 overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-950/80 p-6 shadow-2xl sm:p-8">
+          <div className="absolute -right-12 -top-16 h-56 w-56 rounded-full bg-[conic-gradient(from_180deg,theme(colors.fuchsia.400),theme(colors.cyan.200),theme(colors.violet.700),theme(colors.fuchsia.400))] opacity-40 blur-2xl" />
+          <div className="absolute bottom-0 right-10 h-32 w-80 rotate-[-8deg] rounded-full bg-gradient-to-r from-cyan-200/40 via-fuchsia-300/30 to-transparent blur-xl" />
+          <div className="relative grid gap-6 lg:grid-cols-[1fr_360px] lg:items-end">
+            <div>
+              <div className="mb-4 flex flex-wrap items-center gap-3">
+                <span className="inline-flex items-center rounded-full border border-cyan-200/30 bg-cyan-200/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.28em] text-cyan-100">
+                  <SparklesIcon className="mr-2 h-4 w-4" /> Project Todo
                 </span>
-              )}
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowForm(true)}
-                className="flex items-center gap-2 bg-[var(--theme-color)] hover:brightness-110 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all transform hover:scale-105"
-              >
-                <PlusIcon className="h-5 w-5" />
-                <span>Add Task</span>
-              </button>
-              <div className="flex bg-white rounded-full p-1 shadow-md border border-gray-200">
-                <button
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ${taskView === 'all'
-                      ? 'bg-[var(--theme-color)] text-white shadow'
-                      : 'text-gray-600 hover:bg-[rgb(var(--theme-color-rgb)/0.1)]'
-                    }`}
-                  onClick={() => setTaskView('all')}
-                >
-                  <Squares2X2Icon className="h-5 w-5" />
-                  All Tasks
-                </button>
-                <button
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out ml-1 ${taskView === 'my'
-                      ? 'bg-[var(--theme-color)] text-white shadow'
-                      : 'text-gray-600 hover:bg-[rgb(var(--theme-color-rgb)/0.1)]'
-                    }`}
-                  onClick={() => setTaskView('my')}
-                >
-                  <UserIcon className="h-5 w-5" />
-                  My Tasks
-                </button>
+                {viewMode !== 'dev' && (
+                  <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold border ${viewMode === 'qa'
+                    ? 'border-purple-200/40 bg-purple-300/15 text-purple-100'
+                    : 'border-indigo-200/40 bg-indigo-300/15 text-indigo-100'
+                    }`}>
+                    {viewMode === 'qa' ? 'QA mode' : 'Combined mode'}
+                  </span>
+                )}
               </div>
+              <h1 className="max-w-4xl text-4xl font-black tracking-[-0.06em] text-white sm:text-6xl">
+                A glassy sprint command center for clear priorities.
+              </h1>
+              <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
+                Track due-date heat, progress, and task flow in one immersive board inspired by dimensional analytics dashboards.
+              </p>
+              <div className="mt-6 grid max-w-2xl grid-cols-3 gap-3">
+                <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Complete</p>
+                  <p className="mt-2 text-3xl font-black text-white">{completionRate}%</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Active</p>
+                  <p className="mt-2 text-3xl font-black text-white">{inProgressTasks}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Overdue</p>
+                  <p className="mt-2 text-3xl font-black text-rose-100">{overdueTasks}</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-[1.5rem] border border-white/15 bg-white/10 p-5 backdrop-blur-xl">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.24em] text-fuchsia-100">Smart suggestions</p>
+                  <h2 className="mt-1 text-xl font-bold text-white">Improve this sprint</h2>
+                </div>
+                <ArrowTrendingUpIcon className="h-7 w-7 text-cyan-100" />
+              </div>
+              <ul className="space-y-3">
+                {suggestions.map((suggestion, index) => (
+                  <li key={suggestion} className="rounded-2xl border border-white/10 bg-slate-900/50 p-3 text-sm leading-5 text-slate-200">
+                    <span className="mr-2 font-black text-cyan-200">0{index + 1}</span>{suggestion}
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </header>
+
+        <div className="mb-6 flex flex-col gap-3 rounded-[1.5rem] border border-white/10 bg-white/10 p-3 backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between">
+          <div className="relative flex-1">
+            <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+            <input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search tasks by ID, title or tag..."
+              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 py-3 pl-12 pr-4 text-sm text-white outline-none placeholder:text-slate-500 focus:border-cyan-200/60 focus:ring-2 focus:ring-cyan-200/20"
+            />
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <button
+              onClick={() => setShowForm(true)}
+              className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-fuchsia-500 to-cyan-300 px-5 py-3 font-bold text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:scale-[1.02]"
+            >
+              <PlusIcon className="h-5 w-5" />
+              <span>Add Task</span>
+            </button>
+            <div className="flex rounded-2xl border border-white/10 bg-slate-950/70 p-1">
+              {[["all", "All Tasks", Squares2X2Icon], ["my", "My Tasks", UserIcon]].map(([value, label, Icon]) => (
+                <button
+                  key={value}
+                  className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${taskView === value ? 'bg-white text-slate-950 shadow' : 'text-slate-300 hover:bg-white/10'}`}
+                  onClick={() => setTaskView(value)}
+                >
+                  <Icon className="h-5 w-5" />
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
 
         <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Add a New Task">
           <TaskForm onAddTask={handleAddTask} onCancel={() => setShowForm(false)} defaultType={viewMode === 'qa' ? 'qa' : 'Code'} />
@@ -338,15 +405,6 @@ export default function TodoBoard({ sprintId, projectId, onSprintChange, viewMod
           <Heatmap columns={columns} view={taskView} onViewChange={setTaskView} sprint={currentSprint} />
           <ProgressPieChart columns={applyView(columns)} />
         </div>
-
-        {/* <div className="mb-6">
-        <input
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search tasks by ID, title or tag..."
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] transition-all"
-        />
-      </div> */}
 
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
