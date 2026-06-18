@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { fetchProjects, updateProject } from '../components/api';
+import { SchedulerAPI, fetchProjects, updateProject } from '../components/api';
 import { CalendarDaysIcon, ChevronDownIcon, ChevronUpIcon, CubeTransparentIcon } from '@heroicons/react/24/outline';
 import SprintOverview from './SprintOverview';
 import Scheduler from '../components/Scheduler/Scheduler';
@@ -31,6 +31,105 @@ const formatDateRange = (start, end) => {
   return `${fmt(start)} - ${fmt(end)}`;
 };
 
+const numberOrZero = (value) => {
+  if (value === null || value === undefined || value === '') return 0;
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? 0 : parsed;
+};
+
+const formatHours = (hours) => {
+  const rounded = Math.round(numberOrZero(hours) * 10) / 10;
+  return `${rounded.toFixed(1).replace(/\.0$/, '')}h`;
+};
+
+const buildMemberLookup = (members = []) => {
+  const lookup = new Map();
+  members.forEach((member) => {
+    lookup.set(String(member.id), {
+      id: member.id,
+      name: member.name || member.email || `User ${member.id}`,
+      role: member.role,
+    });
+  });
+  return lookup;
+};
+
+const buildWorkloadRows = (tasks = [], members = []) => {
+  const memberLookup = buildMemberLookup(members);
+  const rows = new Map();
+
+  const ensureRow = (key, fallbackName, role) => {
+    if (!key) return null;
+    const normalizedKey = String(key);
+    const member = memberLookup.get(normalizedKey);
+    const rowKey = member ? `user:${normalizedKey}` : normalizedKey;
+
+    if (!rows.has(rowKey)) {
+      rows.set(rowKey, {
+        key: rowKey,
+        name: member?.name || fallbackName || 'Unassigned',
+        role: member?.role || role || 'member',
+        hours: 0,
+        tasks: new Set(),
+      });
+    }
+
+    return rows.get(rowKey);
+  };
+
+  const addHours = (key, fallbackName, role, hours, taskId) => {
+    const safeHours = numberOrZero(hours);
+    if (safeHours <= 0) return;
+
+    const row = ensureRow(key, fallbackName, role);
+    if (!row) return;
+
+    row.hours += safeHours;
+    if (taskId) row.tasks.add(taskId);
+  };
+
+  tasks.forEach((task) => {
+    if (!['Code', 'qa'].includes(task?.type)) return;
+
+    const taskId = task.id || task.task_id || task.title;
+    const devHours = numberOrZero(task.dev_hours);
+    const handoffHours = numberOrZero(task.dev_to_qa_hours);
+    const reviewHours = numberOrZero(task.code_review_hours);
+    const qaHours = numberOrZero(task.qa_hours) + numberOrZero(task.automation_qa_hours);
+    const hasBreakdown = devHours + handoffHours + reviewHours + qaHours > 0;
+    const estimateFallback = hasBreakdown ? 0 : numberOrZero(task.estimated_hours);
+    const developerId = task.developer_id || task.developer?.id;
+    const reviewerId = task.assigned_to_user || task.assigned_user?.id;
+    const qaAssignee = task.qa_assigned;
+
+    addHours(
+      developerId,
+      task.developer?.name || task.developer?.first_name,
+      'dev',
+      devHours + handoffHours + (task.type === 'Code' ? estimateFallback : 0),
+      taskId
+    );
+    addHours(
+      reviewerId,
+      task.assigned_user?.name || task.assigned_user?.first_name,
+      'review',
+      reviewHours,
+      taskId
+    );
+    addHours(
+      qaAssignee ? `qa:${qaAssignee}` : null,
+      qaAssignee,
+      'qa',
+      qaHours + (task.type === 'qa' ? estimateFallback : 0),
+      taskId
+    );
+  });
+
+  return Array.from(rows.values())
+    .map((row) => ({ ...row, tasks: row.tasks.size }))
+    .sort((a, b) => b.hours - a.hours || a.name.localeCompare(b.name));
+};
+
 export default function SprintDashboard() {
   const { projectId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -58,6 +157,8 @@ export default function SprintDashboard() {
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(false);
   const [viewMode, setViewMode] = useState('combined');
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(true);
+  const [workloadTasks, setWorkloadTasks] = useState([]);
+  const [isLoadingWorkload, setIsLoadingWorkload] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState('');
   const [projectSettings, setProjectSettings] = useState({
@@ -180,6 +281,46 @@ export default function SprintDashboard() {
     }
   }, [sprintId, sprints]);
 
+  useEffect(() => {
+    if (!projectId || !sprintId) {
+      setWorkloadTasks([]);
+      setIsLoadingWorkload(false);
+      return;
+    }
+
+    let mounted = true;
+    const params = { project_id: projectId, sprint_id: sprintId };
+    if (viewMode === 'dev') params.type = 'Code';
+    if (viewMode === 'qa') params.type = 'qa';
+
+    setIsLoadingWorkload(true);
+    SchedulerAPI.getTasks(params)
+      .then(({ data }) => {
+        if (!mounted) return;
+        const list = Array.isArray(data) ? data : [];
+        setWorkloadTasks(list.filter((task) => String(task.sprint_id) === String(sprintId)));
+      })
+      .catch(() => {
+        if (mounted) setWorkloadTasks([]);
+      })
+      .finally(() => {
+        if (mounted) setIsLoadingWorkload(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [projectId, sprintId, viewMode]);
+
+  const workloadRows = useMemo(
+    () => buildWorkloadRows(workloadTasks, project?.users || []),
+    [workloadTasks, project?.users]
+  );
+
+  const visibleWorkloadRows = workloadRows.slice(0, 4);
+  const hiddenWorkloadCount = Math.max(workloadRows.length - visibleWorkloadRows.length, 0);
+  const totalWorkloadHours = workloadRows.reduce((sum, row) => sum + row.hours, 0);
+
   if (isLoadingDashboard) {
     return <PageLoader title="Project dashboard" message="Loading sprint board, tasks, and project data…" />;
   }
@@ -295,23 +436,52 @@ export default function SprintDashboard() {
           </div>
 
           <div className="grid gap-2.5 xl:grid-cols-[minmax(0,1.25fr)_minmax(300px,0.88fr)]">
-            <div className="grid gap-2.5 sm:grid-cols-3">
-              <div className="shell-kpi-card">
-                <span className="shell-kpi-label">Sprint Window</span>
-                <span className="shell-kpi-value">{sprint ? sprint.name : 'Awaiting sprint'}</span>
-                <span className="shell-kpi-meta">{sprintRangeLabel}</span>
+            <div className="grid gap-2.5">
+              <div className="grid gap-2 sm:grid-cols-3">
+                <div className="shell-kpi-card shell-kpi-card-compact">
+                  <span className="shell-kpi-label">Sprint Window</span>
+                  <span className="shell-kpi-value">{sprint ? sprint.name : 'Awaiting sprint'}</span>
+                  <span className="shell-kpi-meta">{sprintRangeLabel}</span>
+                </div>
+
+                <div className="shell-kpi-card shell-kpi-card-compact">
+                  <span className="shell-kpi-label">Working Days</span>
+                  <span className="shell-kpi-value">{workingDaysCount}</span>
+                  <span className="shell-kpi-meta">Configured against this sprint schedule.</span>
+                </div>
+
+                <div className="shell-kpi-card shell-kpi-card-compact">
+                  <span className="shell-kpi-label">Project Crew</span>
+                  <span className="shell-kpi-value">{project?.users?.length || 0}</span>
+                  <span className="shell-kpi-meta">{project?.qa_mode_enabled ? 'Dev and QA lanes enabled.' : 'Dev-only workflow active.'}</span>
+                </div>
               </div>
 
-              <div className="shell-kpi-card">
-                <span className="shell-kpi-label">Working Days</span>
-                <span className="shell-kpi-value">{workingDaysCount}</span>
-                <span className="shell-kpi-meta">Configured against this sprint schedule.</span>
-              </div>
+              <div className="dashboard-workload-strip">
+                <div className="dashboard-workload-summary">
+                  <span className="dashboard-workload-label">Workload</span>
+                  <span className="dashboard-workload-total">{isLoadingWorkload ? '...' : formatHours(totalWorkloadHours)}</span>
+                </div>
 
-              <div className="shell-kpi-card">
-                <span className="shell-kpi-label">Project Crew</span>
-                <span className="shell-kpi-value">{project?.users?.length || 0}</span>
-                <span className="shell-kpi-meta">{project?.qa_mode_enabled ? 'Dev and QA lanes enabled.' : 'Dev-only workflow active.'}</span>
+                <div className="dashboard-workload-list scrollbar-hide">
+                  {isLoadingWorkload ? (
+                    <span className="dashboard-workload-empty">Calculating...</span>
+                  ) : visibleWorkloadRows.length ? (
+                    <>
+                      {visibleWorkloadRows.map((row) => (
+                        <span key={row.key} className="dashboard-workload-pill" title={`${row.name}: ${formatHours(row.hours)} across ${row.tasks} task${row.tasks === 1 ? '' : 's'}`}>
+                          <span className="dashboard-workload-name">{row.name}</span>
+                          <span className="dashboard-workload-hours">{formatHours(row.hours)}</span>
+                        </span>
+                      ))}
+                      {hiddenWorkloadCount > 0 ? (
+                        <span className="dashboard-workload-pill dashboard-workload-pill-muted">+{hiddenWorkloadCount} more</span>
+                      ) : null}
+                    </>
+                  ) : (
+                    <span className="dashboard-workload-empty">No sprint hours assigned.</span>
+                  )}
+                </div>
               </div>
             </div>
 
