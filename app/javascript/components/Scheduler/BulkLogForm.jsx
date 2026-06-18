@@ -1,171 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
-
-const EMPTY_ARRAY = [];
-
-const numberOrZero = (value) => {
-  const numericValue = Number(value);
-  return Number.isFinite(numericValue) ? numericValue : 0;
-};
-
-const formatHours = (value) => {
-  const numericValue = Number(value);
-  if (!Number.isFinite(numericValue)) return '0h';
-  const normalized = numericValue.toFixed(2).replace(/\.0+$/, '').replace(/\.(\d*?)0+$/, '.$1');
-  return `${normalized}h`;
-};
-
-const resolveDefaultLogDate = (dates = []) => {
-  if (!dates.length) return '';
-
-  const today = new Date().toISOString().slice(0, 10);
-  if (dates.includes(today)) return today;
-  return dates[dates.length - 1] || dates[0];
-};
-
-const resolveDefaultLogType = (viewMode, types = []) => {
-  const preferredType = viewMode === 'qa' ? 'Testing' : 'Code';
-  return types.includes(preferredType) ? preferredType : (types[0] || preferredType);
-};
-
-const pickPlannedHours = (task) => {
-  const candidates = [
-    task?.estimated_hours,
-    task?.type === 'qa' ? task?.qa_hours : task?.dev_hours,
-    task?.type === 'qa' ? task?.dev_hours : task?.qa_hours,
-    task?.total_hours
-  ];
-
-  const plannedHours = candidates.find((value) => value !== null && value !== undefined && value !== '');
-  return numberOrZero(plannedHours);
-};
-
-const buildLoggedHoursByTask = (logs = []) =>
-  logs.reduce((accumulator, log) => {
-    const taskId = log?.task_id ?? log?.task?.id;
-    if (!taskId || log?.deleted) return accumulator;
-
-    accumulator[String(taskId)] = (accumulator[String(taskId)] || 0) + numberOrZero(log.hours_logged);
-    return accumulator;
-  }, {});
-
-const buildDailyHoursByMemberDate = (logs = []) =>
-  logs.reduce((accumulator, log) => {
-    const developerId = log?.developer_id ?? log?.developerId;
-    const logDate = log?.log_date ?? log?.logDate;
-    if (!developerId || !logDate || log?.deleted) return accumulator;
-
-    if (!accumulator[String(developerId)]) accumulator[String(developerId)] = {};
-    accumulator[String(developerId)][logDate] = (accumulator[String(developerId)][logDate] || 0) + numberOrZero(log.hours_logged);
-    return accumulator;
-  }, {});
-
-const appendOrMergeEntry = (entries, nextEntry) => {
-  const existingEntry = entries.find((entry) => (
-    entry.task_id === nextEntry.task_id &&
-    entry.developer_id === nextEntry.developer_id &&
-    entry.log_date === nextEntry.log_date &&
-    entry.type === nextEntry.type
-  ));
-
-  if (existingEntry) {
-    existingEntry.hours_logged += nextEntry.hours_logged;
-    return;
-  }
-
-  entries.push(nextEntry);
-};
-
-const buildDistributionPlan = ({ rows, dates, startDate, maxHoursPerDay, existingLogs, logType }) => {
-  const distributionDates = dates.filter((date) => date >= startDate);
-  const perDayLimit = numberOrZero(maxHoursPerDay);
-  const dailyHoursByMemberDate = buildDailyHoursByMemberDate(existingLogs);
-  const selectedRows = rows.filter((row) => row.selected && row.developerId && numberOrZero(row.hours) > 0);
-  const entries = [];
-  let overflowHours = 0;
-  let overflowTasks = 0;
-
-  selectedRows.forEach((row) => {
-    const developerId = String(row.developerId);
-    let remainingHours = numberOrZero(row.hours);
-
-    distributionDates.forEach((date) => {
-      if (remainingHours <= 0 || perDayLimit <= 0) return;
-
-      const currentHours = dailyHoursByMemberDate[developerId]?.[date] || 0;
-      const availableHours = Math.max(perDayLimit - currentHours, 0);
-      if (availableHours <= 0) return;
-
-      const assignedHours = Math.min(remainingHours, availableHours);
-      appendOrMergeEntry(entries, {
-        task_id: row.taskId,
-        developer_id: Number(developerId),
-        log_date: date,
-        type: logType,
-        hours_logged: assignedHours,
-        status: 'todo'
-      });
-
-      if (!dailyHoursByMemberDate[developerId]) dailyHoursByMemberDate[developerId] = {};
-      dailyHoursByMemberDate[developerId][date] = currentHours + assignedHours;
-      remainingHours -= assignedHours;
-    });
-
-    if (remainingHours > 0 && distributionDates.length) {
-      const lastDate = distributionDates[distributionDates.length - 1];
-      appendOrMergeEntry(entries, {
-        task_id: row.taskId,
-        developer_id: Number(developerId),
-        log_date: lastDate,
-        type: logType,
-        hours_logged: remainingHours,
-        status: 'todo'
-      });
-
-      if (!dailyHoursByMemberDate[developerId]) dailyHoursByMemberDate[developerId] = {};
-      dailyHoursByMemberDate[developerId][lastDate] = (dailyHoursByMemberDate[developerId][lastDate] || 0) + remainingHours;
-      overflowHours += remainingHours;
-      overflowTasks += 1;
-    }
-  });
-
-  return {
-    entries,
-    selectedRows,
-    distributionDates,
-    overflowHours,
-    overflowTasks
-  };
-};
-
-const sortTasks = (left, right) => {
-  const leftOrder = Number(left?.order) || Number.MAX_SAFE_INTEGER;
-  const rightOrder = Number(right?.order) || Number.MAX_SAFE_INTEGER;
-  if (leftOrder !== rightOrder) return leftOrder - rightOrder;
-
-  const leftDate = left?.end_date || left?.start_date || '';
-  const rightDate = right?.end_date || right?.start_date || '';
-  if (leftDate !== rightDate) return String(leftDate).localeCompare(String(rightDate));
-
-  return String(left?.task_id || left?.title || left?.id).localeCompare(String(right?.task_id || right?.title || right?.id));
-};
-
-const resolveSuggestedDeveloperId = (task, developers, viewMode) => {
-  const safeDevelopers = Array.isArray(developers) ? developers : EMPTY_ARRAY;
-  const availableIds = new Set(safeDevelopers.map((developer) => String(developer.id)));
-  const candidateIds = viewMode === 'qa'
-    ? [task?.assigned_to_user, task?.assigned_user?.id, task?.developer_id, task?.developer?.id]
-    : [task?.developer_id, task?.developer?.id, task?.assigned_to_user, task?.assigned_user?.id];
-
-  const matchingId = candidateIds.find((candidateId) => candidateId && availableIds.has(String(candidateId)));
-  return matchingId ? String(matchingId) : (safeDevelopers[0] ? String(safeDevelopers[0].id) : '');
-};
+import {
+  EMPTY_ARRAY,
+  buildDistributionPlan,
+  buildTaskStageRows,
+  formatHours,
+  numberOrZero,
+  resolveDefaultLogDate,
+  validateStageSelection,
+} from './bulkLogPlanner';
 
 export default function BulkLogForm({
   tasks,
   existingLogs,
   developers,
   dates,
-  types,
   viewMode = 'combined',
   onSubmit,
   onCancel
@@ -174,9 +22,7 @@ export default function BulkLogForm({
   const safeExistingLogs = useMemo(() => Array.isArray(existingLogs) ? existingLogs : EMPTY_ARRAY, [existingLogs]);
   const safeDevelopers = useMemo(() => Array.isArray(developers) ? developers : EMPTY_ARRAY, [developers]);
   const safeDates = useMemo(() => Array.isArray(dates) ? dates : EMPTY_ARRAY, [dates]);
-  const safeTypes = useMemo(() => Array.isArray(types) ? types : EMPTY_ARRAY, [types]);
   const [logDate, setLogDate] = useState('');
-  const [logType, setLogType] = useState('');
   const [maxHoursPerDay, setMaxHoursPerDay] = useState('8');
   const [applyDeveloperId, setApplyDeveloperId] = useState('');
   const [showOnlyRemaining, setShowOnlyRemaining] = useState(true);
@@ -184,37 +30,18 @@ export default function BulkLogForm({
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const loggedHoursByTask = buildLoggedHoursByTask(safeExistingLogs);
-    const nextRows = [...safeTasks]
-      .sort(sortTasks)
-      .map((task) => {
-        const plannedHours = pickPlannedHours(task);
-        const loggedHours = numberOrZero(loggedHoursByTask[String(task.id)]);
-        const remainingHours = plannedHours - loggedHours;
-        const suggestedHours = remainingHours > 0 ? remainingHours : 0;
-
-        return {
-          taskId: task.id,
-          taskKey: task.task_id,
-          taskUrl: task.task_url,
-          title: task.title,
-          plannedHours,
-          loggedHours,
-          remainingHours,
-          developerId: resolveSuggestedDeveloperId(task, safeDevelopers, viewMode),
-          hours: suggestedHours > 0 ? String(suggestedHours) : '',
-          selected: suggestedHours > 0
-        };
-      });
-
-    setRows(nextRows);
+    setRows(buildTaskStageRows({
+      tasks: safeTasks,
+      existingLogs: safeExistingLogs,
+      developers: safeDevelopers,
+      viewMode,
+    }));
     setLogDate(resolveDefaultLogDate(safeDates));
-    setLogType(resolveDefaultLogType(viewMode, safeTypes));
     setMaxHoursPerDay('8');
     setApplyDeveloperId(safeDevelopers[0] ? String(safeDevelopers[0].id) : '');
     setShowOnlyRemaining(true);
     setError('');
-  }, [safeTasks, safeExistingLogs, safeDevelopers, safeDates, safeTypes, viewMode]);
+  }, [safeTasks, safeExistingLogs, safeDevelopers, safeDates, viewMode]);
 
   const visibleRows = useMemo(
     () => rows.filter((row) => !showOnlyRemaining || row.selected || row.remainingHours > 0),
@@ -237,40 +64,39 @@ export default function BulkLogForm({
       dates: safeDates,
       startDate: logDate,
       maxHoursPerDay,
-      existingLogs: safeExistingLogs,
-      logType
+      existingLogs: safeExistingLogs
     }),
-    [rows, safeDates, logDate, maxHoursPerDay, safeExistingLogs, logType]
+    [rows, safeDates, logDate, maxHoursPerDay, safeExistingLogs]
   );
 
   const remainingTaskCount = useMemo(
-    () => rows.filter((row) => row.remainingHours > 0).length,
+    () => new Set(rows.filter((row) => row.remainingHours > 0).map((row) => row.taskId)).size,
     [rows]
   );
 
-  const updateRow = (taskId, updater) => {
+  const updateRow = (rowId, updater) => {
     setRows((currentRows) => currentRows.map((row) => (
-      row.taskId === taskId ? updater(row) : row
+      row.rowId === rowId ? updater(row) : row
     )));
   };
 
-  const toggleSelection = (taskId) => {
+  const toggleSelection = (rowId) => {
     setError('');
-    updateRow(taskId, (row) => ({
+    updateRow(rowId, (row) => ({
       ...row,
       selected: !row.selected,
       hours: !row.selected && !row.hours && row.remainingHours > 0 ? String(row.remainingHours) : row.hours
     }));
   };
 
-  const handleHoursChange = (taskId, value) => {
+  const handleHoursChange = (rowId, value) => {
     setError('');
-    updateRow(taskId, (row) => ({ ...row, hours: value }));
+    updateRow(rowId, (row) => ({ ...row, hours: value }));
   };
 
-  const handleDeveloperChange = (taskId, value) => {
+  const handleDeveloperChange = (rowId, value) => {
     setError('');
-    updateRow(taskId, (row) => ({ ...row, developerId: value }));
+    updateRow(rowId, (row) => ({ ...row, developerId: value }));
   };
 
   const selectRemainingTasks = () => {
@@ -310,19 +136,14 @@ export default function BulkLogForm({
       return;
     }
 
-    if (!logType) {
-      setError('Select a log type.');
-      return;
-    }
-
     if (numberOrZero(maxHoursPerDay) <= 0) {
       setError('Per day max hours must be greater than 0.');
       return;
     }
 
-    const invalidRow = selectedRows.find((row) => !row.developerId || numberOrZero(row.hours) <= 0);
-    if (invalidRow) {
-      setError(`Complete the assignee and hours for ${invalidRow.taskKey || invalidRow.title}.`);
+    const validation = validateStageSelection(rows);
+    if (!validation.valid) {
+      setError(validation.message);
       return;
     }
 
@@ -357,7 +178,7 @@ export default function BulkLogForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="grid grid-cols-1 gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 xl:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 xl:grid-cols-4">
         <div>
           <label className="mb-2 block text-sm font-medium text-slate-700">Start Date</label>
           <select
@@ -369,19 +190,6 @@ export default function BulkLogForm({
               <option key={date} value={date}>
                 {new Date(date).toLocaleDateString()}
               </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">Log Type</label>
-          <select
-            value={logType}
-            onChange={(event) => setLogType(event.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
-          >
-            {safeTypes.map((type) => (
-              <option key={type} value={type}>{type}</option>
             ))}
           </select>
         </div>
@@ -436,11 +244,11 @@ export default function BulkLogForm({
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Tasks With Remaining Hours</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Tasks With Remaining Stages</div>
           <div className="mt-2 text-2xl font-bold text-slate-900">{remainingTaskCount}</div>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Selected Tasks</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Selected Stages</div>
           <div className="mt-2 text-2xl font-bold text-slate-900">{selectedRows.length}</div>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -454,12 +262,12 @@ export default function BulkLogForm({
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-        Bulk log starts from <span className="font-semibold text-slate-800">{logDate ? new Date(logDate).toLocaleDateString() : 'the selected date'}</span> and fills each working day up to <span className="font-semibold text-slate-800">{formatHours(maxHoursPerDay)}</span> for each member before moving the remaining task hours to the next sprint date.
+        Bulk log starts from <span className="font-semibold text-slate-800">{logDate ? new Date(logDate).toLocaleDateString() : 'the selected date'}</span>, creates task stages from the task hour fields, and fills each working day up to <span className="font-semibold text-slate-800">{formatHours(maxHoursPerDay)}</span> per member. Review, Dev to QA, and QA stages start after the previous stage's last logged day; last sprint day overflow is added there for manual adjustment.
       </div>
 
       {distributionPreview.overflowHours > 0 && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          {formatHours(distributionPreview.overflowHours)} could not fit within the daily limit for {distributionPreview.overflowTasks} task{distributionPreview.overflowTasks === 1 ? '' : 's'} and will be added on the last sprint day so you can adjust manually.
+          {formatHours(distributionPreview.overflowHours)} could not fit within the daily limit for {distributionPreview.overflowTasks} stage{distributionPreview.overflowTasks === 1 ? '' : 's'} and will be added on the last sprint day so you can adjust manually.
         </div>
       )}
 
@@ -469,7 +277,7 @@ export default function BulkLogForm({
           onClick={selectRemainingTasks}
           className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
         >
-          Select Remaining Tasks
+          Select Remaining Stages
         </button>
         <button
           type="button"
@@ -493,6 +301,7 @@ export default function BulkLogForm({
             <tr>
               <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Pick</th>
               <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Task</th>
+              <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Stage</th>
               <th className="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Planned</th>
               <th className="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Logged</th>
               <th className="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Remaining</th>
@@ -503,7 +312,7 @@ export default function BulkLogForm({
           <tbody className="divide-y divide-slate-200 bg-white">
             {visibleRows.length === 0 && (
               <tr>
-                <td colSpan="7" className="px-4 py-8 text-center text-sm text-slate-500">
+                <td colSpan="8" className="px-4 py-8 text-center text-sm text-slate-500">
                   No tasks match the current bulk log filters.
                 </td>
               </tr>
@@ -516,12 +325,12 @@ export default function BulkLogForm({
                   : 'text-slate-500';
 
               return (
-                <tr key={row.taskId} className={row.selected ? 'bg-[rgb(var(--theme-color-rgb)/0.04)]' : undefined}>
+                <tr key={row.rowId} className={row.selected ? 'bg-[rgb(var(--theme-color-rgb)/0.04)]' : undefined}>
                   <td className="px-3 py-3 align-top">
                     <input
                       type="checkbox"
                       checked={row.selected}
-                      onChange={() => toggleSelection(row.taskId)}
+                      onChange={() => toggleSelection(row.rowId)}
                       className="mt-1 h-4 w-4 rounded border-slate-300 text-[var(--theme-color)] focus:ring-[var(--theme-color)]"
                     />
                   </td>
@@ -542,13 +351,14 @@ export default function BulkLogForm({
                       <div className="mt-1 text-sm text-slate-600">{row.title}</div>
                     </div>
                   </td>
+                  <td className="px-3 py-3 align-top text-sm font-semibold text-slate-700">{row.stageLabel}</td>
                   <td className="px-3 py-3 text-center text-sm text-slate-700">{formatHours(row.plannedHours)}</td>
                   <td className="px-3 py-3 text-center text-sm text-slate-700">{formatHours(row.loggedHours)}</td>
                   <td className={`px-3 py-3 text-center text-sm font-semibold ${remainingTone}`}>{formatHours(row.remainingHours)}</td>
                   <td className="px-3 py-3">
                     <select
                       value={row.developerId}
-                      onChange={(event) => handleDeveloperChange(row.taskId, event.target.value)}
+                      onChange={(event) => handleDeveloperChange(row.rowId, event.target.value)}
                       className="w-full min-w-[180px] rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                     >
                       <option value="">Select member</option>
@@ -563,7 +373,7 @@ export default function BulkLogForm({
                       min="0"
                       step="0.25"
                       value={row.hours}
-                      onChange={(event) => handleHoursChange(row.taskId, event.target.value)}
+                      onChange={(event) => handleHoursChange(row.rowId, event.target.value)}
                       className="w-full min-w-[120px] rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
                     />
                   </td>

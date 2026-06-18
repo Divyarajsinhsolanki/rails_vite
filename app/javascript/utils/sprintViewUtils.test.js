@@ -113,6 +113,36 @@ describe("sprintViewUtils", () => {
     ).toEqual([1, 2]);
   });
 
+  it("keeps reviewers visible for scheduler review stages", () => {
+    const members = [
+      { id: 1, name: "Dev One" },
+      { id: 2, name: "Reviewer One" },
+    ];
+
+    expect(
+      getVisibleMembersForView({
+        members,
+        viewMode: "combined",
+        records: [{ type: "Code", developer_id: 1, assigned_to_user: 2, code_review_hours: 1 }],
+      }).map((member) => member.id)
+    ).toEqual([1, 2]);
+  });
+
+  it("resolves QA assigned names to visible project members", () => {
+    const members = [
+      { id: 1, name: "Dev One" },
+      { id: 2, name: "Riya QA", email: "riya@example.test" },
+    ];
+
+    expect(
+      getVisibleMembersForView({
+        members,
+        viewMode: "qa",
+        records: [{ type: "qa", qa_assigned: "Riya QA", qa_hours: 4 }],
+      }).map((member) => member.id)
+    ).toEqual([2]);
+  });
+
   it("gracefully handles non-array API payloads", () => {
     expect(
       getVisibleMembersForView({

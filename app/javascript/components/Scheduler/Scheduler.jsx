@@ -86,6 +86,8 @@ function TaskCard({ task, index, onEdit, onTaskUpdate, onDuplicate }) {
     'Code': 'bg-green-50 border-green-300 text-green-800',
     'Code review': 'bg-blue-50 border-blue-300 text-blue-800',
     'Dev to QA': 'bg-purple-50 border-purple-300 text-purple-800',
+    'Testing': 'bg-amber-50 border-amber-300 text-amber-800',
+    'Automation QA': 'bg-cyan-50 border-cyan-300 text-cyan-800',
     'Default': 'bg-gray-50 border-gray-300 text-gray-800'
   };
   const cardColor = typeColors[task.type] || typeColors['Default'];
@@ -261,7 +263,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, projectMember
   const [developers, setDevelopers] = useState([]);
   const [tasks, setTasks] = useState([]); // will hold task logs
   const [allTasks, setAllTasks] = useState([]); // options from tasks table
-  const types = useMemo(() => ['Code', 'Code review', 'Dev to QA', 'Planning', 'Testing', 'Bug Fixing'], []);
+  const types = useMemo(() => ['Code', 'Code review', 'Dev to QA', 'Planning', 'Testing', 'Automation QA', 'Bug Fixing'], []);
 
   const [loading, setLoading] = useState({ sprint: true, developers: true, tasks: true });
   const [error, setError] = useState(null);

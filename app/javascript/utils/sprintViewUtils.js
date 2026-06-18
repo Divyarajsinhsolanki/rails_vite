@@ -9,6 +9,35 @@ const normalizeGroupKey = (value) =>
 const sortTaskList = (tasks = []) =>
   [...tasks].sort((left, right) => (Number(left.order) || 0) - (Number(right.order) || 0));
 
+const compact = (values = []) =>
+  values.filter((value) => value !== null && value !== undefined && value !== "");
+
+const memberTokens = (member) => {
+  const fullName = [member?.first_name, member?.last_name].filter(Boolean).join(" ");
+  return compact([
+    member?.id,
+    member?.name,
+    member?.email,
+    member?.first_name,
+    member?.last_name,
+    fullName,
+  ]);
+};
+
+const buildMemberLookup = (members = []) =>
+  members.reduce((accumulator, member) => {
+    memberTokens(member).forEach((token) => {
+      const normalized = normalizeGroupKey(String(token));
+      if (normalized) accumulator[normalized] = String(member.id);
+    });
+    return accumulator;
+  }, {});
+
+const resolveMemberIdByLabel = (labels = [], memberLookup = {}) =>
+  compact(labels)
+    .map((label) => memberLookup[normalizeGroupKey(String(label))])
+    .find(Boolean);
+
 export function getTaskAssignmentGroup(task, developerMap = {}) {
   const developerId = task?.assignedTo?.[0] ? String(task.assignedTo[0]) : "";
   if (developerId) {
@@ -82,23 +111,41 @@ export function getVisibleMembersForView({
 } = {}) {
   const safeMembers = Array.isArray(members) ? members : [];
   const safeRecords = Array.isArray(records) ? records : [];
+  const memberLookup = buildMemberLookup(safeMembers);
+  const availableIds = new Set(safeMembers.map((member) => String(member.id)));
+  const addId = (ids, value) => {
+    if (value !== null && value !== undefined && value !== "" && availableIds.has(String(value))) {
+      ids.add(String(value));
+    }
+  };
 
-  const assignedIds = new Set(
-    safeRecords
-      .map((record) => {
-        const recordType = String(record?.type || "").toLowerCase();
-        const preferredQaAssignee = record?.assigned_to_user ?? record?.assignedUser ?? record?.assigned_user?.id;
-        const preferredDevAssignee = record?.developer_id ?? record?.developerId ?? record?.developer?.id;
+  const assignedIds = safeRecords.reduce((ids, record) => {
+    const recordType = String(record?.type || "").toLowerCase();
+    const developerId = record?.developer_id ?? record?.developerId ?? record?.developer?.id;
+    const reviewerId = record?.assigned_to_user ?? record?.assignedUser ?? record?.assigned_user?.id;
+    const qaId = resolveMemberIdByLabel(
+      [record?.qa_assigned, record?.internal_qa, record?.assigned_user?.name, record?.assigned_user?.email],
+      memberLookup
+    );
 
-        if (viewMode === "qa" || recordType === "qa") {
-          return preferredQaAssignee ?? preferredDevAssignee;
-        }
+    if (viewMode === "qa" || recordType === "qa") {
+      addId(ids, reviewerId);
+      addId(ids, qaId);
+      if (!reviewerId && !qaId) addId(ids, developerId);
+      return ids;
+    }
 
-        return preferredDevAssignee ?? preferredQaAssignee;
-      })
-      .filter(Boolean)
-      .map((id) => String(id))
-  );
+    if (viewMode === "dev") {
+      addId(ids, developerId);
+      addId(ids, reviewerId);
+      return ids;
+    }
+
+    addId(ids, developerId);
+    addId(ids, reviewerId);
+    addId(ids, qaId);
+    return ids;
+  }, new Set());
 
   return safeMembers.filter((member) => assignedIds.has(String(member.id)));
 }
