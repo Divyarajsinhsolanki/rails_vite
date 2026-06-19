@@ -25,4 +25,27 @@ class PdfMasterConcurrencyTest < ActiveSupport::TestCase
     Array(sources).each(&:close!)
     Array(outputs).each(&:close!)
   end
+
+  test "service page operations write to explicit output paths" do
+    source = create_test_pdf(pages: 3)
+    rotated = Tempfile.new(["pdf-rotated-", ".pdf"])
+    deleted = Tempfile.new(["pdf-deleted-", ".pdf"])
+    reordered = Tempfile.new(["pdf-reordered-", ".pdf"])
+    blank = Tempfile.new(["pdf-blank-", ".pdf"])
+
+    PdfMaster::Modify.rotate_pages(source.path, [1], 90, rotated.path)
+    assert_equal 90, HexaPDF::Document.open(rotated.path).pages[0][:Rotate]
+
+    PdfMaster::Modify.delete_pages(source.path, [2], deleted.path)
+    assert_equal 2, HexaPDF::Document.open(deleted.path).pages.count
+
+    PdfMaster::Modify.reorder_pages(source.path, [3, 1, 2], reordered.path)
+    assert_equal 3, HexaPDF::Document.open(reordered.path).pages.count
+
+    PdfMaster::Modify.add_blank_page_like(source.path, 2, 1, blank.path)
+    assert_equal 4, HexaPDF::Document.open(blank.path).pages.count
+  ensure
+    source&.close!
+    [rotated, deleted, reordered, blank].compact.each(&:close!)
+  end
 end

@@ -24,80 +24,90 @@ module PdfMaster
 
       def add_page(input_pdf, *page_numbers)
         Logger.log("Adding blank pages to #{input_pdf} at positions #{page_numbers}")
-        load_pdf(input_pdf)
+        positions = normalize_page_numbers(page_numbers)
+        raise ArgumentError, "Choose at least one page position." if positions.empty?
 
-        prawn_pdf = Prawn::Document.new { |pdf| pdf.start_new_page }
-        blank_page = CombinePDF.parse(String.new(prawn_pdf.render).dup).pages[0]
-        new_pdf = CombinePDF.new
+        pdf = CombinePDF.load(input_pdf)
+        validate_positions!(positions, pdf.pages.count + 1, "position")
 
-        page_numbers = page_numbers.map(&:to_i).sort.uniq
-        max_pages = @pdf_pages.count + 1
-        valid_positions = page_numbers.select { |pos| pos.between?(1, max_pages) }
-        
-        insert_index = 0
-        @pdf.pages.each_with_index do |page, index|
-          while insert_index < valid_positions.size && valid_positions[insert_index] - 1 == index
-            new_pdf << blank_page
-            insert_index += 1
-          end
-          new_pdf << page
-        end
-
-        while insert_index < valid_positions.size && valid_positions[insert_index] == max_pages
-          new_pdf << blank_page
-          insert_index += 1
-        end
-        
-        @pdf = new_pdf
-        @pdf = @pdf.dup unless @pdf.nil? || !@pdf.frozen?
-
-        save_pdf(input_pdf)
+        new_pdf = insert_blank_pages(pdf, positions)
+        new_pdf.save(input_pdf)
         Logger.log("Blank pages added successfully.")
       rescue => e
         Logger.log("Error adding pages: #{e.message}")
         raise
       end
 
-      def remove_page(input_pdf, *page_numbers)
-        Logger.log("Removing pages #{page_numbers} from #{input_pdf}")
-        load_pdf(input_pdf)
+      def add_blank_page_like(input_pdf, position, reference_page_number = nil, output_pdf = input_pdf)
+        Logger.log("Adding blank page to #{input_pdf} at position #{position}")
+        pdf = CombinePDF.load(input_pdf)
+        insert_position = Integer(position)
+        validate_positions!([insert_position], pdf.pages.count + 1, "position")
 
-        page_numbers = page_numbers.map(&:to_i).sort.uniq
-        max_pages = @pdf.pages.count
-        valid_positions = page_numbers.select { |pos| pos.between?(1, max_pages) }
+        reference_index = blank_page_reference_index(pdf, insert_position, reference_page_number)
+        blank_page = build_blank_page_like(pdf.pages[reference_index])
+        new_pdf = CombinePDF.new
 
-        if valid_positions.empty?
-          raise ArgumentError, "Invalid page numbers: #{page_numbers}"
+        pdf.pages.each_with_index do |page, index|
+          new_pdf << blank_page if insert_position == index + 1
+          new_pdf << page
         end
+        new_pdf << blank_page if insert_position == pdf.pages.count + 1
+
+        new_pdf.save(output_pdf)
+        Logger.log("Blank page added successfully.")
+      rescue => e
+        Logger.log("Error adding blank page: #{e.message}")
+        raise
+      end
+
+      def remove_page(input_pdf, *page_numbers)
+        delete_pages(input_pdf, page_numbers, input_pdf)
+      end
+
+      def delete_pages(input_pdf, page_numbers, output_pdf = input_pdf)
+        Logger.log("Removing pages #{page_numbers} from #{input_pdf}")
+        pages_to_delete = normalize_page_numbers(page_numbers)
+        raise ArgumentError, "Choose at least one page to delete." if pages_to_delete.empty?
+
+        pdf = CombinePDF.load(input_pdf)
+        validate_positions!(pages_to_delete, pdf.pages.count, "page")
+        raise ArgumentError, "A PDF must keep at least one page." if pages_to_delete.length >= pdf.pages.count
 
         new_pdf = CombinePDF.new
-        @pdf.pages.each_with_index do |page, index|
-          new_pdf << page unless valid_positions.include?(index + 1)
+        pdf.pages.each_with_index do |page, index|
+          new_pdf << page unless pages_to_delete.include?(index + 1)
         end
 
-        @pdf = new_pdf
-        save_pdf(input_pdf)
-        Logger.log("Pages #{valid_positions} removed successfully.")
+        new_pdf.save(output_pdf)
+        Logger.log("Pages #{pages_to_delete} removed successfully.")
       rescue => e
         Logger.log("Error removing pages: #{e.message}")
         raise
       end
 
       def rotate_page(input_pdf, degrees, *page_numbers)
+        rotate_pages(input_pdf, page_numbers, degrees, input_pdf)
+      end
+
+      def rotate_pages(input_pdf, page_numbers, degrees, output_pdf = input_pdf)
         Logger.log("Rotating pages #{page_numbers} of #{input_pdf} by #{degrees} degrees")
-        load_pdf(input_pdf)
-      
-        page_numbers = page_numbers.map(&:to_i).uniq
-        max_pages = @pdf_pages.count
-        valid_positions = page_numbers.select { |pos| pos.between?(1, max_pages) }
-      
-        valid_positions.each do |page_number|
-          page = @pdf_pages[page_number - 1]
+        rotation = Integer(degrees)
+        raise ArgumentError, "Rotation must be a multiple of 90 degrees." unless (rotation % 90).zero?
+
+        pages_to_rotate = normalize_page_numbers(page_numbers)
+        raise ArgumentError, "Choose at least one page to rotate." if pages_to_rotate.empty?
+
+        pdf = CombinePDF.load(input_pdf)
+        validate_positions!(pages_to_rotate, pdf.pages.count, "page")
+
+        pages_to_rotate.each do |page_number|
+          page = pdf.pages[page_number - 1]
           current_rotation = (page[:Rotate] || 0).to_i
-          page[:Rotate] = (current_rotation + degrees) % 360
+          page[:Rotate] = (current_rotation + rotation) % 360
         end
-      
-        save_pdf(input_pdf)
+
+        pdf.save(output_pdf)
         Logger.log("Pages rotated successfully.")
       rescue => e
         Logger.log("Error rotating pages: #{e.message}")
@@ -244,6 +254,25 @@ module PdfMaster
         Logger.log("Pages extracted successfully into #{output_pdf}")
       rescue => e
         Logger.log("Error extracting pages: #{e.message}")
+        raise
+      end
+
+      def reorder_pages(input_pdf, page_order, output_pdf = input_pdf)
+        Logger.log("Reordering pages in #{input_pdf} with order #{page_order}")
+        pdf = CombinePDF.load(input_pdf)
+        order = normalize_page_numbers(page_order)
+        expected = (1..pdf.pages.count).to_a
+
+        unless order.sort == expected
+          raise ArgumentError, "Page order must include each page exactly once."
+        end
+
+        new_pdf = CombinePDF.new
+        order.each { |page_number| new_pdf << pdf.pages[page_number - 1] }
+        new_pdf.save(output_pdf)
+        Logger.log("Pages reordered successfully.")
+      rescue => e
+        Logger.log("Error reordering pages: #{e.message}")
         raise
       end
 
@@ -404,7 +433,64 @@ module PdfMaster
 
       private
 
-      def self.move_pages(pages, indices, direction)
+      def normalize_page_numbers(values)
+        Array(values).flatten.map { |value| Integer(value) }.uniq
+      end
+
+      def validate_positions!(positions, max_position, label)
+        invalid = positions.reject { |position| position.between?(1, max_position) }
+        return if invalid.empty?
+
+        raise ArgumentError, "Invalid #{label} numbers: #{invalid.join(', ')}"
+      end
+
+      def insert_blank_pages(pdf, positions)
+        sorted_positions = positions.sort
+        new_pdf = CombinePDF.new
+        insert_index = 0
+
+        pdf.pages.each_with_index do |page, index|
+          while insert_index < sorted_positions.size && sorted_positions[insert_index] == index + 1
+            new_pdf << build_default_blank_page
+            insert_index += 1
+          end
+          new_pdf << page
+        end
+
+        while insert_index < sorted_positions.size && sorted_positions[insert_index] == pdf.pages.count + 1
+          new_pdf << build_default_blank_page
+          insert_index += 1
+        end
+
+        new_pdf
+      end
+
+      def blank_page_reference_index(pdf, insert_position, reference_page_number)
+        reference = if reference_page_number.nil? || reference_page_number.to_s.strip.empty?
+                      [insert_position - 1, 1].max
+                    else
+                      Integer(reference_page_number)
+                    end
+        reference = [[reference, 1].max, pdf.pages.count].min
+        reference - 1
+      end
+
+      def build_default_blank_page
+        CombinePDF.parse(String.new(Prawn::Document.new.render).dup).pages.first
+      end
+
+      def build_blank_page_like(reference_page)
+        box = Array(reference_page&.mediabox)
+        width = (box[2] || 612).to_f - (box[0] || 0).to_f
+        height = (box[3] || 792).to_f - (box[1] || 0).to_f
+        width = 612 if width <= 0
+        height = 792 if height <= 0
+
+        blank_pdf = Prawn::Document.new(page_size: [width, height], margin: 0)
+        CombinePDF.parse(String.new(blank_pdf.render).dup).pages.first
+      end
+
+      def move_pages(pages, indices, direction)
         # Convert to 0-based indices and sort them to keep extraction predictable
         target_indices = indices.map { |i| i - 1 }.sort
         
