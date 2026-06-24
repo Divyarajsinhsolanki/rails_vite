@@ -8,7 +8,9 @@ class Api::UsersController < Api::BaseController
 
   # GET /api/users.json
   def index
-    users = current_user.workspace.users.order(created_at: :desc)
+    users = current_user.workspace.users
+      .includes(:department, :roles, :projects, profile_picture_attachment: :blob, cover_photo_attachment: :blob)
+      .order(created_at: :desc)
     render_paginated_collection(users, serializer: method(:serialize_user))
   end
 
@@ -51,7 +53,7 @@ class Api::UsersController < Api::BaseController
     role_names = params[:user].delete(:role_names) if params[:user]
 
     if @user.update(user_params)
-      @user.roles = Role.where(name: role_names) if role_names
+      assign_roles!(@user, role_names) if role_names
       render json: serialize_user(@user)
     else
       render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
@@ -169,6 +171,7 @@ class Api::UsersController < Api::BaseController
   def assign_roles!(user, role_names)
     target_role_names = role_names.presence || ['member']
     user.roles = Role.where(name: target_role_names)
+    user.remove_instance_variable(:@role_names) if user.instance_variable_defined?(:@role_names)
   end
 
   def assign_projects!(user, project_ids)
@@ -204,15 +207,20 @@ class Api::UsersController < Api::BaseController
       cover_photo: user.cover_photo.attached? ?
         rails_blob_url(user.cover_photo, only_path: true) : nil,
       avatar_color: user.avatar_color,
-      roles: user.roles.pluck(:name),
+      roles: user.role_names.sort,
       landing_page: user.landing_page,
       phone_number: user.phone_number,
       bio: user.bio,
       social_links: user.social_links || {},
-      projects: user.projects.order(:name).map { |project| { id: project.id, name: project.name } },
+      projects: serialized_projects(user),
       last_seen_at: user.last_seen_at,
       online: user.last_seen_at.present? && user.last_seen_at >= ONLINE_WINDOW.ago
     }
+  end
+
+  def serialized_projects(user)
+    projects = user.association(:projects).loaded? ? user.projects.sort_by { |project| project.name.to_s.downcase } : user.projects.order(:name)
+    projects.map { |project| { id: project.id, name: project.name } }
   end
 
   def authorize_user_creation!

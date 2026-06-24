@@ -117,11 +117,20 @@ class User < ApplicationRecord
     hsl_to_hex(hue, saturation, lightness)
   end
 
+  def role_names
+    @role_names ||= if association(:roles).loaded?
+      roles.map(&:name)
+    else
+      UserRole.in_workspace(workspace)
+        .where(user_id: id)
+        .joins(:role)
+        .order("roles.name")
+        .pluck("roles.name")
+    end
+  end
+
   def has_role?(name)
-    UserRole.in_workspace(workspace)
-      .where(user_id: id)
-      .joins(:role)
-      .exists?(roles: { name: name.to_s })
+    role_names.include?(name.to_s)
   end
 
   def owner?
@@ -205,12 +214,7 @@ class User < ApplicationRecord
     payload = as_json(options)
 
     if include_roles
-      role_names = UserRole.in_workspace(workspace)
-        .where(user_id: id)
-        .joins(:role)
-        .order("roles.name")
-        .pluck("roles.name")
-      payload["roles"] = role_names.map { |role_name| { "name" => role_name } }
+      payload["roles"] = role_names.sort.map { |role_name| { "name" => role_name } }
     end
 
     payload
