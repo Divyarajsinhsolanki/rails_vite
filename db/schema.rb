@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2027_06_15_000000) do
+ActiveRecord::Schema[8.0].define(version: 2027_06_23_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -243,6 +243,7 @@ ActiveRecord::Schema[8.0].define(version: 2027_06_15_000000) do
     t.index ["collection_name"], name: "index_knowledge_bookmarks_on_collection_name"
     t.index ["next_reminder_at"], name: "index_knowledge_bookmarks_on_next_reminder_at"
     t.index ["user_id", "card_type", "source_id"], name: "index_knowledge_bookmarks_on_identity", unique: true
+    t.index ["user_id", "next_reminder_at"], name: "index_knowledge_bookmarks_on_user_next_reminder"
     t.index ["user_id"], name: "index_knowledge_bookmarks_on_user_id"
     t.index ["workspace_id"], name: "index_knowledge_bookmarks_on_workspace_id"
   end
@@ -647,6 +648,10 @@ ActiveRecord::Schema[8.0].define(version: 2027_06_15_000000) do
     t.index ["project_id"], name: "index_tasks_on_project_id"
     t.index ["sprint_id"], name: "index_tasks_on_sprint_id"
     t.index ["type"], name: "index_tasks_on_type"
+    t.index ["workspace_id", "assigned_to_user", "end_date"], name: "index_tasks_on_workspace_assignee_end_date"
+    t.index ["workspace_id", "end_date"], name: "index_tasks_on_workspace_id_and_end_date"
+    t.index ["workspace_id", "project_id", "end_date"], name: "index_tasks_on_workspace_project_end_date"
+    t.index ["workspace_id", "sprint_id", "developer_id", "order"], name: "index_tasks_on_workspace_sprint_developer_order"
     t.index ["workspace_id"], name: "index_tasks_on_workspace_id"
   end
 
@@ -771,6 +776,7 @@ ActiveRecord::Schema[8.0].define(version: 2027_06_15_000000) do
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["last_seen_at"], name: "index_users_on_last_seen_at"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
+    t.index ["workspace_id", "created_at"], name: "index_users_on_workspace_id_and_created_at"
     t.index ["workspace_id"], name: "index_users_on_workspace_id"
   end
 
@@ -816,6 +822,7 @@ ActiveRecord::Schema[8.0].define(version: 2027_06_15_000000) do
     t.bigint "workspace_id", null: false
     t.index ["category_id"], name: "index_work_logs_on_category_id"
     t.index ["priority_id"], name: "index_work_logs_on_priority_id"
+    t.index ["user_id", "log_date"], name: "index_work_logs_on_user_id_and_log_date"
     t.index ["user_id"], name: "index_work_logs_on_user_id"
     t.index ["workspace_id"], name: "index_work_logs_on_workspace_id"
   end
