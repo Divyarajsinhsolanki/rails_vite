@@ -34,6 +34,33 @@ const getTaskTypeParam = (viewMode) => (
 
 const isStructuredTask = (task) => ['Code', 'qa'].includes(task?.type);
 
+const LOG_STAGE_ORDER = {
+  Code: 1,
+  'Code review': 2,
+  'Dev to QA': 3,
+  Testing: 4,
+  'Automation QA': 5,
+};
+
+const taskOrderValue = (log) => {
+  const order = Number(log?.task?.order);
+  return Number.isFinite(order) && order > 0 ? order : Number.MAX_SAFE_INTEGER;
+};
+
+const numericValue = (value) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+};
+
+const sortSchedulerLogs = (logs) => [...logs].sort((left, right) => (
+  String(left.log_date || '').localeCompare(String(right.log_date || '')) ||
+  numericValue(left.developer_id) - numericValue(right.developer_id) ||
+  taskOrderValue(left) - taskOrderValue(right) ||
+  (LOG_STAGE_ORDER[left.type] || 99) - (LOG_STAGE_ORDER[right.type] || 99) ||
+  String(left.created_at || '').localeCompare(String(right.created_at || '')) ||
+  numericValue(left.id) - numericValue(right.id)
+));
+
 
 // --- Helper Components ---
 
@@ -274,6 +301,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, projectMember
   const [processing, setProcessing] = useState(false);
   const [mainHeaderHeight, setMainHeaderHeight] = useState(0); // State to store main header height
   const taskTypeParam = getTaskTypeParam(viewMode);
+  const activeSprintId = sprintId || sprint?.id;
   const visibleDevelopers = useMemo(
     () => getVisibleMembersForView({
       members: developers,
@@ -315,8 +343,20 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, projectMember
   }, [sprintId, projectId]);
 
   useEffect(() => {
-    const params = { project_id: projectId };
-    if (sprintId) params.sprint_id = sprintId;
+    if (!activeSprintId) {
+      if (!loading.sprint) {
+        setDevelopers([]);
+        setTasks([]);
+        setAllTasks([]);
+        setLoading(l => ({ ...l, developers: false, tasks: false }));
+      }
+      return;
+    }
+
+    setLoading(l => ({ ...l, developers: true, tasks: true }));
+
+    const params = { sprint_id: activeSprintId };
+    if (projectId) params.project_id = projectId;
     if (taskTypeParam) params.type = taskTypeParam;
 
     Promise.all([
@@ -326,7 +366,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, projectMember
     ])
       .then(([devRes, logRes, taskRes]) => {
         setDevelopers(devRes.data);
-        setTasks(logRes.data);
+        setTasks(sortSchedulerLogs(logRes.data || []));
         setAllTasks((taskRes.data || []).filter(isStructuredTask));
         setLoading(l => ({ ...l, developers: false, tasks: false }));
       })
@@ -334,7 +374,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, projectMember
         setError("Could not load developers or tasks");
         setLoading(l => ({ ...l, developers: false, tasks: false }));
       });
-  }, [sprintId, projectId, taskTypeParam]);
+  }, [activeSprintId, projectId, taskTypeParam, loading.sprint]);
 
   const getWeekdaysInRange = useCallback((start, end, workingDaysMask = 62) => {
     const datesArr = [];
@@ -375,6 +415,11 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, projectMember
       if (task.log_date && task.developer_id && structuredTasks[task.log_date] && structuredTasks[task.log_date][task.developer_id]) {
         structuredTasks[task.log_date][task.developer_id].push(task);
       }
+    });
+    dates.forEach(date => {
+      visibleDevelopers.forEach(dev => {
+        structuredTasks[date][dev.id] = sortSchedulerLogs(structuredTasks[date][dev.id]);
+      });
     });
     return structuredTasks;
   }, [tasks, dates, visibleDevelopers]);
@@ -442,11 +487,34 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, projectMember
       setProcessing(true);
       const { data: createdLogs } = await SchedulerAPI.bulkCreateTaskLogs(entries);
       const createdList = Array.isArray(createdLogs) ? createdLogs : [];
-      setTasks(prev => [...prev, ...createdList]);
+      setTasks(prev => sortSchedulerLogs([...prev, ...createdList]));
       setIsBulkLogModalOpen(false);
       toast.success(`Created ${createdList.length || entries.length} logs`);
     } catch (error) {
       const message = error?.response?.data?.errors?.join(', ') || error?.message || 'Could not create bulk logs.';
+      toast.error(`Error: ${message}`);
+    }
+    setProcessing(false);
+  };
+
+  const handleDeleteSprintLogs = async () => {
+    if (!activeSprintId) return;
+
+    const visibleLogCount = tasks.filter(task => !task.deleted).length;
+    const sprintLabel = sprint?.name || 'this sprint';
+    const confirmed = window.confirm(
+      `Delete all logs for ${sprintLabel}? This removes every log in the sprint, including logs hidden by the current view.`
+    );
+    if (!confirmed) return;
+
+    try {
+      setProcessing(true);
+      const { data } = await SchedulerAPI.deleteSprintTaskLogs(activeSprintId);
+      const deletedCount = data?.deleted_count ?? visibleLogCount;
+      setTasks([]);
+      toast.success(`Deleted ${deletedCount} sprint log${deletedCount === 1 ? '' : 's'}`);
+    } catch (error) {
+      const message = error?.response?.data?.errors?.join(', ') || error?.message || 'Could not delete sprint logs.';
       toast.error(`Error: ${message}`);
     }
     setProcessing(false);
@@ -618,6 +686,14 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, projectMember
                     >
                       <DocumentDuplicateIcon className="h-5 w-5 mr-2" />
                       Bulk Log
+                    </button>
+                    <button
+                      onClick={handleDeleteSprintLogs}
+                      className="flex items-center bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105"
+                      title="Delete every log for this sprint"
+                    >
+                      <TrashIcon className="h-5 w-5 mr-2" />
+                      Delete Sprint Logs
                     </button>
                     {sheetIntegrationEnabled && (
                       <button

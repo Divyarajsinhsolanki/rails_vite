@@ -2,13 +2,11 @@ class Api::TaskLogsController < Api::BaseController
   before_action :set_task_log, only: [:update, :destroy]
 
   def index
-    task_logs = TaskLog.includes(:task, :developer).order(log_date: :asc)
+    task_logs = ordered_task_logs
     task_logs = task_logs.where(task_id: params[:task_id]) if params[:task_id].present?
     task_logs = task_logs.where(developer_id: params[:developer_id]) if params[:developer_id].present?
     task_logs = task_logs.where(log_date: params[:log_date]) if params[:log_date].present?
 
-    task_logs = task_logs.joins(:task) if params[:type].present? || params[:sprint_id].present? || params[:project_id].present?
-    task_logs = task_logs.joins(task: :sprint) if params[:sprint_id].present? || params[:project_id].present?
     task_logs = task_logs.where(tasks: { sprint_id: params[:sprint_id] }) if params[:sprint_id].present?
     task_logs = task_logs.where(sprints: { project_id: params[:project_id] }) if params[:project_id].present?
     task_logs = task_logs.where(tasks: { type: params[:type] }) if params[:type].present?
@@ -44,6 +42,16 @@ class Api::TaskLogsController < Api::BaseController
     render json: { errors: [e.message] }, status: :unprocessable_entity
   end
 
+  def destroy_for_sprint
+    return render json: { errors: ['sprint_id is required'] }, status: :unprocessable_entity if params[:sprint_id].blank?
+
+    task_logs = TaskLog.joins(:task).where(tasks: { sprint_id: params[:sprint_id] })
+    deleted_count = task_logs.count
+    task_logs.destroy_all
+
+    render json: { deleted_count: deleted_count }
+  end
+
   def update
     if @task_log.update(task_log_params)
       render json: serialize_task_log(@task_log)
@@ -58,6 +66,27 @@ class Api::TaskLogsController < Api::BaseController
   end
 
   private
+
+  def ordered_task_logs
+    TaskLog
+      .includes(:task, :developer)
+      .left_joins(task: :sprint)
+      .order(log_date: :asc)
+      .order(developer_id: :asc)
+      .order(Arel.sql('tasks."order" ASC NULLS LAST'))
+      .order(Arel.sql(<<~SQL.squish))
+        CASE task_logs.type
+          WHEN 'Code' THEN 1
+          WHEN 'Code review' THEN 2
+          WHEN 'Dev to QA' THEN 3
+          WHEN 'Testing' THEN 4
+          WHEN 'Automation QA' THEN 5
+          ELSE 6
+        END ASC
+      SQL
+      .order(created_at: :asc)
+      .order(id: :asc)
+  end
 
   def set_task_log
     @task_log = TaskLog.find(params[:id])

@@ -84,6 +84,42 @@ describe("bulkLogPlanner", () => {
     ]);
   });
 
+  it("builds bulk log entries in sprint task order instead of task key order", () => {
+    const rows = buildTaskStageRows({
+      developers,
+      existingLogs: [],
+      viewMode: "combined",
+      tasks: [
+        {
+          id: 21,
+          task_id: "TASK-2",
+          type: "Code",
+          developer_id: 1,
+          order: 1,
+          dev_hours: 1,
+        },
+        {
+          id: 22,
+          task_id: "TASK-1",
+          type: "Code",
+          developer_id: 1,
+          order: 2,
+          dev_hours: 1,
+        },
+      ],
+    });
+
+    const plan = buildDistributionPlan({
+      rows,
+      dates: ["2026-06-01"],
+      startDate: "2026-06-01",
+      maxHoursPerDay: 8,
+      existingLogs: [],
+    });
+
+    expect(plan.entries.map((entry) => entry.task_id)).toEqual([21, 22]);
+  });
+
   it("uses the last sprint day for dependent overflow so it can be adjusted manually", () => {
     const rows = buildTaskStageRows({
       developers,

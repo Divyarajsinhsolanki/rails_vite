@@ -135,16 +135,17 @@ export const appendOrMergeEntry = (entries, nextEntry) => {
   entries.push(nextEntry);
 };
 
-export const sortTasks = (left, right) => {
-  const leftOrder = Number(left?.order) || Number.MAX_SAFE_INTEGER;
-  const rightOrder = Number(right?.order) || Number.MAX_SAFE_INTEGER;
+const normalizedTaskOrder = (task) => {
+  const order = Number(task?.order);
+  return Number.isFinite(order) && order > 0 ? order : Number.MAX_SAFE_INTEGER;
+};
+
+export const sortTasks = (left, right, leftIndex = 0, rightIndex = 0) => {
+  const leftOrder = normalizedTaskOrder(left);
+  const rightOrder = normalizedTaskOrder(right);
   if (leftOrder !== rightOrder) return leftOrder - rightOrder;
 
-  const leftDate = left?.end_date || left?.start_date || '';
-  const rightDate = right?.end_date || right?.start_date || '';
-  if (leftDate !== rightDate) return String(leftDate).localeCompare(String(rightDate));
-
-  return String(left?.task_id || left?.title || left?.id).localeCompare(String(right?.task_id || right?.title || right?.id));
+  return leftIndex - rightIndex;
 };
 
 const stageIsVisibleForView = (stage, viewMode) => {
@@ -252,8 +253,9 @@ export const buildTaskStageRows = ({ tasks, existingLogs, developers, viewMode =
   const loggedHoursByTaskStage = buildLoggedHoursByTaskStage(existingLogs);
 
   return [...(Array.isArray(tasks) ? tasks : EMPTY_ARRAY)]
-    .sort(sortTasks)
-    .flatMap((task) => WORK_STAGES
+    .map((task, sourceIndex) => ({ task, sourceIndex }))
+    .sort((left, right) => sortTasks(left.task, right.task, left.sourceIndex, right.sourceIndex))
+    .flatMap(({ task, sourceIndex }, taskPosition) => WORK_STAGES
       .map((stage, stageIndex) => {
         if (!stageIsVisibleForView(stage, viewMode)) return null;
 
@@ -271,7 +273,9 @@ export const buildTaskStageRows = ({ tasks, existingLogs, developers, viewMode =
           taskKey: task.task_id,
           taskUrl: task.task_url,
           title: task.title,
-          taskOrder: Number(task?.order) || Number.MAX_SAFE_INTEGER,
+          taskOrder: normalizedTaskOrder(task),
+          taskPosition,
+          sourceIndex,
           stageKey: stage.key,
           stageOrder: stageIndex,
           stageLabel: stage.label,
@@ -358,7 +362,7 @@ export const buildDistributionPlan = ({ rows, dates, startDate, maxHoursPerDay, 
     .filter((row) => row.selected && row.developerId && numberOrZero(row.hours) > 0)
     .sort((left, right) => (
       left.taskOrder - right.taskOrder ||
-      String(left.taskKey || left.taskId).localeCompare(String(right.taskKey || right.taskId)) ||
+      left.taskPosition - right.taskPosition ||
       left.stageOrder - right.stageOrder
     ));
 

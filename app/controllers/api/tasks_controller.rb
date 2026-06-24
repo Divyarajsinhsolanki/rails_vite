@@ -6,7 +6,8 @@ class Api::TasksController < Api::BaseController
   def index
     @tasks = Task.includes(:developer, :assigned_user, :sprint)
                  .where('type != ? OR created_by = ?', 'general', current_user.id)
-                 .order(end_date: :asc)
+                 .order(Arel.sql('tasks."order" ASC NULLS LAST'))
+                 .order(id: :asc)
 
     @tasks = @tasks.where(assigned_to_user: params[:assigned_to_user]) if params[:assigned_to_user].present?
     @tasks = @tasks.where('sprint_id = ? OR type = ?', params[:sprint_id], 'general') if params[:sprint_id].present?

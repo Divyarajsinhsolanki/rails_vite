@@ -111,6 +111,7 @@ Rails.application.routes.draw do
     resources :task_logs, only: [:index, :create, :update, :destroy] do
       collection do
         post :bulk_create
+        delete :destroy_for_sprint
       end
     end
 
