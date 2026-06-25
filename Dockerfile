@@ -14,13 +14,14 @@ ENV RAILS_ENV="production" \
 FROM base as build
 
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y \
-      build-essential \
-      curl \
+        apt-get install --no-install-recommends -y \
+            build-essential \
+            curl \
       git \
       libpq-dev \
       libvips \
       node-gyp \
+            xz-utils \
       pkg-config \
       python-is-python3
 
@@ -29,11 +30,11 @@ RUN gem install bundler -v 4.0.6
 
 ARG NODE_VERSION=24.18.0
 ARG YARN_VERSION=1.22.22
-ENV PATH=/usr/local/node/bin:$PATH
-RUN curl -sL https://github.com/nodenv/node-build/archive/master.tar.gz | tar xz -C /tmp/ && \
-    /tmp/node-build-master/bin/node-build "${NODE_VERSION}" /usr/local/node && \
-    npm install -g yarn@$YARN_VERSION && \
-    rm -rf /tmp/node-build-master
+ENV PATH=/usr/local/bin:$PATH
+RUN curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" -o /tmp/node.tar.xz && \
+    tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 && \
+    npm install -g yarn@${YARN_VERSION} && \
+    rm -f /tmp/node.tar.xz
 
 COPY Gemfile Gemfile.lock ./
 COPY vendor/pdf_master ./vendor/pdf_master
