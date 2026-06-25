@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
-ruby "3.3.0"
+ruby "3.3.11"
 
 # Rails framework
 gem "rails", "~> 8.1.3"
@@ -54,6 +54,7 @@ gem "addressable", ">= 2.9.0"
 gem "erb", ">= 6.0.4"
 gem "json", ">= 2.19.2"
 gem "loofah", ">= 2.25.1"
+gem "multi_json"
 gem "net-imap", ">= 0.6.4"
 gem "nokogiri", ">= 1.19.4"
 gem "rack", ">= 3.2.6"

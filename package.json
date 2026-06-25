@@ -29,7 +29,7 @@
     "framer-motion": "^12.41.0",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^1.21.0",
-    "pdfjs-dist": "^6.0.227",
+    "pdfjs-dist": "5.4.296",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-draggable": "^4.7.0",

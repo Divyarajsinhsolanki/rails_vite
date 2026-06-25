@@ -20,7 +20,7 @@ The Rails app serves both the JSON API and the React entrypoint. Vite handles th
 
 ## Tech Stack
 
-- Ruby 3.3.0
+- Ruby 3.3.11
 - Rails 8.0
 - PostgreSQL
 - React 18
@@ -32,7 +32,7 @@ The Rails app serves both the JSON API and the React entrypoint. Vite handles th
 
 ## Requirements
 
-- Ruby `3.3.0` (`.ruby-version`)
+- Ruby `3.3.11` (`.ruby-version`)
 - Bundler compatible with `Gemfile.lock` (`4.0.6` is currently locked)
 - Node `24.18.0` (`.node-version`)
 - Yarn `1.22.x`

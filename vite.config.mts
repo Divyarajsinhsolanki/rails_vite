@@ -2,6 +2,41 @@
 import { defineConfig } from 'vite';
 import RubyPlugin from 'vite-plugin-ruby';
 
+const chunkGroups = {
+  // Core vendor libraries
+  'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+  'vendor-ui': ['react-hot-toast', 'react-helmet', '@headlessui/react', 'lucide-react', '@heroicons/react'],
+  'vendor-animation': ['framer-motion'],
+  'vendor-http': ['axios'],
+
+  // Data visualization (separate to lazy-load)
+  'charts': ['recharts'],
+
+  // Drag and drop (consolidated to single library)
+  'dnd': ['@hello-pangea/dnd'],
+
+  // PDF handling (will be lazy-loaded)
+  'pdf': ['pdfjs-dist', 'react-pdf', '@react-pdf/renderer'],
+
+  // Firebase modules used by firebaseConfig.js/AuthContext.jsx
+  'firebase': ['firebase/app', 'firebase/auth'],
+
+  // Utilities
+  'utils': ['date-fns', 'jwt-decode', 'react-icons', 'react-draggable', 'react-dropzone', 'react-rnd']
+};
+
+const manualChunks = (id: string) => {
+  if (!id.includes('/node_modules/')) return undefined;
+
+  for (const [chunkName, packages] of Object.entries(chunkGroups)) {
+    if (packages.some((packageName) => id.includes(`/node_modules/${packageName}/`))) {
+      return chunkName;
+    }
+  }
+
+  return undefined;
+};
+
 export default defineConfig({
   plugins: [RubyPlugin()],
   resolve: {
@@ -19,28 +54,7 @@ export default defineConfig({
       //   application: 'app/javascript/entrypoints/application.jsx'
       // },
       output: {
-        manualChunks: {
-          // Core vendor libraries
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-ui': ['react-hot-toast', 'react-helmet', '@headlessui/react', 'lucide-react', '@heroicons/react'],
-          'vendor-animation': ['framer-motion'],
-          'vendor-http': ['axios'],
-          
-          // Data visualization (separate to lazy-load)
-          'charts': ['recharts'],
-          
-          // Drag and drop (consolidated to single library)
-          'dnd': ['@hello-pangea/dnd'],
-          
-          // PDF handling (will be lazy-loaded)
-          'pdf': ['pdfjs-dist', 'react-pdf', '@react-pdf/renderer'],
-          
-          // Firebase modules used by firebaseConfig.js/AuthContext.jsx
-          'firebase': ['firebase/app', 'firebase/auth'],
-          
-          // Utilities
-          'utils': ['date-fns', 'jwt-decode', 'react-icons', 'react-draggable', 'react-dropzone', 'react-rnd']
-        }
+        manualChunks
       }
     }
   },
