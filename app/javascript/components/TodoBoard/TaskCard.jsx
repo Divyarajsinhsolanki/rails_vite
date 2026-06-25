@@ -86,7 +86,7 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
   const renderTaskDetails = () => (
     <div className="space-y-3">
         <div className="flex justify-between items-start">
-            <span className="font-semibold text-lg text-[var(--theme-color)] transition-colors">
+            <span className="font-semibold text-lg text-theme transition-colors">
               {item.task_url ? (
                 <a href={item.task_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
                   {item.task_id || item.title}
@@ -96,25 +96,25 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
               )}
             </span>
             <div className="flex items-center gap-2">
-                <button onClick={() => setIsEditing(true)} className="text-gray-400 hover:text-[var(--theme-color)] transition-colors" title="Edit"><FiEdit2 size={18} /></button>
+                <button onClick={() => setIsEditing(true)} className="text-gray-400 hover:text-theme transition-colors" title="Edit"><FiEdit2 size={18} /></button>
                 <button onClick={() => onDelete(columnId, item.id)} className="text-gray-400 hover:text-red-600 transition-colors" title="Delete"><FiTrash2 size={18} /></button>
             </div>
         </div>
         <p className="text-gray-600 text-sm">{item.description || item.title || 'No Description'}</p>
-        
+
         {item.tags && item.tags.length > 0 && (
             <div className="flex items-center text-sm text-gray-500 mt-2">
                 <FiTag className="mr-2" />
                 <div className="flex flex-wrap gap-1">
                     {item.tags.map((tag, tagIndex) => (
-                        <span key={tagIndex} className="bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)] text-xs font-medium px-2.5 py-0.5 rounded-full">
+                        <span key={tagIndex} className="bg-theme/10 text-theme text-xs font-medium px-2.5 py-0.5 rounded-full">
                             {tag}
                         </span>
                     ))}
                 </div>
             </div>
         )}
-        
+
         <div className="border-t border-gray-200 mt-3 pt-3">
             <div className="flex justify-between items-center text-sm text-gray-500">
                 <div className="flex items-center">
@@ -136,11 +136,11 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
         <div
           className={`bg-white p-4 mb-4 rounded-lg shadow-md border-l-4 ${
             {
-              todo: 'border-[var(--theme-color)]',
+              todo: 'border-theme',
               inprogress: 'border-yellow-500',
               completed: 'border-green-500'
             }[columnId]
-          } hover:shadow-xl transition-shadow transform hover:-translate-y-1 ${snapshot.isDragging ? 'ring-2 ring-[var(--theme-color)]' : ''}`}
+          } hover:shadow-xl transition-shadow transform hover:-translate-y-1 ${snapshot.isDragging ? 'ring-2 ring-theme' : ''}`}
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}

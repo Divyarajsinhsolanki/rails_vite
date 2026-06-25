@@ -66,7 +66,7 @@ const Heatmap = ({ columns, view, onViewChange, sprint }) => {
   return (
     <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-100">
       <div className="flex items-center mb-4">
-        <FiCalendar className="text-[var(--theme-color)] mr-3" size={24} />
+        <FiCalendar className="text-theme mr-3" size={24} />
         <h3 className="text-xl font-bold text-gray-800">Due Date Heatmap</h3>
         {weekStarts.length > 1 && (
           <div className="ml-auto flex gap-2">
@@ -98,7 +98,7 @@ const Heatmap = ({ columns, view, onViewChange, sprint }) => {
             <div key={i} className="relative group flex-1">
               <div
                 onClick={() => setSelectedDate(d.date)}
-                className={`p-3 rounded-lg text-center cursor-pointer transition-all transform group-hover:scale-110 ${intensity} ${selectedDate === d.date ? 'ring-2 ring-offset-2 ring-[var(--theme-color)]' : ''}`}
+                className={`p-3 rounded-lg text-center cursor-pointer transition-all transform group-hover:scale-110 ${intensity} ${selectedDate === d.date ? 'ring-2 ring-offset-2 ring-theme' : ''}`}
               >
                 <div className="text-sm font-semibold">{format(parseISO(d.date), 'EEE')}</div>
                 <div className="text-2xl font-bold">{d.count}</div>
@@ -130,7 +130,7 @@ const Heatmap = ({ columns, view, onViewChange, sprint }) => {
                     : 'bg-gray-50'
                 }`}
               >
-                <FiInfo className="text-[var(--theme-color)] mr-3 shrink-0" />
+                <FiInfo className="text-theme mr-3 shrink-0" />
                 <span className="font-semibold">{t.task_id}</span>
                 <span className="text-gray-600 mx-2">-</span>
                 <span className="truncate">{t.title}</span>

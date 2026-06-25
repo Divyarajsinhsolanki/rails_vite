@@ -158,10 +158,10 @@ const Profile = () => {
           api_key: ""
         }));
       }
-      
+
       const postsResponse = await fetchPosts(userData.id);
       setPosts(postsResponse.data);
-      
+
       const tasksResponse = await SchedulerAPI.getTasks({ assigned_to_user: userData.id });
       setTasks(tasksResponse.data);
     } catch (error) {
@@ -263,7 +263,6 @@ const Profile = () => {
     payload.append("auth[first_name]", formData.first_name);
     payload.append("auth[last_name]", formData.last_name);
     payload.append("auth[date_of_birth]", formData.date_of_birth);
-    payload.append("auth[color_theme]", formData.color_theme);
     payload.append("auth[avatar_color]", formData.avatar_color);
     payload.append("auth[phone_number]", formData.phone_number || "");
     payload.append("auth[bio]", formData.bio || "");
@@ -546,10 +545,10 @@ const Profile = () => {
           <div className="relative h-56 overflow-hidden bg-[linear-gradient(135deg,rgba(15,23,42,0.9),rgba(52,109,255,0.58),rgba(103,232,249,0.34))] md:h-64">
             {/* Cover Photo */}
             {user?.cover_photo && user.cover_photo !== 'null' && (
-              <img 
-                src={user.cover_photo} 
-                alt="Cover" 
-                className="absolute inset-0 w-full h-full object-cover" 
+              <img
+                src={user.cover_photo}
+                alt="Cover"
+                className="absolute inset-0 w-full h-full object-cover"
               loading="lazy" />
             )}
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,17,32,0.08),rgba(7,17,32,0.72))]" />
@@ -562,24 +561,24 @@ const Profile = () => {
                 {viewingOtherProfile ? "Team profile" : "Personal profile"}
               </span>
             </div>
-            
+
             {/* Cover Photo Edit Button */}
             {editMode && !viewingOtherProfile && (
               <label className="absolute bottom-5 right-5 cursor-pointer rounded-full border border-white/30 bg-white/15 p-2.5 text-white shadow-[0_18px_36px_rgb(15_23_42_/_0.22)] backdrop-blur-md hover:bg-white/24">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)]" viewBox="0 0 20 20" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-theme" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                 </svg>
                 <input type="file" name="cover_photo" className="hidden" onChange={handleFileChange} accept="image/*" />
               </label>
             )}
           </div>
-          
+
           <div className="relative px-5 pb-8 sm:px-8">
             <div className="flex flex-col gap-7 xl:flex-row xl:items-end xl:justify-between">
               {/* Profile Picture */}
               <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
               <div className="relative group -mt-16 sm:-mt-20">
-                <div className="absolute inset-0 rounded-full bg-[var(--theme-color)]/20 blur-xl -z-10"></div>
+                <div className="absolute inset-0 rounded-full bg-theme/20 blur-xl -z-10"></div>
                 {user?.profile_picture && user.profile_picture !== 'null' ? (
                   <img
                     src={user.profile_picture}
@@ -596,7 +595,7 @@ const Profile = () => {
                 )}
                 {editMode && !viewingOtherProfile && (
                   <label className="absolute bottom-2 right-2 cursor-pointer rounded-full border border-white/70 bg-white/92 p-2 shadow-[0_14px_26px_rgb(15_23_42_/_0.14)] hover:bg-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)]" viewBox="0 0 20 20" fill="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-theme" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                     </svg>
                     <input type="file" name="profile_picture" className="hidden" onChange={handleFileChange} accept="image/*" />
@@ -620,7 +619,7 @@ const Profile = () => {
                 <h1 className="text-4xl font-semibold tracking-[-0.05em] text-slate-950 md:text-5xl">
                   {user ? displayName : "Loading..."}
                 </h1>
-                <p className="mt-2 text-lg font-medium text-[var(--theme-color)]">{user?.email}</p>
+                <p className="mt-2 text-lg font-medium text-theme">{user?.email}</p>
                 {user?.phone_number && (
                   <p className="mt-1 text-sm text-slate-500">{user.phone_number}</p>
                 )}
@@ -628,26 +627,26 @@ const Profile = () => {
                   <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{user.bio}</p>
                 )}
                 <div className="mt-3 flex flex-wrap justify-center gap-3 text-sm sm:justify-start">
-                  {user?.social_links?.linkedin && <a className="font-medium text-[var(--theme-color)] hover:underline" href={user.social_links.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>}
-                  {user?.social_links?.github && <a className="font-medium text-[var(--theme-color)] hover:underline" href={user.social_links.github} target="_blank" rel="noreferrer">GitHub</a>}
-                  {user?.social_links?.twitter && <a className="font-medium text-[var(--theme-color)] hover:underline" href={user.social_links.twitter} target="_blank" rel="noreferrer">Twitter</a>}
-                  {user?.social_links?.website && <a className="font-medium text-[var(--theme-color)] hover:underline" href={user.social_links.website} target="_blank" rel="noreferrer">Website</a>}
+                  {user?.social_links?.linkedin && <a className="font-medium text-theme hover:underline" href={user.social_links.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>}
+                  {user?.social_links?.github && <a className="font-medium text-theme hover:underline" href={user.social_links.github} target="_blank" rel="noreferrer">GitHub</a>}
+                  {user?.social_links?.twitter && <a className="font-medium text-theme hover:underline" href={user.social_links.twitter} target="_blank" rel="noreferrer">Twitter</a>}
+                  {user?.social_links?.website && <a className="font-medium text-theme hover:underline" href={user.social_links.website} target="_blank" rel="noreferrer">Website</a>}
                 </div>
                 <div className="mt-5 flex flex-wrap justify-center gap-3 sm:justify-start">
                   <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/72 px-4 py-2 text-sm font-semibold text-slate-700 shadow-[0_14px_28px_rgb(15_23_42_/_0.06)]">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)] mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-theme mr-2" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 12.094A5.973 5.973 0 004 15v1H1v-1a3 3 0 013.75-2.906z" />
                     </svg>
                     <span>{teams.length} Teams</span>
                   </div>
                   <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/72 px-4 py-2 text-sm font-semibold text-slate-700 shadow-[0_14px_28px_rgb(15_23_42_/_0.06)]">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)] mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-theme mr-2" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2H5a1 1 0 010-2h12a2 2 0 001-2V4a2 2 0 00-2-2H6a2 2 0 00-2 2z" clipRule="evenodd" />
                     </svg>
                     <span>{projects.length} Projects</span>
                   </div>
                   <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/72 px-4 py-2 text-sm font-semibold text-slate-700 shadow-[0_14px_28px_rgb(15_23_42_/_0.06)]">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)] mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-theme mr-2" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                     </svg>
                     <span>{nonGeneralTasks.length} Tasks</span>
@@ -773,7 +772,7 @@ const Profile = () => {
                       <span>{dueTodayTasks.length} due today</span>
                     </div>
                   </div>
-                  
+
                   <div className="rounded-[24px] border border-fuchsia-100 bg-[linear-gradient(135deg,rgba(250,240,255,0.92),rgba(237,228,255,0.72))] p-6 shadow-[0_20px_40px_rgb(168_85_247_/_0.08)]">
                     <div className="flex items-center justify-between">
                       <div>
@@ -791,7 +790,7 @@ const Profile = () => {
                       <span>{teams.length} teams involved</span>
                     </div>
                   </div>
-                  
+
                   <div className="rounded-[24px] border border-emerald-100 bg-[linear-gradient(135deg,rgba(235,253,242,0.92),rgba(214,248,226,0.72))] p-6 shadow-[0_20px_40px_rgb(16_185_129_/_0.08)]">
                     <div className="flex items-center justify-between">
                       <div>
@@ -854,13 +853,13 @@ const Profile = () => {
                           .slice(0, 5)
                           .map((item) => (
                             <div key={item.id} className="flex items-start pb-4 border-b border-gray-100 last:border-0 last:pb-0">
-                              <div className="bg-[var(--theme-color)]/10 p-2 rounded-lg mr-4">
+                              <div className="bg-theme/10 p-2 rounded-lg mr-4">
                                 {item.message ? (
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-theme" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                                   </svg>
                                 ) : (
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--theme-color)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-theme" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                   </svg>
                                 )}
@@ -901,7 +900,7 @@ const Profile = () => {
                   <h2 className="text-2xl font-bold text-gray-800">Recent Posts</h2>
                   <button
                     onClick={() => navigate('/posts')}
-                    className="px-4 py-2 bg-[var(--theme-color)] text-white rounded-lg hover:bg-[var(--theme-color)]/90 transition flex items-center gap-2"
+                    className="px-4 py-2 bg-theme text-white rounded-lg hover:bg-theme/90 transition flex items-center gap-2"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
@@ -941,7 +940,7 @@ const Profile = () => {
                                 </span>
                               </div>
                             )}
-                            <button onClick={() => navigate('/posts')} className="mt-3 text-[var(--theme-color)] hover:text-[var(--theme-color)]/90 text-sm font-medium flex items-center">
+                            <button onClick={() => navigate('/posts')} className="mt-3 text-theme hover:text-theme/90 text-sm font-medium flex items-center">
                               Read more
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -961,7 +960,7 @@ const Profile = () => {
                     <p className="mt-1 text-gray-500">Share your thoughts with your team!</p>
                     <button
                       onClick={() => navigate('/posts')}
-                      className="mt-4 px-4 py-2 bg-[var(--theme-color)] text-white rounded-lg hover:bg-[var(--theme-color)]/90 transition flex items-center gap-2 mx-auto"
+                      className="mt-4 px-4 py-2 bg-theme text-white rounded-lg hover:bg-theme/90 transition flex items-center gap-2 mx-auto"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
@@ -1017,7 +1016,7 @@ const Profile = () => {
                                 </div>
                                 <button
                                   onClick={() => handleTaskNavigation(task)}
-                                  className="inline-flex items-center text-sm font-medium text-[var(--theme-color)] hover:text-[var(--theme-color)]/80"
+                                  className="inline-flex items-center text-sm font-medium text-theme hover:text-theme/80"
                                 >
                                   View Task
                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
@@ -1033,7 +1032,7 @@ const Profile = () => {
                                   </span>
                                   <button
                                     onClick={() => navigate(`/projects/${task.sprint.project_id}/dashboard`)}
-                                    className="flex items-center text-[var(--theme-color)] hover:underline"
+                                    className="flex items-center text-theme hover:underline"
                                   >
                                     <Squares2X2Icon className="h-4 w-4 mr-1" />Board
                                   </button>
@@ -1044,7 +1043,7 @@ const Profile = () => {
                         </div>
                       </div>
                     )}
-                    
+
                     <div className="space-y-8">
                       {statusSections.length > 0 ? (
                         statusSections.map((section) => (
@@ -1075,7 +1074,7 @@ const Profile = () => {
                                     </div>
                                 <button
                                   onClick={() => handleTaskNavigation(task)}
-                                  className="inline-flex items-center text-sm font-medium text-[var(--theme-color)] hover:text-[var(--theme-color)]/80"
+                                  className="inline-flex items-center text-sm font-medium text-theme hover:text-theme/80"
                                 >
                                   View Task
                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
@@ -1091,7 +1090,7 @@ const Profile = () => {
                                       </span>
                                       <button
                                         onClick={() => navigate(`/projects/${task.sprint.project_id}/dashboard`)}
-                                        className="flex items-center text-[var(--theme-color)] hover:underline"
+                                        className="flex items-center text-theme hover:underline"
                                       >
                                         <Squares2X2Icon className="h-4 w-4 mr-1" />Board
                                       </button>
@@ -1159,14 +1158,14 @@ const Profile = () => {
                             {task.sprint?.project_id && (
                               <button
                                 onClick={() => navigate(`/projects/${task.sprint.project_id}/dashboard`)}
-                                className="inline-flex items-center text-sm font-medium text-[var(--theme-color)] hover:text-[var(--theme-color)]/80"
+                                className="inline-flex items-center text-sm font-medium text-theme hover:text-theme/80"
                               >
                                 View Project
                               </button>
                             )}
                             <button
                               onClick={() => handleTaskNavigation(task)}
-                              className="inline-flex items-center text-sm font-medium text-[var(--theme-color)] hover:text-[var(--theme-color)]/80"
+                              className="inline-flex items-center text-sm font-medium text-theme hover:text-theme/80"
                             >
                               View Task
                             </button>
@@ -1207,7 +1206,7 @@ const Profile = () => {
                           <div className="text-sm text-gray-500 mb-2">{teamUsers.length} members</div>
                           <button
                             onClick={() => navigate('/teams', { state: { teamId: team.id } })}
-                            className="mt-4 w-full py-2 text-sm font-medium text-[var(--theme-color)] hover:text-[var(--theme-color)] border border-[rgb(var(--theme-color-rgb)/0.2)] rounded-lg hover:bg-[rgb(var(--theme-color-rgb)/0.1)] transition"
+                            className="mt-4 w-full py-2 text-sm font-medium text-theme hover:text-theme border border-theme/20 rounded-lg hover:bg-theme/10 transition"
                           >
                             View Team
                           </button>
@@ -1238,7 +1237,7 @@ const Profile = () => {
                         <div key={project.id} className="border border-gray-100 rounded-lg p-6 hover:shadow-md transition bg-white">
                           <div className="flex items-center justify-between mb-4">
                             <h3 className="font-bold text-gray-800">{project.name}</h3>
-                            <span className="text-xs px-2 py-1 bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)] rounded-full">{project.role}</span>
+                            <span className="text-xs px-2 py-1 bg-theme/10 text-theme rounded-full">{project.role}</span>
                           </div>
                           <p className="text-sm text-gray-500 mb-6 line-clamp-2">{project.description || 'No description provided.'}</p>
                           <div className="flex justify-between items-center">
@@ -1260,7 +1259,7 @@ const Profile = () => {
                           </div>
                           <button
                             onClick={() => navigate(`/projects/${project.id}/dashboard`)}
-                            className="mt-4 w-full py-2 text-sm font-medium text-[var(--theme-color)] hover:text-[var(--theme-color)] border border-[rgb(var(--theme-color-rgb)/0.2)] rounded-lg hover:bg-[rgb(var(--theme-color-rgb)/0.1)] transition"
+                            className="mt-4 w-full py-2 text-sm font-medium text-theme hover:text-theme border border-theme/20 rounded-lg hover:bg-theme/10 transition"
                           >
                             View Project
                           </button>
@@ -1295,7 +1294,7 @@ const Profile = () => {
                         type="button"
                         onClick={handleKekaRefresh}
                         disabled={kekaRefreshing || !keka.connected}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[rgb(var(--theme-color-rgb)/0.2)] text-[var(--theme-color)] hover:bg-[rgb(var(--theme-color-rgb)/0.1)] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-theme/20 text-theme hover:bg-theme/10 transition disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <ArrowPathIcon className={`h-4 w-4 ${kekaRefreshing ? "animate-spin" : ""}`} />
                         Refresh Data
@@ -1312,7 +1311,7 @@ const Profile = () => {
                         value={kekaForm.base_url}
                         onChange={handleKekaChange}
                         placeholder="https://yourcompany.keka.com"
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-theme focus:border-theme focus:outline-none"
                         required
                       />
                     </div>
@@ -1324,7 +1323,7 @@ const Profile = () => {
                         value={kekaForm.employee_id}
                         onChange={handleKekaChange}
                         placeholder="EMP000123"
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-theme focus:border-theme focus:outline-none"
                         required
                       />
                     </div>
@@ -1336,7 +1335,7 @@ const Profile = () => {
                         value={kekaForm.api_key}
                         onChange={handleKekaChange}
                         placeholder={keka.api_key_masked ? `Saved (${keka.api_key_masked})` : "Paste your API key"}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-theme focus:border-theme focus:outline-none"
                         required
                       />
                     </div>
@@ -1344,7 +1343,7 @@ const Profile = () => {
                       <button
                         type="submit"
                         disabled={kekaSaving}
-                        className="px-5 py-2 bg-[var(--theme-color)] text-white rounded-lg hover:bg-[var(--theme-color)]/90 transition disabled:opacity-50"
+                        className="px-5 py-2 bg-theme text-white rounded-lg hover:bg-theme/90 transition disabled:opacity-50"
                       >
                         {kekaSaving ? "Saving..." : "Save & Sync"}
                       </button>
@@ -1459,7 +1458,7 @@ const Profile = () => {
                 <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">Raw Keka Payload</h3>
                   <details className="text-sm text-gray-600">
-                    <summary className="cursor-pointer text-[var(--theme-color)] font-medium">View JSON</summary>
+                    <summary className="cursor-pointer text-theme font-medium">View JSON</summary>
                     <pre className="mt-3 whitespace-pre-wrap break-words text-xs bg-gray-50 border border-gray-100 rounded-lg p-4">
                       {JSON.stringify(kekaPayload, null, 2)}
                     </pre>
@@ -1477,7 +1476,7 @@ const Profile = () => {
               <h3 className="text-2xl font-bold">Edit Profile</h3>
               <p className="opacity-90">Update your personal information</p>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="p-6" encType="multipart/form-data">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -1487,11 +1486,11 @@ const Profile = () => {
                     name="first_name"
                     value={formData.first_name}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-theme focus:border-theme focus:outline-none transition"
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 required-label">Last Name</label>
                   <input
@@ -1499,11 +1498,11 @@ const Profile = () => {
                     name="last_name"
                     value={formData.last_name}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-theme focus:border-theme focus:outline-none transition"
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 required-label">Date of Birth</label>
                   <input
@@ -1511,7 +1510,7 @@ const Profile = () => {
                     name="date_of_birth"
                     value={formData.date_of_birth}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-theme focus:border-theme focus:outline-none transition"
                     required
                   />
                 </div>
@@ -1523,7 +1522,7 @@ const Profile = () => {
                     name="phone_number"
                     value={formData.phone_number || ''}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-theme focus:border-theme focus:outline-none transition"
                   />
                 </div>
 
@@ -1534,20 +1533,20 @@ const Profile = () => {
                     rows={3}
                     value={formData.bio || ''}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-theme focus:border-theme focus:outline-none transition"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 gap-3 md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700">Social links</label>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input type="url" name="social_links.linkedin" placeholder="LinkedIn URL" value={formData.social_links?.linkedin || ''} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition" />
-                    <input type="url" name="social_links.github" placeholder="GitHub URL" value={formData.social_links?.github || ''} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition" />
-                    <input type="url" name="social_links.twitter" placeholder="Twitter URL" value={formData.social_links?.twitter || ''} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition" />
-                    <input type="url" name="social_links.website" placeholder="Website URL" value={formData.social_links?.website || ''} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] focus:outline-none transition" />
+                    <input type="url" name="social_links.linkedin" placeholder="LinkedIn URL" value={formData.social_links?.linkedin || ''} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-theme focus:border-theme focus:outline-none transition" />
+                    <input type="url" name="social_links.github" placeholder="GitHub URL" value={formData.social_links?.github || ''} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-theme focus:border-theme focus:outline-none transition" />
+                    <input type="url" name="social_links.twitter" placeholder="Twitter URL" value={formData.social_links?.twitter || ''} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-theme focus:border-theme focus:outline-none transition" />
+                    <input type="url" name="social_links.website" placeholder="Website URL" value={formData.social_links?.website || ''} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-theme focus:border-theme focus:outline-none transition" />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Profile Picture</label>
                   <div className="mt-1 flex items-center">
@@ -1593,31 +1592,6 @@ const Profile = () => {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Theme Color</label>
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="color"
-                      name="color_theme"
-                      value={formData.color_theme}
-                      onChange={handleInputChange}
-                      className="w-16 h-10 p-0 border-0 bg-transparent cursor-pointer rounded-lg overflow-hidden"
-                    />
-                    <div className="flex gap-2">
-                      {Object.entries(COLOR_MAP).map(([name, color]) => (
-                        <button
-                          key={name}
-                          type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, color_theme: color }))}
-                          className="w-6 h-6 rounded-full"
-                          style={{ backgroundColor: color }}
-                          aria-label={name}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Avatar Color</label>
                   <p className="text-xs text-gray-500 mb-3">Used when your profile picture is missing.</p>
                   <div className="flex items-center gap-4">
@@ -1649,7 +1623,7 @@ const Profile = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="mt-8 flex justify-end space-x-3 md:col-span-2">
                 <button
                   type="button"
@@ -1660,7 +1634,7 @@ const Profile = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[var(--theme-color)] text-white rounded-lg hover:bg-[var(--theme-color)]/90 focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)] focus:ring-offset-2 transition"
+                  className="px-4 py-2 bg-theme text-white rounded-lg hover:bg-theme/90 focus:outline-none focus:ring-2 focus:ring-theme focus:ring-offset-2 transition"
                   disabled={isLoading}
                 >
                   {isLoading ? 'Saving...' : 'Save Changes'}

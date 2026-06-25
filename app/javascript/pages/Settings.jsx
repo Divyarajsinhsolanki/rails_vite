@@ -1,7 +1,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import api from "../components/api";
 import { AuthContext } from "../context/AuthContext";
-import { COLOR_MAP } from "/utils/theme";
+import { COLOR_MAP, THEME_PRESETS } from "/utils/theme";
 import { Switch, Tab } from "@headlessui/react";
 import { Toaster, toast } from "react-hot-toast";
 import {
@@ -163,16 +163,15 @@ const Settings = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="app-page px-4 py-8 sm:px-6 lg:px-8">
       <Toaster position="top-right" />
-      <div className="max-w-4xl mx-auto">
+      <div className="mx-auto max-w-5xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-          <p className="mt-1 text-sm text-gray-500">Manage your account preferences and application settings.</p>
+          <h1 className="text-3xl font-bold text-primary">Settings</h1>
+          <p className="mt-1 text-sm text-muted">Manage your account preferences and application settings.</p>
         </div>
 
         <Tab.Group as="div" className="lg:grid lg:grid-cols-12 lg:gap-x-8">
-          {/* Sidebar Tabs */}
           <aside className="py-6 lg:col-span-3 lg:py-0">
             <Tab.List className="flex flex-col space-y-1">
               {tabs.map((tab) => (
@@ -180,53 +179,49 @@ const Settings = () => {
                   key={tab.name}
                   className={({ selected }) =>
                     classNames(
-                      selected
-                        ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
-                        : 'text-gray-900 hover:bg-gray-50 hover:text-gray-900',
-                      'group flex items-center px-3 py-2 text-sm font-medium rounded-r-md border-l-4 border-transparent outline-none transition-colors'
+                      selected ? 'app-tab-active' : '',
+                      'app-tab outline-none focus-visible:ring-2 focus-visible:ring-theme/35'
                     )
                   }
                 >
-                  <tab.icon className="mr-3 h-5 w-5 flex-shrink-0" aria-hidden="true" />
+                  <tab.icon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
                   <span className="truncate">{tab.name}</span>
                 </Tab>
               ))}
             </Tab.List>
           </aside>
 
-          {/* Main Content */}
-          <main className="lg:col-span-9 bg-white shadow rounded-xl border border-gray-200 min-h-[500px]">
+          <main className="app-panel min-h-[500px] overflow-hidden lg:col-span-9">
             <Tab.Panels>
-              {/* Profile Tab */}
-              <Tab.Panel className="p-6 space-y-8 focus:outline-none">
+              <Tab.Panel className="space-y-8 p-6 focus:outline-none">
                 <div>
-                  <h3 className="text-lg font-medium leading-6 text-gray-900">Profile Information</h3>
-                  <p className="mt-1 text-sm text-gray-500">Update your account's public information and landing preferences.</p>
+                  <h3 className="text-lg font-semibold leading-6 text-primary">Profile Information</h3>
+                  <p className="mt-1 text-sm text-muted">Update your account's public information and landing preferences.</p>
                 </div>
 
                 <div className="grid grid-cols-1 gap-y-6 sm:grid-cols-6 sm:gap-x-6">
                   <div className="sm:col-span-4">
-                    <label className="block text-sm font-medium text-gray-700">Email Address</label>
-                    <div className="mt-1 flex rounded-md shadow-sm">
-                      <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
+                    <label className="block text-sm font-semibold text-shell-muted-strong">Email Address</label>
+                    <div className="mt-1 flex rounded-xl shadow-sm">
+                      <span className="inline-flex items-center rounded-l-xl border border-r-0 border-default bg-muted-surface px-3 text-sm text-muted">
                         @
                       </span>
                       <input
                         type="text"
                         disabled
                         value={user?.email || ''}
-                        className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border border-gray-300 bg-gray-100 text-gray-500 sm:text-sm cursor-not-allowed"
+                        className="app-input min-w-0 flex-1 cursor-not-allowed rounded-none rounded-r-xl px-3 py-2 text-sm opacity-70"
                       />
                     </div>
                   </div>
 
                   <div className="sm:col-span-6">
-                    <label className="block text-sm font-medium text-gray-700">Landing Page</label>
-                    <p className="text-xs text-gray-500 mb-2">Choose which page you see when you first log in.</p>
+                    <label className="block text-sm font-semibold text-shell-muted-strong">Landing Page</label>
+                    <p className="mb-2 text-xs text-muted">Choose which page you see when you first log in.</p>
                     <select
                       value={landingPage}
                       onChange={(e) => setLandingPage(e.target.value)}
-                      className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                      className="app-select mt-1 px-3 py-2 text-sm"
                     >
                       {landingPageOptions.map((opt) => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -235,140 +230,150 @@ const Settings = () => {
                   </div>
                 </div>
 
-                <div className="flex justify-end pt-6 border-t border-gray-100">
-                  <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                  >
+                <div className="flex justify-end border-t border-default pt-6">
+                  <button onClick={handleSave} disabled={saving} className="app-primary-button">
                     {saving ? 'Saving...' : 'Save Changes'}
                   </button>
                 </div>
               </Tab.Panel>
 
-              {/* Appearance Tab */}
-              <Tab.Panel className="p-6 space-y-8 focus:outline-none">
+              <Tab.Panel className="space-y-8 p-6 focus:outline-none">
                 <div>
-                  <h3 className="text-lg font-medium leading-6 text-gray-900">Appearance Details</h3>
-                  <p className="mt-1 text-sm text-gray-500">Customize the look and feel of your workspace.</p>
+                  <h3 className="text-lg font-semibold leading-6 text-primary">Appearance Details</h3>
+                  <p className="mt-1 text-sm text-muted">Customize the look and feel of your workspace.</p>
                 </div>
 
                 <div className="space-y-6">
                   <div>
-                    <label className="text-sm font-medium text-gray-700 block mb-3">Theme Color</label>
-                    <div className="flex items-center gap-3 flex-wrap">
+                    <label className="mb-3 block text-sm font-semibold text-shell-muted-strong">Theme Color</label>
+                    <div className="flex flex-wrap items-center gap-3">
                       <input
                         type="color"
                         value={color}
                         onChange={(e) => setColor(e.target.value)}
-                        className="w-10 h-10 p-1 border border-gray-200 rounded-full cursor-pointer overflow-hidden"
+                        className="h-10 w-10 cursor-pointer overflow-hidden rounded-full border border-default bg-card p-1"
                         title="Custom Color"
                       />
-                      {Object.entries(COLOR_MAP).map(([name, value]) => (
+                      {THEME_PRESETS.map((preset) => (
                         <button
-                          key={name}
+                          key={preset.key}
                           type="button"
-                          onClick={() => setColor(value)}
-                          className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${color === value ? "ring-2 ring-offset-2 ring-blue-500 scale-110" : "hover:scale-105"
-                            }`}
-                          style={{ backgroundColor: value }}
-                          title={name}
+                          onClick={() => setColor(preset.value)}
+                          className={`flex h-10 w-10 items-center justify-center rounded-full transition-all ${color === preset.value ? "scale-110 ring-2 ring-theme ring-offset-2 ring-offset-app" : "hover:scale-105"}`}
+                          style={{ backgroundColor: preset.value }}
+                          title={preset.name}
                         >
-                          {color === value && <Check className="w-5 h-5 text-white drop-shadow-md" />}
+                          {color === preset.value && <Check className="h-5 w-5 text-white drop-shadow-md" />}
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t border-gray-100">
-                    <label className="text-sm font-medium text-gray-700 block mb-3">Display Mode</label>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="border-t border-default pt-4">
+                    <label className="mb-3 block text-sm font-semibold text-shell-muted-strong">Display Mode</label>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <button
+                        type="button"
                         onClick={() => setDarkMode(false)}
-                        className={`flex items-center justify-center gap-2 p-4 border rounded-xl transition-all ${!darkMode ? 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500' : 'border-gray-200 hover:bg-gray-50'}`}
+                        className={`flex items-center justify-center gap-2 rounded-xl border p-4 transition-all ${!darkMode ? 'border-theme bg-theme/10 text-theme ring-1 ring-theme' : 'border-default text-shell-muted-strong hover:bg-card'}`}
                       >
-                        <Sun className="w-5 h-5" />
-                        <span className="font-medium text-sm">Light Mode</span>
+                        <Sun className="h-5 w-5" />
+                        <span className="text-sm font-semibold">Light Mode</span>
                       </button>
                       <button
+                        type="button"
                         onClick={() => setDarkMode(true)}
-                        className={`flex items-center justify-center gap-2 p-4 border rounded-xl transition-all ${darkMode ? 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500' : 'border-gray-200 hover:bg-gray-50'}`}
+                        className={`flex items-center justify-center gap-2 rounded-xl border p-4 transition-all ${darkMode ? 'border-theme bg-theme/10 text-theme ring-1 ring-theme' : 'border-default text-shell-muted-strong hover:bg-card'}`}
                       >
-                        <Moon className="w-5 h-5" />
-                        <span className="font-medium text-sm">Dark Mode</span>
+                        <Moon className="h-5 w-5" />
+                        <span className="text-sm font-semibold">Dark Mode</span>
                       </button>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 border-t border-default pt-4 sm:grid-cols-3">
+                    <div className="app-card p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted">Primary Button</p>
+                      <button
+                        type="button"
+                        className="mt-4 rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-lg"
+                        style={{ backgroundColor: color }}
+                      >
+                        Preview
+                      </button>
+                    </div>
+                    <div className="app-card p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted">Card Surface</p>
+                      <p className="mt-3 text-sm font-semibold text-primary">Workspace card</p>
+                      <p className="mt-1 text-xs text-muted">Uses shared surface and border tokens.</p>
+                    </div>
+                    <div className="app-card space-y-2 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted">Status Palette</p>
+                      <span className="app-badge app-badge-success">Success</span>
+                      <span className="app-badge app-badge-warning">Warning</span>
+                      <span className="app-badge app-badge-danger">Danger</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex justify-end pt-6 border-t border-gray-100">
-                  <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                  >
+                <div className="flex justify-end border-t border-default pt-6">
+                  <button onClick={handleSave} disabled={saving} className="app-primary-button">
                     {saving ? 'Saving...' : 'Save Appearance'}
                   </button>
                 </div>
               </Tab.Panel>
 
-              {/* Notifications Tab */}
-              <Tab.Panel className="p-6 space-y-8 focus:outline-none">
+              <Tab.Panel className="space-y-8 p-6 focus:outline-none">
                 <div>
-                  <h3 className="text-lg font-medium leading-6 text-gray-900">Notifications</h3>
-                  <p className="mt-1 text-sm text-gray-500">Decide how and when you want to be notified.</p>
+                  <h3 className="text-lg font-semibold leading-6 text-primary">Notifications</h3>
+                  <p className="mt-1 text-sm text-muted">Decide how and when you want to be notified.</p>
                 </div>
 
                 <div className="space-y-4">
                   {notificationPreferenceOptions.map((option, index) => (
                     <React.Fragment key={option.key}>
-                      {index > 0 && <div className="border-t border-gray-100"></div>}
+                      {index > 0 && <div className="border-t border-default"></div>}
                       <Switch.Group as="div" className="flex items-center justify-between gap-4 py-3">
-                        <span className="flex-grow flex flex-col">
-                          <Switch.Label as="span" className="text-sm font-medium text-gray-900" passive>
+                        <span className="flex flex-grow flex-col">
+                          <Switch.Label as="span" className="text-sm font-semibold text-primary" passive>
                             {option.label}
                           </Switch.Label>
-                          <Switch.Description as="span" className="text-sm text-gray-500">
+                          <Switch.Description as="span" className="text-sm text-muted">
                             {option.description}
                           </Switch.Description>
                         </span>
                         <Switch
                           checked={Boolean(notificationPrefs[option.key])}
                           onChange={(val) => setNotificationPrefs((p) => ({ ...p, [option.key]: val }))}
-                          className={`${notificationPrefs[option.key] ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                          className={`${notificationPrefs[option.key] ? 'bg-theme' : 'bg-muted-surface'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-theme/35 focus:ring-offset-2 focus:ring-offset-app`}
                         >
-                          <span aria-hidden="true" className={`${notificationPrefs[option.key] ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200`} />
+                          <span aria-hidden="true" className={`${notificationPrefs[option.key] ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`} />
                         </Switch>
                       </Switch.Group>
                     </React.Fragment>
                   ))}
                 </div>
 
-                <div className="flex justify-end pt-6 border-t border-gray-100">
-                  <button
-                    onClick={handleSaveNotifications}
-                    disabled={savingNotifications}
-                    className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                  >
+                <div className="flex justify-end border-t border-default pt-6">
+                  <button onClick={handleSaveNotifications} disabled={savingNotifications} className="app-primary-button">
                     {savingNotifications ? 'Saving...' : 'Save Notifications'}
                   </button>
                 </div>
               </Tab.Panel>
 
-              {/* Security Tab */}
-              <Tab.Panel className="p-6 space-y-8 focus:outline-none">
+              <Tab.Panel className="space-y-8 p-6 focus:outline-none">
                 <div>
-                  <h3 className="text-lg font-medium leading-6 text-gray-900">Security</h3>
-                  <p className="mt-1 text-sm text-gray-500">Manage your password and security sessions.</p>
+                  <h3 className="text-lg font-semibold leading-6 text-primary">Security</h3>
+                  <p className="mt-1 text-sm text-muted">Manage your password and security sessions.</p>
                 </div>
 
-                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                <div className="border-l-4 border-warning bg-warning-soft p-4">
                   <div className="flex">
                     <div className="flex-shrink-0">
-                      <Shield className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+                      <Shield className="h-5 w-5 text-warning" aria-hidden="true" />
                     </div>
                     <div className="ml-3">
-                      <p className="text-sm text-yellow-700">
+                      <p className="text-sm text-warning">
                         Two-factor authentication is not yet enabled for this account.
                       </p>
                     </div>
@@ -376,24 +381,24 @@ const Settings = () => {
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900">Password</h4>
-                  <div className="mt-4 max-w-xl text-sm text-gray-500">
+                  <h4 className="text-sm font-semibold text-primary">Password</h4>
+                  <div className="mt-4 max-w-xl text-sm text-muted">
                     <p>Ensure your account is using a long, random password to stay secure.</p>
                   </div>
                   <div className="mt-4">
-                    <button type="button" className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <button type="button" className="app-secondary-button">
                       Change Password
                     </button>
                   </div>
                 </div>
 
-                <div className="pt-6 border-t border-gray-100">
-                  <h4 className="text-sm font-medium text-red-600">Danger Zone</h4>
-                  <div className="mt-4 max-w-xl text-sm text-gray-500">
+                <div className="border-t border-default pt-6">
+                  <h4 className="text-sm font-semibold text-danger">Danger Zone</h4>
+                  <div className="mt-4 max-w-xl text-sm text-muted">
                     <p>Once you delete your account, there is no going back. Please be certain.</p>
                   </div>
                   <div className="mt-4">
-                    <button type="button" className="inline-flex items-center px-4 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    <button type="button" className="app-secondary-button app-danger-button">
                       Delete Account
                     </button>
                   </div>

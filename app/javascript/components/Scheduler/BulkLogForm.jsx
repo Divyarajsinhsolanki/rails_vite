@@ -184,7 +184,7 @@ export default function BulkLogForm({
           <select
             value={logDate}
             onChange={(event) => setLogDate(event.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-theme"
           >
             {safeDates.map((date) => (
               <option key={date} value={date}>
@@ -202,7 +202,7 @@ export default function BulkLogForm({
             step="0.25"
             value={maxHoursPerDay}
             onChange={(event) => setMaxHoursPerDay(event.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-theme"
           />
         </div>
 
@@ -212,7 +212,7 @@ export default function BulkLogForm({
             <select
               value={applyDeveloperId}
               onChange={(event) => setApplyDeveloperId(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-theme"
             >
               <option value="">Select member</option>
               {safeDevelopers.map((developer) => (
@@ -235,7 +235,7 @@ export default function BulkLogForm({
               type="checkbox"
               checked={showOnlyRemaining}
               onChange={(event) => setShowOnlyRemaining(event.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 text-[var(--theme-color)] focus:ring-[var(--theme-color)]"
+              className="h-4 w-4 rounded border-slate-300 text-theme focus:ring-theme"
             />
             Show only remaining work
           </label>
@@ -331,7 +331,7 @@ export default function BulkLogForm({
                       type="checkbox"
                       checked={row.selected}
                       onChange={() => toggleSelection(row.rowId)}
-                      className="mt-1 h-4 w-4 rounded border-slate-300 text-[var(--theme-color)] focus:ring-[var(--theme-color)]"
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-theme focus:ring-theme"
                     />
                   </td>
                   <td className="px-3 py-3 align-top">
@@ -359,7 +359,7 @@ export default function BulkLogForm({
                     <select
                       value={row.developerId}
                       onChange={(event) => handleDeveloperChange(row.rowId, event.target.value)}
-                      className="w-full min-w-[180px] rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                      className="w-full min-w-[180px] rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-theme"
                     >
                       <option value="">Select member</option>
                       {safeDevelopers.map((developer) => (
@@ -374,7 +374,7 @@ export default function BulkLogForm({
                       step="0.25"
                       value={row.hours}
                       onChange={(event) => handleHoursChange(row.rowId, event.target.value)}
-                      className="w-full min-w-[120px] rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
+                      className="w-full min-w-[120px] rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-theme"
                     />
                   </td>
                 </tr>
@@ -400,7 +400,7 @@ export default function BulkLogForm({
         </button>
         <button
           type="submit"
-          className="rounded-lg bg-[var(--theme-color)] px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
+          className="rounded-lg bg-theme px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
         >
           Create Bulk Logs
         </button>

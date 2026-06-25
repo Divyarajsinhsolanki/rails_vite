@@ -1,7 +1,7 @@
 import React from "react";
 
 export const Card = ({ children }) => (
-  <div className="p-4 border rounded-lg shadow-sm bg-white">
+  <div className="app-card p-4">
     {children}
   </div>
 );

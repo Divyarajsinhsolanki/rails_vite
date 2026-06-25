@@ -51,14 +51,14 @@ const Login = ({ switchToSignup }) => {
         </div>
 
         <div className="lg:w-[42%]">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200/80 bg-white/95 p-8 shadow-xl shadow-slate-900/10 transition-transform duration-200 hover:-translate-y-1">
-            <h2 className="mb-1 text-center text-3xl font-bold text-slate-900">Welcome back</h2>
-            <p className="mb-8 text-center text-sm text-slate-500">Sign in to continue where you left off.</p>
+          <div className="w-full max-w-md rounded-2xl border border-shell-border bg-surface-elevated p-8 shadow-shell-lg transition-transform duration-200 hover:-translate-y-1">
+            <h2 className="mb-1 text-center text-3xl font-bold text-shell-text-strong">Welcome back</h2>
+            <p className="mb-8 text-center text-sm text-shell-muted">Sign in to continue where you left off.</p>
 
             {/* 📝 Login Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="mb-1 block text-sm font-semibold text-slate-700 required-label" htmlFor="email">
+                <label className="mb-1 block text-sm font-semibold text-shell-muted-strong required-label" htmlFor="email">
                   Email
                 </label>
                 <input
@@ -67,7 +67,7 @@ const Login = ({ switchToSignup }) => {
                   name="email"
                   placeholder="you@example.com"
                   required
-                  className="w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-slate-800 placeholder-slate-400 shadow-sm transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-xl border-2 border-shell-border bg-surface-card px-4 py-3 text-shell-text placeholder:text-muted/70 shadow-sm transition focus:border-theme focus:ring-1 focus:ring-theme/35"
                   value={formData.email}
                   onChange={handleChange}
                 />
@@ -75,18 +75,18 @@ const Login = ({ switchToSignup }) => {
 
               <div>
                 <div className="mb-1 flex items-center justify-between">
-                  <label className="block text-sm font-semibold text-slate-700 required-label" htmlFor="password">
+                  <label className="block text-sm font-semibold text-shell-muted-strong required-label" htmlFor="password">
                     Password
                   </label>
-                  <div className="flex items-center gap-3 text-xs text-blue-600">
+                  <div className="flex items-center gap-3 text-xs text-theme">
                     <button
                       type="button"
                       onClick={() => navigate("/forgot-password")}
-                      className="font-semibold text-blue-600 transition hover:text-blue-700"
+                      className="font-semibold text-theme transition hover:text-theme/80"
                     >
                       Forgot?
                     </button>
-                    <span className="text-[11px] text-blue-500/80">Secure login</span>
+                    <span className="text-[11px] text-theme/80">Secure login</span>
                   </div>
                 </div>
                 <input
@@ -95,7 +95,7 @@ const Login = ({ switchToSignup }) => {
                   name="password"
                   placeholder="••••••••"
                   required
-                  className="w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-slate-800 placeholder-slate-400 shadow-sm transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-xl border-2 border-shell-border bg-surface-card px-4 py-3 text-shell-text placeholder:text-muted/70 shadow-sm transition focus:border-theme focus:ring-1 focus:ring-theme/35"
                   value={formData.password}
                   onChange={handleChange}
                 />
@@ -103,7 +103,7 @@ const Login = ({ switchToSignup }) => {
 
               <button
                 type="submit"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3 text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-shell-primary py-3 text-white shadow-lg shadow-theme/20 transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-theme/25"
               >
                 Log In
               </button>
@@ -111,7 +111,7 @@ const Login = ({ switchToSignup }) => {
 
             {/* 🚨 Error Message */}
             {error && (
-              <div className="mt-5 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-red-600">
+              <div className="mt-5 flex items-center gap-2 rounded-lg border border-danger/20 bg-danger-soft p-3 text-danger">
                 ⚠️ {error}
               </div>
             )}
@@ -119,10 +119,10 @@ const Login = ({ switchToSignup }) => {
               <>
                 <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-200" />
+                    <div className="w-full border-t border-shell-border" />
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="bg-white px-2 text-slate-500">OR</span>
+                    <span className="bg-surface-elevated px-2 text-shell-muted">OR</span>
                   </div>
                 </div>
 
@@ -137,7 +137,7 @@ const Login = ({ switchToSignup }) => {
                       setLoading(false);
                     }
                   }}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-3 font-medium text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-shell-border bg-surface-card py-3 font-medium text-shell-muted-strong shadow-sm transition hover:-translate-y-0.5 hover:bg-surface-card-hover hover:shadow-lg"
                 >
                   <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path
@@ -150,12 +150,12 @@ const Login = ({ switchToSignup }) => {
               </>
             ) : null}
 
-            <p className="mt-6 text-center text-sm text-slate-600">
+            <p className="mt-6 text-center text-sm text-shell-muted">
               Don't have an account?{" "}
               <button
                 type="button"
                 onClick={switchToSignup}
-                className="font-semibold text-blue-600 transition hover:text-blue-700"
+                className="font-semibold text-theme transition hover:text-theme/80"
               >
                 Sign Up
               </button>

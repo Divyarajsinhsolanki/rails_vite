@@ -172,7 +172,7 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
     } : { id: null, name: '', start_date: '', end_date: '', working_days_mask: 62 });
     setFormVisible(true);
   };
-  
+
   const scrollTimeline = (direction) => {
     if (timelineRef.current) {
       const scrollAmount = direction === 'left' ? -timelineRef.current.offsetWidth / 2 : timelineRef.current.offsetWidth / 2;
@@ -181,14 +181,14 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
   };
 
   // --- HELPER FUNCTIONS ---
-  const formatDate = (dateString, options = { month: 'short', day: 'numeric' }) => 
+  const formatDate = (dateString, options = { month: 'short', day: 'numeric' }) =>
     new Date(dateString).toLocaleDateString('en-US', options);
 
   const calculateWorkingDays = (startDate, endDate, workingDaysMask = 62) => {
     let start = new Date(startDate);
     let end = new Date(endDate);
     let workingDays = 0;
-    
+
     while (start <= end) {
       const dayOfWeek = start.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
       if (isWorkingDay(workingDaysMask, dayOfWeek)) {
@@ -203,7 +203,7 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[var(--theme-color)]"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-theme"></div>
       </div>
     );
   }
@@ -247,8 +247,8 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
                 key={s.id}
                 onClick={() => handleSelectSprint(s)}
                 className={`relative flex-shrink-0 w-56 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 border flex flex-col justify-between
-                  ${isActive 
-                    ? 'bg-[var(--theme-color)] border-[var(--theme-color)] shadow-lg shadow-[rgb(var(--theme-color-rgb)/0.2)] text-white' 
+                  ${isActive
+                    ? 'bg-theme border-theme shadow-lg shadow-theme/20 text-white'
                     : 'bg-white border-slate-200 text-slate-700 hover:border-blue-400 hover:shadow-md'
                   }`}
               >
@@ -263,16 +263,16 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
                   </div>
                 </div>
                 <div className="flex justify-end gap-2 mt-2">
-                  <motion.button 
-                    whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} 
-                    onClick={(e) => { e.stopPropagation(); openForm(s); }} 
+                  <motion.button
+                    whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                    onClick={(e) => { e.stopPropagation(); openForm(s); }}
                     className={`p-1 rounded-md ${isActive ? 'text-blue-100 hover:bg-blue-400' : 'text-slate-500 hover:bg-slate-100'}`}
                   >
                     <FiEdit2 size={16} />
                   </motion.button>
-                  <motion.button 
-                    whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} 
-                    onClick={(e) => { e.stopPropagation(); setDeleteCandidate(s); }} 
+                  <motion.button
+                    whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                    onClick={(e) => { e.stopPropagation(); setDeleteCandidate(s); }}
                     className={`p-1 rounded-md ${isActive ? 'text-blue-100 hover:bg-blue-400' : 'text-slate-500 hover:bg-red-100 hover:text-red-600'}`}
                   >
                     <FiTrash2 size={16} />
@@ -313,16 +313,16 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
                       <div className="space-y-4">
                         <div>
                           <label className="block text-sm font-medium text-slate-600 mb-1 required-label">Sprint Name</label>
-                          <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="e.g., Summer Release" required className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] transition"/>
+                          <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="e.g., Summer Release" required className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-theme focus:border-theme transition"/>
                         </div>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                           <div>
                             <label className="block text-sm font-medium text-slate-600 mb-1 required-label">Start Date</label>
-                            <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} required className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] transition"/>
+                            <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} required className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-theme focus:border-theme transition"/>
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-slate-600 mb-1 required-label">End Date</label>
-                            <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} required className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-[var(--theme-color)] focus:border-[var(--theme-color)] transition"/>
+                            <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} required className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md text-slate-800 focus:ring-2 focus:ring-theme focus:border-theme transition"/>
                           </div>
                         </div>
 
@@ -348,7 +348,7 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
                                       working_days_mask: toggleWorkingDay(prev.working_days_mask, d.idx),
                                     }))
                                   }
-                                  className="h-4 w-4 rounded border-slate-300 text-[var(--theme-color)] focus:ring-[var(--theme-color)]"
+                                  className="h-4 w-4 rounded border-slate-300 text-theme focus:ring-theme"
                                 />
                                 <span>{d.label}</span>
                               </label>
@@ -377,7 +377,7 @@ export default function SprintManager({ onSprintChange, projectId, projectName, 
         </AnimatePresence>,
         portalTarget
       )}
-      
+
       {portalTarget && createPortal(
         <AnimatePresence>
           {deleteCandidate && (

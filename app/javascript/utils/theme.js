@@ -1,11 +1,26 @@
 export const COLOR_MAP = {
   blue: '#3b82f6',
+  indigo: '#6366f1',
+  emerald: '#10b981',
+  violet: '#8b5cf6',
+  rose: '#f43f5e',
+  amber: '#f59e0b',
+  slate: '#475569',
   purple: '#8b5cf6',
   green: '#10b981',
   red: '#ef4444',
-  pink: '#ec4899',
-  indigo: '#6366f1'
+  pink: '#ec4899'
 };
+
+export const THEME_PRESETS = [
+  { name: 'Blue', key: 'blue', value: COLOR_MAP.blue },
+  { name: 'Indigo', key: 'indigo', value: COLOR_MAP.indigo },
+  { name: 'Emerald', key: 'emerald', value: COLOR_MAP.emerald },
+  { name: 'Violet', key: 'violet', value: COLOR_MAP.violet },
+  { name: 'Rose', key: 'rose', value: COLOR_MAP.rose },
+  { name: 'Amber', key: 'amber', value: COLOR_MAP.amber },
+  { name: 'Slate', key: 'slate', value: COLOR_MAP.slate }
+];
 
 export const lightenColor = (color, amount = 0.5) => {
   const hex = color.replace('#', '');

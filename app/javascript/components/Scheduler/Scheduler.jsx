@@ -67,7 +67,7 @@ const sortSchedulerLogs = (logs) => [...logs].sort((left, right) => (
 function LoadingSpinner() {
   return (
     <div className="flex justify-center items-center h-32">
-      <svg className="animate-spin h-8 w-8 text-[var(--theme-color)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <svg className="animate-spin h-8 w-8 text-theme" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
       </svg>
@@ -219,7 +219,7 @@ function TaskCard({ task, index, onEdit, onTaskUpdate, onDuplicate }) {
               <button onClick={toggleStrike} title={task.status === 'completed' ? "Mark as not done" : "Mark as done"} className="p-1 text-gray-500 hover:text-green-600 rounded-full hover:bg-gray-100 transition-colors">
                 {task.status === 'completed' ? <CheckCircleSolidIcon className="h-5 w-5 text-green-600" /> : <CheckCircleIcon className="h-5 w-5" />}
               </button>
-              <button onClick={(e) => { e.stopPropagation(); onEdit(); }} title="Edit task" className="p-1 text-gray-500 hover:text-[var(--theme-color)] rounded-full hover:bg-gray-100 transition-colors">
+              <button onClick={(e) => { e.stopPropagation(); onEdit(); }} title="Edit task" className="p-1 text-gray-500 hover:text-theme rounded-full hover:bg-gray-100 transition-colors">
                 <PencilIcon className="h-5 w-5" />
               </button>
               {task.task?.task_url && (
@@ -261,7 +261,7 @@ function TaskCell({ date, devId, tasksInCell, setEditingTask, handleTaskUpdate, 
         <td
           ref={provided.innerRef}
           {...provided.droppableProps}
-          className={`p-2 border border-gray-200 align-top min-w-[200px] relative transition-colors duration-150 ease-in-out ${snapshot.isDraggingOver ? 'bg-[rgb(var(--theme-color-rgb)/0.1)] outline outline-2 outline-[var(--theme-color)]' : 'bg-white hover:bg-gray-50'}`}
+          className={`p-2 border border-gray-200 align-top min-w-[200px] relative transition-colors duration-150 ease-in-out ${snapshot.isDraggingOver ? 'bg-theme/10 outline outline-2 outline-theme' : 'bg-white hover:bg-gray-50'}`}
           style={{ minHeight: '100px' }}
         >
           <div className={`absolute bottom-0 left-0 right-0 h-1 ${capacityColor} opacity-70 transition-all duration-300`} style={{ width: `${hoursPercentage}%` }} title={`${totalHoursInCell}h / ${cellCapacity}h`}></div>
@@ -611,7 +611,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, projectMember
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <header ref={mainHeaderRef} className="bg-white shadow-sm p-4"> {/* Added ref here */}
-          <h1 className="text-2xl font-bold text-gray-800 flex items-center"><CalendarDaysIcon className="h-7 w-7 mr-2 text-[var(--theme-color)]" />Sprint Logs</h1>
+          <h1 className="text-2xl font-bold text-gray-800 flex items-center"><CalendarDaysIcon className="h-7 w-7 mr-2 text-theme" />Sprint Logs</h1>
         </header>
         <main className="flex-grow container mx-auto px-4 pb-4 pt-2 lg:px-6 lg:pb-6 lg:pt-2">
           <LoadingSpinner />
@@ -629,7 +629,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, projectMember
           <p className="text-red-600 bg-red-50 p-3 rounded-md">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-6 px-6 py-2 bg-[var(--theme-color)] text-white rounded-lg hover:brightness-110 transition-colors"
+            className="mt-6 px-6 py-2 bg-theme text-white rounded-lg hover:brightness-110 transition-colors"
           >
             Try Again
           </button>
@@ -661,7 +661,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, projectMember
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-3">
                     <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] flex items-center">
-                      <TableCellsIcon className="h-6 w-6 mr-2 text-[var(--theme-color)]" /> Sprint Logs
+                      <TableCellsIcon className="h-6 w-6 mr-2 text-theme" /> Sprint Logs
                     </h1>
                     {viewMode !== 'dev' && (
                       <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${viewMode === 'qa'
@@ -675,7 +675,7 @@ function Scheduler({ sprintId, projectId, sheetIntegrationEnabled, projectMember
                   <div className="flex space-x-2">
                     <button
                       onClick={() => setIsAddTaskModalOpen(true)}
-                      className="flex items-center bg-[var(--theme-color)] hover:brightness-110 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105"
+                      className="flex items-center bg-theme hover:brightness-110 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105"
                     >
                       <PlusCircleIcon className="h-5 w-5 mr-2" />
                       Add Log

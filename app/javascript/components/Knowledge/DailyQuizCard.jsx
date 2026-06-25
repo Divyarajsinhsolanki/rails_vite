@@ -149,16 +149,16 @@ export default function DailyQuizCard({
       </div>
 
       {status === "loading" && (
-        <div className="flex-1 flex items-center justify-center text-sm text-gray-500">Fetching a quiz…</div>
+        <div className="flex-1 flex items-center justify-center text-sm text-shell-muted">Fetching a quiz…</div>
       )}
 
       {status === "error" && (
-        <div className="flex-1 flex flex-col items-start gap-3 text-sm text-red-600">
+        <div className="flex-1 flex flex-col items-start gap-3 text-sm text-danger">
           <p>{errorMessage}</p>
           <button
             type="button"
             onClick={loadQuiz}
-            className="px-3 py-1.5 rounded-lg bg-red-100 text-red-700 text-xs font-medium hover:bg-red-200 transition"
+            className="rounded-lg bg-danger-soft px-3 py-1.5 text-xs font-medium text-danger transition hover:bg-danger/15"
           >
             Try again
           </button>
@@ -167,7 +167,7 @@ export default function DailyQuizCard({
 
       {status === "ready" && quiz && (
         <div className="flex-1 flex flex-col gap-4">
-          <p className="text-sm text-gray-800 font-medium whitespace-pre-line">{quiz.question}</p>
+          <p className="text-sm font-medium text-shell-text whitespace-pre-line">{quiz.question}</p>
           <div className="space-y-2">
             {quiz.options?.map((option) => {
               const isSelected = selectedOption === option;
@@ -181,12 +181,12 @@ export default function DailyQuizCard({
                   disabled={Boolean(result)}
                   className={`w-full text-left text-sm border rounded-xl px-3 py-2 transition focus:outline-none focus:ring-2 ${
                     isCorrect
-                      ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                      ? "border-success bg-success-soft text-success"
                       : isIncorrect
-                      ? "border-red-500 bg-red-50 text-red-700"
+                      ? "border-danger bg-danger-soft text-danger"
                       : isSelected
-                      ? "border-[var(--theme-color)] bg-[var(--theme-color)/0.1] text-[var(--theme-color-dark)]"
-                      : "border-gray-200 hover:border-[var(--theme-color)]"
+                      ? "border-theme bg-theme/10 text-theme"
+                      : "border-shell-border hover:border-theme"
                   }`}
                 >
                   {option}
@@ -195,9 +195,9 @@ export default function DailyQuizCard({
             })}
           </div>
 
-          <div className="flex items-center justify-between text-xs text-gray-500">
+          <div className="flex items-center justify-between text-xs text-shell-muted">
             {result ? (
-              <span className={result === "correct" ? "text-emerald-600" : "text-red-600"}>
+              <span className={result === "correct" ? "text-success" : "text-danger"}>
                 {result === "correct" ? "Nice! That's correct." : `Correct answer: ${quiz.correctAnswer}`}
               </span>
             ) : (
@@ -207,7 +207,7 @@ export default function DailyQuizCard({
               type="button"
               onClick={loadQuiz}
               disabled={status === "loading"}
-              className="text-[var(--theme-color)] font-medium disabled:opacity-50"
+              className="text-theme font-medium disabled:opacity-50"
             >
               New quiz
             </button>

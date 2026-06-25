@@ -18,7 +18,7 @@ const Avatar = ({ name, src, className = "" }) => {
   const initial = displayName ? displayName.charAt(0).toUpperCase() : "?";
   return (
     <div
-      className={`bg-blue-500 text-white flex items-center justify-center rounded-full font-bold ${className}`.trim()}
+      className={`flex items-center justify-center rounded-full bg-theme font-bold text-white ${className}`.trim()}
       aria-label={altText}
     >
       {initial}

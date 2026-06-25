@@ -117,9 +117,9 @@ const resolveSection = (pathname) => {
 const roleLabel = (user) => user?.roles?.[0]?.name?.replace(/_/g, " ") || "Member";
 
 const menuItemClass =
-  "group flex w-full items-center gap-3 rounded-[20px] px-4 py-3 text-sm font-medium text-slate-700 hover:bg-white hover:text-slate-950";
+  "group flex w-full items-center gap-3 rounded-[20px] px-4 py-3 text-sm font-medium text-shell-muted-strong hover:bg-surface-card-hover hover:text-shell-text-strong";
 const menuIconClass =
-  "flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-white/70 bg-slate-950/5 text-[var(--theme-color)] transition group-hover:bg-slate-950 group-hover:text-white";
+  "flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-shell-border bg-muted-soft text-theme transition group-hover:bg-shell-text-strong group-hover:text-white";
 
 const HolographicAvatar = ({ user }) => {
   const [angle, setAngle] = useState(135);
@@ -187,15 +187,15 @@ const AnimatedNavLink = ({ to, label, icon: Icon, onClick, fullWidth = false }) 
 
       <span
         className={`relative z-10 flex items-center font-semibold ${
-          isActive ? "text-slate-950" : "text-slate-600"
+          isActive ? "text-shell-text-strong" : "text-shell-muted"
         } ${contentClass}`}
       >
         {Icon ? (
           <span
             className={`flex shrink-0 items-center justify-center ${
               isActive
-                ? "bg-slate-950 text-white shadow-[0_14px_26px_rgb(15_23_42_/_0.18)]"
-                : "border border-white/70 bg-white/70 text-[var(--theme-color)] group-hover:bg-white group-hover:text-slate-950"
+                ? "bg-shell-text-strong text-white shadow-[0_14px_26px_rgb(15_23_42_/_0.18)]"
+                : "border border-white/70 bg-white/70 text-theme group-hover:bg-white group-hover:text-shell-text-strong"
             } ${iconClass}`}
           >
             <Icon className={glyphClass} />
@@ -227,7 +227,7 @@ const ProjectsDropdown = ({ projects, onItemClick, active }) => {
       <button
         onClick={() => setIsOpen((value) => !value)}
         className={`group relative flex items-center gap-1.5 rounded-[16px] px-2.5 py-1.5 text-[12px] font-semibold xl:text-[12.5px] ${
-          active || isOpen ? "text-slate-950" : "text-slate-600"
+          active || isOpen ? "text-shell-text-strong" : "text-shell-muted"
         }`}
       >
         <span
@@ -240,15 +240,15 @@ const ProjectsDropdown = ({ projects, onItemClick, active }) => {
         <span
           className={`relative z-10 flex h-6 w-6 items-center justify-center rounded-[12px] ${
             active || isOpen
-              ? "bg-slate-950 text-white shadow-[0_14px_26px_rgb(15_23_42_/_0.18)]"
-              : "border border-white/70 bg-white/70 text-[var(--theme-color)] group-hover:bg-white group-hover:text-slate-950"
+              ? "bg-shell-text-strong text-white shadow-[0_14px_26px_rgb(15_23_42_/_0.18)]"
+              : "border border-white/70 bg-white/70 text-theme group-hover:bg-white group-hover:text-shell-text-strong"
           }`}
         >
           <FiLayers className="h-[13px] w-[13px]" />
         </span>
         <span className="relative z-10">Projects</span>
         {projects.length > 0 ? (
-          <span className="relative z-10 inline-flex rounded-full bg-slate-950 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-white">
+          <span className="relative z-10 inline-flex rounded-full bg-shell-text-strong px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-white">
             {projects.length}
           </span>
         ) : null}
@@ -269,10 +269,10 @@ const ProjectsDropdown = ({ projects, onItemClick, active }) => {
             <div className="rounded-[22px] bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(235,242,255,0.74))] p-4">
               <div className="mb-3 flex items-center justify-between">
                 <div>
-                  <p className="text-[0.66rem] font-semibold uppercase tracking-[0.28em] text-slate-400">
+                  <p className="text-[0.66rem] font-semibold uppercase tracking-[0.28em] text-shell-muted">
                     Project Access
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">Dashboards and boards</p>
+                  <p className="mt-1 text-sm font-semibold text-shell-text-strong">Dashboards and boards</p>
                 </div>
                 <span className="shell-chip">
                   <span className="shell-chip-dot" />
@@ -287,9 +287,9 @@ const ProjectsDropdown = ({ projects, onItemClick, active }) => {
                     onItemClick();
                     setIsOpen(false);
                   }}
-                  className="group flex items-center gap-3 rounded-[18px] px-3 py-3 text-sm font-medium text-slate-700 hover:bg-white hover:text-slate-950"
+                  className="group flex items-center gap-3 rounded-[18px] px-3 py-3 text-sm font-medium text-shell-muted-strong hover:bg-surface-card-hover hover:text-shell-text-strong"
                 >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-2xl border border-white/70 bg-white/80 text-[var(--theme-color)] transition group-hover:bg-slate-950 group-hover:text-white">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-2xl border border-shell-border bg-surface-card text-theme transition group-hover:bg-shell-text-strong group-hover:text-white">
                     <FiGrid className="h-4 w-4" />
                   </span>
                   <span className="truncate">All projects</span>
@@ -305,9 +305,9 @@ const ProjectsDropdown = ({ projects, onItemClick, active }) => {
                       onItemClick();
                       setIsOpen(false);
                     }}
-                    className="group flex items-center gap-3 rounded-[18px] px-3 py-3 text-sm font-medium text-slate-700 hover:bg-white hover:text-slate-950"
+                    className="group flex items-center gap-3 rounded-[18px] px-3 py-3 text-sm font-medium text-shell-muted-strong hover:bg-surface-card-hover hover:text-shell-text-strong"
                   >
-                    <span className="flex h-9 w-9 items-center justify-center rounded-2xl border border-white/70 bg-white/80 text-[var(--theme-color)] transition group-hover:bg-slate-950 group-hover:text-white">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-2xl border border-shell-border bg-surface-card text-theme transition group-hover:bg-shell-text-strong group-hover:text-white">
                       <FiZap className="h-4 w-4" />
                     </span>
                     <span className="truncate">{project.label}</span>
@@ -341,7 +341,7 @@ const AreaDropdown = ({ label, icon: Icon, links, active }) => {
         type="button"
         onClick={() => setIsOpen((value) => !value)}
         className={`group relative flex items-center gap-1.5 rounded-[16px] px-2.5 py-1.5 text-[12px] font-semibold xl:text-[12.5px] ${
-          active || isOpen ? "text-slate-950" : "text-slate-600"
+          active || isOpen ? "text-shell-text-strong" : "text-shell-muted"
         }`}
         aria-expanded={isOpen}
       >
@@ -355,8 +355,8 @@ const AreaDropdown = ({ label, icon: Icon, links, active }) => {
         <span
           className={`relative z-10 flex h-6 w-6 items-center justify-center rounded-[12px] ${
             active || isOpen
-              ? "bg-slate-950 text-white"
-              : "border border-white/70 bg-white/70 text-[var(--theme-color)]"
+              ? "bg-shell-text-strong text-white"
+              : "border border-white/70 bg-white/70 text-theme"
           }`}
         >
           <Icon className="h-[13px] w-[13px]" />
@@ -374,7 +374,7 @@ const AreaDropdown = ({ label, icon: Icon, links, active }) => {
             className="shell-panel shell-panel-floating shell-panel-strong absolute right-0 top-full z-50 mt-3 w-[18rem] rounded-[28px] p-2"
           >
             <div className="rounded-[22px] bg-white/75 p-3">
-              <p className="px-3 pb-2 text-[0.66rem] font-semibold uppercase tracking-[0.25em] text-slate-400">
+              <p className="px-3 pb-2 text-[0.66rem] font-semibold uppercase tracking-[0.25em] text-shell-muted">
                 {label}
               </p>
               {links.map((link) => {
@@ -524,16 +524,16 @@ const Navbar = () => {
             loading="lazy" />
           </span>
           <div className="min-w-0">
-            <p className="text-[0.58rem] font-semibold uppercase tracking-[0.34em] text-slate-400">Nexus Shell</p>
+            <p className="text-[0.58rem] font-semibold uppercase tracking-[0.34em] text-shell-muted">Nexus Shell</p>
             <motion.h1
-              className="truncate text-lg font-semibold tracking-[-0.04em] text-slate-950 sm:text-xl"
+              className="truncate text-lg font-semibold tracking-[-0.04em] text-shell-text-strong sm:text-xl"
               initial={{ opacity: 0, x: -6 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.32 }}
             >
-              Nexus<span className="text-[var(--theme-color)]">Hub</span>
+              Nexus<span className="text-theme">Hub</span>
             </motion.h1>
-            <p className="hidden max-w-[13rem] truncate text-xs font-medium text-slate-500 min-[1480px]:block">
+            <p className="hidden max-w-[13rem] truncate text-xs font-medium text-shell-muted min-[1480px]:block">
               {currentSection.caption}
             </p>
           </div>
@@ -568,12 +568,12 @@ const Navbar = () => {
             <button
               type="button"
               onClick={() => window.dispatchEvent(new Event("nexus:open-search"))}
-              className="hidden items-center gap-2 rounded-full border border-white/65 bg-white/62 px-3 py-2 text-xs font-semibold text-slate-600 shadow-[0_14px_28px_rgb(15_23_42_/_0.08)] hover:bg-white lg:flex"
+              className="hidden items-center gap-2 rounded-full border border-shell-border bg-surface-card px-3 py-2 text-xs font-semibold text-shell-muted shadow-[0_14px_28px_rgb(15_23_42_/_0.08)] hover:bg-surface-card-hover lg:flex"
               aria-label="Search workspace"
             >
               <FiSearch className="h-4 w-4" />
               <span className="hidden min-[1450px]:inline">Search</span>
-              <kbd className="hidden rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono text-[10px] min-[1550px]:inline">
+              <kbd className="hidden rounded border border-shell-border bg-shell-soft px-1.5 py-0.5 font-mono text-[10px] min-[1550px]:inline">
                 Ctrl K
               </kbd>
             </button>
@@ -604,7 +604,7 @@ const Navbar = () => {
               >
                 <HolographicAvatar user={user} />
                 {hasAdminRole ? (
-                  <div className="absolute -right-1.5 -top-1.5 z-20 rounded-full border-2 border-white bg-[linear-gradient(135deg,var(--theme-color),var(--theme-secondary))] p-1 text-white shadow-[0_14px_24px_rgb(52_109_255_/_0.32)]">
+                  <div className="absolute -right-1.5 -top-1.5 z-20 rounded-full border-2 border-white bg-shell-primary p-1 text-white shadow-lg shadow-theme/25">
                     <FiAward className="h-3 w-3" />
                   </div>
                 ) : null}
@@ -623,12 +623,12 @@ const Navbar = () => {
                       <div className="flex items-start gap-3">
                         <HolographicAvatar user={user} />
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold text-slate-950">
+                          <p className="truncate text-sm font-semibold text-shell-text-strong">
                             {user.first_name} {user.last_name}
                           </p>
-                          <p className="mt-1 truncate text-xs text-slate-500">{user.email}</p>
-                          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/75 bg-white/76 px-3 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-600">
-                            <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(74,222,128,0.6)]" />
+                          <p className="mt-1 truncate text-xs text-shell-muted">{user.email}</p>
+                          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-shell-border bg-surface-card px-3 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-shell-muted">
+                            <span className="h-2 w-2 rounded-full bg-success shadow-[0_0_16px_rgb(var(--color-success-rgb)_/_0.45)]" />
                             {roleLabel(user)}
                           </div>
                         </div>
@@ -679,13 +679,13 @@ const Navbar = () => {
             <div className="hidden items-center gap-2 lg:flex">
               <Link
                 to="/login"
-                className="rounded-full border border-white/70 bg-white/58 px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-[0_14px_24px_rgb(15_23_42_/_0.06)] hover:bg-white"
+                className="rounded-full border border-shell-border bg-surface-card px-4 py-2.5 text-sm font-semibold text-shell-muted-strong shadow-[0_14px_24px_rgb(15_23_42_/_0.06)] hover:bg-surface-card-hover"
               >
                 Login
               </Link>
               <Link
                 to="/signup"
-                className="rounded-full border border-white/75 bg-[linear-gradient(135deg,var(--theme-color),var(--theme-secondary))] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_18px_36px_rgb(52_109_255_/_0.24)] hover:brightness-110"
+                className="rounded-full border border-white/75 bg-shell-primary px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-theme/20 hover:brightness-110"
               >
                 Get Started
               </Link>
@@ -699,11 +699,11 @@ const Navbar = () => {
             <div className="space-y-1.5">
               <motion.span
                 animate={{ width: isMobileMenuOpen ? 22 : 18 }}
-                className="ml-auto block h-0.5 w-5 rounded-full bg-slate-800"
+                className="ml-auto block h-0.5 w-5 rounded-full bg-shell-text"
               />
               <motion.span
                 animate={{ width: isMobileMenuOpen ? 22 : 24 }}
-                className="block h-0.5 w-6 rounded-full bg-slate-800"
+                className="block h-0.5 w-6 rounded-full bg-shell-text"
               />
             </div>
           </button>
@@ -717,7 +717,7 @@ const Navbar = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 bg-slate-950/18 px-3 py-3 backdrop-blur-md lg:hidden"
+            className="fixed inset-0 z-50 bg-shell-text-strong/20 px-3 py-3 backdrop-blur-md lg:hidden"
           >
             <motion.div
               initial={{ x: 24, opacity: 0 }}
@@ -731,13 +731,13 @@ const Navbar = () => {
 
               <div className="relative flex items-center justify-between px-5 pb-4 pt-5">
                 <div className="min-w-0">
-                  <p className="text-[0.58rem] font-semibold uppercase tracking-[0.34em] text-slate-400">Current Lane</p>
-                  <p className="truncate text-lg font-semibold text-slate-950">{currentSection.label}</p>
-                  <p className="mt-1 text-sm text-slate-500">{currentSection.caption}</p>
+                  <p className="text-[0.58rem] font-semibold uppercase tracking-[0.34em] text-shell-muted">Current Lane</p>
+                  <p className="truncate text-lg font-semibold text-shell-text-strong">{currentSection.label}</p>
+                  <p className="mt-1 text-sm text-shell-muted">{currentSection.caption}</p>
                 </div>
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="rounded-full border border-white/75 bg-white/82 p-2 text-slate-700 shadow-[0_12px_22px_rgb(15_23_42_/_0.08)] hover:text-slate-950"
+                  className="rounded-full border border-shell-border bg-surface-card-hover p-2 text-shell-muted-strong shadow-[0_12px_22px_rgb(15_23_42_/_0.08)] hover:text-shell-text-strong"
                 >
                   <FiX className="h-5 w-5" />
                 </button>
@@ -775,7 +775,7 @@ const Navbar = () => {
                         className="pt-4"
                       >
                         <div className="mb-3 flex items-center justify-between px-2">
-                          <p className="text-[0.66rem] font-semibold uppercase tracking-[0.28em] text-slate-400">
+                          <p className="text-[0.66rem] font-semibold uppercase tracking-[0.28em] text-shell-muted">
                             Projects
                           </p>
                           <span className="shell-chip">
@@ -788,9 +788,9 @@ const Navbar = () => {
                           <NavLink
                             to="/projects"
                             onClick={() => setIsMobileMenuOpen(false)}
-                            className="group flex items-center gap-3 rounded-[20px] px-4 py-3 text-sm font-medium text-slate-700 hover:bg-white hover:text-slate-950"
+                            className="group flex items-center gap-3 rounded-[20px] px-4 py-3 text-sm font-medium text-shell-muted-strong hover:bg-surface-card-hover hover:text-shell-text-strong"
                           >
-                            <span className="flex h-9 w-9 items-center justify-center rounded-2xl border border-white/70 bg-white/80 text-[var(--theme-color)] transition group-hover:bg-slate-950 group-hover:text-white">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-2xl border border-shell-border bg-surface-card text-theme transition group-hover:bg-shell-text-strong group-hover:text-white">
                               <FiGrid className="h-4 w-4" />
                             </span>
                             <span className="truncate">All projects</span>
@@ -801,9 +801,9 @@ const Navbar = () => {
                               key={project.to}
                               to={project.to}
                               onClick={() => setIsMobileMenuOpen(false)}
-                              className="group flex items-center gap-3 rounded-[20px] px-4 py-3 text-sm font-medium text-slate-700 hover:bg-white hover:text-slate-950"
+                              className="group flex items-center gap-3 rounded-[20px] px-4 py-3 text-sm font-medium text-shell-muted-strong hover:bg-surface-card-hover hover:text-shell-text-strong"
                             >
-                              <span className="flex h-9 w-9 items-center justify-center rounded-2xl border border-white/70 bg-white/80 text-[var(--theme-color)] transition group-hover:bg-slate-950 group-hover:text-white">
+                              <span className="flex h-9 w-9 items-center justify-center rounded-2xl border border-shell-border bg-surface-card text-theme transition group-hover:bg-shell-text-strong group-hover:text-white">
                                 <FiLayers className="h-4 w-4" />
                               </span>
                               <span className="truncate">{project.label}</span>
@@ -823,7 +823,7 @@ const Navbar = () => {
                           transition={{ delay: 0.24 + sectionIndex * 0.04 }}
                           className="pt-4"
                         >
-                          <p className="mb-2 px-2 text-[0.66rem] font-semibold uppercase tracking-[0.28em] text-slate-400">
+                          <p className="mb-2 px-2 text-[0.66rem] font-semibold uppercase tracking-[0.28em] text-shell-muted">
                             {label}
                           </p>
                           <div className="space-y-1">
@@ -852,14 +852,14 @@ const Navbar = () => {
                       <Link
                         to="/login"
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="flex items-center justify-center rounded-[20px] border border-white/75 bg-white/82 px-4 py-3 text-base font-semibold text-slate-800 shadow-[0_14px_24px_rgb(15_23_42_/_0.06)]"
+                        className="flex items-center justify-center rounded-[20px] border border-shell-border bg-surface-card-hover px-4 py-3 text-base font-semibold text-shell-text shadow-[0_14px_24px_rgb(15_23_42_/_0.06)]"
                       >
                         Login
                       </Link>
                       <Link
                         to="/signup"
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="flex items-center justify-center rounded-[20px] bg-[linear-gradient(135deg,var(--theme-color),var(--theme-secondary))] px-4 py-3 text-base font-semibold text-white shadow-[0_18px_36px_rgb(52_109_255_/_0.24)]"
+                        className="flex items-center justify-center rounded-[20px] bg-shell-primary px-4 py-3 text-base font-semibold text-white shadow-lg shadow-theme/20"
                       >
                         Get Started
                       </Link>
@@ -877,10 +877,10 @@ const Navbar = () => {
                     <div className="flex items-center gap-3">
                       <HolographicAvatar user={user} />
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-slate-950">
+                        <p className="truncate text-sm font-semibold text-shell-text-strong">
                           {user.first_name} {user.last_name}
                         </p>
-                        <p className="truncate text-xs text-slate-500">{user.email}</p>
+                        <p className="truncate text-xs text-shell-muted">{user.email}</p>
                       </div>
                     </div>
 

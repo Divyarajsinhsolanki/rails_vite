@@ -4,17 +4,17 @@ import { portfolioEnabled } from "../config/features";
 
 const Footer = () => {
   return (
-    <footer className="bg-white shadow-t border-t border-gray-200 w-full mt-auto">
-      <div className="container mx-auto flex flex-col md:flex-row items-center justify-between px-6 py-3 text-sm text-gray-600">
+    <footer className="mt-auto w-full border-t border-shell-border bg-surface-elevated shadow-shell-sm">
+      <div className="container mx-auto flex flex-col items-center justify-between px-6 py-3 text-sm text-shell-muted md:flex-row">
         <p className="text-center md:text-left">
-          &copy; {new Date().getFullYear()} <span className="text-indigo-700 font-medium">Nexus Hub</span>. Built by Divyarajsinh Solanki.
+          &copy; {new Date().getFullYear()} <span className="font-medium text-theme">Nexus Hub</span>. Built by Divyarajsinh Solanki.
         </p>
         <div className="flex mt-2 md:mt-0 space-x-4">
-          <Link to="/legal" className="hover:text-indigo-600 transition">
+          <Link to="/legal" className="transition hover:text-theme">
             Privacy & Terms
           </Link>
           {portfolioEnabled ? (
-            <Link to="/" className="hover:text-indigo-600 transition">
+            <Link to="/" className="transition hover:text-theme">
               Portfolio
             </Link>
           ) : null}

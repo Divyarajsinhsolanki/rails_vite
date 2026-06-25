@@ -91,14 +91,14 @@ const Signup = ({ switchToLogin }) => {
         </div>
 
         <div className="lg:w-[42%]">
-          <div className="w-full max-w-md rounded-3xl border border-white/60 bg-white/95 p-8 shadow-2xl shadow-slate-900/10 transition-transform duration-200 hover:-translate-y-1">
-            <h2 className="mb-1 text-center text-3xl font-bold text-slate-900">Create account</h2>
-            <p className="mb-8 text-center text-sm text-slate-500">Join the workspace and start your command deck.</p>
+          <div className="w-full max-w-md rounded-3xl border border-shell-border bg-surface-elevated p-8 shadow-shell-lg transition-transform duration-200 hover:-translate-y-1">
+            <h2 className="mb-1 text-center text-3xl font-bold text-shell-text-strong">Create account</h2>
+            <p className="mb-8 text-center text-sm text-shell-muted">Join the workspace and start your command deck.</p>
 
             <form onSubmit={handleSubmit} className="space-y-5" encType="multipart/form-data">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700 required-label" htmlFor="first_name">
+                  <label className="mb-1 block text-sm font-semibold text-shell-muted-strong required-label" htmlFor="first_name">
                     First name
                   </label>
                   <input
@@ -107,13 +107,13 @@ const Signup = ({ switchToLogin }) => {
                     name="first_name"
                     placeholder="Ada"
                     required
-                    className="w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-slate-800 placeholder-slate-400 shadow-sm transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    className="w-full rounded-xl border-2 border-shell-border bg-surface-card px-4 py-3 text-shell-text placeholder:text-muted/70 shadow-sm transition focus:border-theme focus:ring-1 focus:ring-theme/35"
                     value={formData.first_name}
                     onChange={handleChange}
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700 required-label" htmlFor="last_name">
+                  <label className="mb-1 block text-sm font-semibold text-shell-muted-strong required-label" htmlFor="last_name">
                     Last name
                   </label>
                   <input
@@ -122,7 +122,7 @@ const Signup = ({ switchToLogin }) => {
                     name="last_name"
                     placeholder="Lovelace"
                     required
-                    className="w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-slate-800 placeholder-slate-400 shadow-sm transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    className="w-full rounded-xl border-2 border-shell-border bg-surface-card px-4 py-3 text-shell-text placeholder:text-muted/70 shadow-sm transition focus:border-theme focus:ring-1 focus:ring-theme/35"
                     value={formData.last_name}
                     onChange={handleChange}
                   />
@@ -130,7 +130,7 @@ const Signup = ({ switchToLogin }) => {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-semibold text-slate-700 required-label" htmlFor="email">
+                <label className="mb-1 block text-sm font-semibold text-shell-muted-strong required-label" htmlFor="email">
                   Email
                 </label>
                 <input
@@ -139,14 +139,14 @@ const Signup = ({ switchToLogin }) => {
                   name="email"
                   placeholder="you@example.com"
                   required
-                  className="w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-slate-800 placeholder-slate-400 shadow-sm transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-xl border-2 border-shell-border bg-surface-card px-4 py-3 text-shell-text placeholder:text-muted/70 shadow-sm transition focus:border-theme focus:ring-1 focus:ring-theme/35"
                   value={formData.email}
                   onChange={handleChange}
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-semibold text-slate-700 required-label" htmlFor="password">
+                <label className="mb-1 block text-sm font-semibold text-shell-muted-strong required-label" htmlFor="password">
                   Password
                 </label>
                 <input
@@ -155,15 +155,15 @@ const Signup = ({ switchToLogin }) => {
                   name="password"
                   placeholder="Create a strong password"
                   required
-                  className="w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-slate-800 placeholder-slate-400 shadow-sm transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-xl border-2 border-shell-border bg-surface-card px-4 py-3 text-shell-text placeholder:text-muted/70 shadow-sm transition focus:border-theme focus:ring-1 focus:ring-theme/35"
                   value={formData.password}
                   onChange={handleChange}
                 />
               </div>
 
               <div>
-                <label htmlFor="profile_picture" className="mb-2 block text-sm font-semibold text-slate-700">
-                  Profile picture <span className="font-normal text-slate-400">optional</span>
+                <label htmlFor="profile_picture" className="mb-2 block text-sm font-semibold text-shell-muted-strong">
+                  Profile picture <span className="font-normal text-shell-muted">optional</span>
                 </label>
                 <input
                   type="file"
@@ -172,30 +172,30 @@ const Signup = ({ switchToLogin }) => {
                   accept="image/*"
                   title="Profile Picture"
                   onChange={handleChange}
-                  className="w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-sm text-slate-700 shadow-sm transition file:mr-4 file:rounded-lg file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-xl border-2 border-shell-border bg-surface-card px-4 py-3 text-sm text-shell-muted-strong shadow-sm transition file:mr-4 file:rounded-lg file:border-0 file:bg-theme/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-theme hover:file:bg-theme/15 focus:border-theme focus:ring-1 focus:ring-theme/35"
                 />
               </div>
 
               <button
                 type="submit"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3 font-semibold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-shell-primary py-3 font-semibold text-white shadow-lg shadow-theme/20 transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-theme/25"
               >
                 Sign Up
               </button>
             </form>
 
             {error && (
-              <div className="mt-5 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+              <div className="mt-5 flex items-center gap-2 rounded-lg border border-danger/20 bg-danger-soft p-3 text-sm text-danger">
                 ⚠️ {error}
               </div>
             )}
 
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200" />
+                <div className="w-full border-t border-shell-border" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-slate-500">OR</span>
+                <span className="bg-surface-elevated px-2 text-shell-muted">OR</span>
               </div>
             </div>
 
@@ -208,7 +208,7 @@ const Signup = ({ switchToLogin }) => {
                   setLoading(false);
                 }
               }}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-3 font-medium text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-shell-border bg-surface-card py-3 font-medium text-shell-muted-strong shadow-sm transition hover:-translate-y-0.5 hover:bg-surface-card-hover hover:shadow-lg"
             >
               <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <path
@@ -219,12 +219,12 @@ const Signup = ({ switchToLogin }) => {
               Sign up with Google
             </button>
 
-            <p className="mt-6 text-center text-sm text-slate-600">
+            <p className="mt-6 text-center text-sm text-shell-muted">
               Already have an account?{" "}
               <button
                 type="button"
                 onClick={switchToLogin}
-                className="font-semibold text-blue-600 transition hover:text-blue-700"
+                className="font-semibold text-theme transition hover:text-theme/80"
               >
                 Log in
               </button>

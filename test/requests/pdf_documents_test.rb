@@ -1,4 +1,5 @@
 require "test_helper"
+require "open3"
 
 class PdfDocumentsTest < ActionDispatch::IntegrationTest
   setup do
@@ -141,6 +142,91 @@ class PdfDocumentsTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_content
     assert_equal original_version_id, document.reload.current_version_id
     assert_equal 1, PdfDocumentVersion.unscoped.where(pdf_document_id: document.id).count
+  ensure
+    source&.close!
+  end
+
+  test "runs an annotation operation and flattens shapes into a new version" do
+    source = create_test_pdf(pages: 1)
+    Current.user = @user
+    Current.workspace = @workspace
+    document = PdfDocuments::Manager.create_from_path!(
+      user: @user,
+      path: source.path,
+      filename: "annotated-api.pdf"
+    )
+    original_version_id = document.current_version_id
+
+    post "/api/pdf_document_operations", params: {
+      kind: "annotations",
+      pdf_document_id: document.id,
+      base_version_id: document.current_version_id,
+      parameters: {
+        shapes: [
+          {
+            type: "text",
+            page_number: 1,
+            x: 40,
+            y: 60,
+            width: 180,
+            height: 48,
+            text: "Reviewed",
+            color: "#111827",
+            font_size: 18,
+            opacity: 1
+          },
+          {
+            type: "highlight",
+            page_number: 1,
+            x: 38,
+            y: 120,
+            width: 220,
+            height: 28,
+            color: "#ca8a04",
+            fill_color: "#fde047",
+            opacity: 0.35
+          },
+          {
+            type: "rectangle",
+            page_number: 1,
+            x: 40,
+            y: 170,
+            width: 120,
+            height: 60,
+            color: "#dc2626",
+            stroke_width: 2
+          },
+          {
+            type: "arrow",
+            page_number: 1,
+            x: 250,
+            y: 200,
+            x2: 340,
+            y2: 240,
+            color: "#2563eb",
+            stroke_width: 3
+          },
+          {
+            type: "pen",
+            page_number: 1,
+            points: [{ x: 300, y: 300 }, { x: 320, y: 310 }, { x: 345, y: 292 }],
+            color: "#16a34a",
+            stroke_width: 3
+          }
+        ]
+      }
+    }
+
+    assert_response :created, response.body
+    operation = JSON.parse(response.body)
+    assert_equal "completed", operation.fetch("status")
+    current_version_id = document.reload.current_version_id
+    assert_not_equal original_version_id, current_version_id
+
+    PdfDocumentVersion.unscoped.find(current_version_id).file.open do |file|
+      text, = Open3.capture2("pdftotext", file.path, "-")
+      assert_includes text, "Reviewed"
+    end
   ensure
     source&.close!
   end

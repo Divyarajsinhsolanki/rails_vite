@@ -109,7 +109,7 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
             value={formData.log_date || ''}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)] focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-theme focus:border-transparent"
           >
             {safeDates.map(d => (
               <option key={d} value={d}>
@@ -128,7 +128,7 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
             step="0.25"
             value={formData.hours_logged}
             onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)] focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-theme focus:border-transparent"
           />
         </div>
       </div>
@@ -142,7 +142,7 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
               key={developer.id}
               className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all ${
                 formData.developer_id === developer.id
-                  ? 'border-[var(--theme-color)] bg-[rgb(var(--theme-color-rgb)/0.08)]'
+                  ? 'border-theme bg-[rgb(var(--theme-color-rgb)/0.08)]'
                   : 'border-gray-300 hover:border-gray-400'
               }`}
             >
@@ -152,7 +152,7 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
                 value={developer.id}
                 checked={formData.developer_id === developer.id}
                 onChange={handleChange}
-                className="text-[var(--theme-color)] focus:ring-[var(--theme-color)]"
+                className="text-theme focus:ring-theme"
                 required
               />
               <span className="ml-2 text-sm font-medium">{developer.name}</span>
@@ -170,7 +170,7 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
               key={type}
               className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all ${
                 formData.type === type
-                  ? 'border-[var(--theme-color)] bg-[rgb(var(--theme-color-rgb)/0.08)]'
+                  ? 'border-theme bg-[rgb(var(--theme-color-rgb)/0.08)]'
                   : 'border-gray-300 hover:border-gray-400'
               }`}
             >
@@ -180,7 +180,7 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
                 value={type}
                 checked={formData.type === type}
                 onChange={handleChange}
-                className="text-[var(--theme-color)] focus:ring-[var(--theme-color)]"
+                className="text-theme focus:ring-theme"
                 required
               />
               <span className="ml-2 text-sm font-medium">{type}</span>
@@ -198,9 +198,9 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
               key={option.value}
               type="button"
               onClick={() => handleStatusChange(option.value)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--theme-color)] ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-theme ${
                 formData.status === option.value
-                  ? 'border-[var(--theme-color)] bg-[rgb(var(--theme-color-rgb)/0.1)] text-[var(--theme-color)]'
+                  ? 'border-theme bg-theme/10 text-theme'
                   : 'border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-800'
               }`}
             >
@@ -224,7 +224,7 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
           >
             <div className="relative">
               <Combobox.Input
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)] focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-theme focus:border-transparent"
                 displayValue={taskOption => (taskOption ? taskOption.task_id : taskQuery)}
                 onChange={event => {
                   setTaskQuery(event.target.value);
@@ -242,7 +242,7 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
                     <Combobox.Option
                       key={t.id}
                       value={t}
-                      className={({ active }) => `cursor-default select-none p-3 ${active ? 'bg-[rgb(var(--theme-color-rgb)/0.12)] text-[var(--theme-color)]' : 'text-gray-900'}`}
+                      className={({ active }) => `cursor-default select-none p-3 ${active ? 'bg-theme/12 text-theme' : 'text-gray-900'}`}
                     >
                       <div className="flex flex-col">
                         <span className="text-sm font-semibold">{t.task_id}</span>
@@ -268,7 +268,7 @@ export default function EditTaskForm({ task, developers, dates, types, tasks, on
           )}
           <button
             type="submit"
-            className="flex-1 sm:flex-initial bg-[var(--theme-color)] text-white px-6 py-3 rounded-lg shadow hover:brightness-110 transition-colors font-medium"
+            className="flex-1 sm:flex-initial bg-theme text-white px-6 py-3 rounded-lg shadow hover:brightness-110 transition-colors font-medium"
           >
             💾 Save Changes
           </button>

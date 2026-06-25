@@ -8,9 +8,40 @@ export default {
   theme: {
     extend: {
       colors: {
+        app: "var(--app-bg)",
+        card: "var(--surface-card)",
+        elevated: "var(--surface-elevated)",
+        primary: "var(--text-primary)",
+        default: "var(--border-default)",
         theme: {
           DEFAULT: "rgb(var(--theme-color-rgb) / <alpha-value>)",
           secondary: "rgb(var(--theme-secondary-rgb) / <alpha-value>)",
+        },
+        success: {
+          DEFAULT: "rgb(var(--color-success-rgb) / <alpha-value>)",
+          soft: "var(--color-success-soft)",
+        },
+        warning: {
+          DEFAULT: "rgb(var(--color-warning-rgb) / <alpha-value>)",
+          soft: "var(--color-warning-soft)",
+        },
+        danger: {
+          DEFAULT: "rgb(var(--color-danger-rgb) / <alpha-value>)",
+          soft: "var(--color-danger-soft)",
+        },
+        info: {
+          DEFAULT: "rgb(var(--color-info-rgb) / <alpha-value>)",
+          soft: "var(--color-info-soft)",
+        },
+        muted: {
+          DEFAULT: "rgb(var(--color-muted-rgb) / <alpha-value>)",
+          soft: "var(--color-muted-soft)",
+          surface: "var(--surface-muted)",
+        },
+        surface: {
+          card: "var(--surface-card)",
+          "card-hover": "var(--surface-card-hover)",
+          elevated: "var(--surface-elevated)",
         },
         shell: {
           bg: "var(--shell-bg)",
@@ -19,8 +50,11 @@ export default {
           strong: "var(--shell-surface-strong)",
           soft: "var(--shell-surface-soft)",
           border: "var(--shell-border)",
-          text: "var(--shell-text)",
+          "border-strong": "var(--shell-border-strong)",
+          text: "rgb(var(--shell-text-rgb) / <alpha-value>)",
+          "text-strong": "rgb(var(--shell-text-strong-rgb) / <alpha-value>)",
           muted: "var(--shell-muted)",
+          "muted-strong": "rgb(var(--shell-muted-strong-rgb) / <alpha-value>)",
         },
       },
       boxShadow: {

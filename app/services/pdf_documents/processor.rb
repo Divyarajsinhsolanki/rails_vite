@@ -201,8 +201,7 @@ module PdfDocuments
       when "crop"
         crop_page!(output_path, params)
       when "annotations"
-        PdfMaster::Editor.add_shapes(source_path, mapped_shapes(source_path, params.fetch(:shapes)),
-                                     output_path:)
+        add_annotations!(source_path, output_path, mapped_shapes(source_path, params.fetch(:shapes)))
       when "image"
         add_image!(source_path, output_path, params, asset)
       else
@@ -258,6 +257,151 @@ module PdfDocuments
           end
         end
       end
+    end
+
+    def add_annotations!(source_path, output_path, shapes_by_page)
+      source_pdf = CombinePDF.load(source_path)
+
+      Dir.mktmpdir("pdf-annotations") do |directory|
+        shapes_by_page.each do |page_number, shapes|
+          target_page = source_pdf.pages[page_number - 1]
+          raise ArgumentError, "Invalid page number." unless target_page
+
+          width = target_page.mediabox[2] - target_page.mediabox[0]
+          height = target_page.mediabox[3] - target_page.mediabox[1]
+          overlay_path = File.join(directory, "page-#{page_number}.pdf")
+
+          Prawn::Document.generate(overlay_path, page_size: [width, height], margin: 0) do |pdf|
+            shapes.each { |shape| draw_annotation_shape(pdf, shape) }
+          end
+
+          target_page << CombinePDF.load(overlay_path).pages.first
+        end
+
+        source_pdf.save(output_path)
+      end
+    end
+
+    def draw_annotation_shape(pdf, shape)
+      case shape[:type].to_s
+      when "text"
+        draw_annotation_text(pdf, shape, opacity: annotation_opacity(shape, default: 1.0))
+      when "watermark"
+        draw_annotation_text(pdf, shape, opacity: annotation_opacity(shape, default: 0.25))
+      when "highlight"
+        draw_annotation_rectangle(pdf, shape, fill: annotation_color(shape[:fill_color], "FDE047"),
+                                              opacity: annotation_opacity(shape, default: 0.35),
+                                              stroke: false)
+      when "rectangle"
+        draw_annotation_rectangle(pdf, shape, fill: optional_annotation_color(shape[:fill_color]),
+                                              opacity: annotation_opacity(shape, default: 1.0),
+                                              stroke: true)
+      when "arrow"
+        draw_annotation_arrow(pdf, shape)
+      when "pen"
+        draw_annotation_pen(pdf, shape)
+      end
+    end
+
+    def draw_annotation_text(pdf, shape, opacity:)
+      pdf.save_graphics_state do
+        pdf.fill_color(annotation_color(shape[:color], "111827"))
+        pdf.font("Helvetica", style: :bold)
+        pdf.transparent(opacity) do
+          pdf.text_box(
+            shape[:text].to_s,
+            at: [shape[:x].to_f + 4, shape[:y].to_f - 4],
+            width: [shape[:width].to_f - 8, 1].max,
+            height: [shape[:height].to_f, 1].max,
+            size: annotation_size(shape[:font_size], default: 18, min: 8, max: 96),
+            overflow: :shrink_to_fit
+          )
+        end
+      end
+    end
+
+    def draw_annotation_rectangle(pdf, shape, fill:, opacity:, stroke:)
+      pdf.save_graphics_state do
+        pdf.line_width(annotation_size(shape[:stroke_width], default: 3, min: 0.5, max: 24))
+        pdf.stroke_color(annotation_color(shape[:color], "DC2626"))
+        pdf.fill_color(fill) if fill
+
+        pdf.transparent(opacity) do
+          if fill && stroke
+            pdf.fill_and_stroke_rectangle([shape[:x].to_f, shape[:y].to_f],
+                                          shape[:width].to_f, shape[:height].to_f)
+          elsif fill
+            pdf.fill_rectangle([shape[:x].to_f, shape[:y].to_f],
+                               shape[:width].to_f, shape[:height].to_f)
+          else
+            pdf.stroke_rectangle([shape[:x].to_f, shape[:y].to_f],
+                                 shape[:width].to_f, shape[:height].to_f)
+          end
+        end
+      end
+    end
+
+    def draw_annotation_arrow(pdf, shape)
+      x1 = shape[:x].to_f
+      y1 = shape[:y].to_f
+      x2 = shape[:x2].to_f
+      y2 = shape[:y2].to_f
+      angle = Math.atan2(y2 - y1, x2 - x1)
+      head_size = [annotation_size(shape[:stroke_width], default: 3, min: 0.5, max: 24) * 4, 10].max
+      head = [
+        [x2, y2],
+        [x2 - head_size * Math.cos(angle - Math::PI / 6), y2 - head_size * Math.sin(angle - Math::PI / 6)],
+        [x2 - head_size * Math.cos(angle + Math::PI / 6), y2 - head_size * Math.sin(angle + Math::PI / 6)]
+      ]
+
+      pdf.save_graphics_state do
+        pdf.stroke_color(annotation_color(shape[:color], "DC2626"))
+        pdf.fill_color(annotation_color(shape[:color], "DC2626"))
+        pdf.line_width(annotation_size(shape[:stroke_width], default: 3, min: 0.5, max: 24))
+        pdf.cap_style(:round)
+        pdf.stroke_line([x1, y1], [x2, y2])
+        pdf.fill_polygon(*head)
+      end
+    end
+
+    def draw_annotation_pen(pdf, shape)
+      points = Array(shape[:points]).map { |point| [point[:x].to_f, point[:y].to_f] }
+      return if points.length < 2
+
+      pdf.save_graphics_state do
+        pdf.stroke_color(annotation_color(shape[:color], "DC2626"))
+        pdf.line_width(annotation_size(shape[:stroke_width], default: 3, min: 0.5, max: 24))
+        pdf.cap_style(:round)
+        pdf.join_style(:round)
+        pdf.stroke do
+          pdf.move_to(points.first)
+          points.drop(1).each { |point| pdf.line_to(point) }
+        end
+      end
+    end
+
+    def annotation_color(color, fallback)
+      optional_annotation_color(color) || fallback
+    end
+
+    def optional_annotation_color(color)
+      return if color.blank?
+
+      color.to_s.delete_prefix("#").upcase
+    end
+
+    def annotation_opacity(shape, default:)
+      value = Float(shape[:opacity].presence || default)
+      value.finite? ? value.clamp(0.0, 1.0) : default
+    rescue TypeError, ArgumentError
+      default
+    end
+
+    def annotation_size(value, default:, min:, max:)
+      size = Float(value.presence || default)
+      size.finite? ? size.clamp(min, max) : default
+    rescue TypeError, ArgumentError
+      default
     end
 
     def add_image!(source_path, output_path, params, asset)
