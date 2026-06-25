@@ -9,9 +9,16 @@ import {
   Palette,
   Bell,
   Shield,
+  Building2,
   Moon,
   Sun,
-  Check
+  Check,
+  CreditCard,
+  Boxes,
+  Users,
+  HardDrive,
+  FileText,
+  ArrowUpRight
 } from "lucide-react";
 
 const landingPageOptions = [
@@ -77,6 +84,25 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
 }
 
+const formatBytes = (bytes) => {
+  const value = Number(bytes || 0);
+  if (value >= 1024 ** 3) return `${(value / 1024 ** 3).toFixed(value >= 10 * 1024 ** 3 ? 0 : 1)} GB`;
+  if (value >= 1024 ** 2) return `${(value / 1024 ** 2).toFixed(0)} MB`;
+  return `${value} B`;
+};
+
+const usagePercent = (used, limit) => {
+  if (!limit) return 0;
+  return Math.min(100, Math.round((Number(used || 0) / Number(limit)) * 100));
+};
+
+const planPriceLabel = (plan) => {
+  if (!plan) return "";
+  if (plan.monthly_cents === null || plan.monthly_cents === undefined) return "Custom";
+  if (plan.monthly_cents === 0) return "Free";
+  return `$${(plan.monthly_cents / 100).toFixed(0)}/mo`;
+};
+
 const Settings = () => {
   const { user, setUser } = useContext(AuthContext);
   const initialColor = COLOR_MAP[user?.color_theme] || user?.color_theme || "#3b82f6";
@@ -98,6 +124,20 @@ const Settings = () => {
   const [saving, setSaving] = useState(false);
   const [savingNotifications, setSavingNotifications] = useState(false);
   const [notificationPrefs, setNotificationPrefs] = useState(defaultNotificationPrefs);
+  const workspaceSaas = user?.workspace?.saas || {};
+  const currentPlan = workspaceSaas.plan || {};
+  const billing = workspaceSaas.billing || {};
+  const limits = workspaceSaas.limits || {};
+  const usage = workspaceSaas.usage || {};
+  const modules = workspaceSaas.modules || [];
+  const plans = workspaceSaas.plans || [];
+  const nextPlan = plans.find((plan) => plan.key === currentPlan.next_plan_key);
+  const limitRows = [
+    { key: "seats", label: "Seats", icon: Users, used: usage.seats, limit: limits.seats },
+    { key: "projects", label: "Projects", icon: Boxes, used: usage.projects, limit: limits.projects },
+    { key: "pdf_documents", label: "PDF documents", icon: FileText, used: usage.pdf_documents, limit: limits.pdf_documents },
+    { key: "storage_bytes", label: "Storage", icon: HardDrive, used: usage.storage_bytes, limit: limits.storage_bytes, format: formatBytes },
+  ];
 
   useEffect(() => {
     setDarkMode(user?.dark_mode || false);
@@ -157,6 +197,7 @@ const Settings = () => {
 
   const tabs = [
     { name: 'Profile', icon: User },
+    { name: 'Workspace', icon: Building2 },
     { name: 'Appearance', icon: Palette },
     { name: 'Notifications', icon: Bell },
     { name: 'Security', icon: Shield },
@@ -235,6 +276,101 @@ const Settings = () => {
                     {saving ? 'Saving...' : 'Save Changes'}
                   </button>
                 </div>
+              </Tab.Panel>
+
+              <Tab.Panel className="space-y-8 p-6 focus:outline-none">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold leading-6 text-primary">Workspace Plan</h3>
+                    <p className="mt-1 text-sm text-muted">Package modules, limits, and upgrade path for {user?.workspace?.name || "this workspace"}.</p>
+                  </div>
+                  <span className="app-badge border-theme/25 bg-theme/10 text-theme">
+                    {billing.status || "trialing"}
+                  </span>
+                </div>
+
+                <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+                  <section className="app-card p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted">Current tier</p>
+                        <h4 className="mt-2 text-2xl font-bold text-primary">{currentPlan.name || "Starter"}</h4>
+                        <p className="mt-2 text-sm text-muted">{currentPlan.positioning || "Operations workspace for software and service teams."}</p>
+                      </div>
+                      <div className="rounded-2xl border border-theme/20 bg-theme/10 p-3 text-theme">
+                        <CreditCard className="h-5 w-5" />
+                      </div>
+                    </div>
+                    <div className="mt-6 flex flex-wrap items-center gap-3">
+                      <span className="text-xl font-bold text-primary">{planPriceLabel(currentPlan)}</span>
+                      {billing.trial_ends_at ? (
+                        <span className="app-badge">Trial ends {new Date(billing.trial_ends_at).toLocaleDateString()}</span>
+                      ) : null}
+                    </div>
+                    {nextPlan ? (
+                      <button type="button" className="app-primary-button mt-6">
+                        <ArrowUpRight className="h-4 w-4" />
+                        Plan upgrade: {nextPlan.name}
+                      </button>
+                    ) : (
+                      <button type="button" className="app-secondary-button mt-6">
+                        Contact enterprise support
+                      </button>
+                    )}
+                  </section>
+
+                  <section className="app-card p-5">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted">Workspace usage</p>
+                    <div className="mt-4 space-y-4">
+                      {limitRows.map((row) => {
+                        const Icon = row.icon;
+                        const percent = usagePercent(row.used, row.limit);
+                        const format = row.format || ((value) => value ?? 0);
+                        return (
+                          <div key={row.key}>
+                            <div className="mb-2 flex items-center justify-between gap-3">
+                              <span className="flex items-center gap-2 text-sm font-semibold text-primary">
+                                <Icon className="h-4 w-4 text-theme" />
+                                {row.label}
+                              </span>
+                              <span className="text-xs font-semibold text-muted">
+                                {format(row.used)} / {row.limit ? format(row.limit) : "Unlimited"}
+                              </span>
+                            </div>
+                            <div className="h-2 overflow-hidden rounded-full bg-muted-surface">
+                              <div className="h-full rounded-full bg-theme" style={{ width: `${row.limit ? percent : 100}%` }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                </div>
+
+                <section>
+                  <div className="mb-4 flex items-center justify-between gap-4">
+                    <div>
+                      <h4 className="text-sm font-semibold text-primary">Packaged modules</h4>
+                      <p className="mt-1 text-sm text-muted">Modules are centralized in the SaaS plan catalog for future billing enforcement.</p>
+                    </div>
+                    <span className="app-badge">{modules.filter((item) => item.enabled).length}/{modules.length} enabled</span>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {modules.map((module) => (
+                      <div key={module.key} className={`app-card p-4 ${module.enabled ? "" : "opacity-65"}`}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-primary">{module.name}</p>
+                            <p className="mt-1 text-xs leading-5 text-muted">{module.description}</p>
+                          </div>
+                          <span className={module.enabled ? "app-badge app-badge-success" : "app-badge"}>
+                            {module.enabled ? "Enabled" : module.minimum_plan}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
               </Tab.Panel>
 
               <Tab.Panel className="space-y-8 p-6 focus:outline-none">

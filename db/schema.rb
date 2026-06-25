@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2027_06_23_000000) do
+ActiveRecord::Schema[8.0].define(version: 2027_06_24_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -871,6 +871,13 @@ ActiveRecord::Schema[8.0].define(version: 2027_06_23_000000) do
     t.string "kind", default: "private", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "plan_key", default: "starter", null: false
+    t.string "billing_status", default: "trialing", null: false
+    t.datetime "trial_ends_at"
+    t.integer "seat_limit_override"
+    t.jsonb "module_overrides", default: {}, null: false
+    t.index ["billing_status"], name: "index_workspaces_on_billing_status"
+    t.index ["plan_key"], name: "index_workspaces_on_plan_key"
     t.index ["slug"], name: "index_workspaces_on_slug", unique: true
   end
 

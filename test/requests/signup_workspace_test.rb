@@ -17,6 +17,12 @@ class SignupWorkspaceTest < ActionDispatch::IntegrationTest
     assert_response :created
     user = User.find_by!(email: "new-owner@example.test")
     assert_equal "private", user.workspace.kind
+    assert_equal "starter", user.workspace.plan_key
+    assert_equal "trialing", user.workspace.billing_status
     assert user.owner?
+
+    payload = JSON.parse(response.body)
+    assert_equal "starter", payload.dig("user", "workspace", "saas", "plan", "key")
+    assert_equal 5, payload.dig("user", "workspace", "saas", "limits", "seats")
   end
 end

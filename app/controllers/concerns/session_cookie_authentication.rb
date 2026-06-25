@@ -47,7 +47,8 @@ module SessionCookieAuthentication
         id: user.workspace_id,
         name: user.workspace.name,
         slug: user.workspace.slug,
-        kind: user.workspace.kind
+        kind: user.workspace.kind,
+        saas: user.workspace.saas_plan
       }
     )
   end
