@@ -27,7 +27,7 @@ RUN apt-get update -qq && \
 # Match the Bundler version recorded in Gemfile.lock.
 RUN gem install bundler -v 4.0.6
 
-ARG NODE_VERSION=20.18.0
+ARG NODE_VERSION=24.18.0
 ARG YARN_VERSION=1.22.22
 ENV PATH=/usr/local/node/bin:$PATH
 RUN curl -sL https://github.com/nodenv/node-build/archive/master.tar.gz | tar xz -C /tmp/ && \

@@ -34,7 +34,7 @@ The Rails app serves both the JSON API and the React entrypoint. Vite handles th
 
 - Ruby `3.3.0` (`.ruby-version`)
 - Bundler compatible with `Gemfile.lock` (`4.0.6` is currently locked)
-- Node `20.18.0` (`.node-version`)
+- Node `24.18.0` (`.node-version`)
 - Yarn `1.22.x`
 - PostgreSQL
 - ImageMagick for image handling used by PDF flows

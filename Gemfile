@@ -3,7 +3,7 @@ source "https://rubygems.org"
 ruby "3.3.0"
 
 # Rails framework
-gem "rails", "~> 8.0.4", ">= 8.0.4.1"
+gem "rails", "~> 8.1.3"
 
 # Database adapters
 gem "pg"
@@ -17,21 +17,21 @@ gem "puma", "~> 7.2", ">= 7.2.1"
 gem "jbuilder"
 gem "jsbundling-rails"
 gem "stimulus-rails"
-gem "vite_rails", "~> 3.0"
+gem "vite_rails", "~> 3.11.0"
 
 # Authentication, authorization, and API protection
 gem "bcrypt", ">= 3.1.22"
 gem "devise", ">= 5.0.4"
-gem "jwt", ">= 2.10.3"
+gem "jwt", ">= 3.2.0"
 gem "rack-attack"
-gem "rack-cors", ">= 2.0.2"
+gem "rack-cors", ">= 3.0.0"
 
 # Application services
 gem "attr_encrypted", "~> 4.2"
 gem "connection_pool", "~> 2.5"
-gem "faraday", ">= 2.14.2"
+gem "faraday", ">= 2.14.3"
 gem "kaminari"
-gem "ruby-openai", "~> 5.0"
+gem "ruby-openai", "~> 8.3"
 gem "sidekiq"
 
 # Storage, observability, and external services
@@ -47,7 +47,7 @@ gem "rubyzip", ">= 2.4", "< 4"
 
 # Google integrations
 gem "google-api-client", "~> 0.53.0"
-gem "googleauth"
+gem "googleauth", ">= 1.17.1"
 
 # Security and compatibility pins
 gem "addressable", ">= 2.9.0"
@@ -55,7 +55,7 @@ gem "erb", ">= 6.0.4"
 gem "json", ">= 2.19.2"
 gem "loofah", ">= 2.25.1"
 gem "net-imap", ">= 0.6.4"
-gem "nokogiri", ">= 1.19.3"
+gem "nokogiri", ">= 1.19.4"
 gem "rack", ">= 3.2.6"
 gem "rack-session", ">= 2.1.2"
 
