@@ -2,6 +2,10 @@ class Current < ActiveSupport::CurrentAttributes
   attribute :user, :workspace, :request_id
 
   class << self
+    def reset_all
+      reset
+    end
+
     def request_id
       instance.request_id
     end

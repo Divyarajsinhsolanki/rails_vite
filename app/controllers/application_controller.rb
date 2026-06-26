@@ -36,8 +36,13 @@ class ApplicationController < ActionController::Base
 
   def user_from_access_cookie
     token = cookies.signed[:access_token]
+    return nil if token.blank?
+
     payload = JwtService.decode(token)
-    User.find_by(id: payload["user_id"]) if payload
+    user_id = payload[:user_id]
+    return nil if user_id.blank?
+
+    User.find_by(id: user_id)
   rescue StandardError
     nil
   end
