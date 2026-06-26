@@ -18,6 +18,7 @@ class Task < ApplicationRecord
   validates :type, presence: true
   validates :title, presence: true, if: :general?
 
+  before_validation :assign_tail_order, on: :create
   after_commit :notify_assigned_user, on: :create
   after_commit :notify_assigned_user_change, on: :update
 
@@ -25,6 +26,28 @@ class Task < ApplicationRecord
 
   def general?
     type == 'general' || type == 'qa'
+  end
+
+  def assign_tail_order
+    return if order.present? && order.to_i.positive?
+
+    self.order = next_order_in_assignment_group
+  end
+
+  def next_order_in_assignment_group
+    group = self.class.unscoped.where(workspace_id: workspace_id)
+    group = group.where(project_id: project_id)
+    group = group.where(sprint_id: sprint_id)
+
+    if developer_id.present?
+      group = group.where(developer_id: developer_id)
+    elsif qa_assigned.present?
+      group = group.where(developer_id: nil, qa_assigned: qa_assigned)
+    else
+      group = group.where(developer_id: nil, qa_assigned: [nil, ""])
+    end
+
+    group.maximum(:order).to_i + 1
   end
 
   def notify_assigned_user

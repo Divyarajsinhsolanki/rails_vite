@@ -7,6 +7,7 @@ class Project < ApplicationRecord
   has_many :users, through: :project_users
   has_many :sprints, dependent: :destroy, inverse_of: :project
   has_many :tasks, dependent: :nullify, inverse_of: :project
+  has_many :issues, dependent: :destroy, inverse_of: :project
   has_many :developers, -> { distinct }, through: :tasks, source: :developer
   has_many :project_environments, dependent: :destroy, inverse_of: :project
   has_many :project_vault_items, dependent: :destroy, inverse_of: :project

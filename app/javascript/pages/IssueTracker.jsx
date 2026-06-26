@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { SchedulerAPI, getIssues, createIssue, updateIssue, deleteIssue, importIssuesFromSheet } from "../components/api";
 import { Toaster, toast } from "react-hot-toast";
 import { SparklesIcon, ClipboardDocumentListIcon, LinkIcon, ShieldExclamationIcon, ExclamationTriangleIcon, CheckCircleIcon, ListBulletIcon, Squares2X2Icon, VideoCameraIcon, BellIcon, ClockIcon, BoltIcon, FireIcon, TrashIcon, UserGroupIcon, FunnelIcon } from "@heroicons/react/24/outline";
@@ -388,14 +389,20 @@ const KanbanCard = React.memo(({ issue, onEdit, index, isSelected, onSelect }) =
   const isCritical = issue.severity === "Critical";
   return (
     <Draggable draggableId={issue.id.toString()} index={index}>
-      {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          className={`mb-3 p-4 rounded-xl border bg-white shadow-sm hover:shadow-md transition-all group relative overflow-hidden ${isCritical ? "ring-1 ring-rose-500/30" : "border-slate-200"
-            } ${snapshot.isDragging ? "rotate-2 scale-105 shadow-2xl z-50 ring-2 ring-indigo-500" : ""} ${isSelected ? "ring-2 ring-indigo-500" : ""}`}
-        >
+      {(provided, snapshot) => {
+        const card = (
+          <div
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+            className={`mb-3 p-4 rounded-xl border bg-white shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden ${isCritical ? "ring-1 ring-rose-500/30" : "border-slate-200"
+              } ${snapshot.isDragging ? "shadow-2xl ring-2 ring-indigo-500" : ""} ${isSelected ? "ring-2 ring-indigo-500" : ""}`}
+            style={{
+              ...provided.draggableProps.style,
+              zIndex: snapshot.isDragging ? 9999 : provided.draggableProps.style?.zIndex,
+              pointerEvents: snapshot.isDragging ? "none" : provided.draggableProps.style?.pointerEvents,
+            }}
+          >
           {isCritical && (
             <div className="absolute top-0 inset-x-0 h-0.5 bg-rose-500" />
           )}
@@ -460,8 +467,11 @@ const KanbanCard = React.memo(({ issue, onEdit, index, isSelected, onSelect }) =
               </button>
             </div>
           </div>
-        </div>
-      )}
+          </div>
+        );
+
+        return snapshot.isDragging ? createPortal(card, document.body) : card;
+      }}
     </Draggable>
   );
 }, areKanbanCardPropsEqual);

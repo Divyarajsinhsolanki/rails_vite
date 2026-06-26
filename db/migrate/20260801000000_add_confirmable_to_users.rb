@@ -5,7 +5,11 @@ class AddConfirmableToUsers < ActiveRecord::Migration[7.1]
     add_column :users, :confirmation_sent_at, :datetime
     add_column :users, :unconfirmed_email, :string
 
-    User.update_all confirmed_at: Time.current
+    execute <<~SQL.squish
+      UPDATE users
+      SET confirmed_at = CURRENT_TIMESTAMP
+      WHERE confirmed_at IS NULL
+    SQL
 
     add_index :users, :confirmation_token, unique: true
   end

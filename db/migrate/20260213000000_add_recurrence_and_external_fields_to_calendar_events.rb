@@ -1,5 +1,7 @@
 class AddRecurrenceAndExternalFieldsToCalendarEvents < ActiveRecord::Migration[7.1]
   def change
+    return unless table_exists?(:calendar_events)
+
     add_column :calendar_events, :recurrence_rule, :string, default: 'none', null: false
     add_column :calendar_events, :recurrence_until, :datetime
     add_column :calendar_events, :recurrence_parent_id, :bigint

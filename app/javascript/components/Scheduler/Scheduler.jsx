@@ -171,73 +171,78 @@ function TaskCard({ task, index, onEdit, onTaskUpdate, onDuplicate }) {
 
   return (
     <Draggable draggableId={String(task.id)} index={index}>
-      {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          className={`p-2.5 mb-2 border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-150 ${cardColor} ${task.status === 'completed' ? 'opacity-70' : ''}`}
-          style={{
-            ...provided.draggableProps.style,
-            zIndex: snapshot.isDragging ? 9999 : 'auto',
-            opacity: snapshot.isDragging ? 0.8 : 1,
-            boxShadow: snapshot.isDragging
-              ? '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
-              : '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-          }}
-        >
-          <div className="flex items-start justify-between">
-            <div className="flex items-start min-w-0">
-              <span {...provided.dragHandleProps} className="cursor-move p-1 mr-2 text-gray-400 hover:text-gray-700" title="Drag task">
-                <Bars3Icon className="h-5 w-5" />
-              </span>
-              <div>
-                {task.task?.task_url || task.task_url ? (
-                  <a
-                    href={task.task?.task_url || task.task_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className={`font-semibold text-sm hover:underline ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-indigo-600'} break-all`}
-                    title={`Open: ${task.task?.task_id || task.task_id}`}
-                  >
-                    {task.task?.task_id || task.task_id}
-                  </a>
-                ) : (
-                  <span className={`font-semibold text-sm ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-800'} break-all`}>
-                    {task.task?.task_id || task.task_id}
-                  </span>
-                )}
-                <div className="text-xs text-gray-500 mt-0.5">
-                  <span>{task.hours_logged}h</span>
-                  <span className="mx-1">|</span>
-                  <span>{task.type}</span>
+      {(provided, snapshot) => {
+        const card = (
+          <div
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            className={`p-2.5 mb-2 border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-150 ${cardColor} ${task.status === 'completed' ? 'opacity-70' : ''}`}
+            style={{
+              ...provided.draggableProps.style,
+              zIndex: snapshot.isDragging ? 9999 : provided.draggableProps.style?.zIndex,
+              opacity: snapshot.isDragging ? 0.92 : 1,
+              pointerEvents: snapshot.isDragging ? 'none' : provided.draggableProps.style?.pointerEvents,
+              boxShadow: snapshot.isDragging
+                ? '0 18px 32px -18px rgba(15, 23, 42, 0.45), 0 0 0 2px rgba(52, 109, 255, 0.28)'
+                : '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+            }}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex items-start min-w-0">
+                <span {...provided.dragHandleProps} className="cursor-move p-1 mr-2 text-gray-400 hover:text-gray-700" title="Drag task">
+                  <Bars3Icon className="h-5 w-5" />
+                </span>
+                <div>
+                  {task.task?.task_url || task.task_url ? (
+                    <a
+                      href={task.task?.task_url || task.task_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className={`font-semibold text-sm hover:underline ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-indigo-600'} break-all`}
+                      title={`Open: ${task.task?.task_id || task.task_id}`}
+                    >
+                      {task.task?.task_id || task.task_id}
+                    </a>
+                  ) : (
+                    <span className={`font-semibold text-sm ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-800'} break-all`}>
+                      {task.task?.task_id || task.task_id}
+                    </span>
+                  )}
+                  <div className="text-xs text-gray-500 mt-0.5">
+                    <span>{task.hours_logged}h</span>
+                    <span className="mx-1">|</span>
+                    <span>{task.type}</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
-              <button onClick={toggleStrike} title={task.status === 'completed' ? "Mark as not done" : "Mark as done"} className="p-1 text-gray-500 hover:text-green-600 rounded-full hover:bg-gray-100 transition-colors">
-                {task.status === 'completed' ? <CheckCircleSolidIcon className="h-5 w-5 text-green-600" /> : <CheckCircleIcon className="h-5 w-5" />}
-              </button>
-              <button onClick={(e) => { e.stopPropagation(); onEdit(); }} title="Edit task" className="p-1 text-gray-500 hover:text-theme rounded-full hover:bg-gray-100 transition-colors">
-                <PencilIcon className="h-5 w-5" />
-              </button>
-              {task.task?.task_url && (
-                <button onClick={copyLink} title="Copy task link" className="p-1 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-gray-100 transition-colors relative">
-                  <LinkIcon className="h-5 w-5" />
-                  {copied && <CheckCircleSolidIcon className="h-3 w-3 text-green-500 absolute -top-1 -right-1" />}
+              <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
+                <button onClick={toggleStrike} title={task.status === 'completed' ? "Mark as not done" : "Mark as done"} className="p-1 text-gray-500 hover:text-green-600 rounded-full hover:bg-gray-100 transition-colors">
+                  {task.status === 'completed' ? <CheckCircleSolidIcon className="h-5 w-5 text-green-600" /> : <CheckCircleIcon className="h-5 w-5" />}
                 </button>
-              )}
-              <button onClick={duplicateTask} title="Copy log" className="p-1 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-gray-100 transition-colors">
-                <DocumentDuplicateIcon className="h-5 w-5" />
-              </button>
-              <button onClick={deleteTask} title="Delete task" className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100 transition-colors">
-                <TrashIcon className="h-5 w-5" />
-              </button>
+                <button onClick={(e) => { e.stopPropagation(); onEdit(); }} title="Edit task" className="p-1 text-gray-500 hover:text-theme rounded-full hover:bg-gray-100 transition-colors">
+                  <PencilIcon className="h-5 w-5" />
+                </button>
+                {task.task?.task_url && (
+                  <button onClick={copyLink} title="Copy task link" className="p-1 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-gray-100 transition-colors relative">
+                    <LinkIcon className="h-5 w-5" />
+                    {copied && <CheckCircleSolidIcon className="h-3 w-3 text-green-500 absolute -top-1 -right-1" />}
+                  </button>
+                )}
+                <button onClick={duplicateTask} title="Copy log" className="p-1 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-gray-100 transition-colors">
+                  <DocumentDuplicateIcon className="h-5 w-5" />
+                </button>
+                <button onClick={deleteTask} title="Delete task" className="p-1 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100 transition-colors">
+                  <TrashIcon className="h-5 w-5" />
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+
+        return snapshot.isDragging ? createPortal(card, document.body) : card;
+      }}
     </Draggable>
   );
 }

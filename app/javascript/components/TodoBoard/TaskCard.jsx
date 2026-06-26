@@ -1,5 +1,6 @@
 // src/components/TaskCard.js
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Draggable } from "@hello-pangea/dnd";
 import { FiEdit2, FiTrash2, FiCalendar, FiUser, FiTag, FiCheckCircle } from "react-icons/fi";
 import { getUsers } from '../api';
@@ -132,22 +133,31 @@ const TaskCard = ({ item, index, columnId, onDelete, onUpdate }) => {
 
   return (
     <Draggable key={String(item.id)} draggableId={String(item.id)} index={index}>
-      {(provided, snapshot) => (
-        <div
-          className={`bg-white p-4 mb-4 rounded-lg shadow-md border-l-4 ${
-            {
-              todo: 'border-theme',
-              inprogress: 'border-yellow-500',
-              completed: 'border-green-500'
-            }[columnId]
-          } hover:shadow-xl transition-shadow transform hover:-translate-y-1 ${snapshot.isDragging ? 'ring-2 ring-theme' : ''}`}
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-        >
-          {isEditing ? renderEditForm() : renderTaskDetails()}
-        </div>
-      )}
+      {(provided, snapshot) => {
+        const card = (
+          <div
+            className={`bg-white p-4 mb-4 rounded-lg shadow-md border-l-4 ${
+              {
+                todo: 'border-theme',
+                inprogress: 'border-yellow-500',
+                completed: 'border-green-500'
+              }[columnId]
+            } hover:shadow-xl transition-shadow ${snapshot.isDragging ? 'ring-2 ring-theme shadow-2xl' : ''}`}
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+            style={{
+              ...provided.draggableProps.style,
+              zIndex: snapshot.isDragging ? 9999 : provided.draggableProps.style?.zIndex,
+              pointerEvents: snapshot.isDragging ? 'none' : provided.draggableProps.style?.pointerEvents,
+            }}
+          >
+            {isEditing ? renderEditForm() : renderTaskDetails()}
+          </div>
+        );
+
+        return snapshot.isDragging ? createPortal(card, document.body) : card;
+      }}
     </Draggable>
   );
 };

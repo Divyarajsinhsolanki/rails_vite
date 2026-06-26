@@ -1,4 +1,5 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import { Document, Page } from "react-pdf";
 import { useDropzone } from "react-dropzone";
@@ -76,6 +77,17 @@ const bytesLabel = (bytes = 0) => {
   if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
   return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
 };
+
+const draggablePortal = (node, isDragging) => (
+  isDragging && typeof document !== "undefined" ? createPortal(node, document.body) : node
+);
+
+const dragItemStyle = (style, isDragging) => ({
+  ...style,
+  zIndex: isDragging ? 9999 : style?.zIndex,
+  pointerEvents: isDragging ? "none" : style?.pointerEvents,
+  boxShadow: isDragging ? "0 18px 32px -18px rgba(15, 23, 42, 0.45)" : style?.boxShadow,
+});
 
 const errorMessage = (error, fallback = "PDF action failed.") =>
   error?.response?.data?.error ||
@@ -167,33 +179,38 @@ const PageOrganizer = ({
             <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-3 p-3">
               {pageOrder.map((pageNumber, index) => (
                 <Draggable key={pageNumber} draggableId={`page-${pageNumber}`} index={index} isDragDisabled={disabled}>
-                  {(dragProvided, snapshot) => (
-                    <div
-                      ref={dragProvided.innerRef}
-                      {...dragProvided.draggableProps}
-                      className={`group rounded-xl border bg-white p-2 shadow-sm transition ${
-                        selectedPages.has(pageNumber) ? "border-indigo-500 ring-2 ring-indigo-100" : "border-slate-200"
-                      } ${snapshot.isDragging ? "shadow-xl" : ""}`}
-                    >
-                      <div className="flex items-start gap-2">
-                        <button
-                          type="button"
-                          {...dragProvided.dragHandleProps}
-                          className="mt-8 text-slate-300 hover:text-slate-600"
-                          aria-label={`Move page ${pageNumber}`}
-                        >
-                          <GripVertical className="h-4 w-4" />
-                        </button>
-                        <button type="button" onClick={() => togglePage(pageNumber)} className="min-w-0 flex-1 text-left">
-                          <LazyPageThumbnail pageNumber={pageNumber} />
-                          <div className="mt-2 flex items-center justify-between text-xs">
-                            <span className="font-bold text-slate-700">Page {pageNumber}</span>
-                            {currentPage === pageNumber ? <span className="text-indigo-600">Viewing</span> : null}
-                          </div>
-                        </button>
+                  {(dragProvided, snapshot) => {
+                    const card = (
+                      <div
+                        ref={dragProvided.innerRef}
+                        {...dragProvided.draggableProps}
+                        className={`group rounded-xl border bg-white p-2 shadow-sm transition-shadow ${
+                          selectedPages.has(pageNumber) ? "border-indigo-500 ring-2 ring-indigo-100" : "border-slate-200"
+                        } ${snapshot.isDragging ? "shadow-xl" : ""}`}
+                        style={dragItemStyle(dragProvided.draggableProps.style, snapshot.isDragging)}
+                      >
+                        <div className="flex items-start gap-2">
+                          <button
+                            type="button"
+                            {...dragProvided.dragHandleProps}
+                            className="mt-8 text-slate-300 hover:text-slate-600"
+                            aria-label={`Move page ${pageNumber}`}
+                          >
+                            <GripVertical className="h-4 w-4" />
+                          </button>
+                          <button type="button" onClick={() => togglePage(pageNumber)} className="min-w-0 flex-1 text-left">
+                            <LazyPageThumbnail pageNumber={pageNumber} />
+                            <div className="mt-2 flex items-center justify-between text-xs">
+                              <span className="font-bold text-slate-700">Page {pageNumber}</span>
+                              {currentPage === pageNumber ? <span className="text-indigo-600">Viewing</span> : null}
+                            </div>
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+
+                    return draggablePortal(card, snapshot.isDragging);
+                  }}
                 </Draggable>
               ))}
               {provided.placeholder}
@@ -778,12 +795,22 @@ const PdfMaster = () => {
                               const document = documents.find((item) => item.id === id);
                               return (
                                 <Draggable key={id} draggableId={`merge-${id}`} index={index} isDragDisabled={busy}>
-                                  {(dragProvided) => (
-                                    <div ref={dragProvided.innerRef} {...dragProvided.draggableProps} {...dragProvided.dragHandleProps} className="flex items-center gap-2 rounded-lg bg-slate-50 px-2 py-1.5 text-xs text-slate-600">
-                                      <GripVertical className="h-3.5 w-3.5 text-slate-300" />
-                                      <span className="min-w-0 flex-1 truncate">{index + 1}. {document?.title}</span>
-                                    </div>
-                                  )}
+                                  {(dragProvided, snapshot) => {
+                                    const item = (
+                                      <div
+                                        ref={dragProvided.innerRef}
+                                        {...dragProvided.draggableProps}
+                                        {...dragProvided.dragHandleProps}
+                                        className={`flex items-center gap-2 rounded-lg bg-slate-50 px-2 py-1.5 text-xs text-slate-600 ${snapshot.isDragging ? "ring-2 ring-indigo-500" : ""}`}
+                                        style={dragItemStyle(dragProvided.draggableProps.style, snapshot.isDragging)}
+                                      >
+                                        <GripVertical className="h-3.5 w-3.5 text-slate-300" />
+                                        <span className="min-w-0 flex-1 truncate">{index + 1}. {document?.title}</span>
+                                      </div>
+                                    );
+
+                                    return draggablePortal(item, snapshot.isDragging);
+                                  }}
                                 </Draggable>
                               );
                             })}

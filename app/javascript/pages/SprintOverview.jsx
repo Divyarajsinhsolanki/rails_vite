@@ -145,6 +145,16 @@ const formatHours = (hours) => {
     return `${normalizedHours}h`;
 };
 
+const getDragCloneContainer = () => document.body;
+
+const draggableRowStyle = (style, isDragging) => ({
+    ...style,
+    zIndex: isDragging ? 9999 : style?.zIndex,
+    pointerEvents: isDragging ? 'none' : style?.pointerEvents,
+    background: isDragging ? '#ffffff' : style?.background,
+    boxShadow: isDragging ? '0 18px 32px -18px rgba(15, 23, 42, 0.45)' : style?.boxShadow,
+});
+
 const mapProjectMembersForBoard = (projectMembers = []) => {
     const members = projectMembers.map(member => ({
         id: member.id,
@@ -1211,8 +1221,11 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
             list.sort((a, b) => (a.order || 0) - (b.order || 0))
         );
 
+        const previousTasks = tasks;
         const sourceList = map[srcDev] || [];
         const [moved] = sourceList.splice(result.source.index, 1);
+        if (!moved) return;
+
         moved.assignedTo = dstDev === 'unassigned' ? [] : [dstDev];
         const destList = map[dstDev] || (map[dstDev] = []);
         destList.splice(result.destination.index, 0, moved);
@@ -1225,11 +1238,16 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
         setTasks(newTasks);
 
         // Persist changes for affected tasks
-        const updates = [...sourceList, ...destList];
-        await Promise.all(updates.map(t => {
-            const devId = t.assignedTo?.[0] ? Number(t.assignedTo[0]) : null;
-            return SchedulerAPI.updateTask(t.dbId, { developer_id: devId, order: t.order });
-        }));
+        const updates = srcDev === dstDev ? destList : [...sourceList, ...destList];
+        try {
+            await Promise.all(updates.map(t => {
+                const devId = t.assignedTo?.[0] ? Number(t.assignedTo[0]) : null;
+                return SchedulerAPI.updateTask(t.dbId, { developer_id: devId, order: t.order });
+            }));
+        } catch (error) {
+            setTasks(previousTasks);
+            toast.error('Failed to reorder tasks');
+        }
     };
 
     const handleUpdateTask = async (updatedTask) => {
@@ -1460,14 +1478,44 @@ const SprintOverview = ({ sprintId, onSprintChange, projectId, sheetIntegrationE
                             {groupedTasks.length > 0 ? (
                                 groupedTasks.map(group => (
                                     group.type === 'dev' ? (
-                                        <Droppable droppableId={`dev-${group.rawValue}`} key={group.key}>
+                                        <Droppable
+                                            droppableId={`dev-${group.rawValue}`}
+                                            key={group.key}
+                                            getContainerForClone={getDragCloneContainer}
+                                            renderClone={(provided, snapshot, rubric) => {
+                                                const task = group.tasks[rubric.source.index];
+
+                                                return (
+                                                    <table
+                                                        ref={provided.innerRef}
+                                                        {...provided.draggableProps}
+                                                        {...provided.dragHandleProps}
+                                                        className="min-w-full border-collapse bg-white text-left shadow-2xl ring-2 ring-[var(--theme-color)]"
+                                                        style={draggableRowStyle(provided.draggableProps.style, snapshot.isDragging)}
+                                                    >
+                                                        <tbody>
+                                                            <tr className="bg-white">
+                                                                {renderTaskCells(task)}
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                );
+                                            }}
+                                        >
                                             {(provided) => (
                                                 <tbody ref={provided.innerRef} {...provided.droppableProps} className="bg-white divide-y divide-gray-200">
                                                     {renderGroupHeader(group)}
                                                     {group.tasks.map((task, idx) => (
                                                         <Draggable key={task.dbId} draggableId={`task-${task.dbId}`} index={idx}>
-                                                            {(prov) => (
-                                                                <tr ref={prov.innerRef} {...prov.draggableProps} {...prov.dragHandleProps} className="hover:bg-gray-50 cursor-pointer" onClick={() => openTaskModal(task)}>
+                                                            {(prov, snapshot) => (
+                                                                <tr
+                                                                    ref={prov.innerRef}
+                                                                    {...prov.draggableProps}
+                                                                    {...prov.dragHandleProps}
+                                                                    style={draggableRowStyle(prov.draggableProps.style, snapshot.isDragging)}
+                                                                    className={`hover:bg-gray-50 cursor-pointer ${snapshot.isDragging ? 'bg-white ring-2 ring-[var(--theme-color)]' : ''}`}
+                                                                    onClick={() => openTaskModal(task)}
+                                                                >
                                                                     {renderTaskCells(task)}
                                                                 </tr>
                                                             )}

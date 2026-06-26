@@ -13,6 +13,10 @@ Rails.application.routes.draw do
 
   root "pages#index"
 
+  get "/mcp", to: "mcp#show"
+  post "/mcp", to: "mcp#handle"
+  match "/mcp", to: "mcp#preflight", via: :options
+
   # Legacy PDF reads remain available until their existing 24-hour tokens expire.
   get  "/download_pdf", to: "pdfs#download"
   match "/pdf_file/:token", to: "pdfs#status", via: :head

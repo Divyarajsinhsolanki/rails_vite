@@ -14,6 +14,11 @@ class CreateCalendarEvents < ActiveRecord::Migration[7.1]
       t.string :visibility, null: false, default: 'personal'
       t.string :status, null: false, default: 'scheduled'
       t.string :location_or_meet_link
+      t.string :recurrence_rule, null: false, default: 'none'
+      t.datetime :recurrence_until
+      t.bigint :recurrence_parent_id
+      t.string :external_source
+      t.string :external_id
 
       t.timestamps
     end
@@ -21,5 +26,7 @@ class CreateCalendarEvents < ActiveRecord::Migration[7.1]
     add_index :calendar_events, [:user_id, :start_at]
     add_index :calendar_events, [:visibility, :start_at]
     add_index :calendar_events, :event_type
+    add_index :calendar_events, :recurrence_parent_id
+    add_index :calendar_events, [:external_source, :external_id]
   end
 end
