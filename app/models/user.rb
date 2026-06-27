@@ -67,6 +67,8 @@ class User < ApplicationRecord
   has_many :skills, through: :user_skills
   has_many :learning_goals, dependent: :destroy, inverse_of: :user
   has_many :knowledge_bookmarks, dependent: :destroy, inverse_of: :user
+  has_many :knowledge_prompt_runs, dependent: :destroy, inverse_of: :user
+  has_many :knowledge_items, dependent: :destroy, inverse_of: :user
   has_many :pdf_documents, dependent: :destroy, inverse_of: :user
   has_many :pdf_document_operations, dependent: :destroy, inverse_of: :user
   has_many :pdf_document_artifacts, dependent: :destroy, inverse_of: :user

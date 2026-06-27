@@ -55,15 +55,15 @@ class TaskLogsTest < ActionDispatch::IntegrationTest
   end
 
   test "destroy_for_sprint deletes only logs for the requested sprint" do
-    assert_difference -> { TaskLog.where(task_id: [@first_task.id, @second_task.id]).count }, -2 do
-      assert_no_difference -> { TaskLog.where(task_id: @other_task.id).count } do
+    assert_difference -> { TaskLog.unscoped.where(task_id: [@first_task.id, @second_task.id]).count }, -2 do
+      assert_no_difference -> { TaskLog.unscoped.where(task_id: @other_task.id).count } do
         delete "/api/task_logs/destroy_for_sprint.json", params: { sprint_id: @sprint.id }
       end
     end
 
     assert_response :success
     assert_equal({ "deleted_count" => 2 }, JSON.parse(response.body))
-    assert TaskLog.exists?(@other_log.id)
+    assert TaskLog.unscoped.exists?(@other_log.id)
   end
 
   private

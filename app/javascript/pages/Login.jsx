@@ -42,21 +42,21 @@ const Login = ({ switchToSignup }) => {
   }, [searchParams]);
 
   return (
-    <div className="min-h-full">
+    <div className="w-full">
       <Toaster position="top-right" />
       {loading && <SpinnerOverlay />}
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 py-8 lg:flex-row lg:items-center lg:gap-10 xl:gap-14">
-        <div className="lg:w-[58%]">
+      <div className="mx-auto grid w-full max-w-6xl items-center gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.8fr)] lg:gap-8 xl:gap-10">
+        <div className="auth-orb-panel hidden lg:block">
           <WorkspaceOrb />
         </div>
 
-        <div className="lg:w-[42%]">
-          <div className="w-full max-w-md rounded-2xl border border-shell-border bg-surface-elevated p-8 shadow-shell-lg transition-transform duration-200 hover:-translate-y-1">
-            <h2 className="mb-1 text-center text-3xl font-bold text-shell-text-strong">Welcome back</h2>
-            <p className="mb-8 text-center text-sm text-shell-muted">Sign in to continue where you left off.</p>
+        <div className="flex justify-center lg:justify-end">
+          <div className="w-full max-w-sm rounded-2xl border border-shell-border bg-surface-elevated p-6 shadow-shell-lg transition-transform duration-200 hover:-translate-y-1 sm:p-7">
+            <h2 className="mb-1 text-center text-2xl font-bold text-shell-text-strong">Welcome back</h2>
+            <p className="mb-6 text-center text-sm text-shell-muted">Sign in to continue where you left off.</p>
 
             {/* 📝 Login Form */}
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="mb-1 block text-sm font-semibold text-shell-muted-strong required-label" htmlFor="email">
                   Email
@@ -67,7 +67,7 @@ const Login = ({ switchToSignup }) => {
                   name="email"
                   placeholder="you@example.com"
                   required
-                  className="w-full rounded-xl border-2 border-shell-border bg-surface-card px-4 py-3 text-shell-text placeholder:text-muted/70 shadow-sm transition focus:border-theme focus:ring-1 focus:ring-theme/35"
+                  className="w-full rounded-xl border-2 border-shell-border bg-surface-card px-4 py-2.5 text-shell-text placeholder:text-muted/70 shadow-sm transition focus:border-theme focus:ring-1 focus:ring-theme/35"
                   value={formData.email}
                   onChange={handleChange}
                 />
@@ -95,7 +95,7 @@ const Login = ({ switchToSignup }) => {
                   name="password"
                   placeholder="••••••••"
                   required
-                  className="w-full rounded-xl border-2 border-shell-border bg-surface-card px-4 py-3 text-shell-text placeholder:text-muted/70 shadow-sm transition focus:border-theme focus:ring-1 focus:ring-theme/35"
+                  className="w-full rounded-xl border-2 border-shell-border bg-surface-card px-4 py-2.5 text-shell-text placeholder:text-muted/70 shadow-sm transition focus:border-theme focus:ring-1 focus:ring-theme/35"
                   value={formData.password}
                   onChange={handleChange}
                 />
@@ -103,7 +103,7 @@ const Login = ({ switchToSignup }) => {
 
               <button
                 type="submit"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-shell-primary py-3 text-white shadow-lg shadow-theme/20 transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-theme/25"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-shell-primary py-2.5 font-semibold text-white shadow-lg shadow-theme/20 transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-theme/25"
               >
                 Log In
               </button>
@@ -117,7 +117,7 @@ const Login = ({ switchToSignup }) => {
             )}
             {firebaseEnabled ? (
               <>
-                <div className="relative my-6">
+                <div className="relative my-5">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-shell-border" />
                   </div>
@@ -137,7 +137,7 @@ const Login = ({ switchToSignup }) => {
                       setLoading(false);
                     }
                   }}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-shell-border bg-surface-card py-3 font-medium text-shell-muted-strong shadow-sm transition hover:-translate-y-0.5 hover:bg-surface-card-hover hover:shadow-lg"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-shell-border bg-surface-card py-2.5 font-medium text-shell-muted-strong shadow-sm transition hover:-translate-y-0.5 hover:bg-surface-card-hover hover:shadow-lg"
                 >
                   <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path
@@ -150,7 +150,7 @@ const Login = ({ switchToSignup }) => {
               </>
             ) : null}
 
-            <p className="mt-6 text-center text-sm text-shell-muted">
+            <p className="mt-5 text-center text-sm text-shell-muted">
               Don't have an account?{" "}
               <button
                 type="button"

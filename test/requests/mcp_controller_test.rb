@@ -63,6 +63,8 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     assert_includes tool_names, "mcp_capability_matrix"
     assert_includes tool_names, "workspace_autopilot_plan"
     assert_includes tool_names, "repo_patch_preview"
+    assert_includes tool_names, "create_knowledge_items"
+    assert_includes tool_names, "list_knowledge_items"
   end
 
   test "tool descriptors include apps sdk metadata and output schema" do
@@ -116,7 +118,7 @@ class McpControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "write-scoped token can create a task" do
-    assert_difference -> { Task.where(workspace: @workspace).count }, 1 do
+    assert_difference -> { Task.unscoped.where(workspace: @workspace).count }, 1 do
       post_rpc(
         "tools/call",
         {
@@ -147,6 +149,180 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     payload = JSON.parse(response.body).dig("result")
     assert_equal true, payload.fetch("isError")
     assert_match(/does not allow app writes/, payload.dig("structuredContent", "error"))
+  end
+
+  test "read-only token cannot create generated knowledge items" do
+    _record, raw_read_token = McpAccessToken.issue!(user: @user, name: "read-only-knowledge", scopes: ["app:read"])
+
+    post "/mcp",
+      params: rpc_payload("tools/call", {
+        name: "create_knowledge_items",
+        arguments: {
+          prompt: "Create facts",
+          items: [{ title: "Blocked fact" }]
+        }
+      }).to_json,
+      headers: json_headers.merge("Authorization" => "Bearer #{raw_read_token}")
+
+    assert_response :success
+    payload = JSON.parse(response.body).dig("result")
+    assert_equal true, payload.fetch("isError")
+    assert_match(/does not allow app writes/, payload.dig("structuredContent", "error"))
+  end
+
+  test "mcp creates prompt run and generated knowledge cards in history mode" do
+    assert_difference -> { KnowledgePromptRun.unscoped.where(workspace: @workspace).count }, 1 do
+      assert_difference -> { KnowledgeItem.unscoped.where(workspace: @workspace).count }, 2 do
+        assert_difference -> { McpAuditLog.unscoped.where(tool_name: "create_knowledge_items").count }, 1 do
+          post_rpc(
+            "tools/call",
+            {
+              name: "create_knowledge_items",
+              arguments: {
+                prompt: "Give me two useful MCP facts",
+                collection_name: "MCP Inbox",
+                items: [
+                  {
+                    title: "MCP cards support citations",
+                    summary: "Cards can store source names and URLs.",
+                    category: "tech",
+                    source_name: "Example Source",
+                    source_url: "https://example.test/mcp",
+                    tags: ["mcp", "citations"]
+                  },
+                  {
+                    title: "MCP cards keep history",
+                    summary: "Each prompt creates a prompt run.",
+                    category: "learning"
+                  }
+                ]
+              }
+            }
+          )
+        end
+      end
+    end
+
+    assert_response :success
+    result = JSON.parse(response.body).dig("result", "structuredContent")
+    assert_equal "history", result.dig("knowledge_prompt_run", "generation_mode")
+    assert_equal 2, result.fetch("knowledge_items").length
+    assert_equal "MCP cards support citations", result.fetch("knowledge_items").first.fetch("title")
+  end
+
+  test "mcp lists generated knowledge items" do
+    Current.user = @user
+    Current.workspace = @workspace
+    run = @user.knowledge_prompt_runs.create!(prompt: "Listable facts")
+    @user.knowledge_items.create!(
+      knowledge_prompt_run: run,
+      title: "Listable MCP fact",
+      category: "tech"
+    )
+    Current.reset_all
+
+    post_rpc("tools/call", { name: "list_knowledge_items", arguments: { active: true } })
+
+    assert_response :success
+    items = JSON.parse(response.body).dig("result", "structuredContent", "records")
+    assert_includes items.map { |item| item.fetch("title") }, "Listable MCP fact"
+  end
+
+  test "replace topic archives matching source key and links replacement" do
+    Current.user = @user
+    Current.workspace = @workspace
+    run = @user.knowledge_prompt_runs.create!(prompt: "Old topic")
+    old_item = @user.knowledge_items.create!(
+      knowledge_prompt_run: run,
+      title: "Old Rails fact",
+      source_key: "rails:fact"
+    )
+    Current.reset_all
+
+    post_rpc(
+      "tools/call",
+      {
+        name: "create_knowledge_items",
+        arguments: {
+          prompt: "Replace Rails fact",
+          mode: "replace_topic",
+          items: [
+            {
+              title: "New Rails fact",
+              source_key: "rails:fact",
+              category: "tech"
+            }
+          ]
+        }
+      }
+    )
+
+    assert_response :success
+    result = JSON.parse(response.body).dig("result", "structuredContent")
+    replacement_id = result.fetch("knowledge_items").first.fetch("id")
+    assert_equal 1, result.fetch("archived_count")
+    old_item.reload
+    assert_not old_item.active?
+    assert_equal replacement_id, old_item.replaced_by_id
+  end
+
+  test "replace all archives active mcp generated cards for current user" do
+    Current.user = @user
+    Current.workspace = @workspace
+    run = @user.knowledge_prompt_runs.create!(prompt: "Old MCP batch", source: "mcp")
+    old_item = @user.knowledge_items.create!(
+      knowledge_prompt_run: run,
+      title: "Old active MCP item",
+      source_key: "old:mcp"
+    )
+    Current.reset_all
+
+    post_rpc(
+      "tools/call",
+      {
+        name: "create_knowledge_items",
+        arguments: {
+          prompt: "Replace all MCP facts",
+          mode: "replace_all",
+          source: "mcp",
+          items: [{ title: "Fresh MCP item", source_key: "fresh:mcp" }]
+        }
+      }
+    )
+
+    assert_response :success
+    result = JSON.parse(response.body).dig("result", "structuredContent")
+    assert_equal 1, result.fetch("archived_count")
+    assert_not old_item.reload.active?
+    assert_equal "Fresh MCP item", result.fetch("knowledge_items").first.fetch("title")
+  end
+
+  test "create knowledge bookmark upserts duplicate identity" do
+    arguments = {
+      card_type: "mcp_knowledge_item",
+      source_id: "knowledge_item:42",
+      payload: {
+        title: "Saved MCP card",
+        summary: "Original summary"
+      }
+    }
+
+    assert_difference -> { KnowledgeBookmark.unscoped.where(workspace: @workspace).count }, 1 do
+      post_rpc("tools/call", { name: "create_knowledge_bookmark", arguments: arguments })
+    end
+
+    post_rpc(
+      "tools/call",
+      {
+        name: "create_knowledge_bookmark",
+        arguments: arguments.merge(payload: { title: "Saved MCP card", summary: "Updated summary" })
+      }
+    )
+
+    assert_response :success
+    bookmarks = KnowledgeBookmark.unscoped.where(workspace: @workspace, card_type: "mcp_knowledge_item", source_id: "knowledge_item:42")
+    assert_equal 1, bookmarks.count
+    assert_equal "Updated summary", bookmarks.first.payload.fetch("summary")
   end
 
   test "query token can be disabled outside developer mode" do
@@ -216,7 +392,7 @@ class McpControllerTest < ActionDispatch::IntegrationTest
       end_date: 2.days.ago.to_date
     )
 
-    assert_difference -> { McpAuditLog.where(tool_name: "workspace_autopilot_apply").count }, 1 do
+    assert_difference -> { McpAuditLog.unscoped.where(tool_name: "workspace_autopilot_apply").count }, 1 do
       post_rpc(
         "tools/call",
         {

@@ -518,6 +518,57 @@ module Mcp
             destructive: false
           ),
           tool(
+            "list_knowledge_items",
+            "List Generated Knowledge Items",
+            "List ChatGPT/MCP-generated knowledge cards for the current user.",
+            object_schema(properties: {
+              "active" => boolean("Only active cards when true, archived cards when false."),
+              "category" => string("Optional category filter."),
+              "collection_name" => string("Optional collection name."),
+              "limit" => integer("Maximum items.", default: 50, minimum: 1, maximum: 100)
+            }),
+            read_only: true
+          ),
+          tool(
+            "create_knowledge_items",
+            "Create Generated Knowledge Items",
+            "Create a prompt history run and one or more generated knowledge cards.",
+            object_schema(properties: {
+              "prompt" => string("The user's original ChatGPT prompt or request."),
+              "mode" => string("history, replace_topic, or replace_all.", default: "history"),
+              "source" => string("Source label for this generation.", default: "mcp"),
+              "collection_name" => string("Optional collection name applied to cards without their own collection."),
+              "metadata" => {
+                "type" => "object",
+                "description" => "Optional run metadata.",
+                "additionalProperties" => true
+              },
+              "items" => array(
+                "Knowledge cards to create.",
+                items: {
+                  "type" => "object",
+                  "properties" => {
+                    "title" => { "type" => "string" },
+                    "summary" => { "type" => "string" },
+                    "body" => { "type" => "string" },
+                    "category" => { "type" => "string" },
+                    "item_type" => { "type" => "string" },
+                    "collection_name" => { "type" => "string" },
+                    "source_name" => { "type" => "string" },
+                    "source_url" => { "type" => "string" },
+                    "source_key" => { "type" => "string" },
+                    "published_at" => { "type" => "string" },
+                    "tags" => { "type" => "array", "items" => { "type" => "string" } },
+                    "payload" => { "type" => "object", "additionalProperties" => true }
+                  },
+                  "required" => ["title"],
+                  "additionalProperties" => true
+                }
+              )
+            }, required: %w[prompt items]),
+            destructive: false
+          ),
+          tool(
             "list_conversations",
             "List Conversations",
             "List conversations visible to the current user, including participants and latest message preview.",

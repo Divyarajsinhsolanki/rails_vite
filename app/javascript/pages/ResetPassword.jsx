@@ -36,7 +36,7 @@ const ResetPassword = () => {
 
   if (!token) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100">
+      <div className="flex min-h-dvh items-center justify-center bg-slate-950 px-4 text-slate-100">
         <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center shadow-2xl">
           <h1 className="text-2xl font-bold">Reset link is missing or expired</h1>
           <p className="mt-3 text-sm text-slate-300">Request a new one and try again.</p>
@@ -52,11 +52,11 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-slate-50">
+    <div className="min-h-dvh bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-slate-50">
       <Toaster position="top-right" />
       {loading && <SpinnerOverlay />}
-      <div className="mx-auto flex max-w-5xl flex-col gap-10 px-6 py-14 lg:flex-row lg:items-center">
-        <div className="relative w-full rounded-3xl border border-white/10 bg-white/5 p-10 shadow-2xl backdrop-blur lg:w-2/5">
+      <div className="mx-auto flex min-h-dvh max-w-5xl flex-col items-center justify-center gap-6 px-4 py-6 sm:px-6 lg:flex-row lg:py-8">
+        <div className="relative w-full rounded-2xl border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur sm:p-7 lg:w-2/5">
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute -left-10 top-8 h-32 w-32 rounded-full bg-indigo-500/20 blur-3xl" />
             <div className="absolute -right-10 bottom-4 h-28 w-28 rounded-full bg-cyan-400/25 blur-3xl" />
@@ -64,23 +64,23 @@ const ResetPassword = () => {
           <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-blue-100 ring-1 ring-white/10">
             ✅ Final step
           </p>
-          <h1 className="text-3xl font-bold leading-tight text-white sm:text-4xl">Set a new password</h1>
+          <h1 className="text-3xl font-bold leading-tight text-white">Set a new password</h1>
           <p className="mt-3 text-sm text-slate-200/80">
             Keep this password unique to your account. We will sign you in right after the update.
           </p>
-          <div className="mt-6 rounded-xl border border-white/10 bg-black/20 p-4">
+          <div className="mt-5 rounded-xl border border-white/10 bg-black/20 p-4">
             <p className="text-xs uppercase tracking-[0.14em] text-slate-400/80">Resetting for</p>
             <p className="text-lg font-semibold text-white">{decodeURIComponent(emailParam || "") || "Your account"}</p>
           </div>
         </div>
 
         <div className="w-full lg:w-3/5">
-          <div className="w-full rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur">
+          <div className="w-full rounded-2xl border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur sm:p-7">
             <h2 className="mb-2 text-2xl font-bold text-white">Create strong credentials</h2>
-            <p className="mb-8 text-sm text-slate-300">
+            <p className="mb-6 text-sm text-slate-300">
               Use at least 12 characters and include letters, numbers, and symbols.
             </p>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label className="mb-1 block text-sm font-semibold text-slate-200 required-label" htmlFor="password">
                   New password
@@ -94,7 +94,7 @@ const ResetPassword = () => {
                   value={form.password}
                   onChange={handleChange}
                   placeholder="••••••••••"
-                  className="w-full rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-slate-50 placeholder-slate-400 shadow-inner focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-200/60"
+                  className="w-full rounded-xl border border-white/10 bg-white/10 px-4 py-2.5 text-slate-50 placeholder-slate-400 shadow-inner focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-200/60"
                 />
               </div>
               <div>
@@ -110,12 +110,12 @@ const ResetPassword = () => {
                   value={form.password_confirmation}
                   onChange={handleChange}
                   placeholder="Repeat password"
-                  className="w-full rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-slate-50 placeholder-slate-400 shadow-inner focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-200/60"
+                  className="w-full rounded-xl border border-white/10 bg-white/10 px-4 py-2.5 text-slate-50 placeholder-slate-400 shadow-inner focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-200/60"
                 />
               </div>
               <button
                 type="submit"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-400 to-blue-500 px-4 py-3 text-base font-semibold text-slate-900 shadow-lg shadow-indigo-500/30 transition hover:from-indigo-300 hover:to-blue-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-400 to-blue-500 px-4 py-2.5 font-semibold text-slate-900 shadow-lg shadow-indigo-500/30 transition hover:from-indigo-300 hover:to-blue-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
               >
                 Update password
               </button>
@@ -127,7 +127,7 @@ const ResetPassword = () => {
               </div>
             )}
 
-            <p className="mt-6 text-center text-sm text-slate-300">
+            <p className="mt-5 text-center text-sm text-slate-300">
               Stuck?{" "}
               <button
                 type="button"

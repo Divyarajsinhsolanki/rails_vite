@@ -5,6 +5,8 @@ class Workspace < ApplicationRecord
   has_many :users, dependent: :destroy
   has_many :projects, dependent: :destroy
   has_many :teams, dependent: :destroy
+  has_many :knowledge_prompt_runs, dependent: :destroy
+  has_many :knowledge_items, dependent: :destroy
   has_many :pdf_documents, dependent: :destroy
   has_many :pdf_document_versions, dependent: :destroy
   has_many :pdf_document_operations, dependent: :destroy

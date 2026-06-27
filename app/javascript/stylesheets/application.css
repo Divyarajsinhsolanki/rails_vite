@@ -4,6 +4,8 @@
 
 :root {
   color-scheme: light;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-heading: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --theme-color: #346dff;
   --theme-color-rgb: 52 109 255;
   --theme-color-light: #eef3ff;
@@ -59,6 +61,12 @@
   --focus-ring: rgb(var(--theme-color-rgb) / 0.35);
   --surface-muted: rgb(var(--color-muted-rgb) / 0.1);
   --surface-input: rgb(255 255 255 / 0.78);
+  --type-page-title: 4rem;
+  --type-section-title: 2.75rem;
+  --type-panel-title: 1.45rem;
+  --type-body: 0.96rem;
+  --type-small: 0.875rem;
+  --shell-routed-min-height: calc(100dvh - 11rem);
 }
 
 .dark {
@@ -99,13 +107,35 @@ html {
 body {
   position: relative;
   margin: 0;
-  min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  line-height: 1.55;
   color: var(--shell-text);
   background:
     radial-gradient(circle at top left, rgb(var(--theme-secondary-rgb) / 0.24), transparent 32%),
     radial-gradient(circle at top right, rgb(var(--theme-color-rgb) / 0.18), transparent 24%),
     linear-gradient(180deg, #f8fbff 0%, var(--shell-bg) 48%, #edf2fa 100%);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading);
+  letter-spacing: 0;
+}
+
+.tracking-tight,
+.tracking-tighter,
+[class*="tracking-[-"] {
+  letter-spacing: 0 !important;
+}
+
+p,
+li {
+  text-wrap: pretty;
 }
 
 .dark body {
@@ -159,6 +189,7 @@ button,
 input,
 select,
 textarea {
+  font: inherit;
   transition:
     color var(--shell-motion-fast),
     background-color var(--shell-motion-fast),
@@ -166,6 +197,34 @@ textarea {
     box-shadow var(--shell-motion-base),
     transform var(--shell-motion-base),
     opacity var(--shell-motion-fast);
+}
+
+.app-page-title {
+  font-size: var(--type-page-title);
+  line-height: 1.02;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.app-section-title {
+  font-size: var(--type-section-title);
+  line-height: 1.08;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.app-panel-title {
+  font-size: var(--type-panel-title);
+  line-height: 1.18;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.app-eyebrow-text {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
 }
 
 *::-webkit-scrollbar {
@@ -186,7 +245,7 @@ textarea {
 
 .shell-app {
   position: relative;
-  min-height: 100vh;
+  min-height: 100dvh;
   isolation: isolate;
 }
 
@@ -268,8 +327,11 @@ textarea {
 .shell-main {
   position: relative;
   z-index: 1;
+  display: flex;
+  min-height: 0;
   flex: 1;
-  padding-bottom: 2rem;
+  flex-direction: column;
+  padding-bottom: 1.25rem;
 }
 
 .shell-app-immersive {
@@ -297,6 +359,9 @@ textarea {
 }
 
 .shell-main-stage {
+  display: flex;
+  flex: 1;
+  min-height: 0;
   width: min(100%, 1600px);
   margin: 0 auto;
   padding: 0 0.75rem;
@@ -318,7 +383,32 @@ textarea {
 }
 
 .shell-route-frame {
+  width: 100%;
+  min-height: 0;
   will-change: opacity, transform, filter;
+}
+
+.shell-main-stage > .shell-route-frame > .min-h-screen,
+.shell-main-stage > .shell-route-frame > .h-screen {
+  min-height: var(--shell-routed-min-height);
+}
+
+.shell-main-stage > .shell-route-frame > .h-screen {
+  height: var(--shell-routed-min-height);
+}
+
+.shell-app-immersive .shell-main-stage > .shell-route-frame > .min-h-screen,
+.shell-app-chat .shell-main-stage > .shell-route-frame > .min-h-screen {
+  min-height: 100%;
+}
+
+.shell-route-frame h1.text-5xl,
+.shell-route-frame h1.text-6xl,
+.shell-route-frame h1.text-7xl,
+.shell-route-frame h2.text-5xl,
+.shell-route-frame h2.text-6xl {
+  font-size: 3rem;
+  line-height: 1.08;
 }
 
 .shell-main-stage-chat .shell-route-frame {
@@ -999,7 +1089,7 @@ textarea {
 }
 
 .shell-app footer {
-  padding: 0 0.75rem 1.25rem;
+  padding: 0 0.75rem 0.875rem;
   background: transparent !important;
   border-top: none !important;
   box-shadow: none !important;
@@ -1012,6 +1102,8 @@ textarea {
   border: 1px solid var(--shell-border);
   border-radius: 1.75rem;
   background: var(--surface-card);
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
   backdrop-filter: blur(18px);
   box-shadow: var(--shell-shadow-sm);
 }
@@ -1031,6 +1123,20 @@ textarea {
 .landing-hero-3d {
   transform-style: preserve-3d;
   perspective: 1200px;
+}
+
+@media (min-width: 1024px) and (max-height: 820px) {
+  .auth-orb-panel .landing-hero-3d {
+    padding: 1rem;
+  }
+
+  .auth-orb-panel .landing-orb-stage {
+    max-width: 300px;
+  }
+
+  .auth-orb-panel .landing-feature-card:nth-child(n + 3) {
+    display: none;
+  }
 }
 
 .landing-hero-3d::before {
@@ -1367,6 +1473,21 @@ textarea {
 }
 
 @media (max-width: 640px) {
+  :root {
+    --type-page-title: 2.5rem;
+    --type-section-title: 2rem;
+    --shell-routed-min-height: calc(100dvh - 8.75rem);
+  }
+
+  .shell-route-frame h1.text-5xl,
+  .shell-route-frame h1.text-6xl,
+  .shell-route-frame h1.text-7xl,
+  .shell-route-frame h2.text-5xl,
+  .shell-route-frame h2.text-6xl {
+    font-size: 2rem;
+    line-height: 1.14;
+  }
+
   .shell-main-stage {
     padding: 0 0.5rem;
   }

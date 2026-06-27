@@ -116,6 +116,9 @@ export const startDemoSession = () => api.post("/demo_session", {}, { skipAuthRe
 export const fetchDemoManifest = () => api.get("/demo/manifest");
 export const searchWorkspace = (query, types) => api.get("/search", { params: { q: query, types } });
 export const fetchActivity = () => api.get("/activity");
+export const fetchKnowledgeItems = (params = {}) => api.get("/knowledge_items", { params });
+export const fetchKnowledgePromptRuns = (params = {}) => api.get("/knowledge_prompt_runs", { params });
+export const archiveKnowledgeItem = (id) => api.patch(`/knowledge_items/${id}/archive`);
 export const fetchPortfolio = () => api.get("/portfolio", { skipAuthRetry: true });
 export const fetchPortfolioAdmin = () => api.get("/admin/portfolio");
 export const updatePortfolioProfile = (data) => api.patch("/admin/portfolio/profile", data, { headers: { "Content-Type": "multipart/form-data" } });

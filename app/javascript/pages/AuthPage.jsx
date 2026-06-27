@@ -10,7 +10,7 @@ function AuthPage({ mode = "login" }) {
   }, [mode]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-shell-dark">
+    <div className="relative min-h-dvh overflow-x-hidden bg-shell-dark">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-24 top-10 h-72 w-72 rounded-full bg-theme-secondary/20 blur-3xl" />
         <div className="absolute right-0 top-1/3 h-80 w-80 rounded-full bg-theme/20 blur-3xl" />
@@ -24,7 +24,7 @@ function AuthPage({ mode = "login" }) {
           }}
         />
       </div>
-      <div className="relative z-10 min-h-screen px-4 py-8 sm:px-6 lg:px-8">
+      <div className="relative z-10 flex min-h-dvh items-center px-4 py-4 sm:px-6 lg:px-8">
         {current === "signup" ? (
           <Signup switchToLogin={() => setCurrent("login")} />
         ) : (

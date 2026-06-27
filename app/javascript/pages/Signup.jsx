@@ -76,11 +76,11 @@ const Signup = ({ switchToLogin }) => {
   };
 
   return (
-    <div className="min-h-full">
+    <div className="w-full">
       <Toaster position="top-right" />
       {loading && <SpinnerOverlay />}
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 py-8 lg:flex-row lg:items-center lg:gap-10 xl:gap-14">
-        <div className="lg:w-[58%]">
+      <div className="mx-auto grid w-full max-w-6xl items-center gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.84fr)] lg:gap-8 xl:gap-10">
+        <div className="auth-orb-panel hidden lg:block">
           <WorkspaceOrb
             eyebrow="Start NexusHub"
             title="Build your workspace identity in one polished flow."
@@ -90,12 +90,12 @@ const Signup = ({ switchToLogin }) => {
           />
         </div>
 
-        <div className="lg:w-[42%]">
-          <div className="w-full max-w-md rounded-3xl border border-shell-border bg-surface-elevated p-8 shadow-shell-lg transition-transform duration-200 hover:-translate-y-1">
-            <h2 className="mb-1 text-center text-3xl font-bold text-shell-text-strong">Create account</h2>
-            <p className="mb-8 text-center text-sm text-shell-muted">Join the workspace and start your command deck.</p>
+        <div className="flex justify-center lg:justify-end">
+          <div className="w-full max-w-md rounded-2xl border border-shell-border bg-surface-elevated p-6 shadow-shell-lg transition-transform duration-200 hover:-translate-y-1 sm:p-7">
+            <h2 className="mb-1 text-center text-2xl font-bold text-shell-text-strong">Create account</h2>
+            <p className="mb-6 text-center text-sm text-shell-muted">Join the workspace and start your command deck.</p>
 
-            <form onSubmit={handleSubmit} className="space-y-5" encType="multipart/form-data">
+            <form onSubmit={handleSubmit} className="space-y-4" encType="multipart/form-data">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-sm font-semibold text-shell-muted-strong required-label" htmlFor="first_name">
@@ -107,7 +107,7 @@ const Signup = ({ switchToLogin }) => {
                     name="first_name"
                     placeholder="Ada"
                     required
-                    className="w-full rounded-xl border-2 border-shell-border bg-surface-card px-4 py-3 text-shell-text placeholder:text-muted/70 shadow-sm transition focus:border-theme focus:ring-1 focus:ring-theme/35"
+                    className="w-full rounded-xl border-2 border-shell-border bg-surface-card px-4 py-2.5 text-shell-text placeholder:text-muted/70 shadow-sm transition focus:border-theme focus:ring-1 focus:ring-theme/35"
                     value={formData.first_name}
                     onChange={handleChange}
                   />
@@ -122,7 +122,7 @@ const Signup = ({ switchToLogin }) => {
                     name="last_name"
                     placeholder="Lovelace"
                     required
-                    className="w-full rounded-xl border-2 border-shell-border bg-surface-card px-4 py-3 text-shell-text placeholder:text-muted/70 shadow-sm transition focus:border-theme focus:ring-1 focus:ring-theme/35"
+                    className="w-full rounded-xl border-2 border-shell-border bg-surface-card px-4 py-2.5 text-shell-text placeholder:text-muted/70 shadow-sm transition focus:border-theme focus:ring-1 focus:ring-theme/35"
                     value={formData.last_name}
                     onChange={handleChange}
                   />
@@ -139,7 +139,7 @@ const Signup = ({ switchToLogin }) => {
                   name="email"
                   placeholder="you@example.com"
                   required
-                  className="w-full rounded-xl border-2 border-shell-border bg-surface-card px-4 py-3 text-shell-text placeholder:text-muted/70 shadow-sm transition focus:border-theme focus:ring-1 focus:ring-theme/35"
+                  className="w-full rounded-xl border-2 border-shell-border bg-surface-card px-4 py-2.5 text-shell-text placeholder:text-muted/70 shadow-sm transition focus:border-theme focus:ring-1 focus:ring-theme/35"
                   value={formData.email}
                   onChange={handleChange}
                 />
@@ -155,7 +155,7 @@ const Signup = ({ switchToLogin }) => {
                   name="password"
                   placeholder="Create a strong password"
                   required
-                  className="w-full rounded-xl border-2 border-shell-border bg-surface-card px-4 py-3 text-shell-text placeholder:text-muted/70 shadow-sm transition focus:border-theme focus:ring-1 focus:ring-theme/35"
+                  className="w-full rounded-xl border-2 border-shell-border bg-surface-card px-4 py-2.5 text-shell-text placeholder:text-muted/70 shadow-sm transition focus:border-theme focus:ring-1 focus:ring-theme/35"
                   value={formData.password}
                   onChange={handleChange}
                 />
@@ -172,13 +172,13 @@ const Signup = ({ switchToLogin }) => {
                   accept="image/*"
                   title="Profile Picture"
                   onChange={handleChange}
-                  className="w-full rounded-xl border-2 border-shell-border bg-surface-card px-4 py-3 text-sm text-shell-muted-strong shadow-sm transition file:mr-4 file:rounded-lg file:border-0 file:bg-theme/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-theme hover:file:bg-theme/15 focus:border-theme focus:ring-1 focus:ring-theme/35"
+                  className="w-full rounded-xl border-2 border-shell-border bg-surface-card px-4 py-2.5 text-sm text-shell-muted-strong shadow-sm transition file:mr-4 file:rounded-lg file:border-0 file:bg-theme/10 file:px-4 file:py-1.5 file:text-sm file:font-semibold file:text-theme hover:file:bg-theme/15 focus:border-theme focus:ring-1 focus:ring-theme/35"
                 />
               </div>
 
               <button
                 type="submit"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-shell-primary py-3 font-semibold text-white shadow-lg shadow-theme/20 transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-theme/25"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-shell-primary py-2.5 font-semibold text-white shadow-lg shadow-theme/20 transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-theme/25"
               >
                 Sign Up
               </button>
@@ -190,7 +190,7 @@ const Signup = ({ switchToLogin }) => {
               </div>
             )}
 
-            <div className="relative my-6">
+            <div className="relative my-5">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-shell-border" />
               </div>
@@ -208,7 +208,7 @@ const Signup = ({ switchToLogin }) => {
                   setLoading(false);
                 }
               }}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-shell-border bg-surface-card py-3 font-medium text-shell-muted-strong shadow-sm transition hover:-translate-y-0.5 hover:bg-surface-card-hover hover:shadow-lg"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-shell-border bg-surface-card py-2.5 font-medium text-shell-muted-strong shadow-sm transition hover:-translate-y-0.5 hover:bg-surface-card-hover hover:shadow-lg"
             >
               <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <path
@@ -219,7 +219,7 @@ const Signup = ({ switchToLogin }) => {
               Sign up with Google
             </button>
 
-            <p className="mt-6 text-center text-sm text-shell-muted">
+            <p className="mt-5 text-center text-sm text-shell-muted">
               Already have an account?{" "}
               <button
                 type="button"

@@ -408,6 +408,47 @@ module Mcp
         }
       end
 
+      def knowledge_prompt_run(run)
+        {
+          id: run.id,
+          prompt: run.prompt,
+          source: run.source,
+          generation_mode: run.generation_mode,
+          status: run.status,
+          metadata: run.metadata.to_h.except("secret", "token", "password", "api_key"),
+          item_count: run.knowledge_items.size,
+          created_at: run.created_at,
+          updated_at: run.updated_at
+        }
+      end
+
+      def knowledge_item(item)
+        {
+          id: item.id,
+          title: item.title,
+          summary: item.summary,
+          body: item.body,
+          category: item.category,
+          item_type: item.item_type,
+          collection_name: item.collection_name,
+          source_name: item.source_name,
+          source_url: item.source_url,
+          source_key: item.source_key,
+          published_at: item.published_at,
+          tags: Array(item.tags),
+          payload: item.payload.to_h.except("secret", "token", "password", "api_key"),
+          active: item.active,
+          archived_at: item.archived_at,
+          replaced_by_id: item.replaced_by_id,
+          position: item.position,
+          prompt_run_id: item.knowledge_prompt_run_id,
+          prompt: item.knowledge_prompt_run&.prompt,
+          generation_mode: item.knowledge_prompt_run&.generation_mode,
+          created_at: item.created_at,
+          updated_at: item.updated_at
+        }
+      end
+
       def conversation(conversation, current_user:)
         latest_message = conversation.messages.order(created_at: :desc).first
         membership = conversation.conversation_participants.find { |cp| cp.user_id == current_user.id } ||

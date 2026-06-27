@@ -307,7 +307,7 @@ const AppShell = () => {
   }
 
   return (
-    <div className={`shell-app flex min-h-screen flex-col ${isImmersiveRoute ? "shell-app-immersive" : ""} ${isChatRoute ? "shell-app-chat" : ""}`}>
+    <div className={`shell-app flex min-h-dvh flex-col ${isImmersiveRoute ? "shell-app-immersive" : ""} ${isChatRoute ? "shell-app-chat" : ""}`}>
       <div className="shell-backdrop" aria-hidden="true">
         <div className="shell-orb shell-orb-one" />
         <div className="shell-orb shell-orb-two" />

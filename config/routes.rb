@@ -137,6 +137,12 @@ Rails.application.routes.draw do
         post :mark_reviewed
       end
     end
+    resources :knowledge_items, only: [:index] do
+      member do
+        patch :archive
+      end
+    end
+    resources :knowledge_prompt_runs, only: [:index]
 
 
     resources :calendar_events, only: [:index, :create, :update, :destroy] do

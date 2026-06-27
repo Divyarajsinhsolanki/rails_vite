@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiBook,
@@ -10,6 +10,10 @@ import {
   FiX,
   FiBell,
   FiCheckCircle,
+  FiArchive,
+  FiCpu,
+  FiExternalLink,
+  FiHash,
 } from "react-icons/fi";
 import TodayInHistoryCard from "../components/Knowledge/TodayInHistoryCard";
 import QuoteOfTheDayCard from "../components/Knowledge/QuoteOfTheDayCard";
@@ -35,6 +39,33 @@ import DailyQuizCard from "../components/Knowledge/DailyQuizCard";
 import StudyReminderCard from "../components/Knowledge/StudyReminderCard";
 import Knowledge3DRoom from "../components/Knowledge3DRoom/Knowledge3DRoom";
 import { KnowledgeBookmarksProvider, useKnowledgeBookmarks } from "../context/KnowledgeBookmarksContext";
+import { archiveKnowledgeItem, fetchKnowledgeItems, fetchKnowledgePromptRuns } from "../components/api";
+
+const generatedBookmarkPayload = (item) => ({
+  cardType: "mcp_knowledge_item",
+  sourceId: `knowledge_item:${item.id}`,
+  collectionName: item.collection_name || "ChatGPT Inbox",
+  reminderIntervalDays: 7,
+  title: item.title,
+  subtitle: item.summary || item.source_name || item.category,
+  payload: {
+    title: item.title,
+    summary: item.summary,
+    body: item.body,
+    category: item.category,
+    item_type: item.item_type,
+    collection_name: item.collection_name,
+    source_name: item.source_name,
+    source_url: item.source_url,
+    url: item.source_url,
+    source_key: item.source_key,
+    published_at: item.published_at,
+    tags: item.tags || [],
+    prompt: item.prompt,
+    prompt_run_id: item.prompt_run_id,
+    knowledge_item_id: item.id,
+  },
+});
 
 // Category Tab Component
 const CategoryTab = ({ category, isActive, onClick, index }) => (
@@ -72,6 +103,9 @@ function KnowledgeDashboardContent() {
   const [lastCollectionName, setLastCollectionName] = useState("");
   const [reminderIntervalDays, setReminderIntervalDays] = useState(7);
   const [feedback, setFeedback] = useState(null);
+  const [knowledgeItems, setKnowledgeItems] = useState([]);
+  const [promptRuns, setPromptRuns] = useState([]);
+  const [generatedLoading, setGeneratedLoading] = useState(true);
 
   const {
     bookmarks,
@@ -89,8 +123,41 @@ function KnowledgeDashboardContent() {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadGeneratedKnowledge = async () => {
+      setGeneratedLoading(true);
+      try {
+        const [itemsResponse, runsResponse] = await Promise.all([
+          fetchKnowledgeItems({ limit: 120 }),
+          fetchKnowledgePromptRuns({ limit: 40 }),
+        ]);
+
+        if (cancelled) return;
+        setKnowledgeItems(Array.isArray(itemsResponse.data) ? itemsResponse.data : []);
+        setPromptRuns(Array.isArray(runsResponse.data) ? runsResponse.data : []);
+      } catch (err) {
+        console.error("Unable to load generated knowledge", err);
+        if (!cancelled) {
+          setFeedback({ type: "error", message: "Unable to load ChatGPT knowledge cards" });
+        }
+      } finally {
+        if (!cancelled) setGeneratedLoading(false);
+      }
+    };
+
+    loadGeneratedKnowledge();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const savedCount = bookmarks.length;
   const dueCount = dueBookmarks.length;
+  const activeGeneratedCount = knowledgeItems.filter((item) => item.active).length;
+  const archivedGeneratedCount = knowledgeItems.filter((item) => !item.active).length;
 
   const categories = useMemo(
     () => [
@@ -99,10 +166,13 @@ function KnowledgeDashboardContent() {
       { id: "learning", name: "Learning", icon: "🎓" },
       { id: "stocks", name: "Stocks", icon: "📈" },
       { id: "tech", name: "Tech", icon: "💻" },
+      { id: "mcp", name: `ChatGPT Inbox (${activeGeneratedCount})`, icon: "🤖" },
+      { id: "history", name: `Prompt History (${promptRuns.length})`, icon: "🕘" },
       { id: "saved", name: `Saved (${savedCount})`, icon: "⭐" },
       { id: "due", name: `Due (${dueCount})`, icon: "🔔" },
+      { id: "archived", name: `Archived (${archivedGeneratedCount})`, icon: "🗄️" },
     ],
-    [savedCount, dueCount]
+    [activeGeneratedCount, archivedGeneratedCount, dueCount, promptRuns.length, savedCount]
   );
 
   const cardDefinitions = useMemo(
@@ -303,7 +373,7 @@ function KnowledgeDashboardContent() {
     return map;
   }, [cardDefinitions]);
 
-  const handleBookmarkToggle = async (bookmarkData) => {
+  const handleBookmarkToggle = useCallback(async (bookmarkData) => {
     if (!bookmarkData) return;
     const existing = findBookmark(bookmarkData);
     try {
@@ -319,7 +389,26 @@ function KnowledgeDashboardContent() {
     } catch (err) {
       setFeedback({ type: "error", message: err.message });
     }
-  };
+  }, [deleteBookmark, findBookmark, lastCollectionName]);
+
+  const handleSaveGeneratedItem = useCallback(
+    (item) => handleBookmarkToggle(generatedBookmarkPayload(item)),
+    [handleBookmarkToggle]
+  );
+
+  const handleArchiveGeneratedItem = useCallback(async (item) => {
+    if (!item?.id) return;
+    try {
+      const { data } = await archiveKnowledgeItem(item.id);
+      setKnowledgeItems((current) => current.map((entry) => (entry.id === data.id ? data : entry)));
+      setFeedback({ type: "success", message: "Archived generated knowledge card" });
+    } catch (err) {
+      setFeedback({
+        type: "error",
+        message: err?.response?.data?.errors?.join(", ") || "Unable to archive knowledge card",
+      });
+    }
+  }, []);
 
   const bookmarkHelpers = useMemo(
     () => ({
@@ -343,9 +432,20 @@ function KnowledgeDashboardContent() {
 
     const matchesSearch = (metadata) => {
       if (!hasSearch) return true;
-      const title = metadata?.title?.toLowerCase() ?? "";
-      const summary = metadata?.summary?.toLowerCase() ?? "";
-      return title.includes(normalizedSearch) || summary.includes(normalizedSearch);
+      const searchable = [
+        metadata?.title,
+        metadata?.summary,
+        metadata?.body,
+        metadata?.category,
+        metadata?.sourceName,
+        metadata?.sourceUrl,
+        metadata?.prompt,
+        ...(Array.isArray(metadata?.tags) ? metadata.tags : []),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return searchable.includes(normalizedSearch);
     };
 
     const isReminderDue = (bookmark) => {
@@ -374,63 +474,121 @@ function KnowledgeDashboardContent() {
       return true;
     };
 
+    const savedCardFromBookmark = (bookmark, prefix) => {
+      const definition = cardTypeMap.get(bookmark.card_type);
+      return {
+        key: `${prefix}-${bookmark.id}`,
+        Component: definition?.Component ?? SavedBookmarkFallback,
+        cardType: bookmark.card_type,
+        roomSection: "review",
+        props: {
+          bookmarkHelpers,
+          initialData: bookmark.payload,
+          savedBookmark: bookmark,
+          isSavedView: true,
+          cardType: bookmark.card_type,
+        },
+        bookmark,
+        metadata: definition ?? {
+          title: bookmark.payload?.title || bookmark.payload?.question || "Saved item",
+          summary: bookmark.payload?.summary || bookmark.payload?.answer || "",
+          body: bookmark.payload?.body,
+          tags: bookmark.payload?.tags || [],
+        },
+      };
+    };
+
+    const generatedCardFromItem = (item) => {
+      const bookmarkData = generatedBookmarkPayload(item);
+      const savedBookmark = findBookmark(bookmarkData);
+      return {
+        key: `generated-${item.id}`,
+        Component: GeneratedKnowledgeCard,
+        cardType: "mcp_knowledge_item",
+        category: item.category || "mcp",
+        roomSection: "inbox",
+        generatedItem: item,
+        bookmark: savedBookmark || null,
+        props: {
+          item,
+          isSaved: Boolean(savedBookmark),
+          onSave: handleSaveGeneratedItem,
+          onArchive: handleArchiveGeneratedItem,
+        },
+        metadata: {
+          title: item.title,
+          summary: item.summary || item.body || "",
+          body: item.body,
+          category: item.category,
+          tags: item.tags || [],
+          sourceName: item.source_name,
+          sourceUrl: item.source_url,
+          prompt: item.prompt,
+        },
+      };
+    };
+
+    const promptRunCardFromRun = (run) => ({
+      key: `prompt-run-${run.id}`,
+      Component: PromptRunCard,
+      cardType: "knowledge_prompt_run",
+      category: "history",
+      roomSection: "history",
+      bookmark: null,
+      promptRun: run,
+      props: { run },
+      metadata: {
+        title: run.prompt,
+        summary: `${run.item_count || 0} cards created via ${run.generation_mode || "history"}`,
+        sourceName: run.source,
+        prompt: run.prompt,
+      },
+    });
+
     if (activeCategory === "saved") {
       return bookmarks
-        .map((bookmark) => {
-          const definition = cardTypeMap.get(bookmark.card_type);
-          return {
-            key: `bookmark-${bookmark.id}`,
-            Component: definition?.Component ?? SavedBookmarkFallback,
-            cardType: bookmark.card_type,
-            props: {
-              bookmarkHelpers,
-              initialData: bookmark.payload,
-              savedBookmark: bookmark,
-              isSavedView: true,
-              cardType: bookmark.card_type,
-            },
-            bookmark,
-            metadata: definition ?? { title: "Saved item", summary: "" },
-          };
-        })
+        .map((bookmark) => savedCardFromBookmark(bookmark, "bookmark"))
         .filter((item) => matchesSearch(item.metadata) && matchesFilterFlags(item.bookmark));
     }
 
     if (activeCategory === "due") {
       return dueBookmarks
-        .map((bookmark) => {
-          const definition = cardTypeMap.get(bookmark.card_type);
-          return {
-            key: `due-${bookmark.id}`,
-            Component: definition?.Component ?? SavedBookmarkFallback,
-            cardType: bookmark.card_type,
-            props: {
-              bookmarkHelpers,
-              initialData: bookmark.payload,
-              savedBookmark: bookmark,
-              isSavedView: true,
-              cardType: bookmark.card_type,
-            },
-            bookmark,
-            metadata: definition ?? { title: "Saved item", summary: "" },
-          };
-        })
+        .map((bookmark) => savedCardFromBookmark(bookmark, "due"))
         .filter((item) => matchesSearch(item.metadata) && matchesFilterFlags(item.bookmark));
     }
 
-    return cardDefinitions
+    if (activeCategory === "history") {
+      return promptRuns
+        .map(promptRunCardFromRun)
+        .filter((item) => matchesSearch(item.metadata) && matchesFilterFlags(item.bookmark));
+    }
+
+    const generatedCards = knowledgeItems
+      .filter((item) => (activeCategory === "archived" ? !item.active : item.active))
+      .filter((item) => {
+        if (activeCategory === "all" || activeCategory === "mcp" || activeCategory === "archived") return true;
+        return item.category === activeCategory;
+      })
+      .map(generatedCardFromItem);
+
+    const staticCards = activeCategory === "mcp" || activeCategory === "archived"
+      ? []
+      : cardDefinitions
       .filter((definition) => activeCategory === "all" || definition.category === activeCategory)
       .map((definition) => ({
         key: definition.key,
         Component: definition.Component,
         cardType: definition.cardType,
+        roomSection: "feed",
         props: {
           bookmarkHelpers,
           cardType: definition.cardType,
         },
         bookmark: null,
         metadata: definition,
-      }))
+      }));
+
+    return [...generatedCards, ...staticCards]
       .filter((item) => matchesSearch(item.metadata) && matchesFilterFlags(item.bookmark));
   }, [
     activeCategory,
@@ -439,12 +597,20 @@ function KnowledgeDashboardContent() {
     cardDefinitions,
     cardTypeMap,
     dueBookmarks,
+    findBookmark,
     filters.hasNotes,
     filters.reminderDue,
+    handleArchiveGeneratedItem,
+    handleSaveGeneratedItem,
+    knowledgeItems,
+    promptRuns,
     searchQuery,
   ]);
 
-  const isLoading = uiLoading || (bookmarksLoading && activeCategory !== "saved" && activeCategory !== "due");
+  const isLoading =
+    uiLoading ||
+    generatedLoading ||
+    (bookmarksLoading && activeCategory !== "saved" && activeCategory !== "due");
   const hasSearch = searchQuery.trim().length > 0;
   const filtersActive = Object.values(filters).some(Boolean);
   const currentDate = new Date().toLocaleDateString("en-US", {
@@ -469,6 +635,9 @@ function KnowledgeDashboardContent() {
         savedCount={savedCount}
         dueCount={dueCount}
         filteredCardsLength={filteredCards.length}
+        promptRuns={promptRuns}
+        knowledgeItems={knowledgeItems}
+        generatedLoading={generatedLoading}
         bookmarkHelpers={bookmarkHelpers}
         handleBookmarkToggle={handleBookmarkToggle}
         SavedBookmarkFallback={SavedBookmarkFallback}
@@ -511,6 +680,120 @@ function KnowledgeDashboardContent() {
         }}
       />
     </>
+  );
+}
+
+const formatKnowledgeDate = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+};
+
+function GeneratedKnowledgeCard({ item, isSaved, onSave, onArchive }) {
+  const publishedAt = formatKnowledgeDate(item.published_at || item.created_at);
+  const tags = Array.isArray(item.tags) ? item.tags.slice(0, 4) : [];
+
+  return (
+    <article className="flex h-full flex-col gap-3 rounded-[14px] border border-cyan-100 bg-white/92 p-4 text-slate-800 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-cyan-700">
+            <span className="inline-flex items-center gap-1 rounded-full bg-cyan-50 px-2 py-1">
+              <FiCpu className="h-3 w-3" />
+              {item.collection_name || "ChatGPT Inbox"}
+            </span>
+            {item.category ? <span>{item.category}</span> : null}
+          </div>
+          <h3 className="line-clamp-2 text-base font-semibold leading-snug text-slate-950">{item.title}</h3>
+        </div>
+        {!item.active ? (
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-500">Archived</span>
+        ) : null}
+      </div>
+
+      {item.summary ? <p className="line-clamp-3 text-sm leading-6 text-slate-600">{item.summary}</p> : null}
+      {!item.summary && item.body ? <p className="line-clamp-4 text-sm leading-6 text-slate-600">{item.body}</p> : null}
+
+      <div className="mt-auto space-y-3">
+        {tags.length ? (
+          <div className="flex flex-wrap gap-1.5">
+            {tags.map((tag) => (
+              <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600">
+                <FiHash className="h-3 w-3" />
+                {tag}
+              </span>
+            ))}
+          </div>
+        ) : null}
+
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-xs text-slate-500">
+          <span>{item.source_name || item.generated_source || "MCP"}</span>
+          {publishedAt ? <span>{publishedAt}</span> : null}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {item.source_url ? (
+            <a
+              href={item.source_url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              <FiExternalLink className="h-3.5 w-3.5" />
+              Source
+            </a>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => onSave(item)}
+            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+              isSaved
+                ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                : "bg-slate-950 text-white hover:bg-slate-800"
+            }`}
+          >
+            <FiBookmark className="h-3.5 w-3.5" />
+            {isSaved ? "Saved" : "Save"}
+          </button>
+          {item.active ? (
+            <button
+              type="button"
+              onClick={() => onArchive(item)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-rose-50 hover:text-rose-600"
+            >
+              <FiArchive className="h-3.5 w-3.5" />
+              Archive
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function PromptRunCard({ run }) {
+  const createdAt = formatKnowledgeDate(run.created_at);
+
+  return (
+    <article className="flex h-full flex-col gap-3 rounded-[14px] border border-indigo-100 bg-white/92 p-4 text-slate-800 shadow-sm">
+      <div className="flex items-center justify-between gap-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-indigo-700">
+        <span className="rounded-full bg-indigo-50 px-2.5 py-1">{run.source || "mcp"}</span>
+        <span>{run.generation_mode || "history"}</span>
+      </div>
+      <h3 className="line-clamp-4 text-base font-semibold leading-snug text-slate-950">{run.prompt}</h3>
+      <div className="mt-auto grid grid-cols-2 gap-2 text-xs">
+        <div className="rounded-xl bg-slate-50 p-3">
+          <span className="block text-slate-500">Cards</span>
+          <strong className="text-lg text-slate-950">{run.item_count || 0}</strong>
+        </div>
+        <div className="rounded-xl bg-slate-50 p-3">
+          <span className="block text-slate-500">Status</span>
+          <strong className="text-sm capitalize text-slate-950">{run.status || "completed"}</strong>
+        </div>
+      </div>
+      {createdAt ? <p className="text-xs text-slate-500">Created {createdAt}</p> : null}
+    </article>
   );
 }
 

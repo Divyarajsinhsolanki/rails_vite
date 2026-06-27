@@ -89,7 +89,7 @@ const WorkspaceOrb = ({
 
   return (
     <section
-      className={`landing-hero-3d group relative isolate overflow-hidden rounded-2xl border border-slate-200/80 bg-white/85 p-5 text-slate-900 shadow-xl shadow-slate-900/10 backdrop-blur-xl sm:p-7 ${className}`}
+      className={`landing-hero-3d group relative isolate overflow-hidden rounded-2xl border border-slate-200/80 bg-white/85 p-4 text-slate-900 shadow-xl shadow-slate-900/10 backdrop-blur-xl sm:p-5 ${className}`}
       onMouseMove={handleMouseMove}
       onMouseLeave={resetTilt}
       style={{ "--tilt-x": `${tilt.y}deg`, "--tilt-y": `${tilt.x}deg` }}
@@ -101,33 +101,33 @@ const WorkspaceOrb = ({
       <div className="absolute inset-x-10 top-6 h-px bg-gradient-to-r from-transparent via-cyan-300/60 to-transparent" />
       <div className="absolute -bottom-24 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-cyan-200/35 blur-3xl" />
 
-      <div className="relative z-10 grid gap-7 lg:grid-cols-[1fr_0.95fr] lg:items-center">
-        <div className="space-y-6">
-          <span className="inline-flex items-center gap-2 rounded-full border border-cyan-200/70 bg-white/80 px-4 py-2 text-xs font-bold uppercase tracking-[0.28em] text-cyan-700 shadow-lg shadow-cyan-100/70">
+      <div className="relative z-10 grid gap-5 lg:grid-cols-[1fr_0.9fr] lg:items-center">
+        <div className="space-y-5">
+          <span className="inline-flex items-center gap-2 rounded-full border border-cyan-200/70 bg-white/80 px-3 py-1.5 text-[0.68rem] font-bold uppercase tracking-[0.2em] text-cyan-700 shadow-lg shadow-cyan-100/70">
             <span className="h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.9)]" />
             {eyebrow}
           </span>
 
           <div>
-            <h1 className="max-w-xl text-4xl font-black leading-[0.95] tracking-tight text-slate-950 sm:text-5xl xl:text-6xl">
+            <h1 className="max-w-xl text-3xl font-extrabold leading-tight text-slate-950 sm:text-4xl xl:text-5xl">
               {title}
             </h1>
-            <p className="mt-5 max-w-xl text-base leading-8 text-slate-600 sm:text-lg">
+            <p className="mt-4 max-w-xl text-sm leading-7 text-slate-600 sm:text-base">
               {description}
             </p>
           </div>
 
           <div className={`grid gap-3 ${normalizedMetrics.length >= 4 ? "sm:grid-cols-2 xl:grid-cols-4" : "sm:grid-cols-3"}`}>
             {normalizedMetrics.map(([value, label]) => (
-              <div key={label} className="rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-inner shadow-cyan-50/80">
-                <p className="text-2xl font-black text-cyan-700">{value}</p>
+              <div key={label} className="rounded-2xl border border-slate-200/80 bg-white/75 p-3 shadow-inner shadow-cyan-50/80">
+                <p className="text-xl font-black text-cyan-700">{value}</p>
                 <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-slate-500">{label}</p>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="landing-orb-stage mx-auto aspect-square w-full max-w-[440px]">
+        <div className="landing-orb-stage mx-auto aspect-square w-full max-w-[360px]">
           <div className="landing-orb-perspective">
             <div className="landing-timeline-ring landing-timeline-ring-one" aria-hidden="true" />
             <div className="landing-timeline-ring landing-timeline-ring-two" aria-hidden="true" />
@@ -168,11 +168,11 @@ const WorkspaceOrb = ({
         </div>
       </div>
 
-      <div className="relative z-10 mt-7 grid gap-4 md:grid-cols-2">
+      <div className="relative z-10 mt-5 grid gap-3 md:grid-cols-2">
         {normalizedFeatures.map((feature, index) => (
           <article
             key={feature.title}
-            className="landing-feature-card min-w-0 rounded-2xl border border-slate-200/80 bg-white/75 p-5 shadow-lg shadow-slate-900/10 backdrop-blur-md"
+            className="landing-feature-card min-w-0 rounded-2xl border border-slate-200/80 bg-white/75 p-4 shadow-lg shadow-slate-900/10 backdrop-blur-md"
             style={{ "--card-delay": `${index * 0.08}s` }}
           >
             <div className="flex min-w-0 items-center justify-between gap-4">
@@ -181,7 +181,7 @@ const WorkspaceOrb = ({
                 {feature.metric}
               </span>
             </div>
-            <p className="mt-4 break-words text-sm leading-6 text-slate-600">{feature.copy}</p>
+            <p className="mt-3 break-words text-sm leading-6 text-slate-600">{feature.copy}</p>
           </article>
         ))}
       </div>

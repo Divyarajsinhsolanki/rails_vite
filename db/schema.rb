@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2027_06_27_000000) do
+ActiveRecord::Schema[8.1].define(version: 2027_06_28_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -234,6 +234,56 @@ ActiveRecord::Schema[8.1].define(version: 2027_06_27_000000) do
     t.index ["user_id", "next_reminder_at"], name: "index_knowledge_bookmarks_on_user_next_reminder"
     t.index ["user_id"], name: "index_knowledge_bookmarks_on_user_id"
     t.index ["workspace_id"], name: "index_knowledge_bookmarks_on_workspace_id"
+  end
+
+  create_table "knowledge_items", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "archived_at"
+    t.text "body"
+    t.string "category", default: "learning", null: false
+    t.string "collection_name"
+    t.datetime "created_at", null: false
+    t.string "item_type", default: "fact", null: false
+    t.bigint "knowledge_prompt_run_id", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "published_at"
+    t.bigint "replaced_by_id"
+    t.string "source_key", null: false
+    t.string "source_name"
+    t.string "source_url"
+    t.text "summary"
+    t.jsonb "tags", default: [], null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.bigint "workspace_id", null: false
+    t.index ["knowledge_prompt_run_id", "position"], name: "idx_knowledge_items_run_position"
+    t.index ["knowledge_prompt_run_id"], name: "index_knowledge_items_on_knowledge_prompt_run_id"
+    t.index ["replaced_by_id"], name: "index_knowledge_items_on_replaced_by_id"
+    t.index ["user_id", "active", "created_at"], name: "idx_knowledge_items_user_active_created"
+    t.index ["user_id", "source_key", "active"], name: "idx_knowledge_items_user_source_active"
+    t.index ["user_id"], name: "index_knowledge_items_on_user_id"
+    t.index ["workspace_id", "category", "active"], name: "idx_knowledge_items_workspace_category_active"
+    t.index ["workspace_id"], name: "index_knowledge_items_on_workspace_id"
+  end
+
+  create_table "knowledge_prompt_runs", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "generation_mode", default: "history", null: false
+    t.bigint "mcp_access_token_id"
+    t.jsonb "metadata", default: {}, null: false
+    t.text "prompt", null: false
+    t.string "source", default: "mcp", null: false
+    t.string "status", default: "completed", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.bigint "workspace_id", null: false
+    t.index ["mcp_access_token_id"], name: "index_knowledge_prompt_runs_on_mcp_access_token_id"
+    t.index ["user_id"], name: "index_knowledge_prompt_runs_on_user_id"
+    t.index ["workspace_id", "generation_mode", "status"], name: "idx_knowledge_prompt_runs_mode_status"
+    t.index ["workspace_id", "user_id", "created_at"], name: "idx_knowledge_prompt_runs_workspace_user_created"
+    t.index ["workspace_id"], name: "index_knowledge_prompt_runs_on_workspace_id"
   end
 
   create_table "learning_checkpoints", force: :cascade do |t|
@@ -904,6 +954,13 @@ ActiveRecord::Schema[8.1].define(version: 2027_06_27_000000) do
   add_foreign_key "items", "workspaces"
   add_foreign_key "knowledge_bookmarks", "users"
   add_foreign_key "knowledge_bookmarks", "workspaces"
+  add_foreign_key "knowledge_items", "knowledge_items", column: "replaced_by_id"
+  add_foreign_key "knowledge_items", "knowledge_prompt_runs"
+  add_foreign_key "knowledge_items", "users"
+  add_foreign_key "knowledge_items", "workspaces"
+  add_foreign_key "knowledge_prompt_runs", "mcp_access_tokens"
+  add_foreign_key "knowledge_prompt_runs", "users"
+  add_foreign_key "knowledge_prompt_runs", "workspaces"
   add_foreign_key "learning_checkpoints", "learning_goals"
   add_foreign_key "learning_checkpoints", "workspaces"
   add_foreign_key "learning_goals", "teams"

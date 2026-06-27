@@ -1,3 +1,4 @@
+require "digest"
 require "open3"
 
 module Mcp
@@ -71,6 +72,8 @@ module Mcp
       when "portfolio_snapshot" then portfolio_snapshot
       when "list_knowledge_bookmarks" then list_knowledge_bookmarks(args)
       when "create_knowledge_bookmark" then create_knowledge_bookmark(args)
+      when "list_knowledge_items" then list_knowledge_items(args)
+      when "create_knowledge_items" then create_knowledge_items(args)
       when "list_conversations" then list_conversations(args)
       when "send_chat_message" then send_chat_message(args)
       when "list_notifications" then list_notifications(args)
@@ -846,15 +849,83 @@ module Mcp
 
     def create_knowledge_bookmark(args)
       ensure_write_allowed!
-      bookmark = user.knowledge_bookmarks.create!(
-        card_type: required_string(args, :card_type),
+      card_type = required_string(args, :card_type)
+      payload = safe_hash(args[:payload])
+      source_id = args[:source_id].presence || knowledge_source_key(card_type: card_type, payload: payload)
+      bookmark = user.knowledge_bookmarks.find_or_initialize_by(card_type: card_type, source_id: source_id)
+      bookmark.assign_attributes(
         collection_name: args[:collection_name],
-        source_id: args[:source_id],
-        payload: args[:payload].to_h,
+        payload: payload,
         reminder_interval_days: args[:reminder_interval_days].presence || 7
       )
+      bookmark.save!
 
       { knowledge_bookmark: Serializer.knowledge_bookmark(bookmark.reload) }
+    rescue ActiveRecord::RecordInvalid => e
+      raise ToolError, validation_message(e.record)
+    end
+
+    def list_knowledge_items(args)
+      scope = user.knowledge_items.includes(:knowledge_prompt_run).latest_first
+      scope = scope.where(active: truthy?(args[:active])) if args.key?(:active)
+      scope = scope.where(category: args[:category]) if args[:category].present?
+      scope = scope.where(collection_name: args[:collection_name]) if args[:collection_name].present?
+      records = scope.limit(bounded_limit(args[:limit], default: 50, max: 100))
+
+      collection_payload(records.map { |item| Serializer.knowledge_item(item) })
+    end
+
+    def create_knowledge_items(args)
+      ensure_write_allowed!
+      mode = (args[:mode].presence || args[:generation_mode].presence || "history").to_s
+      raise ToolError, "mode must be history, replace_topic, or replace_all" unless KnowledgePromptRun::GENERATION_MODES.include?(mode)
+
+      items = Array(args[:items])
+      raise ToolError, "items must include at least one knowledge card" if items.empty?
+      raise ToolError, "items cannot exceed 20 cards per call" if items.length > 20
+
+      created = []
+      archived_count = 0
+      run = nil
+
+      KnowledgePromptRun.transaction do
+        run = user.knowledge_prompt_runs.create!(
+          prompt: required_string(args, :prompt),
+          source: args[:source].presence || "mcp",
+          generation_mode: mode,
+          status: "completed",
+          mcp_access_token: token,
+          metadata: safe_hash(args[:metadata]).merge("collection_name" => args[:collection_name])
+        )
+
+        if mode == "replace_all"
+          scope = user.knowledge_items.active.joins(:knowledge_prompt_run).where(knowledge_prompt_runs: { source: run.source })
+          archived_count += archive_knowledge_scope(scope)
+        end
+
+        items.each_with_index do |raw_item, index|
+          attrs = knowledge_item_attrs(safe_hash(raw_item).with_indifferent_access, index, run)
+          replacement_scope = user.knowledge_items.active.where(source_key: attrs[:source_key]).to_a if mode == "replace_topic"
+
+          item = user.knowledge_items.create!(attrs.merge(knowledge_prompt_run: run))
+          created << item
+          archived_count += archive_knowledge_scope(replacement_scope, replacement: item) if replacement_scope
+        end
+      end
+
+      audit_mcp_action!(
+        "create_knowledge_items",
+        mode,
+        knowledge_prompt_run_id: run.id,
+        item_count: created.length,
+        archived_count: archived_count
+      )
+
+      {
+        knowledge_prompt_run: Serializer.knowledge_prompt_run(run.reload),
+        archived_count: archived_count,
+        knowledge_items: created.map { |item| Serializer.knowledge_item(item.reload) }
+      }
     rescue ActiveRecord::RecordInvalid => e
       raise ToolError, validation_message(e.record)
     end
@@ -1092,6 +1163,8 @@ module Mcp
         "api/issues" => curated.call("list_issues", "create_issue", "update_issue"),
         "api/keka" => curated.call("keka_profile_summary"),
         "api/knowledge_bookmarks" => curated.call("list_knowledge_bookmarks", "create_knowledge_bookmark"),
+        "api/knowledge_items" => curated.call("list_knowledge_items", "create_knowledge_items"),
+        "api/knowledge_prompt_runs" => curated.call("list_knowledge_items", "create_knowledge_items"),
         "api/learning_checkpoints" => curated.call("list_learning_goals"),
         "api/learning_goals" => curated.call("list_learning_goals"),
         "api/message_reactions" => curated.call("list_conversations"),
@@ -1407,6 +1480,47 @@ module Mcp
       attrs = record_attrs(args, %i[user_id note_date content])
       attrs[:note_date] = parse_date(attrs[:note_date], default: nil) if attrs[:note_date].present?
       attrs
+    end
+
+    def knowledge_item_attrs(args, index, run)
+      title = required_string(args, :title)
+      category = args[:category].presence || "learning"
+      source_url = args[:source_url].presence || args[:url]
+      source_key = args[:source_key].presence || KnowledgeItem.source_key_for(category: category, title: title, source_url: source_url)
+
+      {
+        title: title,
+        summary: args[:summary],
+        body: args[:body].presence || args[:content],
+        category: category,
+        item_type: args[:item_type].presence || "fact",
+        collection_name: args[:collection_name].presence || run.metadata["collection_name"],
+        source_name: args[:source_name],
+        source_url: source_url,
+        source_key: source_key,
+        published_at: parse_time(args[:published_at], default: nil),
+        tags: Array(args[:tags]).map(&:to_s).reject(&:blank?),
+        payload: safe_hash(args[:payload]),
+        position: args[:position].presence || index
+      }
+    end
+
+    def archive_knowledge_scope(scope, replacement: nil)
+      count = 0
+      iterator = scope.respond_to?(:find_each) ? scope.method(:find_each) : ->(&block) { Array(scope).each(&block) }
+      iterator.call do |item|
+        item.archive!(replacement: replacement)
+        count += 1
+      end
+      count
+    end
+
+    def knowledge_source_key(card_type:, payload:)
+      Digest::SHA256.hexdigest({ card_type: card_type, payload: payload }.to_json)
+    end
+
+    def safe_hash(value)
+      value.respond_to?(:to_h) ? value.to_h : {}
     end
 
     def work_taxonomy_attrs(args, model)

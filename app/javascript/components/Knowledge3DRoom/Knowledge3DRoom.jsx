@@ -1,55 +1,206 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import styles from "./Knowledge3DRoom.module.css";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  FiSearch,
-  FiX,
   FiBell,
-  FiBook,
-  FiCheckCircle,
   FiBookmark,
+  FiCheckCircle,
   FiChevronDown,
   FiChevronUp,
+  FiFilter,
+  FiMaximize2,
+  FiSearch,
+  FiX,
 } from "react-icons/fi";
+import { loadThree } from "../../lib/threeLoader";
+import styles from "./Knowledge3DRoom.module.css";
+
+const ROOM_WIDTH = 18;
+const ROOM_DEPTH = 14;
+const ROOM_HEIGHT = 8.6;
+const PANEL_SCALE = 0.00685;
+const INTERACTIVE_SELECTOR = "button, a, input, select, textarea, option, label, summary, [data-wall-interactive='true'], [contenteditable='true']";
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
-const INITIAL_ZOOM_OFFSET = -60;
-const DEFAULT_ZOOM_LIMITS = { min: -120, max: 260 };
-const INTERACTIVE_SELECTOR = "button, a, input, select, textarea, option, label, summary, [data-room-interactive]";
 
-const getZoomTranslateZ = (zoomOffset) =>
-  `calc(var(--room-camera-z) ${zoomOffset < 0 ? "-" : "+"} ${Math.abs(zoomOffset).toFixed(1)}px)`;
+const isTypingTarget = (target) =>
+  target instanceof Element &&
+  Boolean(target.closest("input, textarea, select, [contenteditable='true']"));
 
-const isInteractiveTarget = (target) => target instanceof Element && Boolean(target.closest(INTERACTIVE_SELECTOR));
+const isWallInteraction = (target) =>
+  target instanceof Element && Boolean(target.closest(INTERACTIVE_SELECTOR));
 
-const getResponsiveZoomLimits = () => {
-  if (typeof window === "undefined") return DEFAULT_ZOOM_LIMITS;
+const makeRoomTexture = (THREE, base, line, accent = "rgba(56, 189, 248, 0.28)") => {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024;
+  canvas.height = 1024;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
 
-  const width = window.innerWidth;
-  const isMobile = width <= 768;
-  const roomDepth = isMobile
-    ? clamp(width * 1.18, 520, 760)
-    : clamp(width * 0.56, 720, 1040);
-  const cameraZ = isMobile
-    ? clamp(width * 0.38, 180, 310)
-    : clamp(width * 0.25, 260, 460);
-  const nearWallSafety = isMobile ? 190 : 240;
+  const gradient = ctx.createLinearGradient(0, 0, 1024, 1024);
+  gradient.addColorStop(0, base[0]);
+  gradient.addColorStop(1, base[1]);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 1024, 1024);
 
-  return {
-    min: -Math.min(isMobile ? 80 : 145, cameraZ * 0.34),
-    max: Math.max(110, roomDepth - cameraZ - nearWallSafety),
-  };
+  const glow = ctx.createRadialGradient(210, 170, 20, 210, 170, 420);
+  glow.addColorStop(0, "rgba(255,255,255,0.34)");
+  glow.addColorStop(0.42, "rgba(255,255,255,0.1)");
+  glow.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, 1024, 1024);
+
+  const accentGlow = ctx.createRadialGradient(820, 760, 10, 820, 760, 410);
+  accentGlow.addColorStop(0, accent);
+  accentGlow.addColorStop(0.44, "rgba(255,255,255,0.08)");
+  accentGlow.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = accentGlow;
+  ctx.fillRect(0, 0, 1024, 1024);
+
+  ctx.strokeStyle = line;
+  ctx.lineWidth = 1;
+  ctx.globalAlpha = 0.46;
+  for (let i = 0; i <= 1024; i += 72) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(i, 1024);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, i);
+    ctx.lineTo(1024, i);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.34;
+  for (let i = 0; i < 7; i += 1) {
+    const x = 72 + i * 140;
+    ctx.beginPath();
+    ctx.moveTo(x, 886);
+    ctx.lineTo(x + 64, 824);
+    ctx.lineTo(x + 128, 824);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
+  return texture;
 };
 
-const getCurrentWallName = ({ x, y }) => {
-  if (x > 15) return "Ceiling";
-  if (x < -10) return "Floor";
+function WallPanel({ title, eyebrow, subtitle, cards, emptyText, children, renderCard }) {
+  return (
+    <section className={styles.wallPanelInner} data-wall-interactive="true">
+      <header className={styles.wallHeader}>
+        <span>{eyebrow}</span>
+        <h2>{title}</h2>
+        <p>{subtitle}</p>
+      </header>
+      {children || (
+        <div className={styles.cardScroller} data-wall-scroll="true">
+          {cards.length ? cards.map(renderCard) : <div className={styles.emptyWall}>{emptyText}</div>}
+        </div>
+      )}
+    </section>
+  );
+}
 
-  const normalizedY = ((y % 360) + 360) % 360;
-  if (normalizedY >= 45 && normalizedY < 135) return "Right Wall";
-  if (normalizedY >= 225 && normalizedY < 315) return "Left Wall";
-  return "Front Wall";
-};
+function PromptHistoryList({ promptRuns }) {
+  return (
+    <div className={styles.promptList} data-wall-scroll="true">
+      {promptRuns.length ? (
+        promptRuns.slice(0, 12).map((run) => (
+          <article key={run.id} className={styles.promptRecord}>
+            <div>
+              <span>{run.generation_mode || "history"}</span>
+              <strong>{run.prompt}</strong>
+            </div>
+            <small>{run.item_count || 0} cards</small>
+          </article>
+        ))
+      ) : (
+        <div className={styles.emptyWall}>
+          MCP prompt history will appear here after ChatGPT creates knowledge items.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FallbackKnowledgeGrid({
+  filteredCards,
+  categories,
+  activeCategory,
+  setActiveCategory,
+  searchQuery,
+  setSearchQuery,
+  filters,
+  setFilters,
+  renderCard,
+}) {
+  return (
+    <div className={styles.fallbackShell}>
+      <div className={styles.fallbackToolbar}>
+        <div className={styles.searchBox}>
+          <FiSearch />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Search knowledge..."
+          />
+          {searchQuery ? (
+            <button type="button" onClick={() => setSearchQuery("")} aria-label="Clear search">
+              <FiX />
+            </button>
+          ) : null}
+        </div>
+        <div className={styles.fallbackCategories}>
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              onClick={() => setActiveCategory(category.id)}
+              className={activeCategory === category.id ? styles.activePill : ""}
+            >
+              <span>{category.icon}</span>
+              {category.name}
+            </button>
+          ))}
+        </div>
+        <div className={styles.fallbackFilters}>
+          {[
+            { key: "reminderDue", label: "Due", icon: FiBell },
+            { key: "hasNotes", label: "Notes", icon: FiBookmark },
+          ].map((option) => {
+            const Icon = option.icon;
+            return (
+              <button
+                key={option.key}
+                type="button"
+                onClick={() => setFilters((current) => ({ ...current, [option.key]: !current[option.key] }))}
+                className={filters[option.key] ? styles.activePill : ""}
+              >
+                <Icon />
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <main className={styles.fallbackGrid}>
+        {filteredCards.length ? (
+          filteredCards.map((card, index) => renderCard(card, index, true))
+        ) : (
+          <div className={styles.emptyWall}>No knowledge cards match this view.</div>
+        )}
+      </main>
+    </div>
+  );
+}
 
 export default function Knowledge3DRoom({
   filteredCards,
@@ -64,631 +215,740 @@ export default function Knowledge3DRoom({
   savedCount,
   dueCount,
   filteredCardsLength,
+  promptRuns = [],
+  knowledgeItems = [],
+  generatedLoading,
   bookmarkHelpers,
   handleBookmarkToggle,
-  SavedBookmarkFallback,
   SavedBookmarkFooter,
   feedback,
   setFeedback,
 }) {
-  const roomRef = useRef(null);
-  const roomTransformRef = useRef(null);
-  const targetRotationRef = useRef({ x: 0, y: 0 });
-  const currentRotationRef = useRef({ x: 0, y: 0 });
-  const zoomLimitsRef = useRef(DEFAULT_ZOOM_LIMITS);
-  const targetZoomRef = useRef(INITIAL_ZOOM_OFFSET);
-  const currentZoomRef = useRef(INITIAL_ZOOM_OFFSET);
-  const lastDisplayUpdateRef = useRef(0);
-  const dragRef = useRef({ active: false, x: 0, y: 0 });
-  const [rotation, setRotation] = useState({ x: 0, y: 0 }); // Start facing front wall
+  const shellRef = useRef(null);
+  const canvasRef = useRef(null);
+  const [threeModules, setThreeModules] = useState(null);
+  const [threeError, setThreeError] = useState(null);
   const [expandedCardId, setExpandedCardId] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [showCategories, setShowCategories] = useState(false);
 
-  const currentWallName = useMemo(() => getCurrentWallName(rotation), [rotation]);
-
-  // Distribute cards across walls more evenly
-  const cardsByWall = useMemo(() => {
-    const walls = {
-      front: [],
-      left: [],
-      right: [],
-      back: [],
+  const wallHosts = useMemo(() => {
+    if (typeof document === "undefined") return null;
+    return {
+      feed: document.createElement("section"),
+      inbox: document.createElement("section"),
+      review: document.createElement("section"),
+      history: document.createElement("section"),
     };
-
-    const cardsPerWall = Math.ceil(filteredCards.length / 4);
-    
-    filteredCards.forEach((card, index) => {
-      const wallIndex = Math.floor(index / cardsPerWall);
-      const wallKeys = ['front', 'left', 'right', 'back'];
-      
-      if (wallIndex < 4) {
-        walls[wallKeys[wallIndex]].push({ 
-          ...card, 
-          wallPosition: index % cardsPerWall 
-        });
-      }
-    });
-
-    return walls;
-  }, [filteredCards]);
-
-  const rotateRoom = useCallback((delta) => {
-    const target = targetRotationRef.current;
-    target.y += delta.y || 0;
-    target.x = clamp(target.x + (delta.x || 0), -15, 25);
   }, []);
 
-  const clampZoom = useCallback((zoom) => {
-    const { min, max } = zoomLimitsRef.current;
-    return clamp(zoom, min, max);
-  }, []);
+  const feedCards = useMemo(
+    () => filteredCards.filter((card) => !card.roomSection || card.roomSection === "feed"),
+    [filteredCards]
+  );
+  const inboxCards = useMemo(
+    () => filteredCards.filter((card) => card.roomSection === "inbox"),
+    [filteredCards]
+  );
+  const reviewCards = useMemo(
+    () => filteredCards.filter((card) => card.roomSection === "review" || card.bookmark),
+    [filteredCards]
+  );
+  const historyCards = useMemo(
+    () => filteredCards.filter((card) => card.roomSection === "history"),
+    [filteredCards]
+  );
+  const expandedCard = filteredCards.find((card) => card.key === expandedCardId);
 
-  // Animation loop
   useEffect(() => {
+    let cancelled = false;
+
+    Promise.all([
+      loadThree(),
+      import("three/examples/jsm/renderers/CSS3DRenderer.js"),
+    ])
+      .then(([THREE, css3d]) => {
+        if (cancelled) return;
+        setThreeModules({
+          THREE,
+          CSS3DObject: css3d.CSS3DObject,
+          CSS3DRenderer: css3d.CSS3DRenderer,
+        });
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        console.error("Failed to load Three.js knowledge room modules:", error);
+        setThreeError(error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const shell = shellRef.current;
+    const canvas = canvasRef.current;
+    if (!shell || !canvas || !wallHosts || !threeModules || threeError) return undefined;
+
+    const { THREE, CSS3DObject, CSS3DRenderer } = threeModules;
+
+    let renderer;
+    let cssRenderer;
     let frameId;
 
-    const animate = (timestamp = 0) => {
-      const target = targetRotationRef.current;
-      const current = currentRotationRef.current;
-      const currentZoom = currentZoomRef.current;
+    try {
+      wallHosts.feed.className = `${styles.wallPanel} ${styles.feedWall}`;
+      wallHosts.inbox.className = `${styles.wallPanel} ${styles.inboxWall}`;
+      wallHosts.review.className = `${styles.wallPanel} ${styles.reviewWall}`;
+      wallHosts.history.className = `${styles.wallPanel} ${styles.historyWall}`;
 
-      current.x += (target.x - current.x) * 0.2;
-      current.y += (target.y - current.y) * 0.2;
-      currentZoomRef.current += (targetZoomRef.current - currentZoom) * 0.22;
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setClearColor(0x09111f, 1);
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-      if (roomTransformRef.current) {
-        roomTransformRef.current.style.transform = `translate(-50%, -50%) translateZ(${getZoomTranslateZ(currentZoomRef.current)}) rotateX(${current.x}deg) rotateY(${current.y}deg)`;
-      }
+      cssRenderer = new CSS3DRenderer();
+      cssRenderer.domElement.className = styles.cssLayer;
+      shell.appendChild(cssRenderer.domElement);
 
-      if (timestamp - lastDisplayUpdateRef.current > 120) {
-        lastDisplayUpdateRef.current = timestamp;
-        setRotation({ x: current.x, y: current.y });
-      }
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x09111f);
+      scene.fog = new THREE.Fog(0x09111f, 18, 38);
+      const cssScene = new THREE.Scene();
 
-      frameId = requestAnimationFrame(animate);
-    };
+      const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 80);
+      camera.position.set(0, 1.45, 5.4);
+      camera.rotation.order = "YXZ";
 
-    animate();
-    return () => cancelAnimationFrame(frameId);
-  }, []);
+      const ambient = new THREE.AmbientLight(0xffffff, 1.1);
+      scene.add(ambient);
+      const keyLight = new THREE.PointLight(0x7dd3fc, 2.4, 30);
+      keyLight.position.set(0, 4.7, 1.6);
+      scene.add(keyLight);
+      const fillLight = new THREE.PointLight(0xa78bfa, 1.2, 24);
+      fillLight.position.set(-5.5, 2.8, -1.2);
+      scene.add(fillLight);
 
-  useEffect(() => {
-    const syncZoomLimits = () => {
-      zoomLimitsRef.current = getResponsiveZoomLimits();
-      targetZoomRef.current = clampZoom(targetZoomRef.current);
-      currentZoomRef.current = clampZoom(currentZoomRef.current);
-    };
+      const wallMaterial = (base, line, accent) =>
+        new THREE.MeshStandardMaterial({
+          map: makeRoomTexture(THREE, base, line, accent),
+          roughness: 0.86,
+          metalness: 0.02,
+          side: THREE.FrontSide,
+        });
 
-    syncZoomLimits();
-    window.addEventListener("resize", syncZoomLimits);
-    return () => window.removeEventListener("resize", syncZoomLimits);
-  }, [clampZoom]);
+      const addWall = (width, height, position, rotation, material) => {
+        const wall = new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
+        wall.position.set(position[0], position[1], position[2]);
+        wall.rotation.set(rotation[0], rotation[1], rotation[2]);
+        scene.add(wall);
+        return wall;
+      };
 
-  const handlePointerDown = (event) => {
-    if (isInteractiveTarget(event.target)) return;
+      addWall(
+        ROOM_WIDTH,
+        ROOM_HEIGHT,
+        [0, 2.1, -ROOM_DEPTH / 2],
+        [0, 0, 0],
+        wallMaterial(["#e7f4ff", "#bad7ea"], "rgba(37, 99, 235, 0.2)", "rgba(34, 211, 238, 0.34)")
+      );
+      addWall(
+        ROOM_WIDTH,
+        ROOM_HEIGHT,
+        [0, 2.1, ROOM_DEPTH / 2],
+        [0, Math.PI, 0],
+        wallMaterial(["#eff2ff", "#cbd5e1"], "rgba(79, 70, 229, 0.18)", "rgba(129, 140, 248, 0.32)")
+      );
+      addWall(
+        ROOM_DEPTH,
+        ROOM_HEIGHT,
+        [-ROOM_WIDTH / 2, 2.1, 0],
+        [0, Math.PI / 2, 0],
+        wallMaterial(["#e0f7f5", "#b9d7df"], "rgba(13, 148, 136, 0.2)", "rgba(20, 184, 166, 0.32)")
+      );
+      addWall(
+        ROOM_DEPTH,
+        ROOM_HEIGHT,
+        [ROOM_WIDTH / 2, 2.1, 0],
+        [0, -Math.PI / 2, 0],
+        wallMaterial(["#f5f3ff", "#cfd5ea"], "rgba(99, 102, 241, 0.18)", "rgba(168, 85, 247, 0.28)")
+      );
 
-    roomRef.current?.focus({ preventScroll: true });
-    dragRef.current = { active: true, x: event.clientX, y: event.clientY };
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-  };
+      const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(ROOM_WIDTH, ROOM_DEPTH),
+        new THREE.MeshStandardMaterial({
+          map: makeRoomTexture(THREE, ["#9aa9b8", "#64748b"], "rgba(15, 23, 42, 0.2)", "rgba(14, 165, 233, 0.24)"),
+          roughness: 0.82,
+          metalness: 0.04,
+          side: THREE.FrontSide,
+        })
+      );
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.y = -2.05;
+      scene.add(floor);
 
-  const handlePointerMove = (event) => {
-    const drag = dragRef.current;
-    if (!drag.active) return;
+      const ceiling = new THREE.Mesh(
+        new THREE.PlaneGeometry(ROOM_WIDTH, ROOM_DEPTH),
+        new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.82, metalness: 0.01, side: THREE.FrontSide })
+      );
+      ceiling.rotation.x = Math.PI / 2;
+      ceiling.position.y = 6.4;
+      scene.add(ceiling);
 
-    const deltaX = event.clientX - drag.x;
-    const deltaY = event.clientY - drag.y;
-    dragRef.current = { active: true, x: event.clientX, y: event.clientY };
+      const runway = new THREE.Mesh(
+        new THREE.PlaneGeometry(3.6, ROOM_DEPTH - 1.2),
+        new THREE.MeshBasicMaterial({
+          color: 0x38bdf8,
+          transparent: true,
+          opacity: 0.18,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+        })
+      );
+      runway.rotation.x = -Math.PI / 2;
+      runway.position.set(0, -2.035, 0);
+      scene.add(runway);
 
-    rotateRoom({ y: deltaX * -0.38, x: deltaY * 0.24 });
-  };
+      const addBand = (width, height, position, rotation, color, opacity) => {
+        const band = new THREE.Mesh(
+          new THREE.PlaneGeometry(width, height),
+          new THREE.MeshBasicMaterial({ color, transparent: true, opacity, side: THREE.DoubleSide, depthWrite: false })
+        );
+        band.position.set(position[0], position[1], position[2]);
+        band.rotation.set(rotation[0], rotation[1], rotation[2]);
+        scene.add(band);
+      };
 
-  const stopDrag = (event) => {
-    dragRef.current.active = false;
-    event.currentTarget.releasePointerCapture?.(event.pointerId);
-  };
+      addBand(ROOM_WIDTH - 1.2, 0.06, [0, 5.85, -ROOM_DEPTH / 2 + 0.045], [0, 0, 0], 0x22d3ee, 0.34);
+      addBand(ROOM_WIDTH - 1.2, 0.06, [0, 5.85, ROOM_DEPTH / 2 - 0.045], [0, Math.PI, 0], 0x818cf8, 0.28);
+      addBand(ROOM_DEPTH - 1.2, 0.055, [-ROOM_WIDTH / 2 + 0.045, 5.8, 0], [0, Math.PI / 2, 0], 0x14b8a6, 0.3);
+      addBand(ROOM_DEPTH - 1.2, 0.055, [ROOM_WIDTH / 2 - 0.045, 5.8, 0], [0, -Math.PI / 2, 0], 0xa855f7, 0.28);
 
-  const handleWheel = (event) => {
-    event.preventDefault();
-    roomRef.current?.focus({ preventScroll: true });
+      [-5, -2.5, 0, 2.5, 5].forEach((x, index) => {
+        const lightPanel = new THREE.Mesh(
+          new THREE.PlaneGeometry(1.4, 0.42),
+          new THREE.MeshBasicMaterial({
+            color: index % 2 === 0 ? 0xe0f2fe : 0xede9fe,
+            transparent: true,
+            opacity: 0.24,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+          })
+        );
+        lightPanel.rotation.x = Math.PI / 2;
+        lightPanel.position.set(x, 6.36, index % 2 === 0 ? -2 : 2);
+        scene.add(lightPanel);
+      });
 
-    const delta = clamp(event.deltaY * -0.68, -170, 170);
-    targetZoomRef.current = clampZoom(targetZoomRef.current + delta);
-  };
+      const addCssWall = (element, position, rotation, scale = PANEL_SCALE) => {
+        const object = new CSS3DObject(element);
+        object.position.set(position[0], position[1], position[2]);
+        object.rotation.set(rotation[0], rotation[1], rotation[2]);
+        object.scale.setScalar(scale);
+        cssScene.add(object);
+        return object;
+      };
 
-  const handleKeyDown = (event) => {
-    const keyActions = {
-      ArrowLeft: { y: 22 },
-      ArrowRight: { y: -22 },
-      ArrowUp: { x: -9 },
-      ArrowDown: { x: 9 },
-      Escape: () => {
-        setExpandedCardId(null);
-        setShowFilters(false);
-        setShowCategories(false);
-      },
-    };
+      const cssWallObjects = [
+        {
+          object: addCssWall(wallHosts.feed, [0, 2.2, -ROOM_DEPTH / 2 + 0.08], [0, 0, 0]),
+          scale: PANEL_SCALE,
+          mobileScale: 0.0087,
+        },
+        {
+          object: addCssWall(wallHosts.inbox, [-ROOM_WIDTH / 2 + 0.08, 2.15, -0.55], [0, Math.PI / 2, 0], 0.0067),
+          scale: 0.0067,
+          mobileScale: 0.0081,
+        },
+        {
+          object: addCssWall(wallHosts.review, [ROOM_WIDTH / 2 - 0.08, 2.15, -0.55], [0, -Math.PI / 2, 0], 0.0067),
+          scale: 0.0067,
+          mobileScale: 0.0081,
+        },
+        {
+          object: addCssWall(wallHosts.history, [0, 2.2, ROOM_DEPTH / 2 - 0.08], [0, Math.PI, 0], PANEL_SCALE),
+          scale: PANEL_SCALE,
+          mobileScale: 0.0087,
+        },
+      ];
 
-    if (keyActions[event.key]) {
-      event.preventDefault();
-      if (typeof keyActions[event.key] === "function") {
-        keyActions[event.key]();
-      } else {
-        rotateRoom(keyActions[event.key]);
-      }
-    }
-  };
+      const controls = {
+        yaw: 0,
+        pitch: 0,
+        dragging: false,
+        lastX: 0,
+        lastY: 0,
+      };
 
-  // Render card positioned on wall
-  const renderCardOnWall = (card, index, wallPosition) => (
-    <motion.div
-      key={card.key}
-      className={styles.cardItem}
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4, delay: index * 0.02 }}
-    >
-      <motion.div
-        className={styles.cardClickable}
-        onClick={(event) => {
-          if (isInteractiveTarget(event.target)) return;
-          setExpandedCardId(card.key);
-        }}
-        whileHover={{ scale: 1.05 }}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (isInteractiveTarget(e.target)) return;
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            setExpandedCardId(card.key);
+      const setCameraRotation = () => {
+        camera.rotation.y = controls.yaw;
+        camera.rotation.x = controls.pitch;
+      };
+
+      const moveCamera = (distance, strafe = 0) => {
+        const forward = new THREE.Vector3(0, 0, -1).applyEuler(camera.rotation);
+        forward.y = 0;
+        forward.normalize();
+        const right = new THREE.Vector3(1, 0, 0).applyEuler(camera.rotation);
+        right.y = 0;
+        right.normalize();
+        camera.position.addScaledVector(forward, distance);
+        camera.position.addScaledVector(right, strafe);
+        camera.position.x = clamp(camera.position.x, -ROOM_WIDTH / 2 + 1.2, ROOM_WIDTH / 2 - 1.2);
+        camera.position.z = clamp(camera.position.z, -ROOM_DEPTH / 2 + 1.2, ROOM_DEPTH / 2 - 1.2);
+      };
+
+      const resize = () => {
+        const width = shell.clientWidth || window.innerWidth;
+        const height = shell.clientHeight || window.innerHeight;
+        const isMobile = width < 720;
+        renderer.setSize(width, height, false);
+        cssRenderer.setSize(width, height);
+        camera.fov = isMobile ? 46 : 58;
+        camera.aspect = width / Math.max(height, 1);
+        if (isMobile) {
+          camera.position.z = clamp(camera.position.z, -1.6, 3.7);
+          camera.position.y = clamp(camera.position.y, 1.05, 1.7);
+        } else {
+          camera.position.z = clamp(camera.position.z, -ROOM_DEPTH / 2 + 1.2, ROOM_DEPTH / 2 - 1.2);
+          camera.position.y = clamp(camera.position.y, 1.2, 2.1);
+        }
+        cssWallObjects.forEach((entry) => {
+          entry.object.scale.setScalar(isMobile ? entry.mobileScale : entry.scale);
+        });
+        camera.updateProjectionMatrix();
+      };
+
+      const handlePointerDown = (event) => {
+        shell.focus({ preventScroll: true });
+        if (isWallInteraction(event.target)) return;
+        controls.dragging = true;
+        controls.lastX = event.clientX;
+        controls.lastY = event.clientY;
+        shell.setPointerCapture?.(event.pointerId);
+      };
+
+      const handlePointerMove = (event) => {
+        if (!controls.dragging) return;
+        const dx = event.clientX - controls.lastX;
+        const dy = event.clientY - controls.lastY;
+        controls.lastX = event.clientX;
+        controls.lastY = event.clientY;
+        controls.yaw += dx * 0.0035;
+        controls.pitch = clamp(controls.pitch + dy * 0.0028, -0.5, 0.5);
+        setCameraRotation();
+      };
+
+      const handlePointerUp = (event) => {
+        controls.dragging = false;
+        shell.releasePointerCapture?.(event.pointerId);
+      };
+
+      const handleWheel = (event) => {
+        if (event.target instanceof Element && event.target.closest("[data-wall-scroll='true']")) return;
+        event.preventDefault();
+        if (Math.abs(event.deltaX) > 1) moveCamera(0, -event.deltaX * 0.008);
+        if (Math.abs(event.deltaY) > 1) moveCamera(-event.deltaY * 0.008);
+      };
+
+      const handleKeyDown = (event) => {
+        if (isTypingTarget(event.target)) return;
+        const key = event.key.toLowerCase();
+        let handled = true;
+        if (key === "w") moveCamera(0.35);
+        else if (key === "s") moveCamera(-0.35);
+        else if (key === "a") moveCamera(0, -0.35);
+        else if (key === "d") moveCamera(0, 0.35);
+        else if (event.key === "ArrowLeft") controls.yaw += 0.11;
+        else if (event.key === "ArrowRight") controls.yaw -= 0.11;
+        else if (event.key === "ArrowUp") controls.pitch = clamp(controls.pitch + 0.08, -0.5, 0.5);
+        else if (event.key === "ArrowDown") controls.pitch = clamp(controls.pitch - 0.08, -0.5, 0.5);
+        else handled = false;
+
+        if (handled) {
+          event.preventDefault();
+          setCameraRotation();
+        }
+      };
+
+      const animate = () => {
+        frameId = requestAnimationFrame(animate);
+        const elapsed = performance.now() * 0.001;
+        keyLight.intensity = 2.25 + Math.sin(elapsed * 0.82) * 0.12;
+        renderer.render(scene, camera);
+        cssRenderer.render(cssScene, camera);
+      };
+
+      resize();
+      setCameraRotation();
+      animate();
+
+      shell.addEventListener("pointerdown", handlePointerDown);
+      shell.addEventListener("pointermove", handlePointerMove);
+      shell.addEventListener("pointerup", handlePointerUp);
+      shell.addEventListener("pointercancel", handlePointerUp);
+      shell.addEventListener("wheel", handleWheel, { passive: false });
+      window.addEventListener("resize", resize);
+      window.addEventListener("keydown", handleKeyDown);
+
+      return () => {
+        cancelAnimationFrame(frameId);
+        shell.removeEventListener("pointerdown", handlePointerDown);
+        shell.removeEventListener("pointermove", handlePointerMove);
+        shell.removeEventListener("pointerup", handlePointerUp);
+        shell.removeEventListener("pointercancel", handlePointerUp);
+        shell.removeEventListener("wheel", handleWheel);
+        window.removeEventListener("resize", resize);
+        window.removeEventListener("keydown", handleKeyDown);
+        cssRenderer.domElement.remove();
+        const disposedMaterials = new Set();
+        const disposedGeometries = new Set();
+        scene.traverse((object) => {
+          if (object.material) {
+            const materials = Array.isArray(object.material) ? object.material : [object.material];
+            materials.forEach((material) => {
+              if (disposedMaterials.has(material)) return;
+              disposedMaterials.add(material);
+              material.map?.dispose();
+              material.dispose();
+            });
           }
-        }}
-      >
-        <div className="group relative overflow-hidden rounded-[16px] border border-white/70 bg-white/80 shadow-[0_12px_32px_rgb(15_23_42_/_0.1)] backdrop-blur-md transition-all duration-300 hover:shadow-[0_20px_48px_rgb(15_23_42_/_0.2)] h-full flex flex-col">
-          <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-sky-400 via-cyan-300 to-indigo-400 opacity-70 transition-opacity duration-300 group-hover:opacity-100" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.3),transparent_50%)] opacity-60" />
+          if (object.geometry && !disposedGeometries.has(object.geometry)) {
+            disposedGeometries.add(object.geometry);
+            object.geometry.dispose();
+          }
+        });
+        renderer.dispose();
+      };
+    } catch (error) {
+      console.error("Failed to initialize Three.js knowledge room:", error);
+      setThreeError(error);
+      cssRenderer?.domElement?.remove();
+      renderer?.dispose?.();
+      return undefined;
+    }
+  }, [threeModules, threeError, wallHosts]);
 
-          <div className="relative p-3 h-full flex flex-col overflow-hidden">
-            {card.Component ? (
-              <div className="flex-1 overflow-hidden">
-                <card.Component {...card.props} />
-              </div>
+  const renderCard = useCallback(
+    (card, index, fallback = false) => {
+      const CardComponent = card.Component;
+      return (
+        <article key={card.key} className={fallback ? styles.fallbackCard : styles.roomCard} data-wall-interactive="true">
+          <header className={styles.roomCardHeader}>
+            <div>
+              <span>{card.metadata?.category || card.cardType || "knowledge"}</span>
+              <h3>{card.metadata?.title || "Knowledge card"}</h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => setExpandedCardId(card.key)}
+              aria-label={`Expand ${card.metadata?.title || "knowledge card"}`}
+            >
+              <FiMaximize2 />
+            </button>
+          </header>
+          <div className={styles.roomCardBody} data-wall-scroll="true">
+            {CardComponent ? (
+              <CardComponent {...card.props} />
             ) : (
-              <div className="text-xs text-slate-500 flex-1">
-                <p className="font-semibold line-clamp-2">{card.metadata?.title || "Card"}</p>
-                <p className="text-[10px] mt-1 line-clamp-1">{card.metadata?.summary}</p>
+              <div className={styles.emptyWall}>
+                <strong>{card.metadata?.title || "Knowledge card"}</strong>
+                <p>{card.metadata?.summary}</p>
               </div>
             )}
-
-            {/* Quick action buttons */}
-            <div className="mt-auto pt-2 border-t border-white/50 flex gap-1 justify-end">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setExpandedCardId(card.key);
-                }}
-                className="px-2 py-1 rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200 text-[11px] font-semibold transition-all"
-                title="Click to expand"
-              >
-                ⬈
-              </button>
-            </div>
           </div>
-        </div>
-      </motion.div>
-    </motion.div>
+        </article>
+      );
+    },
+    []
   );
 
   const filterOptions = [
     { key: "reminderDue", label: "Due", icon: FiBell },
-    { key: "hasNotes", label: "Notes", icon: FiBook },
+    { key: "hasNotes", label: "Notes", icon: FiBookmark },
   ];
 
+  if (threeError) {
+    return (
+      <FallbackKnowledgeGrid
+        filteredCards={filteredCards}
+        categories={categories}
+        activeCategory={activeCategory}
+        setActiveCategory={setActiveCategory}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        filters={filters}
+        setFilters={setFilters}
+        renderCard={renderCard}
+      />
+    );
+  }
+
   return (
-    <div className={styles.roomShell}>
-      {/* 3D Room Container */}
-      <section
-        ref={roomRef}
-        className={styles.roomSection}
-        tabIndex={0}
-        onKeyDown={handleKeyDown}
-        aria-labelledby="knowledge-room-title"
-      >
-        {/* Floating UI Panels */}
-        <div className={styles.floatingUI}>
-          {/* Top Right - Current Wall & Stats */}
-          <div className={styles.statsPanel}>
-            <div className={styles.wallBadge}>{currentWallName}</div>
-            <div className="space-y-2">
-              <div className="text-xs font-semibold text-slate-600 bg-white/80 px-3 py-2 rounded-xl backdrop-blur-sm">
-                📊 {filteredCardsLength} cards
-              </div>
-              <div className="text-xs font-semibold text-slate-600 bg-white/80 px-3 py-2 rounded-xl backdrop-blur-sm">
-                ⭐ {savedCount} saved
-              </div>
-              <div className="text-xs font-semibold text-slate-600 bg-white/80 px-3 py-2 rounded-xl backdrop-blur-sm">
-                🔔 {dueCount} due
-              </div>
-            </div>
-          </div>
+    <div ref={shellRef} className={styles.roomShell} tabIndex={0}>
+      <canvas ref={canvasRef} className={styles.roomCanvas} aria-label="Three.js knowledge room" />
 
-          {/* Bottom Left - Search Bar */}
-          <div className={styles.searchPanel}>
-            <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Search cards..."
-                className="w-full rounded-[16px] border border-white/70 bg-white/80 py-2.5 pl-10 pr-10 text-xs text-slate-700 outline-none ring-0 transition focus:border-sky-200 focus:bg-white focus:shadow-lg"
-              />
-              {searchQuery ? (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-                >
-                  <FiX className="h-3 w-3" />
-                </button>
-              ) : null}
-            </div>
-          </div>
-
-          {/* Bottom Middle - Filter Toggle */}
-          <div className={styles.filterTogglePanel}>
-            <button
-              type="button"
-              onClick={() => setShowFilters(!showFilters)}
-              className={`inline-flex items-center gap-1.5 rounded-[14px] border px-3 py-2 text-xs font-semibold transition ${
-                showFilters || Object.values(filters).some(Boolean)
-                  ? "border-slate-950 bg-slate-950 text-white shadow-lg"
-                  : "border-white/70 bg-white/72 text-slate-600 hover:bg-white hover:text-slate-950"
-              }`}
-            >
-              <FiBell className="h-3.5 w-3.5" />
-              Filters
-              {showFilters ? <FiChevronUp className="h-3 w-3" /> : <FiChevronDown className="h-3 w-3" />}
-            </button>
-
-            {/* Filter Dropdown */}
-            <AnimatePresence>
-              {showFilters && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute bottom-full mb-2 left-0 bg-white/90 backdrop-blur-xl border border-white/70 rounded-[16px] p-3 shadow-lg space-y-2 min-w-max"
-                >
-                  {filterOptions.map((option) => {
-                    const isActive = filters[option.key];
-                    const IconComponent = option.icon;
-
-                    return (
-                      <button
-                        key={option.key}
-                        type="button"
-                        onClick={() =>
-                          setFilters((prev) => ({
-                            ...prev,
-                            [option.key]: !prev[option.key],
-                          }))
-                        }
-                        className={`flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-xs font-semibold transition w-full ${
-                          isActive
-                            ? "border-slate-950 bg-slate-950 text-white"
-                            : "border-white/70 bg-white/50 text-slate-600 hover:bg-white"
-                        }`}
-                      >
-                        <IconComponent className="h-3.5 w-3.5" />
-                        {option.label}
-                      </button>
-                    );
-                  })}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Bottom Right - Category Toggle */}
-          <div className={styles.categoryTogglePanel}>
-            <button
-              type="button"
-              onClick={() => setShowCategories(!showCategories)}
-              className={`inline-flex items-center gap-1.5 rounded-[14px] border px-3 py-2 text-xs font-semibold transition ${
-                showCategories
-                  ? "border-slate-950 bg-slate-950 text-white shadow-lg"
-                  : "border-white/70 bg-white/72 text-slate-600 hover:bg-white hover:text-slate-950"
-              }`}
-            >
-              📂 Category
-              {showCategories ? <FiChevronUp className="h-3 w-3" /> : <FiChevronDown className="h-3 w-3" />}
-            </button>
-
-            {/* Category Dropdown */}
-            <AnimatePresence>
-              {showCategories && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute bottom-full mb-2 right-0 bg-white/90 backdrop-blur-xl border border-white/70 rounded-[16px] p-2 shadow-lg space-y-1 max-w-xs max-h-64 overflow-y-auto"
-                >
-                  {categories.map((cat) => (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => {
-                        setActiveCategory(cat.id);
-                        setShowCategories(false);
-                      }}
-                      className={`flex items-center gap-2 rounded-[10px] px-3 py-2 text-xs font-semibold transition w-full text-left ${
-                        activeCategory === cat.id
-                          ? "border-slate-950 bg-slate-950 text-white"
-                          : "border-white/70 bg-white/50 text-slate-600 hover:bg-white"
-                      }`}
-                    >
-                      <span className="text-sm">{cat.icon}</span>
-                      <span>{cat.name}</span>
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
+      {!threeModules ? (
+        <div className={styles.loadingLayer}>
+          <div>
+            <span>Loading Three.js room</span>
+            <strong>Preparing knowledge walls...</strong>
           </div>
         </div>
+      ) : null}
 
-        {/* 3D Scene */}
-        <div
-          className={styles.stage}
-          role="application"
-          aria-label="Drag to rotate the 3D knowledge room. Use mouse wheel to zoom in and out."
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={stopDrag}
-          onPointerCancel={stopDrag}
-          onWheel={handleWheel}
+      <div className={styles.topBar} data-wall-interactive="true">
+        <div>
+          <span>Knowledge Room</span>
+          <strong>{filteredCardsLength} visible cards</strong>
+        </div>
+        <div className={styles.statStrip}>
+          <span>{knowledgeItems.filter((item) => item.active).length} MCP active</span>
+          <span>{savedCount} saved</span>
+          <span>{dueCount} due</span>
+        </div>
+      </div>
+
+      <div className={styles.searchPanel} data-wall-interactive="true">
+        <FiSearch className={styles.searchIcon} />
+        <input
+          type="search"
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+          placeholder="Search knowledge..."
+        />
+        {searchQuery ? (
+          <button type="button" onClick={() => setSearchQuery("")} aria-label="Clear search">
+            <FiX />
+          </button>
+        ) : null}
+      </div>
+
+      <div className={styles.filterPanel} data-wall-interactive="true">
+        <button
+          type="button"
+          onClick={() => setShowFilters((current) => !current)}
+          className={Object.values(filters).some(Boolean) ? styles.activeControl : ""}
         >
-          <div className={styles.scene}>
-            <div
-              ref={roomTransformRef}
-              className={styles.room}
-              style={{
-                transform: `translate(-50%, -50%) translateZ(${getZoomTranslateZ(currentZoomRef.current)}) rotateX(${currentRotationRef.current.x}deg) rotateY(${currentRotationRef.current.y}deg)`,
-              }}
+          <FiFilter />
+          Filters
+          {showFilters ? <FiChevronUp /> : <FiChevronDown />}
+        </button>
+        <AnimatePresence>
+          {showFilters ? (
+            <motion.div
+              className={styles.popover}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
             >
-              {/* Front Wall */}
-              <div className={`${styles.wall} ${styles.front}`}>
-                <div className={styles.wallIntroCard}>
-                  <p className={styles.eyebrow}>🎨 Knowledge 3D Room</p>
-                  <h1 id="knowledge-room-title" className={styles.title}>
-                    Immersive Knowledge Experience
-                  </h1>
-                  <p className={styles.subtitle}>
-                    Drag the room, use the mouse wheel to zoom, and click cards to expand.
-                  </p>
-                </div>
-                {cardsByWall.front.map((card, idx) =>
-                  renderCardOnWall(card, idx, "front")
-                )}
-              </div>
+              {filterOptions.map((option) => {
+                const Icon = option.icon;
+                return (
+                  <button
+                    key={option.key}
+                    type="button"
+                    onClick={() => setFilters((current) => ({ ...current, [option.key]: !current[option.key] }))}
+                    className={filters[option.key] ? styles.activePill : ""}
+                  >
+                    <Icon />
+                    {option.label}
+                  </button>
+                );
+              })}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </div>
 
-              {/* Left Wall */}
-              <div className={`${styles.wall} ${styles.left}`}>
-                {cardsByWall.left.map((card, idx) =>
-                  renderCardOnWall(card, idx + 10, "left")
-                )}
-              </div>
-
-              {/* Right Wall */}
-              <div className={`${styles.wall} ${styles.right}`}>
-                {cardsByWall.right.map((card, idx) =>
-                  renderCardOnWall(card, idx + 20, "right")
-                )}
-              </div>
-
-              {/* Back Wall */}
-              <div className={`${styles.wall} ${styles.back}`}>
-                {cardsByWall.back.map((card, idx) =>
-                  renderCardOnWall(card, idx + 30, "back")
-                )}
-              </div>
-
-              {/* Ceiling */}
-              <div className={`${styles.wall} ${styles.ceiling}`} aria-hidden="true" />
-
-              {/* Floor */}
-              <div className={`${styles.wall} ${styles.floor}`} aria-hidden="true" />
-            </div>
-          </div>
-
-          {/* Room Controls */}
-          <div
-            className={styles.controls}
-            aria-label="Rotate room controls"
-            onPointerDown={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              className={styles.controlButton}
-              onClick={() => rotateRoom({ x: -9 })}
-              aria-label="Tilt room up"
+      <div className={styles.categoryPanel} data-wall-interactive="true">
+        <button type="button" onClick={() => setShowCategories((current) => !current)}>
+          Category
+          {showCategories ? <FiChevronUp /> : <FiChevronDown />}
+        </button>
+        <AnimatePresence>
+          {showCategories ? (
+            <motion.div
+              className={styles.categoryMenu}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
             >
-              ↑
-            </button>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className={styles.controlButton}
-                onClick={() => rotateRoom({ y: 22 })}
-                aria-label="Rotate room left"
-              >
-                ←
-              </button>
-              <button
-                type="button"
-                className={styles.controlButton}
-                onClick={() => rotateRoom({ x: 9 })}
-                aria-label="Tilt room down"
-              >
-                ↓
-              </button>
-              <button
-                type="button"
-                className={styles.controlButton}
-                onClick={() => rotateRoom({ y: -22 })}
-                aria-label="Rotate room right"
-              >
-                →
-              </button>
-            </div>
-          </div>
-
-          {/* Expanded Card Modal */}
-          <AnimatePresence>
-            {expandedCardId && (
-              <motion.div
-                className={styles.modalLayer}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setExpandedCardId(null)}
-                onPointerDown={(event) => event.stopPropagation()}
-                onWheel={(event) => event.stopPropagation()}
-              >
-                <motion.div
-                  className={styles.expandedCard}
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.8, opacity: 0 }}
-                  onClick={(e) => e.stopPropagation()}
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveCategory(category.id);
+                    setShowCategories(false);
+                  }}
+                  className={activeCategory === category.id ? styles.activePill : ""}
                 >
-                  {filteredCards.map((card) => {
-                    if (card.key === expandedCardId) {
-                      return (
-                        <div key={card.key} className={styles.expandedCardContent}>
-                          <button
-                            className={styles.closeButton}
-                            onClick={() => setExpandedCardId(null)}
-                            aria-label="Close expanded card"
-                          >
-                            <FiX className="h-5 w-5" />
-                          </button>
-                          <div className={styles.expandedCardBody}>
-                            {card.Component ? (
-                              <card.Component {...card.props} />
-                            ) : (
-                              <div>
-                                <p className="text-lg font-semibold">
-                                  {card.metadata?.title}
-                                </p>
-                                <p className="mt-4 text-sm text-slate-600">
-                                  {card.metadata?.summary}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div className="mt-auto border-t border-slate-200 pt-4 flex gap-3 justify-end">
-                            {card.bookmark ? (
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    bookmarkHelpers.markReviewed(card.bookmark);
-                                  }}
-                                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all"
-                                >
-                                  <FiCheckCircle className="h-4 w-4" />
-                                  Reviewed
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    handleBookmarkToggle({
-                                      cardType: card.bookmark.card_type,
-                                      sourceId: card.bookmark.source_id,
-                                      payload: card.bookmark.payload,
-                                    });
-                                    setExpandedCardId(null);
-                                  }}
-                                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-100 text-rose-600 text-sm font-semibold hover:bg-rose-200 transition-all"
-                                >
-                                  <FiX className="h-4 w-4" />
-                                  Remove
-                                </button>
-                              </>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  handleBookmarkToggle({
-                                    cardType: card.cardType,
-                                    sourceId: card.key,
-                                    collectionName: "",
-                                    payload: card.metadata,
-                                  });
-                                }}
-                                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all"
-                              >
-                                <FiBookmark className="h-4 w-4" />
-                                Save to Collection
-                              </button>
-                            )}
-                          </div>
-                          
-                          {card.bookmark && <SavedBookmarkFooter
-                            bookmark={card.bookmark}
-                            onRemove={() =>
-                              handleBookmarkToggle({
-                                cardType: card.bookmark.card_type,
-                                sourceId: card.bookmark.source_id,
-                                payload: card.bookmark.payload,
-                              })
-                            }
-                            onMarkReviewed={() =>
-                              bookmarkHelpers.markReviewed(card.bookmark)
-                            }
-                          />}
-                        </div>
-                      );
-                    }
-                  })}
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </section>
+                  <span>{category.icon}</span>
+                  {category.name}
+                </button>
+              ))}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </div>
 
-      {/* Feedback Toast */}
+      {isLoading || generatedLoading ? (
+        <div className={styles.syncBadge} data-wall-interactive="true">
+          Syncing knowledge...
+        </div>
+      ) : null}
+
+      {wallHosts?.feed
+        ? createPortal(
+            <WallPanel
+              title="Live Knowledge Feed"
+              eyebrow="Front Wall"
+              subtitle="Daily facts, news, language cards, coding tips, and active generated items."
+              cards={feedCards}
+              emptyText="No live cards match this view."
+              renderCard={renderCard}
+            />,
+            wallHosts.feed
+          )
+        : null}
+
+      {wallHosts?.inbox
+        ? createPortal(
+            <WallPanel
+              title="ChatGPT MCP Inbox"
+              eyebrow="Left Wall"
+              subtitle="Generated facts, news, sources, and research cards created through MCP."
+              cards={inboxCards}
+              emptyText="Ask ChatGPT to create knowledge items through MCP and they will appear here."
+              renderCard={renderCard}
+            />,
+            wallHosts.inbox
+          )
+        : null}
+
+      {wallHosts?.review
+        ? createPortal(
+            <WallPanel
+              title="Saved And Due Reviews"
+              eyebrow="Right Wall"
+              subtitle="Bookmarked cards remain the review and reminder layer."
+              cards={reviewCards}
+              emptyText="Saved and due review cards will appear on this wall."
+              renderCard={renderCard}
+            />,
+            wallHosts.review
+          )
+        : null}
+
+      {wallHosts?.history
+        ? createPortal(
+            <WallPanel
+              title="Prompt History"
+              eyebrow="Back Wall"
+              subtitle="Each ChatGPT MCP request creates a run so new cards can stay in history."
+              cards={historyCards}
+              emptyText="No prompt runs match this view."
+              renderCard={renderCard}
+            >
+              {historyCards.length ? (
+                <div className={styles.cardScroller} data-wall-scroll="true">
+                  {historyCards.map(renderCard)}
+                </div>
+              ) : (
+                <PromptHistoryList promptRuns={promptRuns} />
+              )}
+            </WallPanel>,
+            wallHosts.history
+          )
+        : null}
+
+      <AnimatePresence>
+        {expandedCard ? (
+          <motion.div
+            className={styles.modalLayer}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setExpandedCardId(null)}
+            data-wall-interactive="true"
+          >
+            <motion.div
+              className={styles.expandedCard}
+              initial={{ scale: 0.96, opacity: 0, y: 18 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.96, opacity: 0, y: 18 }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                className={styles.closeButton}
+                type="button"
+                onClick={() => setExpandedCardId(null)}
+                aria-label="Close expanded card"
+              >
+                <FiX />
+              </button>
+              <div className={styles.expandedCardBody} data-wall-scroll="true">
+                {expandedCard.Component ? (
+                  <expandedCard.Component {...expandedCard.props} />
+                ) : (
+                  <div className={styles.emptyWall}>{expandedCard.metadata?.summary}</div>
+                )}
+              </div>
+              {expandedCard.bookmark ? (
+                <SavedBookmarkFooter
+                  bookmark={expandedCard.bookmark}
+                  onRemove={() => {
+                    handleBookmarkToggle({
+                      cardType: expandedCard.bookmark.card_type,
+                      sourceId: expandedCard.bookmark.source_id,
+                      payload: expandedCard.bookmark.payload,
+                    });
+                    setExpandedCardId(null);
+                  }}
+                  onMarkReviewed={() => bookmarkHelpers.markReviewed(expandedCard.bookmark)}
+                />
+              ) : null}
+              {!expandedCard.bookmark && !expandedCard.generatedItem && !expandedCard.promptRun ? (
+                <div className={styles.expandedActions}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleBookmarkToggle({
+                        cardType: expandedCard.cardType,
+                        sourceId: expandedCard.key,
+                        collectionName: "",
+                        payload: expandedCard.metadata,
+                      })
+                    }
+                  >
+                    <FiBookmark />
+                    Save to Collection
+                  </button>
+                </div>
+              ) : null}
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
       <AnimatePresence>
         {feedback ? (
           <motion.div
             initial={{ opacity: 0, y: -20, x: "-50%" }}
             animate={{ opacity: 1, y: 0, x: "-50%" }}
             exit={{ opacity: 0, y: -20, x: "-50%" }}
-            className="fixed left-1/2 top-6 z-50"
+            className={styles.feedbackToast}
+            data-wall-interactive="true"
           >
-            <div
-              className={`flex items-center gap-3 rounded-[20px] border px-5 py-3 shadow-lg backdrop-blur-xl ${
-                feedback.type === "error"
-                  ? "border-rose-200 bg-rose-500/90 text-white"
-                  : feedback.type === "info"
-                    ? "border-sky-200 bg-sky-500/90 text-white"
-                    : "border-emerald-200 bg-emerald-500/90 text-white"
-              }`}
-            >
-              {feedback.type === "success" && <FiCheckCircle className="h-5 w-5" />}
-              {feedback.type === "error" && <FiX className="h-5 w-5" />}
-              {feedback.type === "info" && <FiBookmark className="h-5 w-5" />}
-              <span className="font-medium text-sm">{feedback.message}</span>
-              <button
-                className="ml-2 rounded-lg p-1 hover:bg-white/20"
-                onClick={() => setFeedback(null)}
-              >
-                <FiX className="h-4 w-4" />
+            <div className={feedback.type === "error" ? styles.toastError : feedback.type === "info" ? styles.toastInfo : styles.toastSuccess}>
+              {feedback.type === "success" && <FiCheckCircle />}
+              {feedback.type === "error" && <FiX />}
+              {feedback.type === "info" && <FiBookmark />}
+              <span>{feedback.message}</span>
+              <button type="button" onClick={() => setFeedback(null)} aria-label="Dismiss message">
+                <FiX />
               </button>
             </div>
           </motion.div>

@@ -45,7 +45,7 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.22),transparent_32%),radial-gradient(circle_at_80%_20%,rgba(168,85,247,0.18),transparent_28%),linear-gradient(135deg,#020617_0%,#0f172a_48%,#111827_100%)] text-slate-900">
+    <div className="relative min-h-dvh overflow-x-hidden bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.22),transparent_32%),radial-gradient(circle_at_80%_20%,rgba(168,85,247,0.18),transparent_28%),linear-gradient(135deg,#020617_0%,#0f172a_48%,#111827_100%)] text-slate-900">
       <Toaster position="top-right" />
       {loading && <SpinnerOverlay />}
       <div className="pointer-events-none absolute inset-0">
@@ -61,9 +61,9 @@ const ForgotPassword = () => {
           }}
         />
       </div>
-      <div className="relative z-10 min-h-screen px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 py-8 lg:flex-row lg:items-center lg:gap-10 xl:gap-14">
-          <div className="lg:w-[58%]">
+      <div className="relative z-10 flex min-h-dvh items-center px-4 py-4 sm:px-6 lg:px-8">
+        <div className="mx-auto grid w-full max-w-6xl items-center gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.8fr)] lg:gap-8 xl:gap-10">
+          <div className="auth-orb-panel hidden lg:block">
             <WorkspaceOrb
               eyebrow="Secure Recovery"
               title="Reset access without breaking your flow."
@@ -73,16 +73,16 @@ const ForgotPassword = () => {
             />
           </div>
 
-          <div className="lg:w-[42%]">
-            <div className="w-full max-w-md rounded-3xl border border-white/60 bg-white/95 p-8 shadow-2xl shadow-slate-900/10 transition-transform duration-200 hover:-translate-y-1">
+          <div className="flex justify-center lg:justify-end">
+            <div className="w-full max-w-sm rounded-2xl border border-white/60 bg-white/95 p-6 shadow-2xl shadow-slate-900/10 transition-transform duration-200 hover:-translate-y-1 sm:p-7">
               <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
                 🔒 Security first
               </p>
-              <h2 className="mb-2 text-center text-3xl font-bold text-slate-900">Forgot password?</h2>
-              <p className="mb-8 text-center text-sm text-slate-600">
+              <h2 className="mb-2 text-center text-2xl font-bold text-slate-900">Forgot password?</h2>
+              <p className="mb-6 text-center text-sm text-slate-600">
                 Enter the email you use to sign in. We will send a secure link to reset your password.
               </p>
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="mb-1 block text-sm font-semibold text-slate-700 required-label" htmlFor="email">
                     Email address
@@ -95,12 +95,12 @@ const ForgotPassword = () => {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-slate-800 placeholder-slate-400 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                    className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-slate-800 placeholder-slate-400 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
                 <button
                   type="submit"
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 text-base font-semibold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 font-semibold text-white shadow-lg transition hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 >
                   Send reset email
                 </button>
@@ -112,7 +112,7 @@ const ForgotPassword = () => {
                 </div>
               )}
 
-              <p className="mt-6 text-center text-sm text-slate-600">
+              <p className="mt-5 text-center text-sm text-slate-600">
                 Remembered it?{" "}
                 <button
                   type="button"
