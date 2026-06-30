@@ -60,11 +60,19 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     assert_includes tool_names, "app_snapshot"
     assert_includes tool_names, "list_projects"
     assert_includes tool_names, "repo_read_file"
+    assert_includes tool_names, "repo_write_file"
+    assert_includes tool_names, "repo_diff"
+    assert_includes tool_names, "repo_commit"
+    assert_includes tool_names, "run_tests"
+    assert_includes tool_names, "db_query"
+    assert_includes tool_names, "rails_runner"
+    assert_includes tool_names, "rails_console"
     assert_includes tool_names, "mcp_capability_matrix"
     assert_includes tool_names, "workspace_autopilot_plan"
     assert_includes tool_names, "repo_patch_preview"
     assert_includes tool_names, "create_knowledge_items"
     assert_includes tool_names, "list_knowledge_items"
+    assert_includes tool_names, "export_sprint_tasks"
   end
 
   test "tool descriptors include apps sdk metadata and output schema" do
@@ -76,6 +84,7 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     repo_patch_preview = tools.find { |tool| tool.fetch("name") == "repo_patch_preview" }
 
     assert_equal "object", autopilot_tool.dig("outputSchema", "type")
+    assert_equal [{ "type" => "noauth" }], autopilot_tool.fetch("securitySchemes")
     assert_equal "ui://widget/workspace_autopilot.html", autopilot_tool.dig("_meta", "openai/outputTemplate")
     assert_equal autopilot_tool.fetch("securitySchemes"), autopilot_tool.dig("_meta", "securitySchemes")
     assert_equal true, repo_patch_preview.dig("annotations", "readOnlyHint")
@@ -149,6 +158,57 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     payload = JSON.parse(response.body).dig("result")
     assert_equal true, payload.fetch("isError")
     assert_match(/does not allow app writes/, payload.dig("structuredContent", "error"))
+  end
+
+  test "write-scoped token can export sprint tasks to the configured sheet" do
+    @project.update!(sheet_id: "sheet-test-123")
+    sprint = @project.sprints.create!(
+      name: "J1",
+      start_date: Date.new(2026, 6, 1),
+      end_date: Date.new(2026, 6, 5)
+    )
+    task = @project.tasks.create!(
+      task_id: "MYFR-2917",
+      type: "Code",
+      title: "Export through MCP",
+      sprint: sprint,
+      developer: @user,
+      created_by: @user.id
+    )
+
+    initializers = []
+    exports = []
+    fake_service = Object.new
+    fake_service.define_singleton_method(:export_tasks) do |tasks, title: nil|
+      exports << { tasks: tasks.to_a, title: title }
+    end
+
+    factory = lambda do |sheet_name, spreadsheet_id|
+      initializers << { sheet_name: sheet_name, spreadsheet_id: spreadsheet_id }
+      fake_service
+    end
+
+    original_new = TaskSheetService.method(:new)
+    TaskSheetService.define_singleton_method(:new, factory)
+
+    begin
+      assert_difference -> { McpAuditLog.unscoped.where(tool_name: "export_sprint_tasks").count }, 1 do
+        post_rpc("tools/call", { name: "export_sprint_tasks", arguments: { sprint_id: sprint.id } })
+      end
+    ensure
+      TaskSheetService.define_singleton_method(:new, original_new)
+    end
+
+    assert_response :success
+    result = JSON.parse(response.body).dig("result")
+    assert_equal false, result.fetch("isError")
+    payload = result.fetch("structuredContent")
+    assert_equal true, payload.fetch("exported")
+    assert_equal "J1", payload.fetch("sheet_name")
+    assert_equal 1, payload.fetch("task_count")
+    assert_equal [{ sheet_name: "J1", spreadsheet_id: "sheet-test-123" }], initializers
+    assert_equal [task.id], exports.first.fetch(:tasks).map(&:id)
+    assert_match(/J1 : 06\/01\/2026 - 06\/05\/2026/, exports.first.fetch(:title))
   end
 
   test "read-only token cannot create generated knowledge items" do
@@ -352,14 +412,60 @@ class McpControllerTest < ActionDispatch::IntegrationTest
       scopes: %w[app:read app:write repo:read repo:write]
     )
 
-    post "/mcp",
-      params: rpc_payload("tools/call", { name: "repo_apply_patch", arguments: { patch: "diff --git a/README.md b/README.md\n" } }).to_json,
-      headers: json_headers.merge("Authorization" => "Bearer #{raw_repo_token}")
+    with_env("MCP_ENABLE_CODE_TOOLS" => "false") do
+      post "/mcp",
+        params: rpc_payload("tools/call", { name: "repo_apply_patch", arguments: { patch: "diff --git a/README.md b/README.md\n" } }).to_json,
+        headers: json_headers.merge("Authorization" => "Bearer #{raw_repo_token}")
+    end
 
     assert_response :success
     payload = JSON.parse(response.body).dig("result")
     assert_equal true, payload.fetch("isError")
-    assert_match(/Repository write tools are disabled/, payload.dig("structuredContent", "error"))
+    assert_match(/Repository code tools are disabled/, payload.dig("structuredContent", "error"))
+  end
+
+  test "db query requires db scope and env flag then runs read only sql" do
+    post_rpc("tools/call", { name: "db_query", arguments: { sql: "SELECT 1 AS one" } })
+
+    assert_response :success
+    blocked = JSON.parse(response.body).dig("result")
+    assert_equal true, blocked.fetch("isError")
+    assert_match(/does not allow database reads/, blocked.dig("structuredContent", "error"))
+
+    _record, raw_db_token = McpAccessToken.issue!(
+      user: @user,
+      name: "db-read",
+      scopes: %w[app:read repo:read db:read]
+    )
+
+    with_env("MCP_ENABLE_DB_TOOLS" => "true") do
+      post "/mcp",
+        params: rpc_payload("tools/call", { name: "db_query", arguments: { sql: "SELECT 1 AS one" } }).to_json,
+        headers: json_headers.merge("Authorization" => "Bearer #{raw_db_token}")
+    end
+
+    assert_response :success
+    payload = JSON.parse(response.body).dig("result", "structuredContent")
+    assert_equal ["one"], payload.fetch("columns")
+    assert_equal [{ "one" => 1 }], payload.fetch("rows")
+  end
+
+  test "rails runtime tools require system admin scope and env flag" do
+    post_rpc(
+      "tools/call",
+      {
+        name: "rails_runner",
+        arguments: {
+          code: "puts User.count",
+          confirmation: "RUN_RAILS_CODE"
+        }
+      }
+    )
+
+    assert_response :success
+    payload = JSON.parse(response.body).dig("result")
+    assert_equal true, payload.fetch("isError")
+    assert_match(/does not allow Rails runtime execution/, payload.dig("structuredContent", "error"))
   end
 
   test "repo patch preview validates without applying" do
@@ -380,6 +486,52 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     assert_equal true, result.fetch("valid")
     assert_includes result.fetch("changed_paths"), "mcp_preview.txt"
     assert_not File.exist?(Rails.root.join("mcp_preview.txt"))
+  end
+
+  test "repo write file creates and overwrites with sha guard" do
+    _record, raw_repo_token = McpAccessToken.issue!(
+      user: @user,
+      name: "repo-write-file",
+      scopes: %w[app:read app:write repo:read repo:write]
+    )
+    path = "tmp_mcp_write_test.txt"
+    full_path = Rails.root.join(path)
+    FileUtils.rm_f(full_path)
+
+    begin
+      with_env("MCP_ENABLE_CODE_TOOLS" => "true") do
+        post "/mcp",
+          params: rpc_payload("tools/call", { name: "repo_write_file", arguments: { path: path, content: "first\n" } }).to_json,
+          headers: json_headers.merge("Authorization" => "Bearer #{raw_repo_token}")
+      end
+
+      assert_response :success
+      created = JSON.parse(response.body).dig("result", "structuredContent")
+      assert_equal true, created.fetch("written")
+      assert_equal true, created.fetch("created")
+      assert_equal "first\n", File.read(full_path)
+
+      post "/mcp",
+        params: rpc_payload("tools/call", { name: "repo_read_file", arguments: { path: path } }).to_json,
+        headers: json_headers.merge("Authorization" => "Bearer #{raw_repo_token}")
+
+      assert_response :success
+      sha = JSON.parse(response.body).dig("result", "structuredContent", "sha256")
+
+      with_env("MCP_ENABLE_CODE_TOOLS" => "true") do
+        post "/mcp",
+          params: rpc_payload("tools/call", { name: "repo_write_file", arguments: { path: path, content: "second\n", expected_sha256: sha } }).to_json,
+          headers: json_headers.merge("Authorization" => "Bearer #{raw_repo_token}")
+      end
+
+      assert_response :success
+      updated = JSON.parse(response.body).dig("result", "structuredContent")
+      assert_equal true, updated.fetch("written")
+      assert_equal false, updated.fetch("created")
+      assert_equal "second\n", File.read(full_path)
+    ensure
+      FileUtils.rm_f(full_path)
+    end
   end
 
   test "workspace autopilot apply writes an audit log for approved actions" do

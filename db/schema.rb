@@ -150,6 +150,18 @@ ActiveRecord::Schema[8.1].define(version: 2027_06_28_000000) do
     t.index ["workspace_id"], name: "index_event_reminders_on_workspace_id"
   end
 
+  create_table "friendships", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "followed_id", null: false
+    t.bigint "follower_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
+    t.index ["followed_id"], name: "index_friendships_on_followed_id"
+    t.index ["follower_id", "followed_id"], name: "index_friendships_on_follower_id_and_followed_id", unique: true
+    t.index ["follower_id"], name: "index_friendships_on_follower_id"
+    t.index ["workspace_id"], name: "index_friendships_on_workspace_id"
+  end
+
   create_table "issues", force: :cascade do |t|
     t.text "actual_result"
     t.string "assignee"
@@ -719,6 +731,7 @@ ActiveRecord::Schema[8.1].define(version: 2027_06_28_000000) do
     t.index ["developer_id"], name: "index_tasks_on_developer_id"
     t.index ["project_id"], name: "index_tasks_on_project_id"
     t.index ["sprint_id"], name: "index_tasks_on_sprint_id"
+    t.index ["type"], name: "index_tasks_on_type"
     t.index ["workspace_id", "assigned_to_user", "end_date"], name: "index_tasks_on_workspace_assignee_end_date"
     t.index ["workspace_id", "end_date"], name: "index_tasks_on_workspace_id_and_end_date"
     t.index ["workspace_id", "project_id", "end_date"], name: "index_tasks_on_workspace_project_end_date"
@@ -750,6 +763,29 @@ ActiveRecord::Schema[8.1].define(version: 2027_06_28_000000) do
     t.index ["owner_id"], name: "index_teams_on_owner_id"
     t.index ["workspace_id", "name"], name: "index_teams_on_workspace_id_and_name", unique: true
     t.index ["workspace_id"], name: "index_teams_on_workspace_id"
+  end
+
+  create_table "topic_follows", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "topic_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.bigint "workspace_id", null: false
+    t.index ["topic_id"], name: "index_topic_follows_on_topic_id"
+    t.index ["user_id", "topic_id"], name: "index_topic_follows_on_user_id_and_topic_id", unique: true
+    t.index ["user_id"], name: "index_topic_follows_on_user_id"
+    t.index ["workspace_id"], name: "index_topic_follows_on_workspace_id"
+  end
+
+  create_table "topics", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name", null: false
+    t.integer "topic_follows_count", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
+    t.index ["workspace_id", "name"], name: "index_topics_on_workspace_id_and_name", unique: true
+    t.index ["workspace_id"], name: "index_topics_on_workspace_id"
   end
 
   create_table "user_roles", force: :cascade do |t|
@@ -929,6 +965,8 @@ ActiveRecord::Schema[8.1].define(version: 2027_06_28_000000) do
     t.index ["slug"], name: "index_workspaces_on_slug", unique: true
   end
 
+  add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "calendar_events", "projects"
   add_foreign_key "calendar_events", "sprints"
   add_foreign_key "calendar_events", "tasks"
@@ -946,6 +984,9 @@ ActiveRecord::Schema[8.1].define(version: 2027_06_28_000000) do
   add_foreign_key "departments", "workspaces"
   add_foreign_key "event_reminders", "calendar_events"
   add_foreign_key "event_reminders", "workspaces"
+  add_foreign_key "friendships", "users", column: "followed_id"
+  add_foreign_key "friendships", "users", column: "follower_id"
+  add_foreign_key "friendships", "workspaces"
   add_foreign_key "issues", "projects"
   add_foreign_key "issues", "users", column: "assignee_user_id"
   add_foreign_key "issues", "users", column: "reporter_id"
@@ -1030,6 +1071,10 @@ ActiveRecord::Schema[8.1].define(version: 2027_06_28_000000) do
   add_foreign_key "team_users", "workspaces"
   add_foreign_key "teams", "users", column: "owner_id"
   add_foreign_key "teams", "workspaces"
+  add_foreign_key "topic_follows", "topics"
+  add_foreign_key "topic_follows", "users"
+  add_foreign_key "topic_follows", "workspaces"
+  add_foreign_key "topics", "workspaces"
   add_foreign_key "user_roles", "roles"
   add_foreign_key "user_roles", "users"
   add_foreign_key "user_roles", "workspaces"

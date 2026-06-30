@@ -45,6 +45,7 @@ module Mcp
       when "list_sprints" then list_sprints(args)
       when "create_sprint" then create_sprint(args)
       when "update_sprint" then update_sprint(args)
+      when "export_sprint_tasks" then export_sprint_tasks(args)
       when "list_tasks" then list_tasks(args)
       when "create_task" then create_task(args)
       when "update_task" then update_task(args)
@@ -83,10 +84,17 @@ module Mcp
       when "list_pdf_operations" then list_pdf_operations(args)
       when "keka_profile_summary" then keka_profile_summary
       when "repo_status" then RepoTools.status
+      when "repo_diff" then repo_diff(args)
       when "repo_search" then RepoTools.search(args)
       when "repo_read_file" then RepoTools.read_file(args)
+      when "repo_write_file" then repo_write_file(args)
+      when "repo_commit" then repo_commit(args)
       when "repo_patch_preview" then RepoTools.preview_patch(args)
       when "repo_apply_patch" then repo_apply_patch(args)
+      when "run_tests" then run_tests(args)
+      when "db_query" then db_query(args)
+      when "rails_runner" then rails_runner(args)
+      when "rails_console" then rails_console(args)
       else
         raise ToolError, "Unknown tool: #{name}"
       end
@@ -528,6 +536,38 @@ module Mcp
       { sprint: Serializer.sprint(sprint.reload) }
     rescue ActiveRecord::RecordInvalid => e
       raise ToolError, validation_message(e.record)
+    end
+
+    def export_sprint_tasks(args)
+      ensure_write_allowed!
+      sprint = Sprint.includes(:project).find(required_id(args, :sprint_id))
+      tasks = Task.where(sprint_id: sprint.id).order(:developer_id, :start_date)
+
+      service = TaskSheetService.new(sprint.name, sprint.project.sheet_id)
+      service.export_tasks(tasks, title: sprint_sheet_title(sprint))
+      audit = audit_mcp_action!(
+        "export_sprint_tasks",
+        "export_tasks",
+        sprint_id: sprint.id,
+        project_id: sprint.project_id,
+        task_count: tasks.size,
+        sheet_name: sprint.name
+      )
+
+      {
+        exported: true,
+        sprint: Serializer.sprint(sprint.reload),
+        project_id: sprint.project_id,
+        sheet_name: sprint.name,
+        task_count: tasks.size,
+        audit_log: Serializer.mcp_audit_log(audit)
+      }
+    rescue ToolError
+      raise
+    rescue ActiveRecord::RecordNotFound
+      raise ToolError, "Sprint #{args[:sprint_id]} was not found in this workspace."
+    rescue StandardError => e
+      raise ToolError, "Sprint task export failed: #{e.message}"
     end
 
     def list_tasks(args)
@@ -1039,6 +1079,42 @@ module Mcp
       RepoTools.apply_patch(args)
     end
 
+    def repo_write_file(args)
+      ensure_repo_write_allowed!
+      RepoTools.write_file(args)
+    end
+
+    def repo_diff(args)
+      ensure_repo_read_allowed!
+      RepoTools.diff(args)
+    end
+
+    def repo_commit(args)
+      ensure_repo_write_allowed!
+      RepoTools.commit(args)
+    end
+
+    def run_tests(args)
+      ensure_repo_read_allowed!
+      ensure_code_tools_enabled!
+      RepoTools.run_tests(args)
+    end
+
+    def db_query(args)
+      ensure_db_query_allowed!
+      RuntimeTools.db_query(args)
+    end
+
+    def rails_runner(args)
+      ensure_rails_runtime_allowed!
+      RuntimeTools.rails_runner(args)
+    end
+
+    def rails_console(args)
+      ensure_rails_runtime_allowed!
+      RuntimeTools.rails_console(args)
+    end
+
     def search_projects(pattern)
       Project.where("name ILIKE ? OR description ILIKE ?", pattern, pattern)
         .order(updated_at: :desc)
@@ -1184,7 +1260,7 @@ module Mcp
         "api/sheets" => excluded.call("Sheet API can expose external integration details; use project and issue tools instead."),
         "api/skills" => curated.call("list_skills"),
         "api/skill_endorsements" => curated.call("list_skills"),
-        "api/sprints" => curated.call("list_sprints", "create_sprint", "update_sprint"),
+        "api/sprints" => curated.call("list_sprints", "create_sprint", "update_sprint", "export_sprint_tasks"),
         "api/task_logs" => curated.call("list_task_logs", "create_task_log"),
         "api/tasks" => curated.call("list_tasks", "create_task", "update_task"),
         "api/team_users" => curated.call("list_teams"),
@@ -1429,6 +1505,13 @@ module Mcp
       %i[name start_date end_date status progress]
     end
 
+    def sprint_sheet_title(sprint)
+      return sprint.name if sprint.start_date.blank? || sprint.end_date.blank?
+
+      total_days = (sprint.end_date - sprint.start_date).to_i + 1
+      "#{sprint.name} : #{sprint.start_date.strftime('%m/%d/%Y')} - #{sprint.end_date.strftime('%m/%d/%Y')}  (#{total_days} Days)"
+    end
+
     def task_attrs(args)
       record_attrs(
         args,
@@ -1614,8 +1697,31 @@ module Mcp
     end
 
     def ensure_repo_write_allowed!
+      ensure_repo_read_allowed!
       raise ToolError, "This MCP token does not allow repository writes." unless token.allows?("repo:write")
-      raise ToolError, "Repository write tools are disabled. Set MCP_ENABLE_CODE_TOOLS=true locally to enable them." unless RepoTools.write_enabled?
+      ensure_code_tools_enabled!
+    end
+
+    def ensure_repo_read_allowed!
+      raise ToolError, "This MCP token does not allow repository reads." unless token.allows?("repo:read")
+    end
+
+    def ensure_code_tools_enabled!
+      raise ToolError, "Repository code tools are disabled. Set MCP_ENABLE_CODE_TOOLS=true locally to enable them." unless RepoTools.write_enabled?
+    end
+
+    def ensure_db_query_allowed!
+      raise ToolError, "This MCP token does not allow database reads." unless token.allows?("db:read")
+      unless ActiveModel::Type::Boolean.new.cast(ENV["MCP_ENABLE_DB_TOOLS"])
+        raise ToolError, "Database MCP tools are disabled. Set MCP_ENABLE_DB_TOOLS=true locally to enable read-only SQL."
+      end
+    end
+
+    def ensure_rails_runtime_allowed!
+      raise ToolError, "This MCP token does not allow Rails runtime execution." unless token.allows?("system:admin")
+      unless ActiveModel::Type::Boolean.new.cast(ENV["MCP_ENABLE_RAILS_RUNTIME_TOOLS"])
+        raise ToolError, "Rails runtime MCP tools are disabled. Set MCP_ENABLE_RAILS_RUNTIME_TOOLS=true locally to enable them."
+      end
     end
 
     def assert_workspace_record!(model, id)

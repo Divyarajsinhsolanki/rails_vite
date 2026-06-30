@@ -139,7 +139,27 @@ Run locally:
 MCP_ENABLE_CODE_TOOLS=true bin/dev
 ```
 
-ChatGPT should call `repo_patch_preview` before `repo_apply_patch`. The server blocks secret paths such as `.env`, Rails credentials, private keys, logs, storage, build output, and dependency folders.
+ChatGPT should call `repo_patch_preview` before `repo_apply_patch`. If ChatGPT cannot produce a valid unified diff, it can use `repo_read_file` followed by `repo_write_file` with the returned `sha256` as `expected_sha256`. The server blocks secret paths such as `.env`, Rails credentials, private keys, logs, storage, build output, and dependency folders.
+
+Additional local code tools:
+
+- `repo_diff`: requires `repo:read`.
+- `run_tests`: requires `repo:read` and `MCP_ENABLE_CODE_TOOLS=true`.
+- `repo_commit`: requires `repo:write` and `MCP_ENABLE_CODE_TOOLS=true`.
+- `db_query`: read-only SQL only; requires token scope `db:read` and `MCP_ENABLE_DB_TOOLS=true`.
+- `rails_runner` / `rails_console`: noninteractive Ruby execution only; requires token scope `system:admin`, `MCP_ENABLE_RAILS_RUNTIME_TOOLS=true`, and confirmation `RUN_RAILS_CODE`.
+
+For full local operator mode, create a separate short-lived token:
+
+```bash
+bin/rails mcp:token EMAIL=you@example.com NAME=chatgpt-local-operator SCOPES=app:read,app:write,repo:read,repo:write,db:read,system:admin EXPIRES_IN_DAYS=7
+```
+
+Run only when you are actively using it:
+
+```bash
+MCP_ENABLE_CODE_TOOLS=true MCP_ENABLE_DB_TOOLS=true MCP_ENABLE_RAILS_RUNTIME_TOOLS=true bin/dev
+```
 
 ## 7. What ChatGPT Can Access
 
@@ -237,5 +257,5 @@ Call mcp_capability_matrix and show me which Rails route groups are curated or e
 Repo edit safety flow:
 
 ```text
-Inspect the repo, propose a patch, then call repo_patch_preview before asking me to apply it.
+Inspect the repo, propose a patch, then call repo_patch_preview before asking me to apply it. If patch formatting fails, read the target file and call repo_write_file with expected_sha256.
 ```

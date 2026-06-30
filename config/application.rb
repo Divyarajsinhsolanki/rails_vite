@@ -19,6 +19,8 @@ module RailsVite
     config.middleware.use ActionDispatch::Cookies
     config.middleware.use Rack::Attack
     config.hosts << ENV["ALLOWED_NGROK_HOST"] if Rails.env.development? && ENV["ALLOWED_NGROK_HOST"].present?
+    config.hosts << "system.tail54b0b0.ts.net"
+    config.hosts << "www.example.com" if Rails.env.test?
 
     # Configuration for the application, engines, and railties goes here.
     #

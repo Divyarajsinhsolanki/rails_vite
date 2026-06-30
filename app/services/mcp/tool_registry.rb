@@ -2,8 +2,7 @@ module Mcp
   class ToolRegistry
     SECURITY_SCHEMES = [
       {
-        type: "http",
-        scheme: "bearer"
+        type: "noauth"
       }
     ].freeze
 
@@ -16,7 +15,10 @@ module Mcp
       def instructions
         "This MCP server operates a Rails/Vite workspace app. Prefer read tools before write tools. " \
           "All records are scoped to the authenticated user's workspace. Do not ask for passwords, API keys, " \
-          "Keka credentials, raw PDF bytes, or encrypted secrets. Preview repository edits with repo_patch_preview before repo_apply_patch. " \
+          "Keka credentials, raw PDF bytes, or encrypted secrets. Preview repository edits with repo_patch_preview before repo_apply_patch; " \
+          "if a valid unified diff is difficult, call repo_read_file and then repo_write_file with expected_sha256. " \
+          "Use run_tests, repo_diff, and repo_commit for code workflows when enabled. Use db_query only for read-only SQL, " \
+          "and use rails_runner or rails_console only when explicitly enabled for admin runtime work. " \
           "Apply Workspace Autopilot actions only after the user approves action IDs."
       end
 
@@ -287,6 +289,15 @@ module Mcp
             "Update Sprint",
             "Update a sprint.",
             object_schema(properties: sprint_properties.merge("sprint_id" => integer("Sprint ID.")), required: ["sprint_id"]),
+            destructive: false
+          ),
+          tool(
+            "export_sprint_tasks",
+            "Export Sprint Tasks",
+            "Export a sprint's tasks to its configured Google Sheet using the existing TaskSheetService flow.",
+            object_schema(properties: {
+              "sprint_id" => integer("Sprint ID.")
+            }, required: ["sprint_id"]),
             destructive: false
           ),
           tool(
@@ -651,6 +662,17 @@ module Mcp
             read_only: true
           ),
           tool(
+            "repo_diff",
+            "Repository Diff",
+            "Return git diff and stat output for selected safe paths, or the whole repo if no paths are provided.",
+            object_schema(properties: {
+              "paths" => array("Optional relative file paths to diff.", items: { "type" => "string" }),
+              "staged" => boolean("Show staged diff instead of working tree diff.", default: false),
+              "max_bytes" => integer("Maximum diff bytes to return.", default: 80000, minimum: 1, maximum: 200000)
+            }),
+            read_only: true
+          ),
+          tool(
             "repo_search",
             "Repository Search",
             "Search source files in this Rails/Vite repo using ripgrep. Secrets and generated folders are excluded.",
@@ -664,7 +686,7 @@ module Mcp
           tool(
             "repo_read_file",
             "Repository Read File",
-            "Read a text file from this repository. Secret and generated paths are blocked.",
+            "Read a text file from this repository and return its SHA-256 for guarded writes. Secret and generated paths are blocked.",
             object_schema(properties: {
               "path" => string("Relative file path."),
               "max_bytes" => integer("Maximum bytes to read.", default: 80000, minimum: 1, maximum: 200000)
@@ -672,9 +694,30 @@ module Mcp
             read_only: true
           ),
           tool(
+            "repo_write_file",
+            "Repository Write File",
+            "Write a complete UTF-8 text file. Existing files require expected_sha256 from repo_read_file. Disabled unless MCP_ENABLE_CODE_TOOLS=true and token has repo:write.",
+            object_schema(properties: {
+              "path" => string("Relative file path."),
+              "content" => string("Complete replacement file content."),
+              "expected_sha256" => string("Required for existing files. Use the sha256 returned by repo_read_file.")
+            }, required: %w[path content]),
+            destructive: true
+          ),
+          tool(
+            "repo_commit",
+            "Repository Commit",
+            "Stage selected safe paths and create a git commit. Disabled unless MCP_ENABLE_CODE_TOOLS=true and token has repo:write.",
+            object_schema(properties: {
+              "message" => string("Commit message."),
+              "paths" => array("Relative paths to include in the commit.", items: { "type" => "string" })
+            }, required: %w[message paths]),
+            destructive: true
+          ),
+          tool(
             "repo_patch_preview",
             "Repository Patch Preview",
-            "Validate a unified git patch and report changed paths without applying it.",
+            "Validate a valid unified git patch and report changed paths without applying it. Hunk headers must include line ranges, for example @@ -1,2 +1,3 @@.",
             object_schema(properties: {
               "patch" => string("Unified git patch.")
             }, required: ["patch"]),
@@ -683,10 +726,57 @@ module Mcp
           tool(
             "repo_apply_patch",
             "Repository Apply Patch",
-            "Apply a unified git patch inside this repository. Disabled unless MCP_ENABLE_CODE_TOOLS=true and token has repo:write.",
+            "Apply a valid unified git patch inside this repository. Disabled unless MCP_ENABLE_CODE_TOOLS=true and token has repo:write. If generating a correct patch is difficult, use repo_write_file with expected_sha256.",
             object_schema(properties: {
               "patch" => string("Unified git patch.")
             }, required: ["patch"]),
+            destructive: true
+          ),
+          tool(
+            "run_tests",
+            "Run Tests",
+            "Run an allowlisted test/build command. Disabled unless MCP_ENABLE_CODE_TOOLS=true and token has repo:read.",
+            object_schema(properties: {
+              "target" => string("One of mcp_requests, rails_all, yarn_build, yarn_test, or rails_file.", default: "mcp_requests"),
+              "path" => string("Required when target is rails_file; must be under test/."),
+              "timeout_seconds" => integer("Timeout seconds.", default: 120, minimum: 1, maximum: 600),
+              "max_output_bytes" => integer("Maximum stdout/stderr bytes each.", default: 80000, minimum: 1, maximum: 200000)
+            }),
+            destructive: false
+          ),
+          tool(
+            "db_query",
+            "Database Query",
+            "Run a read-only SELECT/WITH/EXPLAIN SQL query. Requires MCP_ENABLE_DB_TOOLS=true and token scope db:read.",
+            object_schema(properties: {
+              "sql" => string("Read-only SQL query. Multiple statements and mutating SQL are blocked."),
+              "limit" => integer("Maximum rows returned.", default: 50, minimum: 1, maximum: 500),
+              "timeout_ms" => integer("Statement timeout in milliseconds.", default: 5000, minimum: 1, maximum: 30000)
+            }, required: ["sql"]),
+            read_only: true
+          ),
+          tool(
+            "rails_runner",
+            "Rails Runner",
+            "Run noninteractive Ruby through bin/rails runner. Requires MCP_ENABLE_RAILS_RUNTIME_TOOLS=true, token scope system:admin, and confirmation RUN_RAILS_CODE.",
+            object_schema(properties: {
+              "code" => string("Ruby code passed to rails runner."),
+              "confirmation" => string("Must equal RUN_RAILS_CODE."),
+              "timeout_seconds" => integer("Timeout seconds.", default: 30, minimum: 1, maximum: 180),
+              "max_output_bytes" => integer("Maximum stdout/stderr bytes each.", default: 80000, minimum: 1, maximum: 200000)
+            }, required: %w[code confirmation]),
+            destructive: true
+          ),
+          tool(
+            "rails_console",
+            "Rails Console",
+            "Run a single noninteractive Rails console-style Ruby snippet. Requires MCP_ENABLE_RAILS_RUNTIME_TOOLS=true, token scope system:admin, and confirmation RUN_RAILS_CODE.",
+            object_schema(properties: {
+              "code" => string("Ruby code to evaluate in the Rails app context."),
+              "confirmation" => string("Must equal RUN_RAILS_CODE."),
+              "timeout_seconds" => integer("Timeout seconds.", default: 30, minimum: 1, maximum: 180),
+              "max_output_bytes" => integer("Maximum stdout/stderr bytes each.", default: 80000, minimum: 1, maximum: 200000)
+            }, required: %w[code confirmation]),
             destructive: true
           )
         ]
