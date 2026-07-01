@@ -1,4 +1,5 @@
 require "active_support/core_ext/integer/time"
+require "uri"
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
@@ -31,6 +32,7 @@ Rails.application.configure do
   # config.action_dispatch.x_sendfile_header = "X-Accel-Redirect" # for NGINX
 
   config.active_storage.service = ENV.fetch("ACTIVE_STORAGE_SERVICE", "local").to_sym
+  config.active_storage.variant_processor = :vips
 
   # Mount Action Cable outside main process or domain.
   # config.action_cable.mount_path = nil
@@ -80,7 +82,12 @@ Rails.application.configure do
     authentication: :plain,
     enable_starttls_auto: true
   }
-  config.action_mailer.default_url_options = { host: ENV.fetch("BASE_URL", "example.com") }
+  app_url = ENV["BASE_URL"].presence || ENV["RENDER_EXTERNAL_URL"].presence || "https://example.com"
+  app_uri = URI.parse(app_url.match?(%r{\A[a-z][a-z0-9+\-.]*://}i) ? app_url : "https://#{app_url}")
+  app_host = app_uri.host.presence || app_url
+  app_protocol = app_uri.scheme.presence || "https"
+
+  config.action_mailer.default_url_options = { host: app_host, protocol: app_protocol }
   
 
   # Ignore bad email addresses and do not raise email delivery errors.
@@ -97,13 +104,32 @@ Rails.application.configure do
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
 
-  Rails.application.routes.default_url_options[:host] = ENV.fetch("BASE_URL", "example.com")
+  Rails.application.routes.default_url_options[:host] = app_host
+  Rails.application.routes.default_url_options[:protocol] = app_protocol
 
   # Enable DNS rebinding protection and other `Host` header attacks.
-  # config.hosts = [
-  #   "example.com",     # Allow requests from example.com
-  #   /.*\.example\.com/ # Allow requests from subdomains like `www.example.com`
-  # ]
+  host_from_value = lambda do |value|
+    value = value.to_s.strip
+    next if value.blank?
+
+    uri_value = value.match?(%r{\A[a-z][a-z0-9+\-.]*://}i) ? value : "https://#{value}"
+    URI.parse(uri_value).host.presence || value
+  rescue URI::InvalidURIError
+    value
+  end
+
+  allowed_hosts = [
+    ENV["APP_DOMAIN"],
+    ENV["BASE_URL"],
+    ENV["RENDER_EXTERNAL_HOSTNAME"],
+    ENV["RENDER_EXTERNAL_URL"],
+    ENV["ALLOWED_HOSTS"]
+  ].flat_map { |value| value.to_s.split(",") }
+   .filter_map { |value| host_from_value.call(value) }
+   .uniq
+
+  config.hosts += allowed_hosts
+
   # Skip DNS rebinding protection for the default health check endpoint.
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 end

@@ -80,7 +80,7 @@ when a local demo workspace is not wanted.
 
 Environment variables are documented in `.env.example`. The most important groups are:
 
-- App/runtime: `RAILS_MASTER_KEY`, `RAILS_LOG_LEVEL`, `RAILS_MAX_THREADS`, `RAILS_MIN_THREADS`, `WEB_CONCURRENCY`
+- App/runtime: `RAILS_MASTER_KEY`, `RAILS_LOG_LEVEL`, `RAILS_MAX_THREADS`, `RAILS_MIN_THREADS`, `WEB_CONCURRENCY`, `ALLOWED_HOSTS`
 - Database: `DB_HOST`, `DATABASE_URL`
 - Mail links and SMTP: `BASE_URL`, `FRONTEND_URL`, `SMTP_ADDRESS`, `SMTP_PORT`, `SMTP_DOMAIN`, `SMTP_USERNAME`, `SMTP_PASSWORD`
 - CORS: `CORS_ALLOWED_ORIGINS`, `CORS_ALLOWED_PATH`
