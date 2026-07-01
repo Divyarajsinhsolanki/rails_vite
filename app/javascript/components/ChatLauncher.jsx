@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { MessageCircle } from "lucide-react";
 import { fetchConversations } from "./api";
@@ -8,18 +8,18 @@ import { AuthContext } from "../context/AuthContext";
 const ChatLauncher = () => {
   const location = useLocation();
   const { isAuthenticated } = useContext(AuthContext);
-  const [conversations, setConversations] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (!isAuthenticated) {
-      setConversations([]);
+      setUnreadCount(0);
       return undefined;
     }
 
     const load = async () => {
       try {
-        const { data } = await fetchConversations();
-        setConversations(Array.isArray(data) ? data : []);
+        const { data } = await fetchConversations({ page: 1, per_page: 1 });
+        setUnreadCount(data?.meta?.unread_count || 0);
       } catch (error) {
         // ignore for logged out state
       }
@@ -28,7 +28,7 @@ const ChatLauncher = () => {
     load();
 
     const subscription = subscribeToUserChat((payload) => {
-      if (payload?.type === "conversation_refresh") {
+      if (["conversation_refresh", "conversation_hidden", "conversation_deleted"].includes(payload?.type)) {
         load();
       }
     });
@@ -36,7 +36,6 @@ const ChatLauncher = () => {
     return () => subscription.unsubscribe();
   }, [isAuthenticated]);
 
-  const unreadCount = useMemo(() => conversations.reduce((count, conversation) => count + (conversation.unread_count || 0), 0), [conversations]);
   const isChatRoute = location.pathname.startsWith("/chat");
 
   if (!isAuthenticated || isChatRoute) return null;

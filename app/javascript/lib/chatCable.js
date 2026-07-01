@@ -1,4 +1,5 @@
 const subscriptions = new Map();
+const statusListeners = new Set();
 let socket;
 let reconnectTimer;
 let reconnectAttempts = 0;
@@ -13,6 +14,10 @@ const sendWhenOpen = (payload) => {
 
   socket.send(JSON.stringify(payload));
   return true;
+};
+
+const emitStatus = (status) => {
+  statusListeners.forEach((listener) => listener(status));
 };
 
 const resubscribeAll = () => {
@@ -33,6 +38,7 @@ const scheduleReconnect = () => {
 
   clearReconnectTimer();
   reconnectAttempts += 1;
+  emitStatus("reconnecting");
   reconnectTimer = setTimeout(connect, Math.min(1000 * reconnectAttempts, 5000));
 };
 
@@ -41,6 +47,7 @@ const connect = () => {
   if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) return;
 
   intentionallyClosed = false;
+  emitStatus("connecting");
   socket = new WebSocket(socketUrl, cableProtocols);
 
   socket.onopen = () => {
@@ -48,6 +55,7 @@ const connect = () => {
     reconnectAttempts = 0;
 
     resubscribeAll();
+    emitStatus("connected");
   };
 
   socket.onmessage = (event) => {
@@ -62,10 +70,12 @@ const connect = () => {
 
   socket.onclose = () => {
     socket = null;
+    emitStatus(intentionallyClosed ? "closed" : "disconnected");
     scheduleReconnect();
   };
 
   socket.onerror = () => {
+    emitStatus("disconnected");
     socket?.close();
   };
 };
@@ -110,6 +120,14 @@ export const subscribeToUserChat = (received) => subscribe({ channel: "ChatChann
 
 export const subscribeToConversationChat = (conversationId, received) => {
   return subscribe({ channel: "ChatChannel", conversation_id: conversationId }, received);
+};
+
+export const subscribeToCableStatus = (received) => {
+  statusListeners.add(received);
+
+  return {
+    unsubscribe: () => statusListeners.delete(received)
+  };
 };
 
 export const sendToConversation = (conversationId, action, data = {}) => {

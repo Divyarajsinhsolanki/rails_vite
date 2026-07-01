@@ -10,6 +10,7 @@ class Message < ApplicationRecord
 
   validate :body_or_attachment_present
 
+  after_create :restore_hidden_participants
   after_create_commit :broadcast_message
   after_create_commit :notify_participants
 
@@ -23,6 +24,13 @@ class Message < ApplicationRecord
 
   def broadcast_message
     Chat::Broadcaster.broadcast_message_created(self)
+  end
+
+  def restore_hidden_participants
+    conversation.conversation_participants
+      .where.not(user_id: user_id)
+      .where.not(hidden_at: nil)
+      .update_all(hidden_at: nil, updated_at: Time.current)
   end
 
   public

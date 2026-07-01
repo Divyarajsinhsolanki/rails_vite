@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2027_06_28_000000) do
+ActiveRecord::Schema[8.1].define(version: 2027_06_29_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -100,12 +100,14 @@ ActiveRecord::Schema[8.1].define(version: 2027_06_28_000000) do
   create_table "conversation_participants", force: :cascade do |t|
     t.bigint "conversation_id", null: false
     t.datetime "created_at", null: false
+    t.datetime "hidden_at"
     t.datetime "last_read_at"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.bigint "workspace_id", null: false
     t.index ["conversation_id", "user_id"], name: "idx_unique_conversation_participant", unique: true
     t.index ["conversation_id"], name: "index_conversation_participants_on_conversation_id"
+    t.index ["user_id", "hidden_at"], name: "index_conversation_participants_on_user_id_and_hidden_at"
     t.index ["user_id"], name: "index_conversation_participants_on_user_id"
     t.index ["workspace_id"], name: "index_conversation_participants_on_workspace_id"
   end

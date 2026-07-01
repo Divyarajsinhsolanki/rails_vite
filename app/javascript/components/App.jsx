@@ -17,6 +17,7 @@ import DemoTourNavigator from "./DemoTourNavigator";
 import CommandPalette from "./CommandPalette";
 import { AuthContext } from "../context/AuthContext";
 import { portfolioEnabled } from "../config/features";
+import { routeFrameKeyForPath } from "../utils/routeFrameKey";
 
 const Admin = lazy(() => import("../components/Admin/Admin"));
 const AdminImpersonation = lazy(() => import("../pages/AdminImpersonation"));
@@ -68,7 +69,7 @@ const AppRoutes = () => {
   const location = useLocation();
   // Query parameters often represent in-page state, so keep the route mounted
   // when they change instead of replaying the full-page loading transition.
-  const routeKey = location.pathname;
+  const routeKey = routeFrameKeyForPath(location.pathname);
 
   return (
     <motion.div key={routeKey} className="shell-route-frame" {...routeTransitionProps}>

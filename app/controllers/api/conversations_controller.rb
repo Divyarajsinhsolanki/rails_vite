@@ -2,7 +2,7 @@ class Api::ConversationsController < Api::BaseController
   CONVERSATION_PAGE_SIZE = 30
   MAX_CONVERSATION_PAGE_SIZE = 100
 
-  before_action :set_conversation, only: [:show]
+  before_action :set_conversation, only: [:show, :summary, :destroy, :for_everyone]
 
   def index
     base_scope = Conversation.for_user(current_user)
@@ -54,6 +54,10 @@ class Api::ConversationsController < Api::BaseController
     render json: serialize_conversation(@conversation, include_messages: true)
   end
 
+  def summary
+    render json: serialize_conversation(@conversation)
+  end
+
   def create
     conversation = Conversation.new(conversation_params.merge(creator: current_user))
 
@@ -78,6 +82,41 @@ class Api::ConversationsController < Api::BaseController
     render json: serialize_conversation(conversation)
   end
 
+  def destroy
+    membership = @conversation.conversation_participants.find_by!(user_id: current_user.id)
+    membership.update!(hidden_at: Time.current, last_read_at: Time.current)
+    Chat::Broadcaster.broadcast_conversation_hidden(@conversation, current_user.id)
+
+    render json: { success: true, conversation_id: @conversation.id }
+  end
+
+  def for_everyone
+    unless can_delete_for_everyone?(@conversation)
+      head :forbidden
+      return
+    end
+
+    unless delete_confirmation_matches?(@conversation)
+      render json: { error: "confirmation_required", confirmation: delete_confirmation_text(@conversation) }, status: :unprocessable_entity
+      return
+    end
+
+    workspace_id = @conversation.workspace_id
+    conversation_id = @conversation.id
+    participant_ids = @conversation.participant_ids
+
+    Conversation.transaction do
+      delete_chat_notifications(@conversation)
+      @conversation.messages.destroy_all
+      @conversation.conversation_participants.delete_all
+      @conversation.destroy!
+    end
+
+    Chat::Broadcaster.broadcast_conversation_deleted(workspace_id, conversation_id, participant_ids)
+
+    render json: { success: true, conversation_id: conversation_id }
+  end
+
   private
 
   def set_conversation
@@ -92,13 +131,17 @@ class Api::ConversationsController < Api::BaseController
 
   def find_or_create_direct_conversation(other_user)
     candidate = Conversation.conversation_direct
+      .where(workspace_id: current_user.workspace_id)
       .joins(:conversation_participants)
       .where(conversation_participants: { user_id: [current_user.id, other_user.id] })
       .group("conversations.id")
       .having("COUNT(DISTINCT conversation_participants.user_id) = 2")
       .first
 
-    return candidate if candidate
+    if candidate
+      restore_current_membership(candidate)
+      return candidate
+    end
 
     conversation = Conversation.create!(conversation_type: :direct, creator: current_user)
     conversation.conversation_participants.create!(user: current_user)
@@ -165,10 +208,41 @@ class Api::ConversationsController < Api::BaseController
       .joins('INNER JOIN conversation_participants current_memberships ON current_memberships.conversation_id = messages.conversation_id')
       .where(conversation_id: conversation_ids)
       .where('current_memberships.user_id = ?', current_user.id)
+      .where('current_memberships.hidden_at IS NULL')
       .where.not(user_id: current_user.id)
       .where('messages.created_at > COALESCE(current_memberships.last_read_at, ?)', Time.at(0))
       .group('messages.conversation_id')
       .count
+  end
+
+  def restore_current_membership(conversation)
+    membership = conversation.conversation_participants.find_by(user_id: current_user.id)
+    return unless membership&.hidden_at?
+
+    membership.update!(hidden_at: nil)
+    Chat::Broadcaster.broadcast_conversation_refresh(conversation)
+  end
+
+  def can_delete_for_everyone?(conversation)
+    conversation.creator_id == current_user.id || current_user.owner? || current_user.admin?
+  end
+
+  def delete_confirmation_text(conversation)
+    "DELETE #{conversation.id}"
+  end
+
+  def delete_confirmation_matches?(conversation)
+    confirmation = params[:confirmation].presence || params[:confirm].presence
+    confirmation.to_s == delete_confirmation_text(conversation)
+  end
+
+  def delete_chat_notifications(conversation)
+    message_ids = conversation.messages.pluck(:id)
+    reaction_ids = MessageReaction.where(message_id: message_ids).pluck(:id)
+
+    Notification.where(notifiable_type: "Message", notifiable_id: message_ids).delete_all if message_ids.any?
+    Notification.where(notifiable_type: "MessageReaction", notifiable_id: reaction_ids).delete_all if reaction_ids.any?
+    Notification.where("metadata ->> 'conversation_id' = ?", conversation.id.to_s).delete_all
   end
 
   def conversation_display_name(conversation)
@@ -185,6 +259,9 @@ class Api::ConversationsController < Api::BaseController
       id: conversation.id,
       title: conversation_display_name(conversation),
       conversation_type: conversation.conversation_type,
+      creator_id: conversation.creator_id,
+      can_delete_for_everyone: can_delete_for_everyone?(conversation),
+      hidden_at: membership&.hidden_at,
       participants: conversation.participants.map do |user|
         participant = conversation.conversation_participants.find { |cp| cp.user_id == user.id } || conversation.conversation_participants.find_by(user_id: user.id)
         {

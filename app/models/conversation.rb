@@ -11,7 +11,8 @@ class Conversation < ApplicationRecord
   validates :conversation_type, presence: true
   validates :title, presence: true, if: :group?
 
-  scope :for_user, ->(user) { joins(:conversation_participants).where(conversation_participants: { user_id: user.id }).distinct }
+  scope :for_user_including_hidden, ->(user) { joins(:conversation_participants).where(conversation_participants: { user_id: user.id }).distinct }
+  scope :for_user, ->(user) { for_user_including_hidden(user).where(conversation_participants: { hidden_at: nil }) }
 
   def direct?
     conversation_type == "direct"

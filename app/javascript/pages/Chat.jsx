@@ -18,7 +18,9 @@ import {
   FiPaperclip,
   FiSearch,
   FiSend,
+  FiTrash2,
   FiUploadCloud,
+  FiWifiOff,
   FiUsers,
   FiVideo,
   FiX,
@@ -28,7 +30,10 @@ import {
   SchedulerAPI,
   addMessageReaction,
   createConversation,
+  deleteConversation,
+  deleteConversationForEveryone,
   fetchConversation,
+  fetchConversationSummary,
   fetchConversations,
   getUsers,
   removeMessageReaction,
@@ -36,7 +41,7 @@ import {
   startDirectConversation
 } from "../components/api";
 import { AuthContext } from "../context/AuthContext";
-import { sendToConversation, subscribeToConversationChat, subscribeToUserChat } from "../lib/chatCable";
+import { sendToConversation, subscribeToCableStatus, subscribeToConversationChat, subscribeToUserChat } from "../lib/chatCable";
 import {
   applyComposerEntity,
   getComposerEntityQuery,
@@ -104,6 +109,22 @@ const mergeConversationGroups = (previous, nextItems, replace = false) => {
       getConversationSortValue(right) - getConversationSortValue(left)
     ))
   );
+};
+
+const removeConversationFromGroups = (previous, conversationId) => ({
+  direct: (previous.direct || []).filter((conversation) => Number(conversation.id) !== Number(conversationId)),
+  group: (previous.group || []).filter((conversation) => Number(conversation.id) !== Number(conversationId))
+});
+
+const mergeConversationSummary = (conversation, summary) => {
+  if (!conversation) return summary;
+  if (!summary) return conversation;
+
+  return {
+    ...conversation,
+    ...summary,
+    messages: conversation.messages || summary.messages
+  };
 };
 
 const normalizeConversationResponse = (payload) => {
@@ -416,12 +437,13 @@ const StatCard = ({ icon, label, value, accentClass }) => (
   </div>
 );
 
-const ConversationItem = ({ conversation, currentUserId, isActive, searchQuery, previewText, onSelect }) => {
+const ConversationItem = ({ conversation, currentUserId, isActive, searchQuery, previewText, onSelect, onHide, onDeleteForEveryone }) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isUnread = conversation.unread_count > 0;
   const isDirect = conversation.conversation_type === "direct";
   const displayName = getConversationDisplayName(conversation, currentUserId);
   const displayImage = getConversationDisplayImage(conversation, currentUserId);
-  const subtitle = isDirect ? "Direct message" : `${conversation.participants?.length || 0} members`;
+  const subtitle = isDirect ? "DM" : `${conversation.participants?.length || 0} members`;
   const conversationPreview = previewText || (isDirect ? "No messages yet" : "Create a room that keeps the whole group aligned");
   const Item = onSelect ? "button" : Link;
   const itemProps = onSelect
@@ -429,23 +451,21 @@ const ConversationItem = ({ conversation, currentUserId, isActive, searchQuery, 
     : { to: `/chat/${conversation.id}` };
 
   return (
-    <Item
-      {...itemProps}
-      className={`group relative block overflow-hidden rounded-[18px] border p-2.5 transition-all duration-200 ${onSelect ? "w-full text-left" : ""} ${
+    <div
+      className={`group relative flex items-center gap-1 rounded-lg border px-2 py-1.5 transition-colors ${
         isActive
-          ? "border-transparent bg-slate-950 text-white shadow-[0_22px_55px_-28px_rgba(15,23,42,0.95)]"
-          : "border-white/70 bg-white/72 text-slate-700 shadow-[0_18px_45px_-34px_rgba(15,23,42,0.5)] hover:-translate-y-0.5 hover:border-slate-200 hover:bg-white/92 dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-slate-200 dark:hover:border-zinc-700 dark:hover:bg-zinc-900"
+          ? "border-slate-900 bg-slate-950 text-white dark:border-white dark:bg-white dark:text-slate-950"
+          : "border-transparent bg-transparent text-slate-700 hover:bg-white/80 dark:text-slate-200 dark:hover:bg-zinc-900/80"
       }`}
     >
-      <div
-        className={`absolute inset-0 opacity-100 ${
-          isActive
-            ? "bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.28),transparent_40%),linear-gradient(135deg,rgba(15,23,42,1),rgba(30,41,59,0.95))]"
-            : ""
-        }`}
-      />
-
-      <div className="relative flex items-start gap-2.5">
+      <Item
+        {...itemProps}
+        className={`flex min-w-0 flex-1 items-center gap-2 text-left ${onSelect ? "w-full" : ""}`}
+        onClick={(event) => {
+          setIsMenuOpen(false);
+          itemProps.onClick?.(event);
+        }}
+      >
         <div className="shrink-0">
           {isDirect ? (
             <Avatar name={displayName} src={displayImage} size="sm" />
@@ -457,38 +477,81 @@ const ConversationItem = ({ conversation, currentUserId, isActive, searchQuery, 
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <p className={`truncate text-[13px] font-semibold ${isActive ? "text-white" : "text-slate-900 dark:text-white"}`}>
-                  <HighlightText text={displayName} query={searchQuery} />
-                </p>
-                {isUnread && !isActive && <span className="h-2 w-2 rounded-full bg-emerald-500" />}
-              </div>
-              <p className={`mt-0.5 text-[10px] font-medium uppercase tracking-[0.16em] ${isActive ? "text-sky-100/70" : "text-slate-400 dark:text-slate-500"}`}>
-                {subtitle}
-              </p>
-            </div>
-
-            <span className={`shrink-0 text-[10px] font-medium ${isActive ? "text-sky-100/70" : "text-slate-400 dark:text-slate-500"}`}>
+          <div className="flex min-w-0 items-center gap-2">
+            <p className={`truncate text-[13px] font-semibold ${isActive ? "" : "text-slate-900 dark:text-white"}`}>
+              <HighlightText text={displayName} query={searchQuery} />
+            </p>
+            {isUnread && !isActive && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />}
+            <span className={`shrink-0 text-[10px] ${isActive ? "opacity-70" : "text-slate-400 dark:text-slate-500"}`}>
               {formatConversationTime(conversation.updated_at)}
             </span>
           </div>
 
-          <div className="mt-1.5 flex items-end justify-between gap-2">
-            <p className={`line-clamp-1 text-[11px] leading-4 ${isActive ? "text-sky-50/80" : isUnread ? "font-semibold text-slate-800 dark:text-slate-100" : "text-slate-500 dark:text-slate-400"}`}>
+          <div className="mt-0.5 flex min-w-0 items-center gap-2">
+            <span className={`shrink-0 text-[10px] uppercase ${isActive ? "opacity-70" : "text-slate-400 dark:text-slate-500"}`}>
+              {subtitle}
+            </span>
+            <p className={`truncate text-[11px] leading-4 ${isActive ? "opacity-80" : isUnread ? "font-semibold text-slate-800 dark:text-slate-100" : "text-slate-500 dark:text-slate-400"}`}>
               <HighlightText text={conversationPreview} query={searchQuery} />
             </p>
-
-            {isUnread && (
-              <span className={`flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${isActive ? "bg-white text-slate-950" : "bg-slate-950 text-white dark:bg-white dark:text-slate-950"}`}>
-                {conversation.unread_count}
-              </span>
-            )}
           </div>
         </div>
-      </div>
-    </Item>
+      </Item>
+
+      {isUnread && (
+        <span className={`flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${isActive ? "bg-white text-slate-950 dark:bg-slate-950 dark:text-white" : "bg-slate-950 text-white dark:bg-white dark:text-slate-950"}`}>
+          {conversation.unread_count}
+        </span>
+      )}
+
+      <button
+        type="button"
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          setIsMenuOpen((previous) => !previous);
+        }}
+        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition group-hover:opacity-100 ${isMenuOpen ? "opacity-100" : ""} ${
+          isActive ? "hover:bg-white/15 dark:hover:bg-slate-950/10" : "hover:bg-slate-100 dark:hover:bg-zinc-800"
+        }`}
+        title="Conversation actions"
+      >
+        <FiMoreVertical className="h-3.5 w-3.5" />
+      </button>
+
+      {isMenuOpen && (
+        <div className="absolute right-2 top-9 z-30 w-44 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 text-slate-700 shadow-xl dark:border-zinc-700 dark:bg-zinc-900 dark:text-slate-100">
+          <button
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              setIsMenuOpen(false);
+              onHide?.(conversation);
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium hover:bg-slate-50 dark:hover:bg-zinc-800"
+          >
+            <FiTrash2 className="h-3.5 w-3.5" />
+            Hide for me
+          </button>
+          {conversation.can_delete_for_everyone && (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setIsMenuOpen(false);
+                onDeleteForEveryone?.(conversation);
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-semibold text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30"
+            >
+              <FiTrash2 className="h-3.5 w-3.5" />
+              Delete for everyone
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -756,6 +819,8 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
   const composerTextareaRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const conversationLoadTokenRef = useRef(0);
+  const conversationCacheRef = useRef({});
+  const allConversationsRef = useRef([]);
 
   const [conversations, setConversations] = useState({ direct: [], group: [] });
   const [conversationListMeta, setConversationListMeta] = useState(null);
@@ -772,6 +837,8 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
   const [isSending, setIsSending] = useState(false);
   const [typingUsers, setTypingUsers] = useState({});
   const [showInfo, setShowInfo] = useState(false);
+  const [isThreadActionsOpen, setIsThreadActionsOpen] = useState(false);
+  const [cableStatus, setCableStatus] = useState("connected");
   const [composerSelection, setComposerSelection] = useState({ start: 0, end: 0 });
   const [activeMentionIndex, setActiveMentionIndex] = useState(0);
 
@@ -808,6 +875,9 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
     () => [...conversations.direct, ...conversations.group],
     [conversations]
   );
+  useEffect(() => {
+    allConversationsRef.current = allConversations;
+  }, [allConversations]);
   const totalConversationCount = conversationListMeta?.total_count ?? allConversations.length;
   const conversationCountLabel = totalConversationCount > allConversations.length
     ? `${allConversations.length} of ${totalConversationCount}`
@@ -815,7 +885,7 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
   const conversationTypeCounts = conversationListMeta?.conversation_counts || {};
   const directConversationCount = conversationTypeCounts.direct ?? conversations.direct.length;
   const groupConversationCount = conversationTypeCounts.group ?? conversations.group.length;
-  const hasPendingConversationPages = isConversationListLoadingMore;
+  const hasMoreConversationPages = Boolean(conversationListMeta?.next_page);
 
   const loadedUnreadCount = useMemo(
     () => allConversations.reduce((total, conversation) => total + (conversation.unread_count || 0), 0),
@@ -823,16 +893,9 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
   );
   const totalUnreadCount = conversationListMeta?.unread_count ?? loadedUnreadCount;
 
-  const fetchAllData = useCallback(async ({ loadRemaining = true } = {}) => {
+  const fetchAllData = useCallback(async () => {
     const loadToken = conversationLoadTokenRef.current + 1;
     conversationLoadTokenRef.current = loadToken;
-
-    const applyConversationPage = (items, meta, replace = false) => {
-      if (conversationLoadTokenRef.current !== loadToken) return;
-
-      setConversations((previous) => mergeConversationGroups(previous, items, replace));
-      setConversationListMeta(meta);
-    };
 
     try {
       setIsConversationListLoading(true);
@@ -841,45 +904,9 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
       const { data } = await fetchConversations({ page: 1, per_page: CONVERSATIONS_PAGE_SIZE });
       const { conversations: firstPageConversations, meta } = normalizeConversationResponse(data);
 
-      applyConversationPage(firstPageConversations, meta, loadRemaining);
-
-      if (!loadRemaining || !meta?.next_page) return;
-
-      const loadRemainingPages = async () => {
-        if (conversationLoadTokenRef.current !== loadToken) return;
-
-        setIsConversationListLoadingMore(true);
-
-        try {
-          let nextPage = meta.next_page;
-
-          while (nextPage && conversationLoadTokenRef.current === loadToken) {
-            const { data: pageData } = await fetchConversations({
-              page: nextPage,
-              per_page: CONVERSATIONS_PAGE_SIZE
-            });
-            const { conversations: pageConversations, meta: pageMeta } = normalizeConversationResponse(pageData);
-
-            applyConversationPage(pageConversations, pageMeta, false);
-            nextPage = pageMeta?.next_page;
-          }
-        } catch (error) {
-          console.error("Failed to load remaining conversations", error);
-        } finally {
-          if (conversationLoadTokenRef.current === loadToken) {
-            setIsConversationListLoadingMore(false);
-          }
-        }
-      };
-
-      const scheduleRemainingLoad = () => {
-        loadRemainingPages();
-      };
-
-      if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-        window.requestIdleCallback(scheduleRemainingLoad, { timeout: 1200 });
-      } else {
-        window.setTimeout(scheduleRemainingLoad, 120);
+      if (conversationLoadTokenRef.current === loadToken) {
+        setConversations(mergeConversationGroups({ direct: [], group: [] }, firstPageConversations, true));
+        setConversationListMeta(meta);
       }
     } catch (error) {
       console.error("Failed to load conversations", error);
@@ -890,21 +917,109 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
     }
   }, []);
 
+  const loadMoreConversations = useCallback(async () => {
+    if (!conversationListMeta?.next_page || isConversationListLoadingMore) return;
+
+    try {
+      setIsConversationListLoadingMore(true);
+      const { data } = await fetchConversations({
+        page: conversationListMeta.next_page,
+        per_page: CONVERSATIONS_PAGE_SIZE
+      });
+      const { conversations: pageConversations, meta } = normalizeConversationResponse(data);
+
+      setConversations((previous) => mergeConversationGroups(previous, pageConversations, false));
+      setConversationListMeta(meta);
+    } catch (error) {
+      console.error("Failed to load more conversations", error);
+    } finally {
+      setIsConversationListLoadingMore(false);
+    }
+  }, [conversationListMeta?.next_page, isConversationListLoadingMore]);
+
+  const removeConversationLocally = useCallback((targetConversationId) => {
+    const wasLoaded = allConversationsRef.current.some((conversation) => Number(conversation.id) === Number(targetConversationId));
+
+    setConversations((previous) => removeConversationFromGroups(previous, targetConversationId));
+    setConversationListMeta((previous) => previous && wasLoaded ? {
+      ...previous,
+      total_count: Math.max(0, (previous.total_count || 0) - 1)
+    } : previous);
+
+    const nextCache = { ...conversationCacheRef.current };
+    delete nextCache[String(targetConversationId)];
+    conversationCacheRef.current = nextCache;
+
+    if (Number(conversationId) === Number(targetConversationId)) {
+      setActiveConversation(null);
+      setShowInfo(false);
+      setIsThreadActionsOpen(false);
+      if (embedded) {
+        setEmbeddedConversationId(null);
+      } else {
+        navigate("/chat", { replace: true });
+      }
+    }
+  }, [conversationId, embedded, navigate]);
+
+  const refreshConversationSummary = useCallback(async (targetConversationId) => {
+    if (!targetConversationId) return;
+
+    try {
+      const { data } = await fetchConversationSummary(targetConversationId);
+
+      setConversations((previous) => mergeConversationGroups(previous, [data], false));
+      setActiveConversation((previous) => {
+        if (!previous || Number(previous.id) !== Number(targetConversationId)) return previous;
+
+        const nextConversation = mergeConversationSummary(previous, data);
+        conversationCacheRef.current = {
+          ...conversationCacheRef.current,
+          [String(targetConversationId)]: nextConversation
+        };
+        return nextConversation;
+      });
+    } catch (error) {
+      if (error?.response?.status === 404) {
+        removeConversationLocally(targetConversationId);
+        return;
+      }
+
+      console.error("Failed to refresh conversation summary", error);
+    }
+  }, [removeConversationLocally]);
+
   const loadConversation = useCallback(async (id) => {
     if (!id) return;
 
+    const cachedConversation = conversationCacheRef.current[String(id)];
+    if (cachedConversation) {
+      setActiveConversation(cachedConversation);
+    } else {
+      setActiveConversation(null);
+    }
     setIsConversationLoading(true);
 
     try {
       const { data } = await fetchConversation(id);
       setActiveConversation(data);
+      conversationCacheRef.current = {
+        ...conversationCacheRef.current,
+        [String(id)]: data
+      };
+      setConversations((previous) => mergeConversationGroups(previous, [data], false));
     } catch (error) {
+      if (error?.response?.status === 404) {
+        removeConversationLocally(id);
+        return;
+      }
+
       console.error("Failed to load conversation details", error);
       setActiveConversation(null);
     } finally {
       setIsConversationLoading(false);
     }
-  }, []);
+  }, [removeConversationLocally]);
 
   const resetNewChatModal = useCallback((mode = "direct") => {
     setNewChatMode(mode);
@@ -947,13 +1062,20 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
   }, [fetchAllData]);
 
   useEffect(() => {
+    const subscription = subscribeToCableStatus(setCableStatus);
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
     if (conversationId) {
       loadConversation(conversationId);
       setThreadSearchQuery("");
       setIsThreadSearchOpen(false);
+      setIsThreadActionsOpen(false);
     } else {
       setActiveConversation(null);
       setIsConversationLoading(false);
+      setIsThreadActionsOpen(false);
     }
   }, [conversationId, loadConversation]);
 
@@ -982,7 +1104,7 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
     setActiveConversation((previous) => {
       if (!previous) return previous;
 
-      return {
+      const nextConversation = {
         ...previous,
         messages: (previous.messages || []).map((message) => {
           if (Number(message.id) !== Number(messageId)) return message;
@@ -1007,22 +1129,28 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
           };
         })
       };
+
+      conversationCacheRef.current = {
+        ...conversationCacheRef.current,
+        [String(previous.id)]: nextConversation
+      };
+      return nextConversation;
     });
   }, [user?.id]);
 
   useEffect(() => {
     const userSub = subscribeToUserChat((payload) => {
       if (payload?.type === "conversation_refresh") {
-        fetchAllData({ loadRemaining: false });
+        refreshConversationSummary(payload.conversation_id);
+      }
 
-        if (conversationId && Number(payload.conversation_id) === Number(conversationId)) {
-          loadConversation(conversationId);
-        }
+      if (payload?.type === "conversation_hidden" || payload?.type === "conversation_deleted") {
+        removeConversationLocally(payload.conversation_id);
       }
     });
 
     return () => userSub.unsubscribe();
-  }, [conversationId, fetchAllData, loadConversation]);
+  }, [refreshConversationSummary, removeConversationLocally]);
 
   useEffect(() => {
     if (!conversationId) return undefined;
@@ -1033,14 +1161,24 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
           if (!previous) return previous;
           if (previous.messages?.some((message) => message.id === payload.message.id)) return previous;
 
-          return {
+          const nextConversation = {
             ...previous,
             messages: [...(previous.messages || []), payload.message]
           };
+
+          conversationCacheRef.current = {
+            ...conversationCacheRef.current,
+            [String(conversationId)]: nextConversation
+          };
+          return nextConversation;
         });
 
-        fetchAllData({ loadRemaining: false });
+        refreshConversationSummary(conversationId);
         markConversationAsRead(conversationId);
+      }
+
+      if (payload?.type === "conversation_deleted" && Number(payload.conversation_id) === Number(conversationId)) {
+        removeConversationLocally(conversationId);
       }
 
       if (payload?.type === "message_reactions_updated" && Number(payload.conversation_id) === Number(conversationId)) {
@@ -1092,7 +1230,7 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
     });
 
     return () => convSub.unsubscribe();
-  }, [applyReactionUpdate, conversationId, fetchAllData, markConversationAsRead, user?.id]);
+  }, [applyReactionUpdate, conversationId, markConversationAsRead, refreshConversationSummary, removeConversationLocally, user?.id]);
 
   useEffect(() => () => {
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
@@ -1467,18 +1605,25 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
 
       setActiveConversation((previous) => {
         if (!previous) return previous;
+        if (previous.messages?.some((message) => message.id === newMessage.id)) return previous;
 
-        return {
+        const nextConversation = {
           ...previous,
           messages: [...(previous.messages || []), newMessage]
         };
+
+        conversationCacheRef.current = {
+          ...conversationCacheRef.current,
+          [String(conversationId)]: nextConversation
+        };
+        return nextConversation;
       });
 
       setMessageBody("");
       setAttachments([]);
       setComposerSelection({ start: 0, end: 0 });
       setActiveMentionIndex(0);
-      fetchAllData({ loadRemaining: false });
+      refreshConversationSummary(conversationId);
     } catch (error) {
       console.error("Failed to send message", error);
     } finally {
@@ -1508,8 +1653,8 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
       try {
         const { data } = await startDirectConversation(selectedUserIds[0]);
         setIsNewChatModalOpen(false);
+        setConversations((previous) => mergeConversationGroups(previous, [data], false));
         openConversation(data.id);
-        fetchAllData({ loadRemaining: false });
       } catch (error) {
         console.error("Failed to start direct conversation", error);
       }
@@ -1534,10 +1679,44 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
 
       setIsNewChatModalOpen(false);
       resetNewChatModal("group");
+      setConversations((previous) => mergeConversationGroups(previous, [data], false));
       openConversation(data.id);
-      fetchAllData({ loadRemaining: false });
     } catch (error) {
       console.error("Failed to create group", error);
+    }
+  };
+
+  const handleHideConversation = async (conversation) => {
+    if (!conversation) return;
+
+    const displayName = getConversationDisplayName(conversation, user?.id);
+    if (!window.confirm(`Hide "${displayName}" from your inbox? New messages will bring it back.`)) return;
+
+    try {
+      removeConversationLocally(conversation.id);
+      await deleteConversation(conversation.id);
+    } catch (error) {
+      console.error("Failed to hide conversation", error);
+      fetchAllData();
+    }
+  };
+
+  const handleDeleteConversationForEveryone = async (conversation) => {
+    if (!conversation?.can_delete_for_everyone) return;
+
+    const confirmation = `DELETE ${conversation.id}`;
+    const enteredConfirmation = window.prompt(
+      `Delete this conversation for everyone? This removes all messages and cannot be undone.\n\nType ${confirmation} to confirm.`
+    );
+
+    if (enteredConfirmation !== confirmation) return;
+
+    try {
+      removeConversationLocally(conversation.id);
+      await deleteConversationForEveryone(conversation.id, confirmation);
+    } catch (error) {
+      console.error("Failed to delete conversation", error);
+      fetchAllData();
     }
   };
 
@@ -1554,66 +1733,70 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
       <div className="relative flex min-h-0 h-full w-full overflow-hidden rounded-[24px] border border-white/70 bg-white/30 shadow-[0_35px_90px_-45px_rgba(15,23,42,0.55)] backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/60">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(125,211,252,0.24),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(96,165,250,0.14),transparent_24%)]" />
 
-        <aside className={`relative z-10 flex min-h-0 w-full flex-col border-r border-white/60 bg-white/74 backdrop-blur-2xl dark:border-zinc-800 dark:bg-zinc-950/72 md:w-[24rem] xl:w-[27rem] ${conversationId ? "hidden md:flex" : "flex"}`}>
-          <div className="border-b border-white/70 px-4 pb-4 pt-5 dark:border-zinc-800 md:px-5">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-[11px] font-medium uppercase tracking-[0.32em] text-sky-500">Inbox</p>
-                <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">Messages</h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  {isConversationListLoading && allConversations.length === 0
-                    ? "Loading conversations..."
-                    : `${conversationCountLabel} conversations across direct messages and group rooms`}
-                </p>
-              </div>
-
+        <aside className={`relative z-10 flex min-h-0 w-full flex-col border-r border-white/60 bg-white/82 backdrop-blur-2xl dark:border-zinc-800 dark:bg-zinc-950/82 md:w-[20rem] xl:w-[22rem] ${conversationId ? "hidden md:flex" : "flex"}`}>
+          <div className="border-b border-white/70 px-3 py-2 dark:border-zinc-800">
+            <div className="flex items-center gap-2">
+              <h1 className="text-base font-semibold tracking-tight text-slate-950 dark:text-white">Messages</h1>
+              {totalUnreadCount > 0 && (
+                <span className="rounded-full bg-slate-950 px-2 py-0.5 text-[10px] font-bold text-white dark:bg-white dark:text-slate-950">
+                  {totalUnreadCount}
+                </span>
+              )}
+              {cableStatus !== "connected" && (
+                <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-950/50 dark:text-amber-200">
+                  <FiWifiOff className="h-3 w-3" />
+                  {cableStatus}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => openNewChatModal("group")}
+                className="ml-auto flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-slate-300 dark:hover:bg-zinc-800"
+                title="Create group room"
+              >
+                <FiUsers className="h-4 w-4" />
+              </button>
               <button
                 type="button"
                 onClick={() => openNewChatModal("direct")}
-                className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-white shadow-[0_24px_50px_-30px_rgba(15,23,42,1)] transition hover:-translate-y-0.5 dark:bg-white dark:text-slate-950"
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-950 text-white transition hover:brightness-110 dark:bg-white dark:text-slate-950"
                 title="Start a new conversation"
               >
-                <FiEdit className="h-5 w-5" />
+                <FiEdit className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="mt-5 grid grid-cols-3 gap-3">
-              <StatCard icon={<FiMessageSquare className="h-4 w-4" />} label="Unread" value={totalUnreadCount} accentClass="bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-200" />
-              <StatCard icon={<FiZap className="h-4 w-4" />} label="Direct" value={directConversationCount} accentClass="bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-200" />
-              <StatCard icon={<FiUsers className="h-4 w-4" />} label="Groups" value={groupConversationCount} accentClass="bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-200" />
+            <div className="mt-2 flex items-center gap-2">
+              <div className="relative min-w-0 flex-1">
+                <FiSearch className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                <input
+                  value={sideSearchQuery}
+                  onChange={(event) => setSideSearchQuery(event.target.value)}
+                  placeholder="Search"
+                  className="h-8 w-full rounded-lg border border-slate-200 bg-white/90 pl-8 pr-2 text-xs text-slate-700 outline-none transition focus:border-sky-300 focus:ring-2 focus:ring-sky-100 dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-slate-100 dark:focus:border-sky-700 dark:focus:ring-sky-950/50"
+                />
+              </div>
+
+              <div className="flex shrink-0 rounded-lg bg-slate-100 p-0.5 dark:bg-zinc-900">
+                {CONVERSATION_FILTERS.map((filter) => (
+                  <button
+                    key={filter.id}
+                    type="button"
+                    onClick={() => setConversationFilter(filter.id)}
+                    className={`rounded-md px-2 py-1 text-[10px] font-semibold transition ${
+                      conversationFilter === filter.id
+                        ? "bg-white text-slate-950 shadow-sm dark:bg-zinc-700 dark:text-white"
+                        : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
+                    }`}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="border-b border-white/70 px-4 py-3 dark:border-zinc-800 md:px-5">
-            <div className="relative">
-              <FiSearch className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                value={sideSearchQuery}
-                onChange={(event) => setSideSearchQuery(event.target.value)}
-                placeholder="Search by person, room, or last message"
-                className="w-full rounded-2xl border border-white/70 bg-white/80 py-3 pl-11 pr-4 text-sm text-slate-700 outline-none transition focus:border-sky-300 focus:ring-4 focus:ring-sky-100 dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-slate-100 dark:focus:border-sky-700 dark:focus:ring-sky-950/50"
-              />
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              {CONVERSATION_FILTERS.map((filter) => (
-                <button
-                  key={filter.id}
-                  type="button"
-                  onClick={() => setConversationFilter(filter.id)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                    conversationFilter === filter.id
-                      ? "bg-slate-950 text-white dark:bg-white dark:text-slate-950"
-                      : "bg-white text-slate-500 hover:bg-slate-100 dark:bg-zinc-900 dark:text-slate-300 dark:hover:bg-zinc-800"
-                  }`}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="scrollbar-hide relative flex-1 overflow-y-auto px-4 py-5">
+          <div className="scrollbar-hide relative flex-1 overflow-y-auto px-2 py-2">
             {isConversationListLoading && allConversations.length === 0 ? (
               <div className="space-y-3 px-2">
                 {[1, 2, 3, 4].map((item) => (
@@ -1646,20 +1829,17 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
                 </button>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-3">
                 {filteredConversations.direct.length > 0 && (
                   <section>
-                    <div className="mb-3 flex items-center justify-between px-2">
-                      <div>
-                        <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">Direct Messages</p>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Focused 1:1 conversations</p>
-                      </div>
-                      <span className="rounded-full bg-white px-2 py-1 text-[11px] font-semibold text-slate-500 dark:bg-zinc-900 dark:text-slate-300">
+                    <div className="mb-1 flex items-center justify-between px-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">Direct</p>
+                      <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
                         {filteredConversations.direct.length}
                       </span>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-0.5">
                       {filteredConversations.direct.map((conversation) => (
                         <ConversationItem
                           key={conversation.id}
@@ -1669,6 +1849,8 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
                           searchQuery={deferredSideSearchQuery}
                           previewText={resolveChatMessageText(conversation.last_message || "", mentionLookups)}
                           onSelect={embedded ? openConversation : undefined}
+                          onHide={handleHideConversation}
+                          onDeleteForEveryone={handleDeleteConversationForEveryone}
                         />
                       ))}
                     </div>
@@ -1677,21 +1859,18 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
 
                 {filteredConversations.group.length > 0 && (
                   <section>
-                    <div className="mb-3 flex items-center justify-between px-2">
-                      <div>
-                        <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">Group Rooms</p>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Shared threads for teams and projects</p>
-                      </div>
+                    <div className="mb-1 flex items-center justify-between px-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">Groups</p>
                       <button
                         type="button"
                         onClick={() => openNewChatModal("group")}
-                        className="rounded-full bg-slate-950 px-3 py-1.5 text-[11px] font-semibold text-white transition hover:brightness-110 dark:bg-white dark:text-slate-950"
+                        className="rounded-md px-2 py-1 text-[10px] font-semibold text-slate-500 transition hover:bg-white hover:text-slate-900 dark:text-slate-400 dark:hover:bg-zinc-900 dark:hover:text-white"
                       >
-                        New Group
+                        New
                       </button>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-0.5">
                       {filteredConversations.group.map((conversation) => (
                         <ConversationItem
                           key={conversation.id}
@@ -1701,16 +1880,23 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
                           searchQuery={deferredSideSearchQuery}
                           previewText={resolveChatMessageText(conversation.last_message || "", mentionLookups)}
                           onSelect={embedded ? openConversation : undefined}
+                          onHide={handleHideConversation}
+                          onDeleteForEveryone={handleDeleteConversationForEveryone}
                         />
                       ))}
                     </div>
                   </section>
                 )}
 
-                {hasPendingConversationPages && (
-                  <div className="px-2 text-center text-xs font-medium text-slate-400 dark:text-slate-500">
-                    Loading more conversations...
-                  </div>
+                {hasMoreConversationPages && (
+                  <button
+                    type="button"
+                    onClick={loadMoreConversations}
+                    disabled={isConversationListLoadingMore}
+                    className="mx-2 w-[calc(100%-1rem)] rounded-lg border border-slate-200 bg-white/80 px-3 py-2 text-xs font-semibold text-slate-500 transition hover:bg-white disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-slate-300 dark:hover:bg-zinc-900"
+                  >
+                    {isConversationListLoadingMore ? "Loading..." : "Load more"}
+                  </button>
                 )}
               </div>
             )}
@@ -1718,7 +1904,7 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
         </aside>
 
         <main className={`relative z-10 flex min-h-0 min-w-0 flex-1 flex-col ${!conversationId ? "hidden md:flex" : "flex"}`}>
-          {conversationId && isConversationLoading ? (
+          {conversationId && isConversationLoading && !activeConversation ? (
             <div className="relative flex flex-1 items-center justify-center p-6 md:p-10">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(125,211,252,0.22),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.6),rgba(248,250,252,0.72))] dark:bg-[linear-gradient(180deg,rgba(9,9,11,0.72),rgba(17,24,39,0.82))]" />
               <div className="relative z-10 w-full max-w-xl rounded-[32px] border border-white/80 bg-white/78 p-8 shadow-[0_30px_70px_-40px_rgba(15,23,42,0.8)] backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/78">
@@ -1815,7 +2001,7 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
                         </span>
                       </div>
                       <p className={`mt-1 truncate text-sm ${typingNames.length > 0 ? "text-emerald-500" : "text-slate-500 dark:text-slate-400"}`}>
-                        {threadStatusLabel}
+                        {isConversationLoading ? "Syncing conversation..." : threadStatusLabel}
                       </p>
                     </div>
                   </div>
@@ -1850,13 +2036,45 @@ const Chat = ({ embedded = false, initialConversationId = null }) => {
                       <FiInfo className="h-4.5 w-4.5" />
                     </button>
 
-                    <button
-                      type="button"
-                      className="hidden h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-slate-300 dark:hover:bg-zinc-800 md:flex"
-                      title="More actions"
-                    >
-                      <FiMoreVertical className="h-4.5 w-4.5" />
-                    </button>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setIsThreadActionsOpen((previous) => !previous)}
+                        className={`hidden h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-slate-300 dark:hover:bg-zinc-800 md:flex ${isThreadActionsOpen ? "ring-2 ring-sky-100 dark:ring-sky-950/60" : ""}`}
+                        title="More actions"
+                      >
+                        <FiMoreVertical className="h-4.5 w-4.5" />
+                      </button>
+
+                      {isThreadActionsOpen && (
+                        <div className="absolute right-0 top-12 z-40 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-slate-700 shadow-xl dark:border-zinc-700 dark:bg-zinc-900 dark:text-slate-100">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsThreadActionsOpen(false);
+                              handleHideConversation(activeConversation);
+                            }}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-zinc-800"
+                          >
+                            <FiTrash2 className="h-4 w-4" />
+                            Hide for me
+                          </button>
+                          {activeConversation.can_delete_for_everyone && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsThreadActionsOpen(false);
+                                handleDeleteConversationForEveryone(activeConversation);
+                              }}
+                              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30"
+                            >
+                              <FiTrash2 className="h-4 w-4" />
+                              Delete for everyone
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 

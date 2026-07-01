@@ -41,6 +41,27 @@ module Chat
         end
       end
 
+      def broadcast_conversation_hidden(conversation, user_id)
+        ActionCable.server.broadcast(user_stream(conversation.workspace_id, user_id), {
+          type: "conversation_hidden",
+          conversation_id: conversation.id
+        })
+      end
+
+      def broadcast_conversation_deleted(workspace_id, conversation_id, participant_ids)
+        participant_ids.each do |participant_id|
+          ActionCable.server.broadcast(user_stream(workspace_id, participant_id), {
+            type: "conversation_deleted",
+            conversation_id: conversation_id
+          })
+        end
+
+        ActionCable.server.broadcast(conversation_stream(workspace_id, conversation_id), {
+          type: "conversation_deleted",
+          conversation_id: conversation_id
+        })
+      end
+
       def broadcast_typing_indicator(workspace_id, conversation_id, user, is_typing)
         payload = {
           type: "typing_indicator",

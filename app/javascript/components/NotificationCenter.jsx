@@ -5,8 +5,10 @@ import { fetchNotifications, markNotificationRead, markAllNotificationsRead } fr
 import { subscribeToUserChat } from '../lib/chatCable';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const NotificationCenter = () => {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
@@ -72,6 +74,19 @@ const NotificationCenter = () => {
     }
   };
 
+  const handleOpenNotification = async (notification, closePopover) => {
+    const conversationId = notification.metadata?.conversation_id;
+
+    if (!notification.read_at) {
+      await handleMarkRead(notification.id);
+    }
+
+    if (conversationId) {
+      closePopover?.();
+      navigate(`/chat/${conversationId}`);
+    }
+  };
+
   const handleMarkAllRead = async () => {
     setLoading(true);
     try {
@@ -99,7 +114,7 @@ const NotificationCenter = () => {
 
   return (
     <Popover className="relative">
-      {({ open }) => (
+      {({ open, close }) => (
         <>
           <Popover.Button
             className={`
@@ -150,8 +165,9 @@ const NotificationCenter = () => {
                       notifications.map((notification) => (
                         <div
                           key={notification.id}
+                          onClick={() => handleOpenNotification(notification, close)}
                           className={`relative -m-3 flex items-start rounded-lg p-3 transition duration-150 ease-in-out ${notification.read_at ? 'bg-surface-elevated hover:bg-surface-card-hover' : 'bg-info/10 hover:bg-info/15'
-                            }`}
+                            } ${notification.metadata?.conversation_id ? 'cursor-pointer' : ''}`}
                         >
                           <div className="flex-shrink-0 mt-1">
                             {notification.actor_avatar && (
@@ -178,7 +194,10 @@ const NotificationCenter = () => {
                           </div>
                           {!notification.read_at && (
                             <button
-                              onClick={() => handleMarkRead(notification.id)}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleMarkRead(notification.id);
+                              }}
                               className="ml-2 text-info/70 hover:text-info focus:outline-none"
                               title="Mark as read"
                             >
