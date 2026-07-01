@@ -6,7 +6,7 @@ import PostForm from "../components/PostForm";
 import PostList from "../components/PostList";
 import { Toaster } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import QuickActions from "../components/quick_actions/QuickActions";
 
 // --- Icon Imports ---

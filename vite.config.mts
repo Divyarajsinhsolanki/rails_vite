@@ -5,7 +5,7 @@ import RubyPlugin from 'vite-plugin-ruby';
 const chunkGroups = {
   // Core vendor libraries
   'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-  'vendor-ui': ['react-hot-toast', 'react-helmet', '@headlessui/react', 'lucide-react', '@heroicons/react'],
+  'vendor-ui': ['react-hot-toast', 'react-helmet-async', '@headlessui/react', 'lucide-react', '@heroicons/react'],
   'vendor-animation': ['framer-motion'],
   'vendor-http': ['axios'],
 
@@ -37,6 +37,8 @@ const manualChunks = (id: string) => {
   return undefined;
 };
 
+const isProductionBuild = process.env.RAILS_ENV === 'production' || process.env.NODE_ENV === 'production';
+
 export default defineConfig({
   plugins: [RubyPlugin()],
   resolve: {
@@ -46,7 +48,7 @@ export default defineConfig({
   build: {
     minify: 'esbuild',
     sourcemap: false, // Disable in production for faster builds and smaller artifacts
-    chunkSizeWarningLimit: 500,
+    chunkSizeWarningLimit: 1200,
     reportCompressedSize: false,
     
     rollupOptions: {
@@ -84,6 +86,7 @@ export default defineConfig({
   },
   
   server: {
+    hmr: isProductionBuild ? false : undefined,
     // This workspace can exceed Linux inotify limits when Rails, esbuild,
     // and Vite all watch files at once. Polling keeps Vite stable in dev.
     watch: {

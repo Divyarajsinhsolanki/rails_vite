@@ -41,10 +41,10 @@ COPY Gemfile Gemfile.lock ./
 COPY vendor/pdf_master ./vendor/pdf_master
 RUN bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
-    bundle exec bootsnap precompile --gemfile
+    RUBYOPT="-W0" bundle exec bootsnap precompile --gemfile
 
 COPY package.json yarn.lock tailwind.config.js postcss.config.js ./
-RUN yarn install --frozen-lockfile
+RUN YARN_WORKSPACES_EXPERIMENTAL=false yarn install --frozen-lockfile --silent
 
 COPY . .
 
