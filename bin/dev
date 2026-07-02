@@ -5,7 +5,9 @@ if gem list --no-installed --exact --silent foreman; then
   gem install foreman
 fi
 
+FOREMAN_BIN="$(ruby -e 'require "rubygems"; print Gem.bin_path("foreman", "foreman")')"
+
 # Default to port 3000 if not specified
 export PORT="${PORT:-3000}"
 
-exec foreman start -f Procfile.dev --env /dev/null "$@"
+exec ruby "$FOREMAN_BIN" start -f Procfile.dev --env /dev/null "$@"

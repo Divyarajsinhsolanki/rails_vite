@@ -68,7 +68,6 @@ FROM base
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y \
       libpq5 \
-      libsqlite3-0 \
       libvips \
       imagemagick \
       poppler-utils \

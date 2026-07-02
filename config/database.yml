@@ -20,9 +20,9 @@ test:
 
 production:
   <<: *default
-  # url: <%= ENV["DATABASE_URL"] %>
-  database: pdf_master_development
-  username: postgres
-  password: postgres
-  host: <%= ENV.fetch('DB_HOST', 'localhost') %>
+  url: <%= ENV["DATABASE_URL"] %>
+  # database: pdf_master_development
+  # username: postgres
+  # password: postgres
+  # host: <%= ENV.fetch('DB_HOST', 'localhost') %>
 

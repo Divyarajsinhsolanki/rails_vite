@@ -5,9 +5,8 @@ ruby "3.3.11"
 # Rails framework
 gem "rails", "~> 8.1.3"
 
-# Database adapters
+# Database adapter
 gem "pg"
-gem "sqlite3", "~> 1.4"
 
 # Web server and boot performance
 gem "bootsnap", require: false
@@ -16,7 +15,6 @@ gem "puma", "~> 7.2", ">= 7.2.1"
 # Frontend and Rails UI integration
 gem "jbuilder"
 gem "jsbundling-rails"
-gem "stimulus-rails"
 gem "vite_rails", "~> 3.11.0"
 
 # Authentication, authorization, and API protection
